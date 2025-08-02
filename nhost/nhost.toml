@@ -2,20 +2,20 @@
 
 [[global.environment]]
 name = 'REACT_APP_NHOST_SUBDOMAIN'
-value = '{{ variables.NHOST_SUBDOMAIN }}'
+value = '{{ NHOST_SUBDOMAIN }}'
 
 [[global.environment]]
 name = 'REACT_APP_NHOST_REGION'
-value = '{{ variables.NHOST_REGION }}'
+value = '{{ NHOST_REGION }}'
 
 [hasura]
 version = 'v2.46.0-ce'
-adminSecret = '{{ variables.NHOST_ADMIN_SECRET }}'
-webhookSecret = '{{ variables.NHOST_WEBHOOK_SECRET }}'
+adminSecret = '{{ NHOST_ADMIN_SECRET }}'
+webhookSecret = '{{ NHOST_WEBHOOK_SECRET }}'
 
 [[hasura.jwtSecrets]]
 type = 'HS256'
-key = '{{ variables.NHOST_JWT_SECRET }}'
+key = '{{ NHOST_JWT_SECRET }}'
 
 [hasura.settings]
 corsDomain = ['*']
@@ -37,8 +37,8 @@ httpPoolSize = 100
 version = '0.41.0'
 
 [auth.redirections]
-clientUrl = 'https://{{ variables.NHOST_SUBDOMAIN }}.nhost.app'
-allowedUrls = ['https://{{ variables.NHOST_SUBDOMAIN }}.nhost.app', 'https://{{ variables.NHOST_SUBDOMAIN }}.nhost.app/dashboard', 'http://localhost:3000', 'http://localhost:3000/dashboard']
+clientUrl = 'https://{{ NHOST_SUBDOMAIN }}.nhost.app'
+allowedUrls = ['https://{{ NHOST_SUBDOMAIN }}.nhost.app', 'https://{{ NHOST_SUBDOMAIN }}.nhost.app/dashboard', 'http://localhost:3000', 'http://localhost:3000/dashboard']
 
 [auth.signUp]
 enabled = true
