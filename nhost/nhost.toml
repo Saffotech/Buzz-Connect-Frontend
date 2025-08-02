@@ -1,5 +1,15 @@
 [global]
 
+# Frontend configuration for React app
+[web]
+build_command = "npm run build"
+build_directory = "build"
+install_command = "npm install"
+
+[web.environment]
+REACT_APP_NHOST_SUBDOMAIN = "{{ secrets.NHOST_SUBDOMAIN }}"
+REACT_APP_NHOST_REGION = "{{ secrets.NHOST_REGION }}"
+
 [hasura]
 version = 'v2.46.0-ce'
 adminSecret = '{{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}'
