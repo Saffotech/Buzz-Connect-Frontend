@@ -14,7 +14,7 @@ console.log('🚀 BuzzConnect Deployment Health Check (Free Tier Optimized)\n');
 
 // Check if required files exist
 const requiredFiles = [
-  'nhost.toml',
+  'nhost/nhost.toml',
   '.env.example',
   'package.json',
   'src/lib/nhost.js'
@@ -67,7 +67,7 @@ console.log('\n⚙️  Checking nhost.toml configuration...');
 let nhostConfigOk = true;
 
 try {
-  const nhostConfig = fs.readFileSync('nhost.toml', 'utf8');
+  const nhostConfig = fs.readFileSync('nhost/nhost.toml', 'utf8');
 
   const requiredSections = ['[web]', 'build_command', 'build_directory'];
 
@@ -94,7 +94,7 @@ try {
     console.log('⚠️  Compute resources - May exceed free tier limits');
   }
 } catch (error) {
-  console.log('❌ Error reading nhost.toml');
+  console.log('❌ Error reading nhost/nhost.toml');
   nhostConfigOk = false;
 }
 
