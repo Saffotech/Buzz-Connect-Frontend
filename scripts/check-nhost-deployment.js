@@ -9,10 +9,6 @@ const path = require('path');
 
 const requiredFiles = [
   'nhost/nhost.toml',
-  'nhost/config.yaml',
-  'nhost/metadata/version.yaml',
-  'nhost/metadata/metadata.yaml',
-  'nhost/metadata/sources.yaml',
   'nhost/migrations/default/1733155200000_init_buzzconnect_schema/up.sql'
 ];
 
@@ -28,10 +24,9 @@ requiredFiles.forEach(file => {
 if (allFilesExist) {
   console.log('\n🎉 All required files are present!');
   console.log('\n📊 Configuration Summary:');
-  console.log('- ✅ Nhost configuration (nhost.toml)');
-  console.log('- ✅ Hasura CLI config (config.yaml)');
-  console.log('- ✅ Database migrations');
-  console.log('- ✅ Hasura metadata');
+  console.log('- ✅ Nhost configuration (nhost.toml) - Modern config approach');
+  console.log('- ✅ Database migrations - BuzzConnect schema');
+  console.log('- ✅ No metadata files needed - Nhost manages this automatically');
   console.log('\n🚀 Your deployment should succeed!');
   
   console.log('\n📋 Next Steps:');
