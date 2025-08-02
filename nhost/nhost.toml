@@ -1,12 +1,6 @@
 [global]
 
-[[global.environment]]
-name = 'REACT_APP_NHOST_SUBDOMAIN'
-value = '{{ NHOST_SUBDOMAIN }}'
 
-[[global.environment]]
-name = 'REACT_APP_NHOST_REGION'
-value = '{{ NHOST_REGION }}'
 
 [hasura]
 version = 'v2.46.0-ce'
@@ -37,8 +31,8 @@ httpPoolSize = 100
 version = '0.41.0'
 
 [auth.redirections]
-clientUrl = 'https://{{ NHOST_SUBDOMAIN }}.nhost.app'
-allowedUrls = ['https://{{ NHOST_SUBDOMAIN }}.nhost.app', 'https://{{ NHOST_SUBDOMAIN }}.nhost.app/dashboard', 'http://localhost:3000', 'http://localhost:3000/dashboard']
+clientUrl = 'https://rrbtsubvwmsqbnqyubmc.nhost.app'
+allowedUrls = ['https://rrbtsubvwmsqbnqyubmc.nhost.app', 'https://rrbtsubvwmsqbnqyubmc.nhost.app/dashboard', 'http://localhost:3000', 'http://localhost:3000/dashboard']
 
 [auth.signUp]
 enabled = true
