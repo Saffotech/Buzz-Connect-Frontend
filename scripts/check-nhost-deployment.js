@@ -11,7 +11,8 @@ const requiredFiles = [
   'nhost/nhost.toml',
   'nhost/config.yaml',
   'nhost/metadata/version.yaml',
-  'nhost/metadata/databases.yaml',
+  'nhost/metadata/metadata.yaml',
+  'nhost/metadata/sources.yaml',
   'nhost/migrations/default/1733155200000_init_buzzconnect_schema/up.sql'
 ];
 
