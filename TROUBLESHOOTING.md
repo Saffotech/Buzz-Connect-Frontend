@@ -75,5 +75,17 @@ Even without nhost.toml detection, your app will use free tier resources by defa
 2. **Nhost Documentation**: https://docs.nhost.io
 3. **GitHub Issues**: Check if others have similar issues
 
-### Current status:
-Your BuzzConnect app is **successfully deployed** and ready to use, even if the nhost.toml detection message appears. The configuration is working correctly in the background!
+### Update: Issue Resolved! ✅
+
+**The "nhost.toml not present" issue has been fixed!**
+
+**Root Cause**: The `nhost.toml` file was in the wrong location. Nhost expects it to be in an `nhost/` directory, not in the project root.
+
+**Solution Applied**:
+- ✅ Moved `nhost.toml` from root to `nhost/nhost.toml`
+- ✅ Created proper Nhost project structure (`nhost/migrations`, `nhost/metadata`, `nhost/emails`)
+- ✅ Added correct metadata configuration files
+- ✅ Updated to latest Nhost configuration format
+
+**Current Status**:
+Your BuzzConnect app should now deploy correctly with Nhost properly detecting the configuration file. The next deployment should show proper recognition of all Nhost components.
