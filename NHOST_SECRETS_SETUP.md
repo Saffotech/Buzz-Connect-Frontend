@@ -8,22 +8,28 @@ Based on the official Nhost documentation and examples, I've updated the `nhost.
 
 You **must** set these secrets in your Nhost Dashboard before deployment will work:
 
-### 1. **HASURA_GRAPHQL_ADMIN_SECRET**
+### 1. **AUTH_CLIENT_URL** (CRITICAL for fixing redirect error)
+- **Purpose**: Defines allowed redirect URLs for authentication
+- **Value**: Your deployed app URL
+- **Format**: `https://your-subdomain.nhost.app`
+- **Example**: `https://buzzconnect-abc123.nhost.app`
+
+### 2. **HASURA_GRAPHQL_ADMIN_SECRET**
 - **Purpose**: Admin access to Hasura GraphQL API
 - **Generate**: `openssl rand -base64 32`
 - **Example**: `f03d5f5a0ed055e3fcbc0a3639405aca0511e6abe6d60e40d1fff610c6248f2a`
 
-### 2. **NHOST_WEBHOOK_SECRET**
+### 3. **NHOST_WEBHOOK_SECRET**
 - **Purpose**: Secure webhooks between services
 - **Generate**: `openssl rand -base64 32`
 - **Example**: `a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456`
 
-### 3. **HASURA_GRAPHQL_JWT_SECRET**
+### 4. **HASURA_GRAPHQL_JWT_SECRET**
 - **Purpose**: JWT signing and verification
 - **Generate**: `openssl rand -base64 32`
 - **Example**: `9876543210abcdef9876543210abcdef9876543210abcdef9876543210abcdef`
 
-### 4. **GRAFANA_ADMIN_PASSWORD**
+### 5. **GRAFANA_ADMIN_PASSWORD**
 - **Purpose**: Grafana monitoring dashboard access
 - **Generate**: Any strong password
 - **Example**: `MyStrongGrafanaPassword2024!`
@@ -39,19 +45,23 @@ You **must** set these secrets in your Nhost Dashboard before deployment will wo
 Click **"Add Environment Variable"** for each secret:
 
 ```bash
-# Secret 1
+# Secret 1 - CRITICAL for fixing redirect error
+Name: AUTH_CLIENT_URL
+Value: https://your-subdomain.nhost.app
+
+# Secret 2
 Name: HASURA_GRAPHQL_ADMIN_SECRET
 Value: [generated-32-char-string]
 
-# Secret 2  
+# Secret 3
 Name: NHOST_WEBHOOK_SECRET
 Value: [generated-32-char-string]
 
-# Secret 3
+# Secret 4
 Name: HASURA_GRAPHQL_JWT_SECRET
 Value: [generated-32-char-string]
 
-# Secret 4
+# Secret 5
 Name: GRAFANA_ADMIN_PASSWORD
 Value: [your-strong-password]
 ```
