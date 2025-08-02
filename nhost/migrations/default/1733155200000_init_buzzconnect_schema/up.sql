@@ -1,6 +1,6 @@
 -- ========= WORKSPACES (No Change) =========
 -- Top-level entity for multi-tenancy.
-CREATE TABLE public.workspaces (
+CREATE TABLE IF NOT EXISTS public.workspaces (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
   name text NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE public.workspaces (
 
 -- ========= PROFILES (No Change) =========
 -- Linked 1-to-1 with Nhost auth.users.
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid PRIMARY KEY,
   updated_at timestamp with time zone,
   full_name text,
@@ -19,7 +19,7 @@ CREATE TABLE public.profiles (
 
 -- ========= WORKSPACE_USERS (No Change) =========
 -- Manages user roles within workspaces.
-CREATE TABLE public.workspace_users (
+CREATE TABLE IF NOT EXISTS public.workspace_users (
   workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE NOT NULL,
   user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   -- Role-based access control is critical for team features.
@@ -29,7 +29,7 @@ CREATE TABLE public.workspace_users (
 
 -- ========= SOCIAL ACCOUNTS (Enhanced) =========
 -- Stores connected social media accounts for a workspace.
-CREATE TABLE public.social_accounts (
+CREATE TABLE IF NOT EXISTS public.social_accounts (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE NOT NULL,
   platform text NOT NULL, -- e.g., 'twitter', 'linkedin', 'instagram_business'
@@ -45,7 +45,7 @@ CREATE TABLE public.social_accounts (
 
 -- ========= MEDIA ASSETS (New) =========
 -- A central library for all user-uploaded media.
-CREATE TABLE public.media_assets (
+CREATE TABLE IF NOT EXISTS public.media_assets (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE NOT NULL,
   uploader_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -61,7 +61,7 @@ CREATE TABLE public.media_assets (
 
 -- ========= TAGS (New) =========
 -- For organizing content within a workspace.
-CREATE TABLE public.tags (
+CREATE TABLE IF NOT EXISTS public.tags (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE NOT NULL,
   name text NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE public.tags (
 
 -- ========= POSTS (Heavily Enhanced) =========
 -- The core entity for all content.
-CREATE TABLE public.posts (
+CREATE TABLE IF NOT EXISTS public.posts (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE NOT NULL,
   author_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -90,7 +90,7 @@ CREATE TABLE public.posts (
 
 -- ========= POST_DESTINATIONS (New) =========
 -- Allows a single post to target multiple social accounts.
-CREATE TABLE public.post_destinations (
+CREATE TABLE IF NOT EXISTS public.post_destinations (
   post_id uuid REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
   social_account_id uuid REFERENCES public.social_accounts(id) ON DELETE CASCADE NOT NULL,
   -- Stores the platform-specific ID of the post after publication.
@@ -101,7 +101,7 @@ CREATE TABLE public.post_destinations (
 );
 
 -- ========= POST_TAGS (New Junction Table) =========
-CREATE TABLE public.post_tags (
+CREATE TABLE IF NOT EXISTS public.post_tags (
   post_id uuid REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
   tag_id uuid REFERENCES public.tags(id) ON DELETE CASCADE NOT NULL,
   PRIMARY KEY (post_id, tag_id)
@@ -109,7 +109,7 @@ CREATE TABLE public.post_tags (
 
 -- ========= POST_MEDIA (New Junction Table) =========
 -- Links posts to media assets from the library.
-CREATE TABLE public.post_media (
+CREATE TABLE IF NOT EXISTS public.post_media (
   post_id uuid REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
   asset_id uuid REFERENCES public.media_assets(id) ON DELETE CASCADE NOT NULL,
   -- Order of media in the post (e.g., for carousels).
