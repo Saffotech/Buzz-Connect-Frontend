@@ -131,7 +131,7 @@ enabled = false
 enabled = false
 
 [postgres]
-version = '16.6-20250311-1'
+version = '14.6-20221215-1'
 
 [postgres.resources.storage]
 capacity = 1
