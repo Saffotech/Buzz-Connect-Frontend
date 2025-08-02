@@ -23,8 +23,7 @@ level = 'warn'
 [hasura.events]
 httpPoolSize = 100
 
-[hasura.resources]
-compute = { cpu = 62, memory = 128 }
+
 
 [auth]
 version = '0.41.0'
@@ -125,8 +124,7 @@ enabled = false
 [auth.totp]
 enabled = false
 
-[auth.resources]
-compute = { cpu = 62, memory = 128 }
+
 
 [postgres]
 version = '14.18-20250728-1'
@@ -137,8 +135,7 @@ capacity = 1
 [storage]
 version = '0.7.2'
 
-[storage.resources]
-compute = { cpu = 62, memory = 128 }
+
 
 [observability]
 [observability.grafana]
