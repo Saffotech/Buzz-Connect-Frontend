@@ -11,7 +11,7 @@ Your BuzzConnect project has been configured specifically for **Nhost's Free Tie
 | **Database Storage** | 1 GB | ✅ Optimized |
 | **File Storage** | 1 GB | ✅ Optimized |
 | **Network Egress** | 5 GB/month | ✅ Monitored |
-| **Compute Resources** | Shared CPU | ✅ Minimal (62 mCPU, 128MB RAM) |
+| **Compute Resources** | Shared CPU | ✅ Default (no custom resources) |
 | **Functions** | 10 included | ✅ Within limit |
 | **Execution Time** | 1 GB-hours | ✅ Optimized |
 | **Projects** | 1 active | ✅ Single project |
