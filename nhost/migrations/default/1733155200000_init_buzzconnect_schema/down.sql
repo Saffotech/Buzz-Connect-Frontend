@@ -1,5 +1,4 @@
 -- Drop tables in reverse order to handle foreign key dependencies
-
 DROP TABLE IF EXISTS public.post_media;
 DROP TABLE IF EXISTS public.post_tags;
 DROP TABLE IF EXISTS public.post_destinations;

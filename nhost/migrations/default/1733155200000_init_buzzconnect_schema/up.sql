@@ -1,4 +1,4 @@
--- ========= WORKSPACES (No Change) =========
+-- ========= WORKSPACES =========
 -- Top-level entity for multi-tenancy.
 CREATE TABLE IF NOT EXISTS public.workspaces (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.workspaces (
   settings jsonb
 );
 
--- ========= PROFILES (No Change) =========
+-- ========= PROFILES =========
 -- Linked 1-to-1 with Nhost auth.users.
 CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid PRIMARY KEY,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   avatar_url text
 );
 
--- ========= WORKSPACE_USERS (No Change) =========
+-- ========= WORKSPACE_USERS =========
 -- Manages user roles within workspaces.
 CREATE TABLE IF NOT EXISTS public.workspace_users (
   workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS public.workspace_users (
   PRIMARY KEY (workspace_id, user_id)
 );
 
--- ========= SOCIAL ACCOUNTS (Enhanced) =========
+-- ========= SOCIAL ACCOUNTS =========
 -- Stores connected social media accounts for a workspace.
 CREATE TABLE IF NOT EXISTS public.social_accounts (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.social_accounts (
   platform text NOT NULL, -- e.g., 'twitter', 'linkedin', 'instagram_business'
   display_name text NOT NULL, -- e.g., 'BuzzConnect Official'
   platform_user_id text NOT NULL, -- The user ID on the social platform
-  -- IMPORTANT: Using Supabase Vault is non-negotiable for these tokens.
+  -- IMPORTANT: Using Nhost Vault for these tokens.
   encrypted_credentials jsonb NOT NULL,
   last_validated_at timestamp with time zone,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -43,14 +43,14 @@ CREATE TABLE IF NOT EXISTS public.social_accounts (
   UNIQUE (workspace_id, platform, platform_user_id)
 );
 
--- ========= MEDIA ASSETS (New) =========
+-- ========= MEDIA ASSETS =========
 -- A central library for all user-uploaded media.
 CREATE TABLE IF NOT EXISTS public.media_assets (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE NOT NULL,
   uploader_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
   file_name text NOT NULL,
-  -- Links to the file in Supabase Storage.
+  -- Links to the file in Nhost Storage.
   storage_path text NOT NULL,
   file_type text, -- e.g., 'image/jpeg', 'video/mp4'
   file_size_bytes bigint,
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS public.media_assets (
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- ========= TAGS (New) =========
+-- ========= TAGS =========
 -- For organizing content within a workspace.
 CREATE TABLE IF NOT EXISTS public.tags (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS public.tags (
   UNIQUE (workspace_id, name)
 );
 
--- ========= POSTS (Heavily Enhanced) =========
+-- ========= POSTS =========
 -- The core entity for all content.
 CREATE TABLE IF NOT EXISTS public.posts (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS public.posts (
   updated_at timestamp with time zone
 );
 
--- ========= POST_DESTINATIONS (New) =========
+-- ========= POST_DESTINATIONS =========
 -- Allows a single post to target multiple social accounts.
 CREATE TABLE IF NOT EXISTS public.post_destinations (
   post_id uuid REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
@@ -100,14 +100,14 @@ CREATE TABLE IF NOT EXISTS public.post_destinations (
   PRIMARY KEY (post_id, social_account_id)
 );
 
--- ========= POST_TAGS (New Junction Table) =========
+-- ========= POST_TAGS =========
 CREATE TABLE IF NOT EXISTS public.post_tags (
   post_id uuid REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
   tag_id uuid REFERENCES public.tags(id) ON DELETE CASCADE NOT NULL,
   PRIMARY KEY (post_id, tag_id)
 );
 
--- ========= POST_MEDIA (New Junction Table) =========
+-- ========= POST_MEDIA =========
 -- Links posts to media assets from the library.
 CREATE TABLE IF NOT EXISTS public.post_media (
   post_id uuid REFERENCES public.posts(id) ON DELETE CASCADE NOT NULL,
