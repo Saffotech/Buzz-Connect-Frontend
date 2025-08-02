@@ -1,13 +1,13 @@
 version: 3
 sources: "!include sources.yaml"
-actions: "!include actions.yaml"
+actions: []
 custom_types:
   enums: []
   input_objects: []
   objects: []
   scalars: []
-allow_list: "!include allow_list.yaml"
-cron_triggers: "!include cron_triggers.yaml"
-inherited_roles: "!include inherited_roles.yaml"
-query_collections: "!include query_collections.yaml"
-remote_schemas: "!include remote_schemas.yaml"
+allow_list: []
+cron_triggers: []
+inherited_roles: []
+query_collections: []
+remote_schemas: []
