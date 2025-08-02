@@ -1,3 +1,4 @@
+sources:
 - name: default
   kind: postgres
   configuration:
