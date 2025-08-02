@@ -23,9 +23,7 @@ level = 'warn'
 [hasura.events]
 httpPoolSize = 100
 
-[functions]
-[functions.node]
-version = 18
+
 
 [auth]
 version = '0.39.0-beta6'
