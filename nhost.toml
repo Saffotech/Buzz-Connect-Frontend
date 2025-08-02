@@ -1,0 +1,146 @@
+# Nhost Configuration for Free Tier
+# This configuration is optimized for Nhost's free tier limits:
+# - 1 GB database storage
+# - 1 GB file storage
+# - 5 GB network egress
+# - Minimal compute resources (shared CPU)
+# - 10 functions included
+# - 1 GB-hours execution time
+
+[global]
+environment = "production"
+
+[hasura]
+version = "v2.36.0-ce"
+admin_secret = "{{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}"
+webhook_secret = "{{ secrets.NHOST_WEBHOOK_SECRET }}"
+
+[hasura.settings]
+cors_domain = ["*"]
+dev_mode = false
+enable_allowlist = false
+enable_console = true
+enable_remote_schema_permissions = false
+enabled_log_types = ["startup", "query-log", "websocket-log", "http-log"]
+log_level = "warn"
+
+[hasura.events]
+http_pool_size = 100
+
+[hasura.resources]
+# Free tier: Use minimal shared compute resources
+compute = [
+  { cpu = 62, memory = 128 }
+]
+
+[auth]
+version = "0.21.2"
+
+[auth.redirections]
+client_url = "{{ secrets.AUTH_CLIENT_URL }}"
+allowed_redirect_urls = ["{{ secrets.AUTH_CLIENT_URL }}", "{{ secrets.AUTH_CLIENT_URL }}/dashboard"]
+
+[auth.sign_up]
+enabled = true
+default_allowed_roles = ["user"]
+default_role = "user"
+
+[auth.user]
+default_allowed_roles = ["user"]
+default_role = "user"
+
+[auth.session]
+access_token_expires_in = 900
+refresh_token_expires_in = 43200
+
+[auth.method.email_password]
+enabled = true
+hibp_enabled = false
+email_verification_required = true
+password_min_length = 8
+
+[auth.method.sms_passwordless]
+enabled = false
+
+[auth.method.oauth.google]
+enabled = false
+
+[auth.method.oauth.github]
+enabled = false
+
+[auth.method.oauth.facebook]
+enabled = false
+
+[auth.method.oauth.twitter]
+enabled = false
+
+[auth.method.oauth.apple]
+enabled = false
+
+[auth.method.oauth.linkedin]
+enabled = false
+
+[auth.method.oauth.spotify]
+enabled = false
+
+[auth.method.webauthn]
+enabled = false
+
+[auth.resources]
+# Free tier: Use minimal shared compute resources
+compute = [
+  { cpu = 62, memory = 128 }
+]
+
+[storage]
+version = "0.6.0"
+
+[storage.resources]
+# Free tier: Use minimal shared compute resources
+compute = [
+  { cpu = 62, memory = 128 }
+]
+
+[functions]
+[functions.node]
+version = 18
+
+[postgres]
+version = "14.6-20221215-1"
+
+[postgres.settings]
+jit = true
+max_connections = 100
+shared_buffers = "256MB"
+effective_cache_size = "768MB"
+maintenance_work_mem = "64MB"
+checkpoint_completion_target = 0.9
+wal_buffers = "7864kB"
+default_statistics_target = 100
+random_page_cost = 1.1
+effective_io_concurrency = 200
+work_mem = "2621kB"
+min_wal_size = "1GB"
+max_wal_size = "4GB"
+
+[postgres.resources]
+# Free tier: Use minimal shared compute resources
+compute = [
+  { cpu = 62, memory = 128 }
+]
+
+[observability]
+[observability.grafana]
+admin_password = "{{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+
+# Frontend configuration for React app
+[web]
+# Build configuration
+build_command = "npm run build"
+build_directory = "build"
+install_command = "npm install"
+
+# Environment variables for the frontend
+[web.environment]
+REACT_APP_NHOST_SUBDOMAIN = "{{ secrets.NHOST_SUBDOMAIN }}"
+REACT_APP_NHOST_REGION = "{{ secrets.NHOST_REGION }}"
