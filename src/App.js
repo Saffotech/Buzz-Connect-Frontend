@@ -5,9 +5,12 @@ import Dashboard from './components/Dashboard';
 import toast from 'react-hot-toast';
 
 function App() {
-  // Simple authentication state
+  // Auto-login for testing - always authenticated
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('isAuthenticated') === 'true';
+    // Auto-login for development
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userEmail', 'test@buzzconnect.com');
+    return true;
   });
   
   const [isLoading, setIsLoading] = useState(false);
