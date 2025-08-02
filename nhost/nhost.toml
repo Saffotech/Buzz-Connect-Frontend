@@ -34,8 +34,8 @@ version = '0.39.0-beta6'
 mode = 'required'
 
 [auth.redirections]
-clientUrl = '{{ secrets.AUTH_CLIENT_URL }}'
-allowedUrls = ['{{ secrets.AUTH_CLIENT_URL }}', '{{ secrets.AUTH_CLIENT_URL }}/dashboard', 'http://localhost:3000', 'http://localhost:3000/dashboard']
+clientUrl = 'http://localhost:3000'
+allowedUrls = ['http://localhost:3000', 'http://localhost:3000/dashboard', 'https://*.nhost.app', 'https://*.nhost.app/dashboard']
 
 [auth.signUp]
 enabled = true
