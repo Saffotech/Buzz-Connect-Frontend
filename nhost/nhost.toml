@@ -40,6 +40,10 @@ passwordMinLength = 8
 [postgres]
 version = "14.18-20250728-1"
 
+[postgres.resources]
+[postgres.resources.storage]
+capacity = 1
+
 [storage]
 version = "0.7.2"
 
