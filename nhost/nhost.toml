@@ -25,8 +25,9 @@ allowedUrls = ["https://rrbtsubvwmsqbnqyubmc.nhost.app", "http://localhost:3000"
 enabled = true
 
 [auth.user]
-defaultRole = "user"
-allowedRoles = ["user"]
+[auth.user.roles]
+default = "user"
+allowed = ["user"]
 
 [auth.session]
 accessToken.expiresIn = 900
