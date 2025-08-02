@@ -1,7 +1,0 @@
-version: 3
-endpoint: http://localhost:1337/v1/graphql
-metadata_directory: metadata
-metadata_file: metadata.yaml
-actions:
-  kind: synchronous
-  handler_webhook_baseurl: http://localhost:1337/v1/functions
