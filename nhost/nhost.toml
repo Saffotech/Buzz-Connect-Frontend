@@ -1,5 +1,13 @@
 [global]
 
+[[global.environment]]
+name = 'REACT_APP_NHOST_SUBDOMAIN'
+value = '{{ variables.NHOST_SUBDOMAIN }}'
+
+[[global.environment]]
+name = 'REACT_APP_NHOST_REGION'
+value = '{{ variables.NHOST_REGION }}'
+
 [hasura]
 version = 'v2.46.0-ce'
 adminSecret = '{{ variables.NHOST_ADMIN_SECRET }}'
