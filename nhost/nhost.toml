@@ -2,12 +2,12 @@
 
 [hasura]
 version = 'v2.46.0-ce'
-adminSecret = '{{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}'
-webhookSecret = '{{ secrets.NHOST_WEBHOOK_SECRET }}'
+adminSecret = '{{ variables.NHOST_ADMIN_SECRET }}'
+webhookSecret = '{{ variables.NHOST_WEBHOOK_SECRET }}'
 
 [[hasura.jwtSecrets]]
 type = 'HS256'
-key = '{{ secrets.HASURA_GRAPHQL_JWT_SECRET }}'
+key = '{{ variables.NHOST_JWT_SECRET }}'
 
 [hasura.settings]
 corsDomain = ['*']
@@ -29,8 +29,8 @@ httpPoolSize = 100
 version = '0.41.0'
 
 [auth.redirections]
-clientUrl = '{{ secrets.AUTH_CLIENT_URL }}'
-allowedUrls = ['{{ secrets.AUTH_CLIENT_URL }}', '{{ secrets.AUTH_CLIENT_URL }}/dashboard', 'http://localhost:3000', 'http://localhost:3000/dashboard']
+clientUrl = 'https://{{ variables.NHOST_SUBDOMAIN }}.nhost.app'
+allowedUrls = ['https://{{ variables.NHOST_SUBDOMAIN }}.nhost.app', 'https://{{ variables.NHOST_SUBDOMAIN }}.nhost.app/dashboard', 'http://localhost:3000', 'http://localhost:3000/dashboard']
 
 [auth.signUp]
 enabled = true
@@ -138,7 +138,5 @@ version = '0.7.2'
 
 
 [observability]
-[observability.grafana]
-adminPassword = '{{ secrets.GRAFANA_ADMIN_PASSWORD }}'
 
 
