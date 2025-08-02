@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useSignOut, useUserData } from '@nhost/react';
 import {
   BarChart3,
   Calendar,
@@ -21,18 +20,25 @@ import PostDetail from './PostDetail';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const { signOut } = useSignOut();
-  const user = useUserData();
+  // Mock user data
+  const user = {
+    email: localStorage.getItem('userEmail') || 'user@example.com',
+    displayName: 'Demo User'
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userEmail');
+    window.location.reload();
+  };
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showPostDetail, setShowPostDetail] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [posts, setPosts] = useState([]);
 
-  const handleSignOut = () => {
-    signOut();
-    localStorage.removeItem('mockAuthenticated');
-    localStorage.clear();
+  const handleLogout = () => {
+    handleSignOut();
   };
 
   const handleCreatePost = (newPost) => {
@@ -121,7 +127,7 @@ const Dashboard = () => {
               <Settings size={18} />
               Settings
             </button>
-            <button className="btn-danger" onClick={handleSignOut}>
+            <button className="btn-danger" onClick={handleLogout}>
               <LogOut size={18} />
               Logout
             </button>
