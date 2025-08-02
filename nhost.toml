@@ -6,6 +6,7 @@
 # - Minimal compute resources (shared CPU)
 # - 10 functions included
 # - 1 GB-hours execution time
+# Updated: 2025-08-02
 
 [global]
 environment = "production"
