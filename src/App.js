@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthenticationStatus, useNhostClient } from '@nhost/react';
 import AuthPage from './components/AuthPage';
 import Dashboard from './components/Dashboard';
 import toast from 'react-hot-toast';
 
 function App() {
-  const { isAuthenticated, isLoading } = useAuthenticationStatus();
-  const nhost = useNhostClient();
-
-  // For development: assume logged in for a few sessions
-  const [mockAuthenticated, setMockAuthenticated] = React.useState(() => {
-    const mockAuth = localStorage.getItem('mockAuthenticated');
-    // Default to true for development, or use stored value, or use real auth
-    return mockAuth !== 'false' && (mockAuth === 'true' || isAuthenticated || true);
+  // Simple authentication state for development
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('isAuthenticated') === 'true';
   });
+
+  const [isLoading, setIsLoading] = useState(false);
 
   React.useEffect(() => {
     if (isAuthenticated) {

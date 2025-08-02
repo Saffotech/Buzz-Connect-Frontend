@@ -1,20 +1,23 @@
 # BuzzConnect - Aapke Brands. Ek Jagah.
 
-A modern social media management platform built with React and Nhost.
+A modern social media management platform built with React and traditional backend.
 
 ## Features
 
-- 🔐 User authentication with email/password
+- 🔐 User authentication with JWT
 - 📱 Multi-platform social media management
 - 📊 Analytics and insights
 - 📅 Content scheduling
 - 🤖 AI-powered content suggestions
 - 📈 Performance tracking
+- 🖼️ Media management with Cloudinary
+- 🗄️ MongoDB database
 
 ## Tech Stack
 
 - **Frontend**: React 18, React Router, Lucide React
-- **Backend**: Nhost (GraphQL, PostgreSQL, Authentication)
+- **Backend**: Node.js, Express, MongoDB, JWT Authentication
+- **Media Storage**: Cloudinary
 - **Styling**: CSS3 with modern design patterns
 - **Testing**: Playwright for E2E testing
 
