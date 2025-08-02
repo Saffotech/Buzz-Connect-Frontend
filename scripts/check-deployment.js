@@ -69,7 +69,7 @@ let nhostConfigOk = true;
 try {
   const nhostConfig = fs.readFileSync('nhost/nhost.toml', 'utf8');
 
-  const requiredSections = ['[web]', 'build_command', 'build_directory'];
+  const requiredSections = ['[hasura]', '[auth]', '[postgres]'];
 
   requiredSections.forEach(section => {
     if (nhostConfig.includes(section)) {
