@@ -34,7 +34,6 @@ accessToken.expiresIn = 900
 refreshToken.expiresIn = 43200
 
 [auth.method.emailPassword]
-enabled = true
 emailVerificationRequired = true
 passwordMinLength = 8
 
