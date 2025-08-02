@@ -2,6 +2,7 @@
 
 [hasura]
 version = 'v2.46.0-ce'
+adminSecret = 'nhost-admin-secret'
 
 [hasura.settings]
 corsDomain = ['*']
