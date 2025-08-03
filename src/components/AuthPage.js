@@ -1,46 +1,97 @@
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import './AuthPage.css';
 
 const AuthPage = () => {
+  const { login, register, isLoading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    displayName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const validateForm = () => {
+    const { displayName, email, password, confirmPassword } = formData;
+
+    if (!email || !password) {
+      toast.error('Please fill in all required fields');
+      return false;
+    }
+
+    if (!email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return false;
+    }
+
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return false;
+    }
+
+    if (!isLogin) {
+      if (!displayName) {
+        toast.error('Please enter your name');
+        return false;
+      }
+
+      if (password !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
-      // Mock authentication - replace with actual API call
+      let result;
+
       if (isLogin) {
-        // Mock login
-        if (email && password) {
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('userEmail', email);
-          toast.success('Login successful! 🎉');
-          window.location.reload(); // Trigger app re-render
-        } else {
-          toast.error('Please enter email and password');
-        }
+        result = await login({
+          email: formData.email,
+          password: formData.password
+        });
       } else {
-        // Mock signup
-        if (email && password) {
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('userEmail', email);
-          toast.success('Account created successfully! 🎉');
-          window.location.reload(); // Trigger app re-render
-        } else {
-          toast.error('Please enter email and password');
-        }
+        result = await register({
+          displayName: formData.displayName,
+          email: formData.email,
+          password: formData.password
+        });
+      }
+
+      if (result.success) {
+        // AuthContext will handle the redirect
+        setFormData({
+          displayName: '',
+          email: '',
+          password: '',
+          confirmPassword: ''
+        });
       }
     } catch (error) {
+      console.error('Authentication error:', error);
       toast.error('Authentication failed. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -68,13 +119,29 @@ const AuthPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
+          {!isLogin && (
+            <div className="form-group">
+              <label htmlFor="displayName">Full Name</label>
+              <input
+                type="text"
+                id="displayName"
+                name="displayName"
+                value={formData.displayName}
+                onChange={handleInputChange}
+                placeholder="Enter your full name"
+                required={!isLogin}
+              />
+            </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
               type="email"
               id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
               placeholder="Enter your email"
               required
             />
@@ -86,10 +153,12 @@ const AuthPage = () => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
                 placeholder="Enter your password"
                 required
+                minLength="6"
               />
               <button
                 type="button"
@@ -100,6 +169,31 @@ const AuthPage = () => {
               </button>
             </div>
           </div>
+
+          {!isLogin && (
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm Password</label>
+              <div className="password-input">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Confirm your password"
+                  required={!isLogin}
+                  minLength="6"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"

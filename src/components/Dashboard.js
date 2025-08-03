@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
   Calendar,
@@ -13,36 +13,69 @@ import {
   Users,
   Heart,
   MessageCircle,
-  Share
+  Share,
+  Loader,
+  AlertCircle
 } from 'lucide-react';
 import CreatePost from './CreatePost';
 import PostDetail from './PostDetail';
+import { useDashboardData } from '../hooks/useApi';
+import { STORAGE_KEYS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  // Mock user data
-  const user = {
-    email: localStorage.getItem('userEmail') || 'user@example.com',
-    displayName: 'Demo User'
-  };
+  // Use optimized dashboard hook that fetches all data efficiently
+  const {
+    user,
+    posts,
+    analytics,
+    instagramStatus,
+    loading,
+    error: dashboardError,
+    createPost: apiCreatePost,
+    deletePost: apiDeletePost,
+    connectInstagram,
+    disconnectInstagram,
+    refetch: refetchDashboard
+  } = useDashboardData();
 
-  const handleSignOut = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userEmail');
-    window.location.reload();
-  };
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showPostDetail, setShowPostDetail] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [posts, setPosts] = useState([]);
+  const [notification, setNotification] = useState(null);
+
+  const handleSignOut = () => {
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.USER_EMAIL);
+    localStorage.removeItem('isAuthenticated');
+    window.location.reload();
+  };
 
   const handleLogout = () => {
     handleSignOut();
   };
 
-  const handleCreatePost = (newPost) => {
-    setPosts(prev => [newPost, ...prev]);
+  const handleCreatePost = async (postData) => {
+    try {
+      const response = await apiCreatePost(postData);
+      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
+      setShowCreatePost(false);
+      return response;
+    } catch (error) {
+      setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
+      throw error;
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      await apiDeletePost(postId);
+      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_DELETED });
+    } catch (error) {
+      setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
+    }
   };
 
   const handleEditPost = (post) => {
@@ -51,70 +84,69 @@ const Dashboard = () => {
     setShowCreatePost(true);
   };
 
-  const handleDeletePost = (postId) => {
-    setPosts(prev => prev.filter(post => post.id !== postId));
-    setShowPostDetail(false);
-  };
+
 
   const handlePostClick = (post) => {
     setSelectedPost(post);
     setShowPostDetail(true);
   };
 
-  const mockStats = {
-    followers: '12.5K',
-    engagement: '8.2%',
-    posts: '156',
-    reach: '45.2K'
+  // Real analytics data with fallbacks
+  const stats = {
+    followers: analytics?.totalFollowers || '0',
+    engagement: analytics?.avgEngagementRate ? `${analytics.avgEngagementRate.toFixed(1)}%` : '0%',
+    posts: posts?.length || '0',
+    reach: analytics?.totalReach || '0'
   };
 
-  // Initialize with some mock posts if empty
-  React.useEffect(() => {
-    if (posts.length === 0) {
-      const initialPosts = [
-        {
-          id: 1,
-          platforms: ['instagram'],
-          content: 'Amazing sunset at the beach! 🌅 #sunset #beach #photography',
-          images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=300&fit=crop'],
-          hashtags: ['#sunset', '#beach', '#photography'],
-          likes: 234,
-          comments: 18,
-          shares: 12,
-          status: 'published',
-          createdAt: '2025-01-15T18:00:00Z'
-        },
-        {
-          id: 2,
-          platforms: ['twitter'],
-          content: 'Just launched our new product! Excited to share this journey with you all 🚀 #startup #innovation',
-          hashtags: ['#startup', '#innovation'],
-          likes: 89,
-          comments: 23,
-          shares: 45,
-          status: 'published',
-          createdAt: '2025-01-16T10:30:00Z'
-        },
-        {
-          id: 3,
-          platforms: ['instagram', 'twitter'],
-          content: 'Behind the scenes of our latest photoshoot 📸 #bts #photography #creative',
-          images: ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop'],
-          hashtags: ['#bts', '#photography', '#creative'],
-          likes: 156,
-          comments: 31,
-          shares: 8,
-          status: 'scheduled',
-          scheduledDate: '2025-01-17T14:15:00Z',
-          createdAt: '2025-01-16T12:00:00Z'
-        }
-      ];
-      setPosts(initialPosts);
+  // Show notification temporarily
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  }, [posts.length]);
+  }, [notification]);
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="dashboard loading">
+        <div className="loading-spinner">
+          <Loader className="spinner" size={48} />
+          <p>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (dashboardError) {
+    return (
+      <div className="dashboard error">
+        <div className="error-message">
+          <AlertCircle size={48} />
+          <h2>Unable to load dashboard</h2>
+          <p>{dashboardError}</p>
+          <button onClick={() => refetchDashboard()} className="btn-primary">
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard">
+      {/* Notification */}
+      {notification && (
+        <div className={`notification ${notification.type}`}>
+          <span>{notification.message}</span>
+          <button onClick={() => setNotification(null)}>×</button>
+        </div>
+      )}
+
       {/* Header */}
       <header className="dashboard-header">
         <div className="header-content">
@@ -186,7 +218,8 @@ const Dashboard = () => {
                 <p>Here's what's happening with your social media accounts today.</p>
                 {user && (
                   <div className="user-info">
-                    <p>Logged in as: <strong>{user.email || 'Instagram User'}</strong></p>
+                    <p>Logged in as: <strong>{user.displayName || user.email}</strong></p>
+                    {user.email && <p className="user-email">{user.email}</p>}
                   </div>
                 )}
               </div>
@@ -198,7 +231,7 @@ const Dashboard = () => {
                     <Users size={24} />
                   </div>
                   <div className="stat-content">
-                    <h3>{mockStats.followers}</h3>
+                    <h3>{stats.followers}</h3>
                     <p>Total Followers</p>
                     <span className="stat-change positive">+12% this month</span>
                   </div>
@@ -208,7 +241,7 @@ const Dashboard = () => {
                     <Heart size={24} />
                   </div>
                   <div className="stat-content">
-                    <h3>{mockStats.engagement}</h3>
+                    <h3>{stats.engagement}</h3>
                     <p>Engagement Rate</p>
                     <span className="stat-change positive">+2.1% this week</span>
                   </div>
@@ -218,7 +251,7 @@ const Dashboard = () => {
                     <Image size={24} />
                   </div>
                   <div className="stat-content">
-                    <h3>{mockStats.posts}</h3>
+                    <h3>{stats.posts}</h3>
                     <p>Total Posts</p>
                     <span className="stat-change neutral">+5 this week</span>
                   </div>
@@ -228,7 +261,7 @@ const Dashboard = () => {
                     <TrendingUp size={24} />
                   </div>
                   <div className="stat-content">
-                    <h3>{mockStats.reach}</h3>
+                    <h3>{stats.reach}</h3>
                     <p>Total Reach</p>
                     <span className="stat-change positive">+18% this month</span>
                   </div>
@@ -271,51 +304,66 @@ const Dashboard = () => {
               </div>
 
               <div className="posts-grid">
-                {posts.map(post => (
-                  <div key={post.id} className="post-card" onClick={() => handlePostClick(post)}>
-                    <div className="post-header">
-                      <div className="platform-badges">
-                        {post.platforms?.map(platform => {
-                          const Icon = platform === 'instagram' ? Instagram : Twitter;
-                          return (
-                            <div key={platform} className="platform-badge">
-                              <Icon size={16} />
-                              <span>{platform}</span>
-                            </div>
-                          );
-                        })}
+                {posts.length === 0 ? (
+                  <div className="empty-state">
+                    <Image size={48} />
+                    <h3>No posts yet</h3>
+                    <p>Create your first post to get started!</p>
+                    <button onClick={() => setShowCreatePost(true)} className="btn-primary">
+                      <Plus size={18} />
+                      Create Your First Post
+                    </button>
+                  </div>
+                ) : (
+                  posts.map(post => (
+                    <div key={post._id || post.id} className="post-card" onClick={() => handlePostClick(post)}>
+                      <div className="post-header">
+                        <div className="platform-badges">
+                          {post.platforms?.map(platform => {
+                            const Icon = platform === 'instagram' ? Instagram : Twitter;
+                            return (
+                              <div key={platform} className="platform-badge">
+                                <Icon size={16} />
+                                <span>{platform}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <span className="post-date">
+                          {post.status === 'scheduled'
+                            ? new Date(post.scheduledDate).toLocaleDateString()
+                            : new Date(post.createdAt).toLocaleDateString()
+                          }
+                        </span>
                       </div>
-                      <span className="post-date">
-                        {post.status === 'scheduled' ? post.scheduledDate : post.createdAt}
-                      </span>
-                    </div>
-                    {post.images && post.images.length > 0 && (
-                      <div className="post-image">
-                        <img src={post.images[0]} alt="Post content" />
-                      </div>
-                    )}
-                    <div className="post-content">
-                      <p>{post.content}</p>
-                      {post.hashtags && (
-                        <div className="post-hashtags">
-                          {post.hashtags.slice(0, 3).map((tag, index) => (
-                            <span key={index} className="hashtag">{tag}</span>
-                          ))}
+                      {post.images && post.images.length > 0 && (
+                        <div className="post-image">
+                          <img src={post.images[0].url || post.images[0]} alt={post.images[0].altText || "Post content"} />
                         </div>
                       )}
+                      <div className="post-content">
+                        <p>{post.content}</p>
+                        {post.hashtags && post.hashtags.length > 0 && (
+                          <div className="post-hashtags">
+                            {post.hashtags.slice(0, 3).map((tag, index) => (
+                              <span key={index} className="hashtag">{tag}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="post-stats">
+                        <span><Heart size={14} /> {post.totalEngagement || 0}</span>
+                        <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
+                        <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
+                      </div>
+                      <div className="post-status">
+                        <span className={`status-badge ${post.status}`}>
+                          {post.status}
+                        </span>
+                      </div>
                     </div>
-                    <div className="post-stats">
-                      <span><Heart size={14} /> {post.likes}</span>
-                      <span><MessageCircle size={14} /> {post.comments}</span>
-                      <span><Share size={14} /> {post.shares}</span>
-                    </div>
-                    <div className="post-status">
-                      <span className={`status-badge ${post.status}`}>
-                        {post.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}

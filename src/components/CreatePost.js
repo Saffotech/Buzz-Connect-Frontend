@@ -15,21 +15,28 @@ import {
   Wand2,
   Sparkles,
   RefreshCw,
-  Copy
+  Copy,
+  Loader,
+  AlertCircle
 } from 'lucide-react';
+import { useMedia } from '../hooks/useApi';
+import apiClient from '../utils/api';
+import { PLATFORMS, PLATFORM_CONFIGS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import './CreatePost.css';
 
 const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
+  const { uploadMedia } = useMedia();
+
   const [postData, setPostData] = useState({
     content: '',
     platforms: [],
     scheduledDate: '',
     scheduledTime: '',
     images: [],
-    hashtags: '',
-    mentions: ''
+    hashtags: [],
+    mentions: []
   });
-  
+
   const [activeTab, setActiveTab] = useState('compose');
   const [isScheduled, setIsScheduled] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -37,6 +44,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [error, setError] = useState(null);
 
   const platforms = [
     { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F', connected: true },
@@ -53,13 +63,32 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     }));
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const imageUrls = files.map(file => URL.createObjectURL(file));
-    setPostData(prev => ({
-      ...prev,
-      images: [...prev.images, ...imageUrls]
-    }));
+    if (files.length === 0) return;
+
+    setUploadingFiles(true);
+    setError(null);
+
+    try {
+      // Upload files to Cloudinary via API
+      const response = await uploadMedia(files);
+      const uploadedImages = response.data.map(media => ({
+        url: media.url,
+        altText: media.originalName,
+        publicId: media.publicId
+      }));
+
+      setPostData(prev => ({
+        ...prev,
+        images: [...prev.images, ...uploadedImages]
+      }));
+    } catch (error) {
+      console.error('Failed to upload images:', error);
+      setError(error.message || 'Failed to upload images');
+    } finally {
+      setUploadingFiles(false);
+    }
   };
 
   const removeImage = (index) => {
@@ -69,42 +98,65 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const newPost = {
-      id: Date.now(),
-      content: postData.content,
-      platforms: postData.platforms,
-      images: postData.images,
-      hashtags: postData.hashtags.split(' ').filter(tag => tag.startsWith('#')),
-      mentions: postData.mentions.split(' ').filter(mention => mention.startsWith('@')),
-      scheduledDate: isScheduled ? `${postData.scheduledDate} ${postData.scheduledTime}` : null,
-      status: isScheduled ? 'scheduled' : 'published',
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      comments: 0,
-      shares: 0
-    };
+    setIsSubmitting(true);
+    setError(null);
 
-    onPostCreated(newPost);
-    onClose();
-    
-    // Reset form
+    try {
+      // Prepare post data for API
+      const apiPostData = {
+        content: postData.content,
+        platforms: postData.platforms,
+        images: postData.images.map(img => ({
+          url: img.url || img,
+          altText: img.altText || 'Post image'
+        })),
+        hashtags: Array.isArray(postData.hashtags)
+          ? postData.hashtags
+          : postData.hashtags.split(' ').filter(tag => tag.startsWith('#')),
+        mentions: Array.isArray(postData.mentions)
+          ? postData.mentions
+          : postData.mentions.split(' ').filter(mention => mention.startsWith('@'))
+      };
+
+      // Add scheduled date if scheduling
+      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+        apiPostData.scheduledDate = scheduledDateTime.toISOString();
+      }
+
+      // Create post via API
+      const response = await onPostCreated(apiPostData);
+
+      // Reset form on success
+      resetForm();
+      onClose();
+
+    } catch (error) {
+      console.error('Failed to create post:', error);
+      setError(error.message || ERROR_MESSAGES.SERVER_ERROR);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
     setPostData({
       content: '',
       platforms: [],
       scheduledDate: '',
       scheduledTime: '',
       images: [],
-      hashtags: '',
-      mentions: ''
+      hashtags: [],
+      mentions: []
     });
     setIsScheduled(false);
     setPreviewMode(false);
     setShowAISuggestions(false);
     setAiSuggestions([]);
     setAiPrompt('');
+    setError(null);
   };
 
   const getCharacterCount = () => {
@@ -124,71 +176,115 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     if (!aiPrompt.trim()) return;
 
     setIsGenerating(true);
+    setError(null);
 
     try {
-      // Simulate AI API call - replace with actual LLM integration
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Generate content for different tones using the real AI API
+      const tones = ['enthusiastic', 'professional', 'casual', 'educational'];
+      const selectedPlatforms = postData.platforms.length > 0 ? postData.platforms : ['instagram'];
 
-      // Generate contextual suggestions based on the prompt
-      const generateContextualSuggestions = (prompt) => {
-        const suggestions = [];
-        const emojis = ['🚀', '✨', '💡', '🎯', '🔥', '💪', '🌟', '⚡', '🎉', '💫'];
-        const getRandomEmoji = () => emojis[Math.floor(Math.random() * emojis.length)];
+      const suggestions = [];
 
-        // Enthusiastic/Marketing tone
+      // Generate content for each tone
+      for (let i = 0; i < tones.length; i++) {
+        const tone = tones[i];
+
+        try {
+          const response = await apiClient.generateContent({
+            prompt: aiPrompt,
+            platforms: selectedPlatforms,
+            tone: tone,
+            includeHashtags: true,
+            includeEmojis: true
+          });
+
+          if (response.success) {
+            // Process each platform's content
+            Object.entries(response.data).forEach(([platform, data]) => {
+              suggestions.push({
+                id: `${tone}-${platform}-${i}`,
+                content: data.content,
+                hashtags: data.hashtags ? data.hashtags.join(' ') : '',
+                tone: tone.charAt(0).toUpperCase() + tone.slice(1),
+                platforms: [platform],
+                characterCount: data.characterCount,
+                withinLimit: data.withinLimit,
+                provider: response.provider || 'ai'
+              });
+            });
+          }
+        } catch (toneError) {
+          console.error(`Failed to generate ${tone} content:`, toneError);
+          // Continue with other tones even if one fails
+        }
+      }
+
+      // If no suggestions were generated, create a fallback
+      if (suggestions.length === 0) {
         suggestions.push({
-          id: 1,
-          content: `${getRandomEmoji()} Exciting news! ${prompt} is here to revolutionize your experience. Join thousands who are already loving the innovation! What are you most excited about?`,
-          hashtags: '#Innovation #Exciting #Revolutionary #GameChanger #NewLaunch',
-          tone: 'Enthusiastic',
-          platforms: ['instagram', 'twitter']
+          id: 'fallback-1',
+          content: `✨ ${aiPrompt} - Let's make this amazing! What do you think?`,
+          hashtags: '#content #social #engagement',
+          tone: 'Casual',
+          platforms: selectedPlatforms,
+          characterCount: 0,
+          withinLimit: true,
+          provider: 'fallback'
         });
+      }
 
-        // Professional/Informative tone
-        suggestions.push({
-          id: 2,
-          content: `Discover the power of ${prompt}. Simple, effective, and designed with you in mind. Ready to transform your workflow? ${getRandomEmoji()}`,
-          hashtags: '#Productivity #Workflow #Innovation #Professional #Efficiency',
-          tone: 'Professional',
-          platforms: ['twitter', 'facebook']
-        });
-
-        // Storytelling/Behind-the-scenes tone
-        suggestions.push({
-          id: 3,
-          content: `Behind the scenes: How ${prompt} came to life. From concept to reality, here's our journey of creating something amazing! ${getRandomEmoji()}${getRandomEmoji()}`,
-          hashtags: '#BehindTheScenes #Journey #Creation #Story #Process',
-          tone: 'Storytelling',
-          platforms: ['instagram']
-        });
-
-        // Question/Engagement tone
-        suggestions.push({
-          id: 4,
-          content: `What do you think about ${prompt}? We'd love to hear your thoughts and experiences! Share in the comments below ${getRandomEmoji()}`,
-          hashtags: '#Community #Feedback #Thoughts #Engagement #Discussion',
-          tone: 'Engaging',
-          platforms: ['instagram', 'facebook']
-        });
-
-        // Tips/Educational tone
-        suggestions.push({
-          id: 5,
-          content: `Pro tip: ${prompt} can help you achieve better results in less time. Here's how to get started and make the most of it! ${getRandomEmoji()}`,
-          hashtags: '#ProTip #Tutorial #HowTo #Tips #Education',
-          tone: 'Educational',
-          platforms: ['twitter', 'instagram']
-        });
-
-        return suggestions;
-      };
-
-      const mockSuggestions = generateContextualSuggestions(aiPrompt);
-
-      setAiSuggestions(mockSuggestions);
+      setAiSuggestions(suggestions);
     } catch (error) {
       console.error('AI generation failed:', error);
-      // You could show an error toast here
+      setError('Failed to generate AI content. Please try again.');
+
+      // Provide fallback suggestions
+      setAiSuggestions([{
+        id: 'error-fallback',
+        content: `🚀 ${aiPrompt} - Share your thoughts with the world!`,
+        hashtags: '#content #social #share',
+        tone: 'Casual',
+        platforms: postData.platforms.length > 0 ? postData.platforms : ['instagram'],
+        characterCount: 0,
+        withinLimit: true,
+        provider: 'fallback'
+      }]);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // AI Hashtag Generation
+  const generateHashtags = async () => {
+    if (!postData.content.trim()) {
+      setError('Please enter some content first to generate hashtags');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      const selectedPlatform = postData.platforms.length > 0 ? postData.platforms[0] : 'instagram';
+
+      const response = await apiClient.suggestHashtags({
+        content: postData.content,
+        platform: selectedPlatform,
+        count: 10
+      });
+
+      if (response.success && response.data.hashtags) {
+        const newHashtags = response.data.hashtags.join(' ');
+        setPostData(prev => ({
+          ...prev,
+          hashtags: prev.hashtags ? `${prev.hashtags} ${newHashtags}` : newHashtags
+        }));
+      } else {
+        setError('Failed to generate hashtags. Please try again.');
+      }
+    } catch (error) {
+      console.error('Hashtag generation failed:', error);
+      setError('Failed to generate hashtags. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -254,6 +350,15 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
 
 
         <form onSubmit={handleSubmit} className="create-post-form">
+          {/* Error Display */}
+          {error && (
+            <div className="error-message">
+              <AlertCircle size={16} />
+              <span>{error}</span>
+              <button type="button" onClick={() => setError(null)}>×</button>
+            </div>
+          )}
+
           {activeTab === 'compose' && (
             <div className={`compose-tab ${showAISuggestions ? 'with-ai' : ''}`}>
               {/* AI Suggestions Column */}
@@ -423,6 +528,16 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
                   <label className="section-label">
                     <Hash size={16} />
                     Hashtags
+                    <button
+                      type="button"
+                      className="ai-hashtag-btn"
+                      onClick={generateHashtags}
+                      disabled={isGenerating || !postData.content.trim()}
+                      title="Generate hashtags with AI"
+                    >
+                      {isGenerating ? <Loader size={14} className="spinning" /> : <Sparkles size={14} />}
+                      AI
+                    </button>
                   </label>
                   <input
                     type="text"
@@ -462,10 +577,20 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
                     className="file-input"
                     id="image-upload"
                   />
-                  <label htmlFor="image-upload" className="upload-label">
-                    <Upload size={24} />
-                    <span>Click to upload images or drag and drop</span>
-                    <small>PNG, JPG, GIF up to 10MB each</small>
+                  <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
+                    {uploadingFiles ? (
+                      <>
+                        <Loader className="spinner" size={24} />
+                        <span>Uploading images...</span>
+                        <small>Please wait while we upload your files</small>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={24} />
+                        <span>Click to upload images or drag and drop</span>
+                        <small>PNG, JPG, GIF up to 10MB each</small>
+                      </>
+                    )}
                   </label>
                 </div>
                 
@@ -569,12 +694,17 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn-primary"
-              disabled={!postData.content.trim() || postData.platforms.length === 0 || charCount.remaining < 0}
+              disabled={!postData.content.trim() || postData.platforms.length === 0 || charCount.remaining < 0 || isSubmitting}
             >
-              {isScheduled ? (
+              {isSubmitting ? (
+                <>
+                  <Loader className="spinner" size={16} />
+                  {isScheduled ? 'Scheduling...' : 'Publishing...'}
+                </>
+              ) : isScheduled ? (
                 <>
                   <Calendar size={16} />
                   Schedule Post
