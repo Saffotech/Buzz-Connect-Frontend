@@ -19,7 +19,7 @@
 
 .header-content {
   max-width: 1200px;
-  margin: 0 auto;
+  /* margin: 0 auto; */
   padding: 0 1.5rem;
 }
 
@@ -479,7 +479,6 @@
 }
 
 .coming-soon-card svg {
-  margin: 0 auto 1.5rem;
   color: #d1d5db;
 }
 
@@ -527,18 +526,18 @@
 
 /* Modal Styles */
 .modal-overlay {
-  position: fixed;
+  position: fixed; /* not absolute! */
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-  padding: 1rem;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5); /* or whatever dim you prefer */
+  z-index: 50; /* must be higher than sidebar */
 }
+.modal-overlay {
+  backdrop-filter: blur(3px);
+}
+
 
 .modal {
   background: white;

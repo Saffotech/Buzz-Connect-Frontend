@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UserPlus, Trash2, Crown, Shield, User, Mail, X } from 'lucide-react';
 import SettingsCard from '../SettingsCard';
+import InviteMemberModal from './InviteMemberModal';
 
 const MembersSettings = ({ onNotify, onShowModal, onHideModal }) => {
   const [members, setMembers] = useState([
@@ -61,36 +62,28 @@ const MembersSettings = ({ onNotify, onShowModal, onHideModal }) => {
   };
 
   const showInviteModal = () => {
-    onShowModal({
-      title: 'Invite Team Member',
-      children: (
-        <div>
-          <p>Send an invitation to join your workspace</p>
-          <div className="form-group">
-            <label>Email Address</label>
-            <input
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="Enter email address"
-              className="form-input"
-            />
-          </div>
-        </div>
-      ),
-      actions: (
-        <>
-          <button onClick={onHideModal} className="btn-secondary">
-            Cancel
-          </button>
-          <button onClick={handleInviteMember} className="btn-primary">
-            <Mail size={16} />
-            Send Invitation
-          </button>
-        </>
-      )
-    });
-  };
+  onShowModal({
+    title: 'Invite Team Member',
+    children: (
+      <InviteMemberModal
+        onInvite={(email) => {
+          const newMember = {
+            id: Date.now(),
+            name: email.split('@')[0],
+            email,
+            role: 'member',
+            avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&fit=crop&crop=face`,
+            joinedDate: new Date().toISOString().split('T')[0]
+          };
+          setMembers(prev => [...prev, newMember]);
+          onHideModal();
+          onNotify('success', 'Invitation sent successfully');
+        }}
+        onCancel={onHideModal}
+      />
+    )
+  });
+};
 
   return (
     <div className="settings-subpage">

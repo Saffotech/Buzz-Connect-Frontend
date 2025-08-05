@@ -37,12 +37,12 @@ const BillingSettings = ({ onNotify }) => {
                 Get Updates
               </button>
             </div>
-            <div className="contact-info">
+            {/* <div className="contact-info">
               <p>Questions about pricing or enterprise features?</p>
               <a href="mailto:sales@buzzconnect.com" className="contact-link">
                 sales@buzzconnect.com
               </a>
-            </div>
+            </div> */}
           </div>
         </SettingsCard>
       </div>
