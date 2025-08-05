@@ -457,7 +457,7 @@
 }
 
 .empty-state svg {
-  margin: 0 auto 1rem;
+  /* margin: 0 auto 1rem; */
   color: #d1d5db;
 }
 
