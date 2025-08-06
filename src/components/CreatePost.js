@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   X,
   Image,
@@ -17,7 +17,9 @@ import {
   RefreshCw,
   Copy,
   Loader,
-  AlertCircle
+  AlertCircle,
+  CheckCircle,
+  Info
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -33,8 +35,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     scheduledDate: '',
     scheduledTime: '',
     images: [],
-    hashtags: [],
-    mentions: []
+    hashtags: '',
+    mentions: ''
   });
 
   const [activeTab, setActiveTab] = useState('compose');
@@ -47,12 +49,39 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const platforms = [
     { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F', connected: true },
     { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2', connected: true },
     { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2', connected: false }
   ];
+
+  // Toast notification function
+  const showToast = (message, type = 'info', duration = 3000) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), duration);
+  };
+
+  // Validation function with toast
+  const validatePreview = () => {
+    if (!postData.content.trim()) {
+      showToast('Please enter some content before viewing the preview', 'error');
+      return false;
+    }
+    if (postData.platforms.length === 0) {
+      showToast('Please select at least one platform', 'error');
+      return false;
+    }
+    return true;
+  };
+
+  // Handle preview tab click with validation
+  const handlePreviewClick = () => {
+    if (validatePreview()) {
+      setActiveTab('preview');
+    }
+  };
 
   const handlePlatformToggle = (platformId) => {
     setPostData(prev => ({
@@ -67,25 +96,56 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
+    console.log('Files selected:', files);
     setUploadingFiles(true);
     setError(null);
 
     try {
+      // For immediate preview, create local URLs
+      const localPreviews = files.map(file => ({
+        url: URL.createObjectURL(file),
+        altText: file.name,
+        isLocal: true
+      }));
+
+      // Add local previews immediately
+      setPostData(prev => ({
+        ...prev,
+        images: [...prev.images, ...localPreviews]
+      }));
+
+      showToast('Uploading images...', 'info');
+
       // Upload files to Cloudinary via API
       const response = await uploadMedia(files);
+      console.log('Upload response:', response);
+      
       const uploadedImages = response.data.map(media => ({
         url: media.url,
         altText: media.originalName,
         publicId: media.publicId
       }));
 
+      console.log('Uploaded images:', uploadedImages);
+
+      // Replace local previews with actual uploaded URLs
       setPostData(prev => ({
         ...prev,
-        images: [...prev.images, ...uploadedImages]
+        images: prev.images.filter(img => !img.isLocal).concat(uploadedImages)
       }));
+
+      showToast(`Successfully uploaded ${files.length} image(s)`, 'success');
+
     } catch (error) {
       console.error('Failed to upload images:', error);
       setError(error.message || 'Failed to upload images');
+      showToast('Failed to upload images', 'error');
+      
+      // Remove local previews on error
+      setPostData(prev => ({
+        ...prev,
+        images: prev.images.filter(img => !img.isLocal)
+      }));
     } finally {
       setUploadingFiles(false);
     }
@@ -96,6 +156,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
+    showToast('Image removed', 'info');
   };
 
   const handleSubmit = async (e) => {
@@ -126,8 +187,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
         apiPostData.scheduledDate = scheduledDateTime.toISOString();
       }
 
+      showToast(isScheduled ? 'Scheduling post...' : 'Publishing post...', 'info');
+
       // Create post via API
       const response = await onPostCreated(apiPostData);
+
+      showToast(isScheduled ? 'Post scheduled successfully!' : 'Post published successfully!', 'success');
 
       // Reset form on success
       resetForm();
@@ -136,6 +201,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     } catch (error) {
       console.error('Failed to create post:', error);
       setError(error.message || ERROR_MESSAGES.SERVER_ERROR);
+      showToast('Failed to create post', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -148,8 +214,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
       scheduledDate: '',
       scheduledTime: '',
       images: [],
-      hashtags: [],
-      mentions: []
+      hashtags: '',
+      mentions: ''
     });
     setIsScheduled(false);
     setPreviewMode(false);
@@ -157,6 +223,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     setAiSuggestions([]);
     setAiPrompt('');
     setError(null);
+    setToast(null);
   };
 
   const getCharacterCount = () => {
@@ -177,6 +244,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
 
     setIsGenerating(true);
     setError(null);
+    showToast('Generating AI content...', 'info');
 
     try {
       // Generate content for different tones using the real AI API
@@ -234,9 +302,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
       }
 
       setAiSuggestions(suggestions);
+      showToast(`Generated ${suggestions.length} AI suggestions`, 'success');
     } catch (error) {
       console.error('AI generation failed:', error);
       setError('Failed to generate AI content. Please try again.');
+      showToast('Failed to generate AI content', 'error');
 
       // Provide fallback suggestions
       setAiSuggestions([{
@@ -257,12 +327,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
   // AI Hashtag Generation
   const generateHashtags = async () => {
     if (!postData.content.trim()) {
-      setError('Please enter some content first to generate hashtags');
+      showToast('Please enter some content first to generate hashtags', 'error');
       return;
     }
 
     setIsGenerating(true);
     setError(null);
+    showToast('Generating hashtags...', 'info');
 
     try {
       const selectedPlatform = postData.platforms.length > 0 ? postData.platforms[0] : 'instagram';
@@ -279,12 +350,15 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
           ...prev,
           hashtags: prev.hashtags ? `${prev.hashtags} ${newHashtags}` : newHashtags
         }));
+        showToast(`Added ${response.data.hashtags.length} hashtags`, 'success');
       } else {
         setError('Failed to generate hashtags. Please try again.');
+        showToast('Failed to generate hashtags', 'error');
       }
     } catch (error) {
       console.error('Hashtag generation failed:', error);
       setError('Failed to generate hashtags. Please try again.');
+      showToast('Failed to generate hashtags', 'error');
     } finally {
       setIsGenerating(false);
     }
@@ -297,17 +371,31 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
       hashtags: suggestion.hashtags,
       platforms: suggestion.platforms
     }));
+    showToast('AI suggestion applied successfully', 'success');
     // Keep AI suggestions visible for easy comparison and further editing
   };
 
   const copySuggestionContent = async (suggestion) => {
     try {
       await navigator.clipboard.writeText(suggestion.content);
-      // You could add a toast notification here
+      showToast('Content copied to clipboard', 'success');
     } catch (err) {
       console.error('Failed to copy text: ', err);
+      showToast('Failed to copy content', 'error');
     }
   };
+
+  // Clean up blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clean up any blob URLs when component unmounts
+      postData.images.forEach(image => {
+        if (image.url && image.url.startsWith('blob:')) {
+          URL.revokeObjectURL(image.url);
+        }
+      });
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -340,14 +428,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
           </button>
           <button
             className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('preview')}
+            onClick={handlePreviewClick}
           >
             <Eye size={16} />
             Preview
           </button>
         </div>
-
-
 
         <form onSubmit={handleSubmit} className="create-post-form">
           {/* Error Display */}
@@ -504,149 +590,205 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
                   </div>
                 </div>
 
-              {/* Content */}
-              <div className="form-section">
-                <label className="section-label">
-                  Content
-                  <span className={`char-count ${charCount.remaining < 0 ? 'over-limit' : ''}`}>
-                    {charCount.current}/{charCount.max}
-                  </span>
-                </label>
-                <textarea
-                  value={postData.content}
-                  onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="What's happening? Share your thoughts..."
-                  className="content-textarea"
-                  rows={6}
-                  required
-                />
-              </div>
-
-              {/* Hashtags and Mentions */}
-              <div className="form-row">
+                {/* Content */}
                 <div className="form-section">
                   <label className="section-label">
-                    <Hash size={16} />
-                    Hashtags
-                    <button
-                      type="button"
-                      className="ai-hashtag-btn"
-                      onClick={generateHashtags}
-                      disabled={isGenerating || !postData.content.trim()}
-                      title="Generate hashtags with AI"
-                    >
-                      {isGenerating ? <Loader size={14} className="spinning" /> : <Sparkles size={14} />}
-                      AI
-                    </button>
+                    Content
+                    <span className={`char-count ${charCount.remaining < 0 ? 'over-limit' : ''}`}>
+                      {charCount.current}/{charCount.max}
+                    </span>
                   </label>
-                  <input
-                    type="text"
-                    value={postData.hashtags}
-                    onChange={(e) => setPostData(prev => ({ ...prev, hashtags: e.target.value }))}
-                    placeholder="#marketing #socialmedia #content"
-                    className="form-input"
+                  <textarea
+                    value={postData.content}
+                    onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
+                    placeholder="What's happening? Share your thoughts..."
+                    className="content-textarea"
+                    rows={6}
+                    required
                   />
                 </div>
-                <div className="form-section">
-                  <label className="section-label">
-                    <AtSign size={16} />
-                    Mentions
-                  </label>
-                  <input
-                    type="text"
-                    value={postData.mentions}
-                    onChange={(e) => setPostData(prev => ({ ...prev, mentions: e.target.value }))}
-                    placeholder="@username @brand"
-                    className="form-input"
-                  />
-                </div>
-              </div>
 
-              {/* Image Upload */}
-              <div className="form-section">
-                <label className="section-label">
-                  <Image size={16} />
-                  Images
-                </label>
-                <div className="image-upload-area">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="file-input"
-                    id="image-upload"
-                  />
-                  <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
-                    {uploadingFiles ? (
-                      <>
-                        <Loader className="spinner" size={24} />
-                        <span>Uploading images...</span>
-                        <small>Please wait while we upload your files</small>
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={24} />
-                        <span>Click to upload images or drag and drop</span>
-                        <small>PNG, JPG, GIF up to 10MB each</small>
-                      </>
-                    )}
-                  </label>
-                </div>
-                
-                {postData.images.length > 0 && (
-                  <div className="uploaded-images">
-                    {postData.images.map((image, index) => (
-                      <div key={index} className="image-preview">
-                        <img src={image} alt={`Upload ${index + 1}`} />
-                        <button
-                          type="button"
-                          className="remove-image"
-                          onClick={() => removeImage(index)}
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
+                {/* Hashtags and Mentions */}
+                <div className="form-row">
+                  <div className="form-section">
+                    <label className="section-label">
+                      <Hash size={16} />
+                      Hashtags
+                      <button
+                        type="button"
+                        className="ai-hashtag-btn"
+                        onClick={generateHashtags}
+                        disabled={isGenerating || !postData.content.trim()}
+                        title="Generate hashtags with AI"
+                      >
+                        {isGenerating ? <Loader size={14} className="spinning" /> : <Sparkles size={14} />}
+                        AI
+                      </button>
+                    </label>
+                    <input
+                      type="text"
+                      value={postData.hashtags}
+                      onChange={(e) => setPostData(prev => ({ ...prev, hashtags: e.target.value }))}
+                      placeholder="#marketing #socialmedia #content"
+                      className="form-input"
+                    />
                   </div>
-                )}
-              </div>
+                  <div className="form-section">
+                    <label className="section-label">
+                      <AtSign size={16} />
+                      Mentions
+                    </label>
+                    <input
+                      type="text"
+                      value={postData.mentions}
+                      onChange={(e) => setPostData(prev => ({ ...prev, mentions: e.target.value }))}
+                      placeholder="@username @brand"
+                      className="form-input"
+                    />
+                  </div>
+                </div>
 
-              {/* Scheduling */}
-              <div className="form-section">
-                <div className="schedule-toggle">
-                  <input
-                    type="checkbox"
-                    id="schedule-toggle"
-                    checked={isScheduled}
-                    onChange={(e) => setIsScheduled(e.target.checked)}
-                  />
-                  <label htmlFor="schedule-toggle" className="toggle-label">
+                {/* Image Upload */}
+                <div className="form-section">
+                  <label className="section-label">
+                    <Image size={16} />
+                    Images
+                  </label>
+                  <div className="image-upload-area">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="file-input"
+                      id="image-upload"
+                    />
+                    <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
+                      {uploadingFiles ? (
+                        <>
+                          <Loader className="spinner" size={24} />
+                          <span>Uploading images...</span>
+                          <small>Please wait while we upload your files</small>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={24} />
+                          <span>Click to upload images or drag and drop</span>
+                          <small>PNG, JPG, GIF up to 10MB each</small>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                  
+                  {postData.images.length > 0 && (
+                    <div className="uploaded-images">
+                      {postData.images.map((image, index) => (
+                        <div key={index} className="image-preview">
+                          <img 
+                            src={image.url || image} 
+                            alt={image.altText || `Upload ${index + 1}`}
+                            onError={(e) => {
+                              console.error('Image failed to load:', image);
+                              e.target.style.display = 'none';
+                              e.target.parentElement.classList.add('error');
+                            }}
+                            onLoad={() => {
+                              console.log('Image loaded successfully:', image);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="remove-image"
+                            onClick={() => removeImage(index)}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Scheduling - Updated with Radio Buttons and Tooltips */}
+                <div className="form-section">
+                  <label className="section-label">
                     <Clock size={16} />
-                    Schedule for later
+                    Scheduler
                   </label>
-                </div>
-                
-                {isScheduled && (
-                  <div className="schedule-inputs">
-                    <input
-                      type="date"
-                      value={postData.scheduledDate}
-                      onChange={(e) => setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                      className="form-input"
-                      min={new Date().toISOString().split('T')[0]}
-                      required
-                    />
-                    <input
-                      type="time"
-                      value={postData.scheduledTime}
-                      onChange={(e) => setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))}
-                      className="form-input"
-                      required
-                    />
+                  
+                  <div className="scheduler-options">
+                    <div className="radio-group">
+                      <label className="radio-option">
+                        <input
+                          type="radio"
+                          name="scheduler"
+                          value="now"
+                          checked={!isScheduled}
+                          onChange={() => setIsScheduled(false)}
+                        />
+                        <span className="radio-custom"></span>
+                        <div className="radio-content">
+
+                          <small 
+                            className="radio-description"
+                            data-tooltip="Post will be published immediately"
+                          ><span className="radio-label">Schedule Now</span>
+                          </small>
+                        </div>
+                      </label>
+                      
+                      <label className="radio-option">
+                        <input
+                          type="radio"
+                          name="scheduler"
+                          value="later"
+                          checked={isScheduled}
+                          onChange={() => setIsScheduled(true)}
+                        />
+                        <span className="radio-custom"></span>
+                        <small 
+                          className="radio-description"
+                          data-tooltip="Choose a specific date and time for publishing"
+                        >
+                          <div className="radio-content">                         
+                            <span className="radio-label">Schedule For Later</span>
+                          </div>
+                        </small>
+                       
+                      </label>
+                    </div>
+                    
+                    {/* Date and Time inputs */}
+                    {isScheduled && (
+                      <div className="schedule-inputs">
+                        <div className="input-group">
+                          <div className="date-input-wrapper">
+                            <input
+                              type="date"
+                              value={postData.scheduledDate}
+                              onChange={(e) => setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                              className="form-input"
+                              min={new Date().toISOString().split('T')[0]}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="input-group">
+                          <div className="time-input-wrapper">
+                            <input
+                              type="time"
+                              value={postData.scheduledTime}
+                              onChange={(e) => setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                              className="form-input"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
-                )}
-              </div>
+                </div>
               </div>
             </div>
           )}
@@ -655,37 +797,51 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
             <div className="preview-tab">
               <div className="preview-content">
                 <h3>Post Preview</h3>
-                {postData.platforms.map(platformId => {
-                  const platform = platforms.find(p => p.id === platformId);
-                  const Icon = platform.icon;
-                  return (
-                    <div key={platformId} className="platform-preview" style={{ '--platform-color': platform.color }}>
-                      <div className="platform-header">
-                        <Icon size={20} />
-                        <span>{platform.name}</span>
-                      </div>
-                      <div className="preview-post">
-                        {postData.images.length > 0 && (
-                          <div className="preview-images">
-                            {postData.images.slice(0, 4).map((image, index) => (
-                              <img key={index} src={image} alt={`Preview ${index + 1}`} />
-                            ))}
-                          </div>
-                        )}
-                        <div className="preview-text">
-                          {postData.content}
-                          {postData.hashtags && (
-                            <div className="preview-hashtags">
-                              {postData.hashtags.split(' ').filter(tag => tag.startsWith('#')).map((tag, index) => (
-                                <span key={index} className="hashtag">{tag}</span>
-                              ))}
+                <div className="preview-platforms-grid">
+                  {postData.platforms.map(platformId => {
+                    const platform = platforms.find(p => p.id === platformId);
+                    const Icon = platform.icon;
+                    
+                    return (
+                      <div key={platformId} className={`platform-preview ${platformId}`} style={{ '--platform-color': platform.color }}>
+                        <div className="platform-header">
+                          <Icon size={20} />
+                          <span>{platform.name}</span>
+                        </div>
+                        <div className="preview-post">
+                          {postData.images.length > 0 && (
+                            <div className="preview-images">
+                              <img 
+                                src={postData.images[0].url || postData.images[0]} 
+                                alt={postData.images[0].altText || "Post preview"}
+                                onError={(e) => {
+                                  console.error('Preview image failed to load');
+                                  e.target.style.display = 'none';
+                                }}
+                              />
                             </div>
                           )}
+                          <div className="preview-text">
+                            <p>{postData.content}</p>
+                            {/* Fixed hashtags rendering */}
+                            {postData.hashtags && (
+                              <div className="preview-hashtags">
+                                {(typeof postData.hashtags === 'string' ? 
+                                  postData.hashtags.split(' ') : 
+                                  Array.isArray(postData.hashtags) ? postData.hashtags : []
+                                )
+                                .filter(tag => tag.startsWith('#'))
+                                .map((tag, index) => (
+                                  <span key={index} className="hashtag">{tag}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
@@ -718,6 +874,18 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
             </button>
           </div>
         </form>
+
+        {/* Toast Notification */}
+        {toast && (
+          <div className={`toast toast-${toast.type}`}>
+            <div className="toast-icon">
+              {toast.type === 'success' && <CheckCircle size={20} />}
+              {toast.type === 'error' && <AlertCircle size={20} />}
+              {toast.type === 'info' && <Info size={20} />}
+            </div>
+            <span className="toast-message">{toast.message}</span>
+          </div>
+        )}
       </div>
     </div>
   );
