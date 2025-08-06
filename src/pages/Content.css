@@ -179,7 +179,7 @@
 }
 
 .filter-section label {
-  display: block;
+  /* display: block; */
   font-size: 0.875rem;
   font-weight: 600;
   color: #1e293b;
