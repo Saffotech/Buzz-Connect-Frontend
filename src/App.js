@@ -9,6 +9,7 @@ import Planner from './pages/Planner';
 import Content from './pages/Content';
 import Analytics from './pages/Analytics';
 import AIAssistant from './pages/AIAssistant';
+import SettingsPage from './pages/Settings';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -122,10 +123,7 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <Layout>
-                <div style={{ padding: '2rem', textAlign: 'center' }}>
-                  <h1>Settings</h1>
-                  <p>Coming soon...</p>
-                </div>
+                <SettingsPage />
               </Layout>
             </ProtectedRoute>
           }
