@@ -135,7 +135,7 @@ const Layout = ({ children }) => {
         </nav>
 
         <div className="sidebar-footer">
-          {/* <div className="user-info">
+          <div className="user-info">
             <div className="user-avatar">
               <User size={20} />
             </div>
@@ -143,7 +143,7 @@ const Layout = ({ children }) => {
               <p className="user-name">{user?.displayName || user?.email || 'User'}</p>
               <p className="user-email">{user?.email}</p>
             </div>
-          </div> */}
+          </div>
           <button className="logout-btn" onClick={handleLogout}>
             <LogOut size={16} />
             Logout
