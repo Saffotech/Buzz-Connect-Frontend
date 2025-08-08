@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Form from './form/Form'; // ✅ Import Form
-import './AuthPage.css'; // ✅ If your CSS is outside
+import Form from './common/form/Form';
+import './AuthPage.css';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);

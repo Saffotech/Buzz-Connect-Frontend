@@ -22,7 +22,8 @@ const AccountsSettings = ({ onNotify }) => {
   useEffect(() => {
     const fetchAccounts = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/auth/instagram/accounts', {
+          const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`, {
+
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -41,7 +42,7 @@ const AccountsSettings = ({ onNotify }) => {
 
   const handleDeleteAccount = async (accountId) => {
   try {
-    await axios.delete(`http://localhost:5000/api/auth/instagram/accounts/${accountId}`, {
+    await axios.delete(`${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts/${accountId}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
