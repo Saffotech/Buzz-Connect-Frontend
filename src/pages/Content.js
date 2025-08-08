@@ -68,7 +68,7 @@ const Content = () => {
   });
 
   // Basic media hook (using existing functionality)
-  const { media: basicMedia, loading: basicLoading, refetch: refetchMedia } = useMedia();
+  const { media: basicMedia, loading: basicLoading, refetch: refetchMedia, uploadMedia } = useMedia();  
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showMediaPreview, setShowMediaPreview] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -145,32 +145,42 @@ const Content = () => {
 
   const handleMediaUpload = async (files) => {
     try {
-      const formData = new FormData();
-      Array.from(files).forEach(file => {
-        formData.append('files', file);
-      });
-
-      const response = await apiClient.request('/api/media/upload', {
-        method: 'POST',
-        data: formData,
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      setNotification({ type: 'success', message: 'Media uploaded successfully' });
-      refetchMedia(); // Refresh media list
+      // ✅ Close modal immediately when upload starts
       setShowUploadModal(false);
+
+      // Show uploading notification
+      setNotification({ type: 'info', message: 'Uploading media...' });
+      
+      // Use the same upload method as CreatePost
+      const response = await uploadMedia(files);
+      console.log('Upload successful:', response);
+      
+      // Show success notification
+      setNotification({ 
+        type: 'success', 
+        message: `Successfully uploaded ${files.length} file(s)` 
+      });
+      
+      // Refresh media list and close modal
+      refetchMedia();
+
+      
     } catch (error) {
       console.error('Failed to upload media:', error);
-      setNotification({ type: 'error', message: 'Failed to upload media' });
+      setNotification({ 
+        type: 'error', 
+        message: error.message || 'Failed to upload media' 
+      });
     }
   };
 
   const handleMediaDelete = async (mediaId) => {
     try {
+      // ✅ Close modal immediately when delete starts
+      setShowMediaPreview(false);
       await apiClient.request(`/api/media/${mediaId}`, { method: 'DELETE' });
       setNotification({ type: 'success', message: 'Media deleted successfully' });
       refetchMedia(); // Refresh media list
-      setShowMediaPreview(false);
     } catch (error) {
       console.error('Failed to delete media:', error);
       setNotification({ type: 'error', message: 'Failed to delete media' });
@@ -288,7 +298,7 @@ const Content = () => {
 
       {/* Page Header */}
       <div className="page-header">
-        <div className="header-content">
+        <div className="header-content header-content-left">
           <h1>Content Hub</h1>
           <p>Your central repository for all creative assets, posts, and media</p>
         </div>
