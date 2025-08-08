@@ -298,7 +298,7 @@ const Content = () => {
 
       {/* Page Header */}
       <div className="page-header">
-        <div className="header-content">
+        <div className="header-content header-content-left">
           <h1>Content Hub</h1>
           <p>Your central repository for all creative assets, posts, and media</p>
         </div>

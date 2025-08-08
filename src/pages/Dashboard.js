@@ -88,13 +88,15 @@ const Dashboard = () => {
       await apiClient.logout();
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      navigate('/login');
+      navigate('/auth');
+      window.location.reload();
     } catch (error) {
       console.error('Logout error:', error);
       // Force logout even if API call fails
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      navigate('/login');
+      navigate('/auth');
+      window.location.reload();
     }
   };
 
