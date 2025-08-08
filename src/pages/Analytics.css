@@ -128,6 +128,11 @@
 
 .platform-icon {
   font-size: 1rem;
+  color: black;
+}
+
+.platform-btn.selected .platform-btn-content .platform-icon {
+  color: white;
 }
 
 /* Loading and Error States */
