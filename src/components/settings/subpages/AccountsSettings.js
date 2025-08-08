@@ -1,26 +1,15 @@
-import React, { useState } from 'react';
+// AccountsSettings.jsx
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube } from 'lucide-react';
 import SettingsCard from '../SettingsCard';
+import { useAuth } from '../../../hooks/useAuth'; // Adjust path if needed
+import toast from 'react-hot-toast';
 
 const AccountsSettings = ({ onNotify }) => {
-  const [connectedAccounts, setConnectedAccounts] = useState([
-    {
-      id: 1,
-      platform: 'instagram',
-      username: '@mybrand',
-      profilePicture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&fit=crop&crop=face',
-      connected: true,
-      followers: '12.5K'
-    },
-    {
-      id: 2,
-      platform: 'twitter',
-      username: '@mybrand_official',
-      profilePicture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=40&h=40&fit=crop&crop=face',
-      connected: true,
-      followers: '8.2K'
-    }
-  ]);
+  const { user, token } = useAuth(); // make sure token is available for auth
+  const [connectedAccounts, setConnectedAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const platformIcons = {
     instagram: Instagram,
@@ -30,13 +19,52 @@ const AccountsSettings = ({ onNotify }) => {
     youtube: Youtube
   };
 
-  const handleDeleteAccount = (accountId) => {
-    setConnectedAccounts(prev => prev.filter(acc => acc.id !== accountId));
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/auth/instagram/accounts', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setConnectedAccounts(res.data.accounts);
+      } catch (err) {
+        console.error("Failed to fetch connected accounts", err);
+        toast.error("Failed to load accounts");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccounts();
+  }, [token]);
+
+  const handleDeleteAccount = async (accountId) => {
+  try {
+    await axios.delete(`http://localhost:5000/api/auth/instagram/accounts/${accountId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    setConnectedAccounts(prev => prev.filter(acc => acc._id !== accountId));
     onNotify('success', 'Account disconnected successfully');
-  };
+  } catch (err) {
+    console.error("Failed to disconnect account", err);
+    toast.error("Failed to disconnect account");
+  }
+};
+
 
   const handleConnectAccount = () => {
-    onNotify('info', 'Connect account feature coming soon!');
+    if (!user || !user._id) {
+      toast.error("User not logged in");
+      return;
+    }
+
+    const userId = user._id;
+    // Redirect to Instagram OAuth (your backend URL)
+    window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${userId}`;
   };
 
   return (
@@ -56,15 +84,20 @@ const AccountsSettings = ({ onNotify }) => {
             </button>
           }
         >
-          {connectedAccounts.length > 0 ? (
+          {loading ? (
+            <p>Loading accounts...</p>
+          ) : connectedAccounts.length > 0 ? (
             <div className="accounts-list">
-              {connectedAccounts.map(account => {
+              {connectedAccounts.map((account, index) => {
                 const PlatformIcon = platformIcons[account.platform];
                 return (
-                  <div key={account.id} className="account-item">
+                  <div key={index} className="account-item">
                     <div className="account-info">
                       <div className="account-avatar">
-                        <img src={account.profilePicture} alt={account.username} />
+                        <img
+                          src={account.profilePicture || "/default-avatar.png"}
+                          alt={account.username}
+                        />
                         <div className={`platform-badge ${account.platform}`}>
                           <PlatformIcon size={12} />
                         </div>
@@ -74,7 +107,9 @@ const AccountsSettings = ({ onNotify }) => {
                         <p className="platform-name">
                           {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
                         </p>
-                        <span className="followers-count">{account.followers} followers</span>
+                        <span className="followers-count">
+{account.followerCount ?? "-"} followers
+                        </span>
                       </div>
                     </div>
                     <div className="account-actions">
@@ -83,7 +118,7 @@ const AccountsSettings = ({ onNotify }) => {
                         Connected
                       </div>
                       <button
-                        onClick={() => handleDeleteAccount(account.id)}
+                        onClick={() => handleDeleteAccount(account._id)} // Adjust if needed
                         className="btn-danger-outline"
                       >
                         <Trash2 size={16} />

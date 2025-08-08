@@ -64,7 +64,7 @@ const SettingsHub = ({
       />
 
       <div className="page-header">
-        <div className="header-content">
+        <div className="header-content header-content-left">
           <h1>{title}</h1>
           <p>{description}</p>
         </div>
