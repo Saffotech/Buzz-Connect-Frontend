@@ -1,8 +1,8 @@
 // components/Form.jsx
 import React, { useState } from 'react';
-import Input from '../input/Input';
-import Button from '../common/button/Button';
-import { useAuth } from '../../hooks/useAuth';
+import Input from '../../input/Input';
+import Button from '../button/Button';
+import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
 const Form = ({ isLogin, setIsLogin }) => {
