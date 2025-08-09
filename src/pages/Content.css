@@ -417,7 +417,7 @@
 
 .action-btn:hover {
   background: white;
-  color: #1e293b;
+  /* color: #1e293b; */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 

@@ -115,7 +115,7 @@ const Layout = ({ children }) => {
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = isActivePath(item.path);
-            
+
             return (
               <button
                 key={item.path}
@@ -135,7 +135,11 @@ const Layout = ({ children }) => {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-info">
+          <div
+            className="user-info"
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate('/settings?tab=profile')} // ✅ Go directly to Profile tab
+          >
             <div className="user-avatar">
               <User size={20} />
             </div>
