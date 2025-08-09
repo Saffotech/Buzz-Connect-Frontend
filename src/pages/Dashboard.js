@@ -5,6 +5,7 @@ import {
   Image,
   TrendingUp,
   Instagram,
+  Facebook,
   Twitter,
   Plus,
   Calendar,
@@ -25,6 +26,7 @@ import CreatePost from '../components/CreatePost';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import apiClient from '../utils/api';
 import './Dashboard.css';
+import { platformColors } from '../utils/constants';
 
 const Dashboard = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
@@ -118,6 +120,7 @@ const Dashboard = () => {
     reach: analytics?.totalReach || '0'
   };
 
+
   // Show notification temporarily
   useEffect(() => {
     if (notification) {
@@ -183,7 +186,7 @@ const Dashboard = () => {
             </button>
             {showUserDropdown && (
               <div className="dropdown-menu">
-                <button onClick={() => navigate('/settings')} className="dropdown-item">
+                <button onClick={() => navigate('/settings?tab=profile')} className="dropdown-item">
                   <Settings size={16} />
                   Settings
                 </button>
@@ -374,34 +377,60 @@ const Dashboard = () => {
           </div>
 
           {/* Connected Accounts */}
+          {/* Connected Accounts */}
           <div className="connected-accounts-sidebar">
             <h3>Connected Accounts</h3>
             <div className="accounts-list">
-              {user?.connectedAccounts?.length > 0 ? (
-                user.connectedAccounts.map((account, index) => (
-                  <div key={index} className={`account-item ${account.platform}`}>
-                    <div className="account-icon">
-                      {account.platform === 'instagram' && <Instagram size={20} />}
-                      {account.platform === 'twitter' && <Twitter size={20} />}
+              {(() => {
+                let accounts = user?.connectedAccounts ? [...user.connectedAccounts] : [];
+
+                // Check if Instagram exists but Facebook not yet added
+                const instaAccount = accounts.find(acc => acc.platform === 'instagram');
+                if (instaAccount && !accounts.some(acc => acc.platform === 'facebook')) {
+                  accounts.push({
+                    platform: 'facebook',
+                    username: instaAccount.fbUsername || 'Facebook (linked via Instagram)',
+                    connected: true,
+                  });
+                }
+
+                return accounts.length > 0 ? (
+                  accounts.map((account, index) => (
+                    <div key={index} className={`account-item ${account.platform}`}>
+                      <div
+                        className="account-icon"
+                        style={{ backgroundColor: platformColors[account.platform] || '#ccc' }}>
+                        {account.platform === 'instagram' && <Instagram size={20} />}
+                        {account.platform === 'twitter' && <Twitter size={20} />}
+                        {account.platform === 'facebook' && <Facebook size={20} />}
+                      </div>
+                      <div className="account-details">
+                        <span className="platform-name">
+                          {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
+                        </span>
+                        <span className="username">@{account.username}</span>
+                      </div>
+                      <div
+                        className={`connection-status ${account.connected ? 'connected' : 'disconnected'
+                          }`}
+                      >
+                        <div className="status-dot"></div>
+                        <span>{account.connected ? 'Connected' : 'Disconnected'}</span>
+                      </div>
                     </div>
-                    <div className="account-details">
-                      <span className="platform-name">{account.platform}</span>
-                      <span className="username">@{account.username}</span>
-                    </div>
-                    <div className={`connection-status ${account.connected ? 'connected' : 'disconnected'}`}>
-                      <div className="status-dot"></div>
-                      <span>{account.connected ? 'Connected' : 'Disconnected'}</span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="no-accounts">
+                    <p>No accounts connected</p>
                   </div>
-                ))
-              ) : (
-                <div className="no-accounts">
-                  <p>No accounts connected</p>
-                </div>
-              )}
-              <button className="btn-link manage-accounts" onClick={() => navigate('/settings')}>
-                Manage Accounts
-              </button>
+                );
+              })()}
+             <button
+  className="btn-link manage-accounts"
+  onClick={() => navigate('/settings?tab=accounts')}
+>
+  Manage Accounts
+</button>
             </div>
           </div>
 

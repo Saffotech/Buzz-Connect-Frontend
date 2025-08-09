@@ -12,7 +12,7 @@ const SettingsPage = () => {
     <SettingsHub
       title="Settings"
     //   description="Manage your workspace, accounts, team members, and billing preferences"
-      availableTabs={['workspace', 'accounts', 'members', 'billing']}
+      availableTabs={['workspace', 'accounts', 'members', 'billing', '']} // ✅ Added 'profile'
       initialTab="workspace"
       onSettingsChange={handleSettingsChange}
     />
