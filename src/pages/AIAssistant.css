@@ -509,7 +509,7 @@
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
@@ -519,6 +519,7 @@
 .checkbox-label input[type="checkbox"] {
   width: auto;
   margin: 0;
+  margin-right: 5px;
 }
 
 /* Generate Button */

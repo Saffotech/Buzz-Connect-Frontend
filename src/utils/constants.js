@@ -101,6 +101,12 @@ export const PLATFORM_CONFIGS = {
   }
 };
 
+ export const platformColors = {
+  instagram: '#E1306C',
+  twitter: '#1DA1F2',
+  facebook: '#1877F2'
+};
+
 // Post Status
 export const POST_STATUS = {
   DRAFT: 'draft',

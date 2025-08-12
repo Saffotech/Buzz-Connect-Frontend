@@ -1,52 +1,53 @@
 import React, { useState } from 'react';
-import Form from './form/Form'; // ✅ Import Form
-import './AuthPage.css'; // ✅ If your CSS is outside
+import Form from './common/form/Form';
+import './AuthPage.css';
+
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
 
+
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1>BuzzConnect</h1>
-          <p>Aapke Brands. Ek Jagah.</p>
-        </div>
-
-        <div className="auth-tabs">
-          <button
-            className={`auth-tab ${isLogin ? 'active' : ''}`}
-            onClick={() => setIsLogin(true)}
-          >
-            Login
-          </button>
-
-          <button
-            className={`auth-tab ${!isLogin ? 'active' : ''}`}
-            onClick={() => setIsLogin(false)}
-          >
-            Sign Up
-          </button>
-        </div>
-
-        {/* ✅ Form takes isLogin and setIsLogin as props */}
-        <Form isLogin={isLogin} setIsLogin={setIsLogin} />
-
-        <div className="auth-footer">
-          <p>
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
+    <div className="auth-split-container">
+      <div className="auth-graphics">
+        {/* <div className="dashboard-mockup">
+          <div className="dashboard-card">
+            <span className="icon"></span>
+            <h2>$40,832.32</h2>
+            <p>New income • Amazon</p>
+          </div>
+          Add more brand cards here
+        </div> */}
+      </div>
+     
+      {/* Right Side: Auth Form */}
+      <div className="auth-form-side">
+        <div className="auth-card">
+          <img src={require("../assets/img/Logo.png")} alt="BuzzConnect Logo" className="logo" />
+          {/* Toggle Tabs for Sign In / Sign Up */}
+          <div className="auth-tabs">
             <button
-              type="button"
-              className="auth-switch"
-              onClick={() => setIsLogin(!isLogin)}
+              className={`auth-tab${isLogin ? ' active' : ''}`}
+              onClick={() => setIsLogin(true)}
             >
-              {isLogin ? 'Sign Up' : 'Login'}
+              Sign In
             </button>
-          </p>
+            <button
+              className={`auth-tab${!isLogin ? ' active' : ''}`}
+              onClick={() => setIsLogin(false)}
+            >
+              Sign Up
+            </button>
+          </div>
+
+
+          {/* Form */}
+          <Form isLogin={isLogin} setIsLogin={setIsLogin} />
         </div>
       </div>
     </div>
   );
 };
+
 
 export default AuthPage;

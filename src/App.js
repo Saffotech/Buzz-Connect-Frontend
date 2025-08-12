@@ -1,7 +1,8 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Loader from './components/common/Loader'
 import Layout from './components/Layout';
 import AuthPage from './components/AuthPage';
 import Dashboard from './pages/Dashboard';
@@ -10,24 +11,25 @@ import Content from './pages/Content';
 import Analytics from './pages/Analytics';
 import AIAssistant from './pages/AIAssistant';
 import SettingsPage from './pages/Settings';
+import { trackPageView } from "./utils/analytics-helpers";
+
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '18px'
-      }}>
-        Loading...
-      </div>
-    );
-  }
+ if (isLoading) {
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh'
+    }}>
+      <Loader />
+    </div>
+  );
+}
 
   return isAuthenticated ? children : <Navigate to="/auth" replace />;
 };
@@ -37,18 +39,17 @@ const PublicRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '18px'
-      }}>
-        Loading...
-      </div>
-    );
-  }
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh'
+    }}>
+      <Loader />
+    </div>
+  );
+}
 
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
 };
@@ -56,7 +57,11 @@ const PublicRoute = ({ children }) => {
 // App Routes Component
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
-
+    const location = useLocation();
+  // Track page views whenever route changes
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location]);
   return (
     <div className="App">
       <Routes>
