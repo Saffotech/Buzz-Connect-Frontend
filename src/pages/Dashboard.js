@@ -10,7 +10,6 @@ import {
   Plus,
   Calendar,
   BarChart3,
-  Loader,
   AlertCircle,
   Settings,
   LogOut,
@@ -18,7 +17,8 @@ import {
   Upload,
   Clock,
   Activity,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import { useDashboardData } from '../hooks/useApi';
 import { useNavigate } from 'react-router-dom';
@@ -27,49 +27,134 @@ import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import apiClient from '../utils/api';
 import './Dashboard.css';
 import { platformColors } from '../utils/constants';
+import Loader from '../components/common/Loader';
 
 const Dashboard = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [posts, setPosts] = useState([]);
   const [upcomingPosts, setUpcomingPosts] = useState([]);
   const [userStats, setUserStats] = useState(null);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [postsError, setPostsError] = useState(null);
   const navigate = useNavigate();
 
   const {
     user,
-    posts,
     analytics,
     instagramStatus,
-    loading,
+    loading: dashboardLoading,
     error: dashboardError,
     createPost: apiCreatePost,
     refetch: refetchDashboard
   } = useDashboardData();
 
-  // Fetch additional data for dashboard
-  useEffect(() => {
-    const fetchAdditionalData = async () => {
-      try {
-        const [upcomingRes, statsRes] = await Promise.allSettled([
-          apiClient.getUpcomingPosts(),
-          apiClient.request('/api/users/stats')
-        ]);
-
-        if (upcomingRes.status === 'fulfilled') {
-          setUpcomingPosts(upcomingRes.value?.data || []);
+  // Fetch posts from API
+  const fetchPosts = async (refresh = false) => {
+    if (!refresh && posts.length > 0) return; // Avoid unnecessary refetches
+    
+    setPostsLoading(true);
+    setPostsError(null);
+    
+    try {
+      const response = await apiClient.request('/api/posts', {
+        method: 'GET',
+        params: {
+          page: 1,
+          limit: 50, // Fetch more posts for better dashboard data
+          // You can add filters here if needed
+          // status: 'all',
+          // platform: 'all'
         }
+      });
 
-        if (statsRes.status === 'fulfilled') {
-          setUserStats(statsRes.value?.data || null);
-        }
-      } catch (error) {
-        console.warn('Failed to fetch additional dashboard data:', error);
+      if (response.success && response.data) {
+        const fetchedPosts = response.data.posts || [];
+        setPosts(fetchedPosts);
+        
+        // Filter upcoming posts (scheduled status and future dates)
+        const now = new Date();
+        const upcoming = fetchedPosts.filter(post => 
+          post.status === 'scheduled' && 
+          new Date(post.scheduledDate) > now
+        );
+        setUpcomingPosts(upcoming);
+        
+        // Calculate user stats from posts
+        calculateUserStats(fetchedPosts);
+      } else {
+        throw new Error('Invalid response format');
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
+      setPostsError(error.message || 'Failed to fetch posts');
+      setPosts([]);
+      setUpcomingPosts([]);
+    } finally {
+      setPostsLoading(false);
+    }
+  };
 
+  // Calculate user stats from posts data
+  const calculateUserStats = (postsData) => {
+    if (!postsData || postsData.length === 0) {
+      setUserStats({
+        totalPosts: 0,
+        publishedPosts: 0,
+        scheduledPosts: 0,
+        totalEngagement: 0,
+        avgEngagementRate: 0,
+        totalReach: 0,
+        totalFollowers: 0
+      });
+      return;
+    }
+
+    const published = postsData.filter(post => post.status === 'published');
+    const scheduled = postsData.filter(post => post.status === 'scheduled');
+    
+    // Calculate engagement from platformPosts
+    let totalEngagement = 0;
+    let totalReach = 0;
+    let totalFollowers = 0;
+    
+    postsData.forEach(post => {
+      if (post.platformPosts && Array.isArray(post.platformPosts)) {
+        post.platformPosts.forEach(platformPost => {
+          if (platformPost.analytics) {
+            const analytics = platformPost.analytics;
+            totalEngagement += (analytics.likes || 0) + 
+                             (analytics.comments || 0) + 
+                             (analytics.shares || 0);
+            totalReach += analytics.reach || 0;
+          }
+        });
+      }
+      // Use post-level totalEngagement if available
+      if (post.totalEngagement) {
+        totalEngagement += post.totalEngagement;
+      }
+    });
+
+    const avgEngagementRate = published.length > 0 ? 
+      postsData.reduce((sum, post) => sum + (post.avgEngagementRate || 0), 0) / published.length : 0;
+
+    setUserStats({
+      totalPosts: postsData.length,
+      publishedPosts: published.length,
+      scheduledPosts: scheduled.length,
+      totalEngagement,
+      avgEngagementRate,
+      totalReach,
+      totalFollowers // This should ideally come from user profile or separate API
+    });
+  };
+
+  // Initial data fetch
+  useEffect(() => {
     if (user) {
-      fetchAdditionalData();
+      fetchPosts();
     }
   }, [user]);
 
@@ -78,6 +163,10 @@ const Dashboard = () => {
       const response = await apiCreatePost(postData);
       setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
       setShowCreatePost(false);
+      
+      // Refresh posts after creating new one
+      fetchPosts(true);
+      
       return response;
     } catch (error) {
       setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
@@ -102,24 +191,26 @@ const Dashboard = () => {
     }
   };
 
-  // Ensure posts is always an array with better error handling
-  const postsArray = Array.isArray(posts) ? posts : [];
+  const handleRefreshPosts = () => {
+    fetchPosts(true);
+  };
 
-  // Calculate posts this month
+  // Calculate posts this month from fetched data
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const postsThisMonth = postsArray.filter(post =>
+  const postsThisMonth = posts.filter(post =>
     new Date(post.createdAt) >= startOfMonth
   ).length;
 
   // Real analytics data with fallbacks
   const stats = {
-    followers: userStats?.totalFollowers || analytics?.totalFollowers || '0',
-    engagement: analytics?.avgEngagementRate ? `${analytics.avgEngagementRate.toFixed(1)}%` : '0%',
+    followers: userStats?.totalFollowers || analytics?.totalFollowers || user?.followers || '0',
+    engagement: userStats?.avgEngagementRate ? 
+      `${userStats.avgEngagementRate.toFixed(1)}%` : 
+      (analytics?.avgEngagementRate ? `${analytics.avgEngagementRate.toFixed(1)}%` : '0%'),
     postsThisMonth: postsThisMonth || '0',
-    reach: analytics?.totalReach || '0'
+    reach: userStats?.totalReach || analytics?.totalReach || '0'
   };
-
 
   // Show notification temporarily
   useEffect(() => {
@@ -131,16 +222,17 @@ const Dashboard = () => {
     }
   }, [notification]);
 
-  if (loading) {
+  // Loading state
+  if (dashboardLoading || (postsLoading && posts.length === 0)) {
     return (
       <div className="page-loading">
-        <Loader className="spinner" size={48} />
-        <p>Loading your dashboard...</p>
+        <Loader/>
       </div>
     );
   }
 
-  if (dashboardError) {
+  // Error state
+  if (dashboardError && !user) {
     return (
       <div className="page-error">
         <AlertCircle size={48} />
@@ -202,7 +294,6 @@ const Dashboard = () => {
 
       {/* Three Column Layout */}
       <div className="dashboard-layout">
-
         {/* Center Column: Core Content */}
         <div className="dashboard-center">
           {/* Performance Snapshot */}
@@ -253,41 +344,96 @@ const Dashboard = () => {
 
           {/* Upcoming Posts */}
           <div className="upcoming-posts-section">
-            <h3>Upcoming Posts</h3>
+            <div className="section-header">
+              <h3>Upcoming Posts</h3>
+              <button 
+                className="refresh-btn" 
+                onClick={handleRefreshPosts}
+                disabled={postsLoading}
+              >
+                <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
+                Refresh
+              </button>
+            </div>
+            
+            {postsError && (
+              <div className="error-message">
+                <AlertCircle size={16} />
+                <span>{postsError}</span>
+                <button onClick={() => fetchPosts(true)}>Retry</button>
+              </div>
+            )}
+            
             <div className="upcoming-posts-scroll">
-              {upcomingPosts.length > 0 ? (
-                upcomingPosts.slice(0, 5).map(post => (
-                  <div key={post._id} className="upcoming-post-card">
-                    <div className="post-schedule">
-                      <Clock size={16} />
-                      <span className="schedule-time">
-                        {new Date(post.scheduledDate).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                    </div>
-                    <div className="post-content-preview">
-                      <p>{post.content.substring(0, 80)}...</p>
-                    </div>
-                    <div className="post-platforms">
-                      {post.platforms.map(platform => (
-                        <span key={platform} className={`platform-icon ${platform}`}>
-                          {platform === 'instagram' && <Instagram size={14} />}
-                          {platform === 'twitter' && <Twitter size={14} />}
-                        </span>
-                      ))}
-                    </div>
-                    {post.images && post.images.length > 0 && (
-                      <div className="post-thumbnail">
-                        <img src={post.images[0].url || post.images[0]} alt="Post preview" />
+              {postsLoading && posts.length === 0 ? (
+                <div className="loading-posts">
+                         <Loader/>
+
+                </div>
+              ) : upcomingPosts.length > 0 ? (
+                upcomingPosts.slice(0, 5).flatMap(post => {
+                  // Defensive platforms array
+                  const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ? 
+                    post.platforms : ['instagram'];
+
+                  // For each platform, create a separate card
+                  return platformsArray.map(platform => {
+                    const primary = platform.toLowerCase();
+                    const colorMap = {
+                      instagram: '#E4405F',
+                      twitter: '#1DA1F2',
+                      facebook: '#1877F2',
+                    };
+                    const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
+
+                    return (
+                      <div
+                        key={`${post._id}-${primary}`}
+                        className={`upcoming-post-card platform-preview ${primary}`}
+                        style={style}
+                      >
+                        <div className="platform-header">
+                          <Clock size={16} />
+                          <span className="schedule-time">
+                            {new Date(post.scheduledDate).toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          <span className="platform-name">{primary}</span>
+                        </div>
+
+                        {post.images?.length > 0 && (
+                          <div className="preview-images">
+                            {post.images.slice(0, 4).map((img, i) => {
+                              const src = typeof img === 'string' ? img : img.url;
+                              return <img key={i} src={src} alt="" />;
+                            })}
+                          </div>
+                        )}
+
+                        <div className="preview-text">
+                          <p>{post.content.substring(0, 80)}{post.content.length > 80 ? '…' : ''}</p>
+                        </div>
+
+                        <div className="preview-hashtags">
+                          {post.hashtags?.slice(0, 3).map((hashtag, i) => (
+                            <span key={i} className="hashtag">{hashtag}</span>
+                          )) || <span className="hashtag">#{primary}</span>}
+                        </div>
+
+                        <div className="post-status">
+                          <span className={`status-badge ${post.status}`}>
+                            {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                ))
+                    );
+                  });
+                })
               ) : (
                 <div className="empty-upcoming">
                   <Calendar size={32} />
@@ -297,51 +443,70 @@ const Dashboard = () => {
               )}
             </div>
           </div>
-
+          
           {/* Top Performing Post */}
-          {analytics?.topPerformingPost && (
-            <div className="top-performing-post">
-              <h3>Top Performing Post</h3>
-              <div className="top-post-card">
-                {analytics.topPerformingPost.images && analytics.topPerformingPost.images.length > 0 && (
-                  <div className="top-post-image">
-                    <img
-                      src={analytics.topPerformingPost.images[0].url || analytics.topPerformingPost.images[0]}
-                      alt="Top performing post"
-                    />
+          {(() => {
+            // Find top performing post from fetched posts
+            const publishedPosts = posts.filter(post => post.status === 'published');
+            const topPost = publishedPosts.reduce((top, post) => {
+              const currentEngagement = post.totalEngagement || 0;
+              const topEngagement = top?.totalEngagement || 0;
+              return currentEngagement > topEngagement ? post : top;
+            }, null);
+
+            if (!topPost) return null;
+
+            return (
+              <div className="top-performing-post">
+                <h3>Top Performing Post</h3>
+                <div className="top-post-card">
+                  {topPost.images && topPost.images.length > 0 && (
+                    <div className="top-post-image">
+                      <img
+                        src={typeof topPost.images[0] === 'string' ? topPost.images[0] : topPost.images[0].url}
+                        alt="Top performing post"
+                      />
+                    </div>
+                  )}
+                  <div className="top-post-content">
+                    <p>{topPost.content.substring(0, 120)}{topPost.content.length > 120 ? '...' : ''}</p>
+                    <div className="top-post-metrics">
+                      <div className="metric">
+                        <Heart size={16} />
+                        <span>{topPost.platformPosts?.reduce((sum, pp) => sum + (pp.analytics?.likes || 0), 0) || 0}</span>
+                      </div>
+                      <div className="metric">
+                        <span>💬</span>
+                        <span>{topPost.platformPosts?.reduce((sum, pp) => sum + (pp.analytics?.comments || 0), 0) || 0}</span>
+                      </div>
+                      <div className="metric">
+                        <span>🔄</span>
+                        <span>{topPost.platformPosts?.reduce((sum, pp) => sum + (pp.analytics?.shares || 0), 0) || 0}</span>
+                      </div>
+                      <div className="metric engagement-rate">
+                        <TrendingUp size={16} />
+                        <span>{topPost.avgEngagementRate?.toFixed(1) || 0}%</span>
+                      </div>
+                    </div>
+                    <div className="post-platforms">
+                      {topPost.platforms?.map(platform => (
+                        <span key={platform} className={`platform-tag ${platform}`}>
+                          {platform}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      className="btn-primary view-analytics-btn"
+                      onClick={() => navigate(`/analytics/posts/${topPost._id}`)}
+                    >
+                      <ExternalLink size={16} />
+                      View Post Analytics
+                    </button>
                   </div>
-                )}
-                <div className="top-post-content">
-                  <p>{analytics.topPerformingPost.content.substring(0, 120)}...</p>
-                  <div className="top-post-metrics">
-                    <div className="metric">
-                      <Heart size={16} />
-                      <span>{analytics.topPerformingPost.totalLikes || 0}</span>
-                    </div>
-                    <div className="metric">
-                      <span>💬</span>
-                      <span>{analytics.topPerformingPost.totalComments || 0}</span>
-                    </div>
-                    <div className="metric">
-                      <span>🔄</span>
-                      <span>{analytics.topPerformingPost.totalShares || 0}</span>
-                    </div>
-                    <div className="metric engagement-rate">
-                      <TrendingUp size={16} />
-                      <span>{analytics.topPerformingPost.avgEngagementRate?.toFixed(1) || 0}%</span>
-                    </div>
-                  </div>
-                  <button
-                    className="btn-primary view-analytics-btn"
-                    onClick={() => navigate(`/analytics/posts/${analytics.topPerformingPost._id}`)}
-                  >
-                    <ExternalLink size={16} />
-                    View Post Analytics
-                  </button>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Right Column: Actions & Status */}
@@ -377,7 +542,6 @@ const Dashboard = () => {
           </div>
 
           {/* Connected Accounts */}
-          {/* Connected Accounts */}
           <div className="connected-accounts-sidebar">
             <h3>Connected Accounts</h3>
             <div className="accounts-list">
@@ -411,8 +575,7 @@ const Dashboard = () => {
                         <span className="username">@{account.username}</span>
                       </div>
                       <div
-                        className={`connection-status ${account.connected ? 'connected' : 'disconnected'
-                          }`}
+                        className={`connection-status ${account.connected ? 'connected' : 'disconnected'}`}
                       >
                         <div className="status-dot"></div>
                         <span>{account.connected ? 'Connected' : 'Disconnected'}</span>
@@ -425,12 +588,12 @@ const Dashboard = () => {
                   </div>
                 );
               })()}
-             <button
-  className="btn-link manage-accounts"
-  onClick={() => navigate('/settings?tab=accounts')}
->
-  Manage Accounts
-</button>
+              <button
+                className="btn-link manage-accounts"
+                onClick={() => navigate('/settings?tab=accounts')}
+              >
+                Manage Accounts
+              </button>
             </div>
           </div>
 
@@ -438,7 +601,7 @@ const Dashboard = () => {
           <div className="recent-activity-sidebar">
             <h3>Recent Activity</h3>
             <div className="activity-feed">
-              {postsArray.slice(0, 5).map(post => (
+              {posts.slice(0, 5).map(post => (
                 <div key={post._id} className="activity-item">
                   <div className="activity-icon">
                     <Activity size={16} />
@@ -448,14 +611,20 @@ const Dashboard = () => {
                       Post to {post.platforms?.join(', ')} was {post.status === 'published' ? 'published' : post.status}.
                     </p>
                     <span className="activity-time">
-                      {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+                      {new Date(post.publishedAt || post.updatedAt || post.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
               ))}
-              {postsArray.length === 0 && (
+              {posts.length === 0 && !postsLoading && (
                 <div className="no-activity">
                   <p>No recent activity</p>
+                </div>
+              )}
+              {postsLoading && (
+                <div className="loading-activity">
+                        <Loader/>
+
                 </div>
               )}
             </div>

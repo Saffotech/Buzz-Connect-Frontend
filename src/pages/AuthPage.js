@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import Form from '../components/Form'; // ✅ Import Form
-import '../styles/AuthPage.css'; // ✅ If your CSS is outside
-// import Form from './components/form/Form';
+import Form from '../components/Form'; 
+import '../styles/AuthPage.css'; 
 
 
 const AuthPage = () => {

@@ -765,3 +765,30 @@
     gap: 1rem;
   }
 }
+
+.password-verify-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.verify-btn {
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.verification-success {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.readonly-input {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
