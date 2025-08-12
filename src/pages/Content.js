@@ -68,7 +68,7 @@ const Content = () => {
   });
 
   // Basic media hook (using existing functionality)
-  const { media: basicMedia, loading: basicLoading, refetch: refetchMedia, uploadMedia } = useMedia();  
+  const { media: basicMedia, loading: basicLoading, refetch: refetchMedia, uploadMedia } = useMedia();
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showMediaPreview, setShowMediaPreview] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -150,26 +150,26 @@ const Content = () => {
 
       // Show uploading notification
       setNotification({ type: 'info', message: 'Uploading media...' });
-      
+
       // Use the same upload method as CreatePost
       const response = await uploadMedia(files);
       console.log('Upload successful:', response);
-      
+
       // Show success notification
-      setNotification({ 
-        type: 'success', 
-        message: `Successfully uploaded ${files.length} file(s)` 
+      setNotification({
+        type: 'success',
+        message: `Successfully uploaded ${files.length} file(s)`
       });
-      
+
       // Refresh media list and close modal
       refetchMedia();
 
-      
+
     } catch (error) {
       console.error('Failed to upload media:', error);
-      setNotification({ 
-        type: 'error', 
-        message: error.message || 'Failed to upload media' 
+      setNotification({
+        type: 'error',
+        message: error.message || 'Failed to upload media'
       });
     }
   };
@@ -453,6 +453,62 @@ const PostsSubPage = ({
             />
           </div>
         </div>
+        <div className="filters-bar">
+          {/* Status Dropdown */}
+          <select
+            value={filters.status}
+            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+          >
+            <option value="all">All Posts</option>
+            <option value="draft">Draft</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="published">Published</option>
+            <option value="failed">Failed</option>
+          </select>
+
+
+          {/* Platform Dropdown */}
+          <select
+            value={filters.platform}
+            onChange={(e) => setFilters(prev => ({ ...prev, platform: e.target.value }))}
+          >
+            <option value="all">All Platforms</option>
+            <option value="instagram">Instagram</option>
+            <option value="twitter">Twitter</option>
+          </select>
+
+
+        
+
+
+          {/* Date Range Dropdown Style */}
+          <div className="date-range-dropdown">
+            <span className="date-label">Date Range :</span>
+            <input
+              type="date"
+              value={filters.dateRange.start}
+              onChange={(e) =>
+                setFilters(prev => ({
+                  ...prev,
+                  dateRange: { ...prev.dateRange, start: e.target.value }
+                }))
+              }
+            />
+            <span className="date-separator">to</span>
+            <input
+              type="date"
+              value={filters.dateRange.end}
+              onChange={(e) =>
+                setFilters(prev => ({
+                  ...prev,
+                  dateRange: { ...prev.dateRange, end: e.target.value }
+                }))
+              }
+            />
+          </div>
+
+
+        </div>
 
         <div className="control-actions">
           <div className="view-controls">
@@ -479,95 +535,6 @@ const PostsSubPage = ({
 
       {/* Main Layout: Sidebar + Content */}
       <div className="posts-layout">
-        {/* Filtering Sidebar */}
-        <div className="posts-sidebar">
-          <div className="sidebar-header">
-            <h3>Filters</h3>
-            <button className="clear-filters-btn" onClick={clearFilters}>
-              Clear All
-            </button>
-          </div>
-
-          <div className="filter-section">
-            <label>Status</label>
-            <div className="filter-options">
-              {['all', 'draft', 'scheduled', 'published', 'failed'].map(status => (
-                <label key={status} className="filter-checkbox">
-                  <input
-                    type="radio"
-                    name="status"
-                    value={status}
-                    checked={filters.status === status}
-                    onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                  />
-                  <span className="checkmark"></span>
-                  {status === 'all' ? 'All Posts' : status.charAt(0).toUpperCase() + status.slice(1)}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <label>Platform</label>
-            <div className="filter-options">
-              {['all', 'instagram', 'twitter'].map(platform => (
-                <label key={platform} className="filter-checkbox">
-                  <input
-                    type="radio"
-                    name="platform"
-                    value={platform}
-                    checked={filters.platform === platform}
-                    onChange={(e) => setFilters(prev => ({ ...prev, platform: e.target.value }))}
-                  />
-                  <span className="checkmark"></span>
-                  <div className="platform-option">
-                    {platform === 'instagram' && <Instagram size={16} />}
-                    {platform === 'twitter' && <Twitter size={16} />}
-                    {platform === 'all' ? 'All Platforms' : platform.charAt(0).toUpperCase() + platform.slice(1)}
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <label>Hashtag</label>
-            <div className="filter-input">
-              <Tag size={16} />
-              <input
-                type="text"
-                placeholder="Enter hashtag..."
-                value={filters.hashtag}
-                onChange={(e) => setFilters(prev => ({ ...prev, hashtag: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <label>Date Range</label>
-            <div className="date-range-inputs">
-              <input
-                type="date"
-                placeholder="Start Date"
-                value={filters.dateRange.start}
-                onChange={(e) => setFilters(prev => ({
-                  ...prev,
-                  dateRange: { ...prev.dateRange, start: e.target.value }
-                }))}
-              />
-              <input
-                type="date"
-                placeholder="End Date"
-                value={filters.dateRange.end}
-                onChange={(e) => setFilters(prev => ({
-                  ...prev,
-                  dateRange: { ...prev.dateRange, end: e.target.value }
-                }))}
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Posts Grid/List */}
         <div className="posts-content">
           <div className={`posts-container ${viewMode}`}>
@@ -740,6 +707,56 @@ const MediaLibrarySubPage = ({
             Upload New Media
           </button>
         </div>
+         <div className="filters-bar">
+  {/* Type Dropdown */}
+  <select
+    value={filters.type}
+    onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+  >
+    <option value="all">All Types</option>
+    <option value="image">Image</option>
+    <option value="video">Video</option>
+  </select>
+
+  {/* Folder Dropdown */}
+  <select
+    value={filters.folder}
+    onChange={(e) => setFilters(prev => ({ ...prev, folder: e.target.value }))}
+  >
+    <option value="all">All Folders ({media.length})</option>
+    <option value="general">General</option>
+    <option value="posts">Posts</option>
+    <option value="profile">Profile</option>
+    <option value="campaigns">Campaigns</option>
+  </select>
+
+  {/* Tags Input */}
+  <div className="filter-input">
+    <Tag size={16} />
+    <input
+      type="text"
+      placeholder="Search by tags..."
+      value={filters.tags}
+      onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value }))}
+    />
+  </div>
+
+  {/* Sort By Dropdown */}
+  <select
+    value={filters.sort}
+    onChange={(e) => setFilters(prev => ({ ...prev, sort: e.target.value }))}
+  >
+    <option value="newest">Newest First</option>
+    <option value="oldest">Oldest First</option>
+    <option value="mostUsed">Most Used</option>
+  </select>
+
+  {/* Clear All */}
+  <button className="clear-filters-btn" onClick={clearFilters}>
+    Clear All
+  </button>
+</div>
+
 
         <div className="control-right">
           <div className="view-controls">
@@ -762,102 +779,7 @@ const MediaLibrarySubPage = ({
       {/* Main Layout: Sidebar + Content */}
       <div className="media-layout">
         {/* Filtering Sidebar */}
-        <div className="media-sidebar">
-          <div className="sidebar-header">
-            <h3>Filters</h3>
-            <button className="clear-filters-btn" onClick={clearFilters}>
-              Clear All
-            </button>
-          </div>
-
-          <div className="filter-section">
-            <label>Type</label>
-            <div className="filter-options">
-              {['all', 'image', 'video'].map(type => (
-                <label key={type} className="filter-checkbox">
-                  <input
-                    type="radio"
-                    name="type"
-                    value={type}
-                    checked={filters.type === type}
-                    onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-                  />
-                  <span className="checkmark"></span>
-                  <div className="type-option">
-                    {type === 'image' && <Image size={16} />}
-                    {type === 'video' && <Play size={16} />}
-                    {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <label>Folder</label>
-            <div className="filter-options">
-              <label className="filter-checkbox">
-                <input
-                  type="radio"
-                  name="folder"
-                  value="all"
-                  checked={filters.folder === 'all'}
-                  onChange={(e) => setFilters({ folder: e.target.value })}
-                />
-                <span className="checkmark"></span>
-                <div className="folder-option">
-                  <Folder size={16} />
-                  All Folders
-                  {media.length > 0 && <span className="count">({media.length})</span>}
-                </div>
-              </label>
-
-              {/* Static folders for now */}
-              {['general', 'posts', 'profile', 'campaigns'].map(folder => (
-                <label key={folder} className="filter-checkbox">
-                  <input
-                    type="radio"
-                    name="folder"
-                    value={folder}
-                    checked={filters.folder === folder}
-                    onChange={(e) => setFilters({ folder: e.target.value })}
-                  />
-                  <span className="checkmark"></span>
-                  <div className="folder-option">
-                    <Folder size={16} />
-                    {folder.charAt(0).toUpperCase() + folder.slice(1)}
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <label>Tags</label>
-            <div className="filter-input">
-              <Tag size={16} />
-              <input
-                type="text"
-                placeholder="Search by tags..."
-                value={filters.tags}
-                onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <label>Sort By</label>
-            <select
-              value={filters.sort}
-              onChange={(e) => setFilters(prev => ({ ...prev, sort: e.target.value }))}
-              className="filter-select"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="mostUsed">Most Used</option>
-            </select>
-          </div>
-        </div>
+       
 
         {/* Media Grid/List */}
         <div className="media-content">

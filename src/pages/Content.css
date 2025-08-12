@@ -18,7 +18,7 @@
   display: flex;
   flex-direction: column;  
   align-items: flex-start !important;
-  gap: 0rem !important;
+  gap: 0rem !important;
 }
 
 .header-content h1 {
@@ -417,7 +417,7 @@
 
 .action-btn:hover {
   background: white;
-  color: #1e293b;
+  /* color: #1e293b; */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -1342,4 +1342,202 @@
   .preview-video {
     max-height: 250px;
   }
+}
+
+
+
+/* latest updated code */
+
+
+
+
+.filters-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+
+.filters-bar select,
+.filters-bar input[type="text"] {
+  height: 36px;
+  padding: 6px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 14px;
+  color: #2d3748;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+
+.filters-bar select:hover,
+.filters-bar input:hover {
+  border-color: #a0aec0;
+}
+
+
+.filters-bar select:focus,
+.filters-bar input:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.3);
+}
+
+
+.filters-bar select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg fill='none' height='16' stroke='%23666' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M19 9l-7 7-7-7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 28px;
+}
+
+
+/* Date Range Dropdown Style */
+.date-range-dropdown {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 0 6px;
+  height: 36px;
+  background-color: #fff;
+}
+
+
+.date-range-dropdown input[type="date"] {
+  border: none;
+  outline: none;
+  height: 100%;
+  padding: 0 4px;
+  font-size: 14px;
+  color: #2d3748;
+  background-color: transparent;
+}
+
+
+.date-range-dropdown input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+
+.date-separator {
+  color: #718096;
+  font-size: 13px;
+  margin: 0 4px;
+}
+
+
+.date-range-dropdown {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 0 6px;
+  height: 36px;
+  background-color: #fff;
+}
+
+
+
+
+
+
+
+/* latest updated code */
+
+
+
+
+.filters-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+
+.filters-bar select,
+.filters-bar input[type="text"] {
+  height: 36px;
+  padding: 6px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 14px;
+  color: #2d3748;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+
+.filters-bar select:hover,
+.filters-bar input:hover {
+  border-color: #a0aec0;
+}
+
+
+.filters-bar select:focus,
+.filters-bar input:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.3);
+}
+
+
+.filters-bar select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg fill='none' height='16' stroke='%23666' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M19 9l-7 7-7-7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 28px;
+}
+
+
+/* Date Range Dropdown Style */
+.date-range-dropdown {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 0 6px;
+  height: 36px;
+  background-color: #fff;
+}
+
+
+.date-range-dropdown input[type="date"] {
+  border: none;
+  outline: none;
+  height: 100%;
+  padding: 0 4px;
+  font-size: 14px;
+  color: #2d3748;
+  background-color: transparent;
+}
+
+
+.date-range-dropdown input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+
+.date-separator {
+  color: #718096;
+  font-size: 13px;
+  margin: 0 4px;
+}
+
+
+.date-range-dropdown {
+  display: flex;
+  align-items: center;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 0 6px;
+  height: 36px;
+  background-color: #fff;
 }

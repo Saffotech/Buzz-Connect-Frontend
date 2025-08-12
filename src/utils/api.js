@@ -1,5 +1,5 @@
 // API Configuration and Client
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://buzz-connect-backend.onrender.com/';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 class ApiClient {
   constructor() {

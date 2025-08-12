@@ -1,13 +1,14 @@
 // AccountsSettings.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube } from 'lucide-react';
+import { Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User } from 'lucide-react';
 import SettingsCard from '../SettingsCard';
-import { useAuth } from '../../../hooks/useAuth'; // Adjust path if needed
+import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
+
 const AccountsSettings = ({ onNotify }) => {
-  const { user, token } = useAuth(); // make sure token is available for auth
+  const { user, token, isLoading } = useAuth();
   const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,15 +20,35 @@ const AccountsSettings = ({ onNotify }) => {
     youtube: Youtube
   };
 
+  const authToken = token || localStorage.getItem("token");
+
   useEffect(() => {
+    if (!authToken || isLoading) return; // Wait until token is ready
+
     const fetchAccounts = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/auth/instagram/accounts', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setConnectedAccounts(res.data.accounts);
+        const res = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`,
+          { headers: { Authorization: `Bearer ${authToken}` } }
+        );
+
+        let accounts = res.data.accounts || [];
+
+        // ✅ Add linked Facebook account if not already present
+        const instaAccount = accounts.find(acc => acc.platform === "instagram");
+        if (instaAccount && !accounts.some(acc => acc.platform === "facebook")) {
+          const fbPic = instaAccount.fbProfilePicture || instaAccount.profilePicture || null;
+          accounts.push({
+            _id: `${instaAccount._id}-fb`,
+            username: instaAccount.fbUsername || "Facebook (linked via Instagram)",
+            platform: "facebook",
+            profilePicture: fbPic,
+            noProfilePicture: !fbPic,
+            followerCount: instaAccount.fbFollowerCount ?? "-"
+          });
+        }
+
+        setConnectedAccounts(accounts);
       } catch (err) {
         console.error("Failed to fetch connected accounts", err);
         toast.error("Failed to load accounts");
@@ -37,34 +58,48 @@ const AccountsSettings = ({ onNotify }) => {
     };
 
     fetchAccounts();
-  }, [token]);
-
-  const handleDeleteAccount = async (accountId) => {
-  try {
-    await axios.delete(`http://localhost:5000/api/auth/instagram/accounts/${accountId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    setConnectedAccounts(prev => prev.filter(acc => acc._id !== accountId));
-    onNotify('success', 'Account disconnected successfully');
-  } catch (err) {
-    console.error("Failed to disconnect account", err);
-    toast.error("Failed to disconnect account");
-  }
-};
-
+  }, [authToken, isLoading]);
 
   const handleConnectAccount = () => {
-    if (!user || !user._id) {
+    const storedToken = authToken; // ✅ Use the same fallback
+
+    if (!storedToken) {
       toast.error("User not logged in");
+      console.log("User Not", storedToken);
       return;
     }
 
-    const userId = user._id;
-    // Redirect to Instagram OAuth (your backend URL)
-    window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${userId}`;
+    if (!user?._id) {
+      toast.error("User ID not found");
+      console.error("Missing user ID for account connection");
+      return;
+    }
+
+    // ✅ Redirect with token and userId
+    window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${user._id}&token=${storedToken}`;
+  };
+
+  const handleDeleteAccount = async (accountId) => {
+    try {
+      // Extract base id (for insta-linked fb accounts, strip "-fb")
+      const baseId = accountId.replace('-fb', '');
+
+      // Always send the request to delete Instagram from backend
+      await axios.delete(
+        `${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts/${baseId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Remove both insta + fb from local state
+      setConnectedAccounts(prev =>
+        prev.filter(acc => acc._id !== baseId && acc._id !== `${baseId}-fb`)
+      );
+
+      onNotify('success', 'Account disconnected successfully');
+    } catch (err) {
+      console.error('Failed to disconnect account', err);
+      toast.error('Failed to disconnect account');
+    }
   };
 
   return (
@@ -78,12 +113,17 @@ const AccountsSettings = ({ onNotify }) => {
         <SettingsCard
           title="Connected Accounts"
           headerAction={
-            <button onClick={handleConnectAccount} className="btn-primary">
+            <button
+              onClick={handleConnectAccount}
+              className="btn-primary"
+              disabled={connectedAccounts.length > 0} // ✅ Disable if there's at least 1 account
+            >
               <Plus size={16} />
-              Connect New Account
+              {connectedAccounts.length > 0 ? "Account Connected" : "Connect New Account"}
             </button>
           }
         >
+
           {loading ? (
             <p>Loading accounts...</p>
           ) : connectedAccounts.length > 0 ? (
@@ -95,9 +135,13 @@ const AccountsSettings = ({ onNotify }) => {
                     <div className="account-info">
                       <div className="account-avatar">
                         <img
-                          src={account.profilePicture || "/default-avatar.png"}
+                          src={account.profilePicture || undefined}
                           alt={account.username}
+                          style={{ display: account.profilePicture ? 'block' : 'none' }}
                         />
+                        {(!account.profilePicture || account.noProfilePicture) && (
+                          <User size={36} strokeWidth={1.5} />
+                        )}
                         <div className={`platform-badge ${account.platform}`}>
                           <PlatformIcon size={12} />
                         </div>
@@ -108,7 +152,7 @@ const AccountsSettings = ({ onNotify }) => {
                           {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
                         </p>
                         <span className="followers-count">
-{account.followerCount ?? "-"} followers
+                          {account.followerCount ?? "-"} followers
                         </span>
                       </div>
                     </div>
