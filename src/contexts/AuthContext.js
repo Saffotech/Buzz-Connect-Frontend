@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('token');
       
-      if (storedToken) {
+      if (storedToken) {  
         try {
           // Verify token and get user data
           const response = await apiClient.getCurrentUser();
@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }) => {
             setUser(response.data.user);
             setIsAuthenticated(true);
             setToken(storedToken);
+            console.log("Stored token at init:", storedToken);
           } else {
             // Token is invalid, clear it
             clearAuth();

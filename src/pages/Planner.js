@@ -34,7 +34,7 @@ const Planner = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     platforms: ['instagram', 'twitter'],
-    statuses: ['scheduled', 'published']
+    statuses: ['scheduled', 'published', 'failed', 'draft']
   });
   const [calendarPosts, setCalendarPosts] = useState([]);
   const [draftPosts, setDraftPosts] = useState([]);
@@ -50,33 +50,39 @@ const Planner = () => {
   const fetchCalendarPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const startDate = getCalendarStartDate();
-      const endDate = getCalendarEndDate();
-
+      // Fetch all posts and filter them client-side for better reliability
       const response = await apiClient.request('/api/posts', {
         params: {
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString()
+          limit: 100 // Increase limit to get more posts
         }
       });
 
-      setCalendarPosts(response.data || []);
+      // Extract posts from the response structure
+      const postsData = response?.data?.posts || response?.data || [];
+      console.log('Fetched posts:', postsData); // Debug log
+      
+      setCalendarPosts(postsData);
     } catch (error) {
       console.error('Failed to fetch calendar posts:', error);
       setNotification({ type: 'error', message: 'Failed to load calendar posts' });
     } finally {
       setLoading(false);
     }
-  }, [currentDate, viewMode]);
+  }, []);
 
   // Fetch draft posts for sidebar
   const fetchDraftPosts = useCallback(async () => {
     try {
       const response = await apiClient.request('/api/posts', {
-        params: { status: 'draft' }
+        params: { 
+          status: 'draft',
+          limit: 50
+        }
       });
 
-      setDraftPosts(response.data || []);
+      // Extract posts from the response structure
+      const draftsData = response?.data?.posts || response?.data || [];
+      setDraftPosts(draftsData);
     } catch (error) {
       console.error('Failed to fetch draft posts:', error);
     }
@@ -118,6 +124,26 @@ const Planner = () => {
     setCurrentDate(new Date());
   };
 
+  const getDateRangeText = () => {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    if (viewMode === 'month') {
+      return `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    } else {
+      const start = getCalendarStartDate();
+      const end = getCalendarEndDate();
+
+      if (start.getMonth() === end.getMonth()) {
+        return `${monthNames[start.getMonth()]} ${start.getDate()}-${end.getDate()}, ${start.getFullYear()}`;
+      } else {
+        return `${monthNames[start.getMonth()]} ${start.getDate()} - ${monthNames[end.getMonth()]} ${end.getDate()}, ${start.getFullYear()}`;
+      }
+    }
+  };
+
   // Calendar date calculations
   const getCalendarStartDate = () => {
     if (viewMode === 'month') {
@@ -144,26 +170,6 @@ const Planner = () => {
       const dayOfWeek = end.getDay();
       end.setDate(end.getDate() + (6 - dayOfWeek));
       return end;
-    }
-  };
-
-  const getDateRangeText = () => {
-    const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-
-    if (viewMode === 'month') {
-      return `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-    } else {
-      const start = getCalendarStartDate();
-      const end = getCalendarEndDate();
-
-      if (start.getMonth() === end.getMonth()) {
-        return `${monthNames[start.getMonth()]} ${start.getDate()}-${end.getDate()}, ${start.getFullYear()}`;
-      } else {
-        return `${monthNames[start.getMonth()]} ${start.getDate()} - ${monthNames[end.getMonth()]} ${end.getDate()}, ${start.getFullYear()}`;
-      }
     }
   };
 
@@ -330,7 +336,7 @@ const Planner = () => {
           <div className="draft-cards">
             {draftPosts.length > 0 ? (
               draftPosts.map(draft => (
-                <div key={draft._id} className="draft-card" draggable>
+                <div key={draft._id || draft.id} className="draft-card" draggable>
                   <div className="draft-content">
                     <p>{draft.content.substring(0, 60)}...</p>
                     <div className="draft-platforms">
@@ -449,11 +455,31 @@ const MonthView = ({ currentDate, posts, filters, onDateClick, onPostClick, load
 
     return postsArray.filter(post => {
       if (!post || !post.status) return false;
+      
+      // Apply status filter
       if (!filters.statuses.includes(post.status)) return false;
-      if (post.platforms && !post.platforms.some(p => filters.platforms.includes(p))) return false;
+      
+      // Apply platform filter
+      if (post.platforms && post.platforms.length > 0 && 
+          !post.platforms.some(p => filters.platforms.includes(p))) {
+        return false;
+      }
 
-      const postDate = new Date(post.scheduledDate || post.publishedAt || post.createdAt);
-      return postDate.toDateString() === date.toDateString();
+      // Get the appropriate date based on post status
+      let postDate;
+      if (post.status === 'published' && post.publishedAt) {
+        postDate = new Date(post.publishedAt);
+      } else if (post.scheduledDate) {
+        postDate = new Date(post.scheduledDate);
+      } else {
+        postDate = new Date(post.createdAt);
+      }
+
+      // Compare dates (ignore time)
+      const dateStr = date.toISOString().split('T')[0];
+      const postDateStr = postDate.toISOString().split('T')[0];
+      
+      return dateStr === postDateStr;
     });
   };
 
@@ -484,27 +510,31 @@ const MonthView = ({ currentDate, posts, filters, onDateClick, onPostClick, load
       </div>
 
       <div className="calendar-body">
-        {getDaysInMonth().map((date, index) => (
-          <div
-            key={index}
-            className={`calendar-day ${!isCurrentMonth(date) ? 'other-month' : ''} ${isToday(date) ? 'today' : ''}`}
-            onClick={() => onDateClick(date)}
-          >
-            <div className="day-number">{date.getDate()}</div>
-            <div className="day-posts">
-              {getPostsForDate(date).slice(0, 3).map(post => (
-                <PostCard
-                  key={post._id}
-                  post={post}
-                  onClick={() => onPostClick(post)}
-                />
-              ))}
-              {getPostsForDate(date).length > 3 && (
-                <div className="more-posts">+{getPostsForDate(date).length - 3} more</div>
-              )}
+        {getDaysInMonth().map((date, index) => {
+          const dayPosts = getPostsForDate(date);
+          
+          return (
+            <div
+              key={index}
+              className={`calendar-day ${!isCurrentMonth(date) ? 'other-month' : ''} ${isToday(date) ? 'today' : ''}`}
+              onClick={() => onDateClick(date)}
+            >
+              <div className="day-number">{date.getDate()}</div>
+              <div className="day-posts">
+                {dayPosts.slice(0, 3).map(post => (
+                  <PostCard
+                    key={post._id || post.id}
+                    post={post}
+                    onClick={() => onPostClick(post)}
+                  />
+                ))}
+                {dayPosts.length > 3 && (
+                  <div className="more-posts">+{dayPosts.length - 3} more</div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -533,11 +563,31 @@ const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loadi
 
     return postsArray.filter(post => {
       if (!post || !post.status) return false;
+      
+      // Apply status filter
       if (!filters.statuses.includes(post.status)) return false;
-      if (post.platforms && !post.platforms.some(p => filters.platforms.includes(p))) return false;
+      
+      // Apply platform filter
+      if (post.platforms && post.platforms.length > 0 && 
+          !post.platforms.some(p => filters.platforms.includes(p))) {
+        return false;
+      }
 
-      const postDate = new Date(post.scheduledDate || post.publishedAt || post.createdAt);
-      return postDate.toDateString() === date.toDateString();
+      // Get the appropriate date based on post status
+      let postDate;
+      if (post.status === 'published' && post.publishedAt) {
+        postDate = new Date(post.publishedAt);
+      } else if (post.scheduledDate) {
+        postDate = new Date(post.scheduledDate);
+      } else {
+        postDate = new Date(post.createdAt);
+      }
+
+      // Compare dates (ignore time)
+      const dateStr = date.toISOString().split('T')[0];
+      const postDateStr = postDate.toISOString().split('T')[0];
+      
+      return dateStr === postDateStr;
     });
   };
 
@@ -569,23 +619,27 @@ const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loadi
       </div>
 
       <div className="week-body">
-        {getWeekDays().map((date, index) => (
-          <div
-            key={index}
-            className={`week-day ${isToday(date) ? 'today' : ''}`}
-            onClick={() => onDateClick(date)}
-          >
-            <div className="day-posts">
-              {getPostsForDate(date).map(post => (
-                <PostCard
-                  key={post._id}
-                  post={post}
-                  onClick={() => onPostClick(post)}
-                />
-              ))}
+        {getWeekDays().map((date, index) => {
+          const dayPosts = getPostsForDate(date);
+          
+          return (
+            <div
+              key={index}
+              className={`week-day ${isToday(date) ? 'today' : ''}`}
+              onClick={() => onDateClick(date)}
+            >
+              <div className="day-posts">
+                {dayPosts.map(post => (
+                  <PostCard
+                    key={post._id || post.id}
+                    post={post}
+                    onClick={() => onPostClick(post)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -604,12 +658,35 @@ const PostCard = ({ post, onClick }) => {
   };
 
   const getPostTime = () => {
-    const date = new Date(post.scheduledDate || post.publishedAt || post.createdAt);
+    let date;
+    if (post.status === 'published' && post.publishedAt) {
+      date = new Date(post.publishedAt);
+    } else if (post.scheduledDate) {
+      date = new Date(post.scheduledDate);
+    } else {
+      date = new Date(post.createdAt);
+    }
+    
     return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
     });
+  };
+
+  const getStatusIcon = () => {
+    switch (post.status) {
+      case 'scheduled':
+        return <Clock size={12} />;
+      case 'published':
+        return <CheckCircle size={12} />;
+      case 'failed':
+        return <X size={12} />;
+      case 'draft':
+        return <AlertCircle size={12} />;
+      default:
+        return <AlertCircle size={12} />;
+    }
   };
 
   return (
@@ -622,7 +699,12 @@ const PostCard = ({ post, onClick }) => {
       }}
       draggable
     >
-      <div className="post-time">{getPostTime()}</div>
+      <div className="post-header">
+        <div className="post-time">{getPostTime()}</div>
+        <div className="post-status">
+          {getStatusIcon()}
+        </div>
+      </div>
       <div className="post-content">{post.content.substring(0, 30)}...</div>
       <div className="post-platforms">
         {post.platforms?.map(platform => (
@@ -632,6 +714,11 @@ const PostCard = ({ post, onClick }) => {
           </span>
         ))}
       </div>
+      {post.images && post.images.length > 0 && (
+        <div className="post-media-indicator">
+          📷 {post.images.length}
+        </div>
+      )}
     </div>
   );
 };

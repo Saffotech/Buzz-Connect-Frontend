@@ -13,51 +13,131 @@ const ProfileSettings = ({ onNotify }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
+  const [verifyingPassword, setVerifyingPassword] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
 
-  // Load profile data
+  // Load profile data from the correct API endpoint
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Replace with your real profile endpoint
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/user/profile`, {
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setName(res.data.name || 'John Doe');
-        setEmail(res.data.email || 'john@example.com');
+        
+        if (res.data.success) {
+          setName(res.data.data.displayName || 'N/A');
+          setEmail(res.data.data.email || 'N/A');
+        }
       } catch (err) {
-        console.error(err);
-        setName('John Doe');
-        setEmail('john@example.com');
+        console.error('Error fetching profile:', err);
+        toast.error('Failed to load profile data');
+        setName('Error loading');
+        setEmail('Error loading');
       }
     };
-    fetchProfile();
+
+    if (token) {
+      fetchProfile();
+    }
   }, [token]);
 
-  const handlePasswordUpdate = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error('Please fill all fields');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match');
+  // Verify current password
+  const verifyCurrentPassword = async () => {
+    if (!currentPassword.trim()) {
+      toast.error('Please enter your current password');
       return;
     }
 
+    setVerifyingPassword(true);
     try {
-      // Replace with your real password update endpoint
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/user/update-password`,
-        { currentPassword, newPassword },
+      // Call API to verify current password
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/users/verify-password`,
+        { currentPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Password updated successfully');
-      setShowPasswordForm(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+
+      if (res.data.success) {
+        setCurrentPasswordVerified(true);
+        toast.success('Password verified! You can now set a new password.');
+      } else {
+        toast.error('Current password is incorrect');
+        setCurrentPasswordVerified(false);
+      }
     } catch (err) {
-      console.error(err);
-      toast.error('Failed to update password');
+      console.error('Password verification error:', err);
+      toast.error(err.response?.data?.message || 'Failed to verify password');
+      setCurrentPasswordVerified(false);
+    } finally {
+      setVerifyingPassword(false);
+    }
+  };
+
+  // Handle password update
+  const handlePasswordUpdate = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast.error('Please fill in both password fields');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    setUpdatingPassword(true);
+    try {
+      const res = await axios.put(
+        `${process.env.REACT_APP_API_URL}/api/users/update-password`,
+        { 
+          currentPassword, 
+          newPassword 
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.success) {
+        toast.success('Password updated successfully');
+        // Reset form
+        setShowPasswordForm(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setCurrentPasswordVerified(false);
+        
+        if (onNotify) {
+          onNotify('Password updated successfully');
+        }
+      }
+    } catch (err) {
+      console.error('Password update error:', err);
+      toast.error(err.response?.data?.message || 'Failed to update password');
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
+  // Reset password form when cancelled
+  const handleCancelPasswordUpdate = () => {
+    setShowPasswordForm(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setCurrentPasswordVerified(false);
+  };
+
+  // Handle current password input change
+  const handleCurrentPasswordChange = (e) => {
+    setCurrentPassword(e.target.value);
+    // Reset verification when password changes
+    if (currentPasswordVerified) {
+      setCurrentPasswordVerified(false);
     }
   };
 
@@ -67,11 +147,21 @@ const ProfileSettings = ({ onNotify }) => {
         <SettingsCard title="Profile Information">
           <div className="form-group">
             <label>Name</label>
-            <input type="text" value={name} readOnly />
+            <input 
+              type="text" 
+              value={name} 
+              readOnly 
+              className="readonly-input"
+            />
           </div>
           <div className="form-group">
             <label>Email</label>
-            <input type="email" value={email} readOnly />
+            <input 
+              type="email" 
+              value={email} 
+              readOnly 
+              className="readonly-input"
+            />
           </div>
         </SettingsCard>
 
@@ -79,7 +169,10 @@ const ProfileSettings = ({ onNotify }) => {
           title="Password"
           headerAction={
             !showPasswordForm && (
-              <button className="btn-primary" onClick={() => setShowPasswordForm(true)}>
+              <button 
+                className="btn-primary" 
+                onClick={() => setShowPasswordForm(true)}
+              >
                 Update Password
               </button>
             )
@@ -88,35 +181,68 @@ const ProfileSettings = ({ onNotify }) => {
           {showPasswordForm && (
             <>
               <div className="form-group">
-                <label>Current Password</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                />
+                <label>Current Password *</label>
+                <div className="password-verify-group">
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={handleCurrentPasswordChange}
+                    placeholder="Enter your current password"
+                    disabled={currentPasswordVerified}
+                  />
+                  {!currentPasswordVerified && (
+                    <button 
+                      className="btn-secondary verify-btn"
+                      onClick={verifyCurrentPassword}
+                      disabled={!currentPassword.trim() || verifyingPassword}
+                    >
+                      {verifyingPassword ? 'Verifying...' : 'Verify'}
+                    </button>
+                  )}
+                  {currentPasswordVerified && (
+                    <span className="verification-success">✓ Verified</span>
+                  )}
+                </div>
               </div>
+
               <div className="form-group">
                 <label>New Password</label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password (min 6 characters)"
+                  disabled={!currentPasswordVerified}
                 />
               </div>
+
               <div className="form-group">
                 <label>Confirm New Password</label>
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your new password"
+                  disabled={!currentPasswordVerified}
                 />
               </div>
-              <button className="btn-primary" onClick={handlePasswordUpdate}>
-                Save Password
-              </button>
-              <button className="btn-secondary" onClick={() => setShowPasswordForm(false)}>
-                Cancel
-              </button>
+
+              <div className="button-group">
+                <button 
+                  className="btn-primary" 
+                  onClick={handlePasswordUpdate}
+                  disabled={!currentPasswordVerified || updatingPassword || !newPassword || !confirmPassword}
+                >
+                  {updatingPassword ? 'Updating...' : 'Update Password'}
+                </button>
+                <button 
+                  className="btn-secondary" 
+                  onClick={handleCancelPasswordUpdate}
+                  disabled={updatingPassword}
+                >
+                  Cancel
+                </button>
+              </div>
             </>
           )}
         </SettingsCard>

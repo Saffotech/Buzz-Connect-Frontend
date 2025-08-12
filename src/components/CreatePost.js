@@ -16,7 +16,6 @@ import {
   Sparkles,
   RefreshCw,
   Copy,
-  Loader,
   AlertCircle,
   CheckCircle,
   Info
@@ -25,6 +24,7 @@ import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
 import { PLATFORMS, PLATFORM_CONFIGS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import './CreatePost.css';
+import Loader from '../components/common/Loader';
 
 const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
   const { uploadMedia } = useMedia();
@@ -621,7 +621,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
                         disabled={isGenerating || !postData.content.trim()}
                         title="Generate hashtags with AI"
                       >
-                        {isGenerating ? <Loader size={14} className="spinning" /> : <Sparkles size={14} />}
+                        {isGenerating ? <Loader /> : <Sparkles size={14} />}
                         AI
                       </button>
                     </label>
