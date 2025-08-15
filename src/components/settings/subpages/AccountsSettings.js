@@ -1,4 +1,3 @@
-// AccountsSettings.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User } from 'lucide-react';
@@ -6,12 +5,11 @@ import SettingsCard from '../SettingsCard';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
-
 const AccountsSettings = ({ onNotify }) => {
   const { user, token, isLoading } = useAuth();
   const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  
   const platformIcons = {
     instagram: Instagram,
     twitter: Twitter,
@@ -23,18 +21,17 @@ const AccountsSettings = ({ onNotify }) => {
   const authToken = token || localStorage.getItem("token");
 
   useEffect(() => {
-    if (!authToken || isLoading) return; // Wait until token is ready
-
+    if (!authToken || isLoading) return;
+    
     const fetchAccounts = async () => {
       try {
         const res = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`,
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
-
         let accounts = res.data.accounts || [];
-
-        // ✅ Add linked Facebook account if not already present
+        
+        // Add linked Facebook account if not already present
         const instaAccount = accounts.find(acc => acc.platform === "instagram");
         if (instaAccount && !accounts.some(acc => acc.platform === "facebook")) {
           const fbPic = instaAccount.fbProfilePicture || instaAccount.profilePicture || null;
@@ -47,7 +44,7 @@ const AccountsSettings = ({ onNotify }) => {
             followerCount: instaAccount.fbFollowerCount ?? "-"
           });
         }
-
+        
         setConnectedAccounts(accounts);
       } catch (err) {
         console.error("Failed to fetch connected accounts", err);
@@ -56,51 +53,61 @@ const AccountsSettings = ({ onNotify }) => {
         setLoading(false);
       }
     };
-
+    
     fetchAccounts();
   }, [authToken, isLoading]);
 
-  const handleConnectAccount = () => {
-    const storedToken = authToken; // ✅ Use the same fallback
-
+  const handleConnectMeta = () => {
+    const storedToken = authToken;
     if (!storedToken) {
       toast.error("User not logged in");
-      console.log("User Not", storedToken);
       return;
     }
-
     if (!user?._id) {
       toast.error("User ID not found");
-      console.error("Missing user ID for account connection");
       return;
     }
-
-    // ✅ Redirect with token and userId
+    
     window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${user._id}&token=${storedToken}`;
+  };
+
+  const handleConnectTwitter = () => {
+    toast.info("Twitter integration coming soon!");
   };
 
   const handleDeleteAccount = async (accountId) => {
     try {
-      // Extract base id (for insta-linked fb accounts, strip "-fb")
       const baseId = accountId.replace('-fb', '');
-
-      // Always send the request to delete Instagram from backend
+      
       await axios.delete(
-        `${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts/${baseId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        `${process.env.REACT_APP_API_URL}/api/auth/instagram/disconnect/${baseId}`,
+        { headers: { Authorization: `Bearer ${authToken}` } }
       );
-
-      // Remove both insta + fb from local state
+      
       setConnectedAccounts(prev =>
         prev.filter(acc => acc._id !== baseId && acc._id !== `${baseId}-fb`)
       );
-
+      
       onNotify('success', 'Account disconnected successfully');
     } catch (err) {
       console.error('Failed to disconnect account', err);
       toast.error('Failed to disconnect account');
     }
   };
+
+  // Check if Meta (Instagram/Facebook) is connected
+  const isMetaConnected = connectedAccounts.some(acc => 
+    acc.platform === 'instagram' || acc.platform === 'facebook'
+  );
+  
+  // Check if Twitter is connected
+  const isTwitterConnected = connectedAccounts.some(acc => acc.platform === 'twitter');
+
+  // Sort accounts: Instagram first, then Facebook, then Twitter
+  const sortedAccounts = connectedAccounts.sort((a, b) => {
+    const order = { instagram: 1, facebook: 2, twitter: 3 };
+    return (order[a.platform] || 999) - (order[b.platform] || 999);
+  });
 
   return (
     <div className="settings-subpage">
@@ -110,79 +117,119 @@ const AccountsSettings = ({ onNotify }) => {
           <p>Manage your connected social media accounts</p>
         </div>
 
-        <SettingsCard
-          title="Connected Accounts"
-          headerAction={
-            <button
-              onClick={handleConnectAccount}
-              className="btn-primary"
-              disabled={connectedAccounts.length > 0} // ✅ Disable if there's at least 1 account
-            >
-              <Plus size={16} />
-              {connectedAccounts.length > 0 ? "Account Connected" : "Connect New Account"}
-            </button>
-          }
-        >
-
+        <SettingsCard title="Connected Accounts">
           {loading ? (
             <p>Loading accounts...</p>
-          ) : connectedAccounts.length > 0 ? (
-            <div className="accounts-list">
-              {connectedAccounts.map((account, index) => {
-                const PlatformIcon = platformIcons[account.platform];
-                return (
-                  <div key={index} className="account-item">
-                    <div className="account-info">
-                      <div className="account-avatar">
-                        <img
-                          src={account.profilePicture || undefined}
-                          alt={account.username}
-                          style={{ display: account.profilePicture ? 'block' : 'none' }}
-                        />
-                        {(!account.profilePicture || account.noProfilePicture) && (
-                          <User size={36} strokeWidth={1.5} />
-                        )}
-                        <div className={`platform-badge ${account.platform}`}>
-                          <PlatformIcon size={12} />
+          ) : (
+            <>
+              {/* Connection Buttons Section */}
+              <div className="connection-buttons" style={{ marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleConnectMeta}
+                  className={`btn-primary ${isMetaConnected ? 'btn-connected' : ''}`}
+                  disabled={isMetaConnected}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    backgroundColor: isMetaConnected ? '#10b981' : undefined,
+                    cursor: isMetaConnected ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  <Instagram size={16} />
+                  <Facebook size={16} />
+                  {isMetaConnected ? (
+                    <>
+                      <Check size={16} />
+                      Meta Connected
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={16} />
+                      Connect with Meta
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleConnectTwitter}
+                  className="btn-secondary"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    border: '2px solid #1da1f2',
+                    color: isTwitterConnected ? '#10b981' : '#1da1f2'
+                  }}
+                >
+                  <Twitter size={16} />
+                  {isTwitterConnected ? (
+                    <>
+                      <Check size={16} />
+                      Twitter Connected
+                    </>
+                  ) : (
+                    'Connect Twitter (Coming Soon)'
+                  )}
+                </button>
+              </div>
+
+              {/* Connected Accounts List */}
+              {sortedAccounts.length > 0 ? (
+                <div className="accounts-list">
+                  {sortedAccounts.map((account, index) => {
+                    const PlatformIcon = platformIcons[account.platform];
+                    return (
+                      <div key={index} className="account-item">
+                        <div className="account-info">
+                          <div className="account-avatar">
+                            <img
+                              src={account.profilePicture || undefined}
+                              alt={account.username}
+                              style={{ display: account.profilePicture ? 'block' : 'none' }}
+                            />
+                            {(!account.profilePicture || account.noProfilePicture) && (
+                              <User size={36} strokeWidth={1.5} />
+                            )}
+                            <div className={`platform-badge ${account.platform}`}>
+                              <PlatformIcon size={12} />
+                            </div>
+                          </div>
+                          <div className="account-details">
+                            <h4>{account.username}</h4>
+                            <p className="platform-name">
+                              {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
+                            </p>
+                            <span className="followers-count">
+                              {account.followerCount ?? "-"} followers
+                            </span>
+                          </div>
+                        </div>
+                        <div className="account-actions">
+                          <div className="connection-status connected">
+                            <Check size={14} />
+                            Connected
+                          </div>
+                          <button
+                            onClick={() => handleDeleteAccount(account._id)}
+                            className="btn-danger-outline"
+                          >
+                            <Trash2 size={16} />
+                            Disconnect
+                          </button>
                         </div>
                       </div>
-                      <div className="account-details">
-                        <h4>{account.username}</h4>
-                        <p className="platform-name">
-                          {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
-                        </p>
-                        <span className="followers-count">
-                          {account.followerCount ?? "-"} followers
-                        </span>
-                      </div>
-                    </div>
-                    <div className="account-actions">
-                      <div className="connection-status connected">
-                        <Check size={14} />
-                        Connected
-                      </div>
-                      <button
-                        onClick={() => handleDeleteAccount(account._id)} // Adjust if needed
-                        className="btn-danger-outline"
-                      >
-                        <Trash2 size={16} />
-                        Disconnect
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <Link2 size={48} />
-              <h3>No accounts connected</h3>
-              <p>Connect your social media accounts to start posting</p>
-              <button onClick={handleConnectAccount} className="btn-primary">
-                <Plus size={16} />
-                Connect Your First Account
-              </button>
-            </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <Link2 size={48} />
+                  <h3>No accounts connected</h3>
+                  <p>Connect your social media accounts to start posting</p>
+                </div>
+              )}
+            </>
           )}
         </SettingsCard>
       </div>
