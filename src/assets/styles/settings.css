@@ -773,13 +773,24 @@
 }
 
 .verify-btn {
-  white-space: nowrap;
-  min-width: 80px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    padding: 1rem 1.3rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .verification-success {
   color: #28a745;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .readonly-input {
