@@ -12,19 +12,38 @@ import {
   LogOut,
   Menu,
   X,
-  User
+  User,
+  Sidebar
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
 import mgalogo from '../assets/img/mgalogo.png';
 
 const Layout = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default to true for desktop
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, token } = useAuth();
   const [name, setName] = useState('Loading...');
   const [email, setEmail] = useState('Loading...');
+
+  // Check if it's mobile view
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+      // On desktop, always keep sidebar open by default
+      if (window.innerWidth > 768) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const navigationItems = [
     {
@@ -67,7 +86,14 @@ const Layout = ({ children }) => {
 
   const handleNavigation = (path) => {
     navigate(path);
-    setIsSidebarOpen(false);
+    // Only close sidebar on mobile
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const handleSidebarToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
   const handleLogout = async () => {
@@ -116,7 +142,10 @@ const Layout = ({ children }) => {
   // Handle user profile click
   const handleUserProfileClick = () => {
     navigate('/settings?tab=profile');
-    setIsSidebarOpen(false); // Close sidebar on mobile
+    // Only close sidebar on mobile
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
   };
 
   return (
@@ -125,7 +154,7 @@ const Layout = ({ children }) => {
       <header className="mobile-header">
         <button
           className="mobile-menu-btn"
-          onClick={() => setIsSidebarOpen(true)}
+          onClick={handleSidebarToggle}
         >
           <Menu size={24} />
         </button>
@@ -138,16 +167,29 @@ const Layout = ({ children }) => {
       </header>
 
       {/* Sidebar */}
-      <aside className={`app-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+      <aside className={`app-sidebar ${isSidebarOpen ? 'open' : ''}`} 
+       onMouseEnter={() => !isMobile && setIsSidebarOpen(true)}
+      onMouseLeave={() => !isMobile && setIsSidebarOpen(false)}
+      >
         <div className="sidebar-header">
-          <div className="app-logo">
-            <img src={mgalogo} alt="MGA Logo" className="logo-img" />
+          <div className="app-logo"
+          onClick={handleSidebarToggle}
+          >
+           { isSidebarOpen ? <img src={mgalogo} alt="MGA Logo" className="logo-img" /> : <></> }
           </div>
+         
           <button
             className="sidebar-close"
             onClick={() => setIsSidebarOpen(false)}
           >
             <X size={20} />
+          </button>
+
+          <button
+          className='sidebar-toggle'
+            onClick={handleSidebarToggle}
+          >
+            <Sidebar size={20} />
           </button>
         </div>
 
@@ -161,6 +203,7 @@ const Layout = ({ children }) => {
                 key={item.path}
                 className={`nav-item ${isActive ? 'active' : ''}`}
                 onClick={() => handleNavigation(item.path)}
+                data-tooltip={item.name}
               >
                 <div className="nav-item-content">
                   <Icon size={20} />
@@ -191,7 +234,7 @@ const Layout = ({ children }) => {
           </div>
           <button className="logout-btn" onClick={handleLogout}>
             <LogOut size={16} />
-            Logout
+            <span>Logout</span>
           </button>
         </div>
       </aside>
