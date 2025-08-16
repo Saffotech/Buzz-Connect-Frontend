@@ -68,7 +68,10 @@ const AccountsSettings = ({ onNotify }) => {
       return;
     }
     
-    window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${user._id}&token=${storedToken}`;
+  // 🔹 Redirect with token and userId
+  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  window.location.href = `${apiUrl}/api/auth/instagram?userId=${user._id}&token=${storedToken}`;
+
   };
 
   const handleConnectTwitter = () => {
