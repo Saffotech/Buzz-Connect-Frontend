@@ -1,23 +1,20 @@
-import React, { useState } from 'react';
-import { Settings, Users, CreditCard, Link2 } from 'lucide-react';
+import React from 'react';
+import { Users, CreditCard, Link2 } from 'lucide-react';
 import SettingsNavigation from './SettingsNavigation';
 import SettingsCard from './SettingsCard';
 import Notification from './Notification';
 import Modal from './Modal';
-import WorkspaceSettings from './subpages/WorkspaceSettings';
 import AccountsSettings from './subpages/AccountsSettings';
-import MembersSettings from './subpages/MembersSettings';
 import BillingSettings from './subpages/BillingSettings';
 import ProfileSettings from './subpages/ProfileSettings';
 import { useSettings } from '../../hooks/useSettings';
 import { useLocation } from 'react-router-dom';
 
-
 const SettingsHub = ({
   title = "Settings",
-  description = "Manage your workspace, accounts, team members, and billing preferences",
-  availableTabs = ['workspace', 'accounts', 'members', 'billing'],
-  initialTab = 'workspace',
+  description = "Manage your profile, connected accounts, and billing preferences",
+  availableTabs = ['profile', 'accounts', 'billing'],
+  initialTab = 'profile',
   onSettingsChange
 }) => {
   const location = useLocation();
@@ -35,36 +32,31 @@ const SettingsHub = ({
     hideModal
   } = useSettings(tabFromUrl || initialTab, onSettingsChange);
 
-const tabItems = [
-  { id: 'workspace', label: 'Workspace', icon: Settings },
-  { id: 'accounts', label: 'Social Accounts', icon: Link2 },
-  { id: 'members', label: 'Members', icon: Users },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
-  { id: 'profile', label: 'Profile', icon: Users } // <-- New tab
-].filter(tab => availableTabs.includes(tab.id));
+  // ✅ New ordered tabs
+  const tabItems = [
+    { id: 'profile', label: 'Profile', icon: Users },
+    { id: 'accounts', label: 'Social Accounts', icon: Link2 },
+    { id: 'billing', label: 'Billing', icon: CreditCard }
+  ].filter(tab => availableTabs.includes(tab.id));
 
- const renderTabContent = () => {
-  const commonProps = {
-    onNotify: showNotification,
-    onShowModal: showModal,
-    onHideModal: hideModal
+  const renderTabContent = () => {
+    const commonProps = {
+      onNotify: showNotification,
+      onShowModal: showModal,
+      onHideModal: hideModal
+    };
+
+    switch (activeTab) {
+      case 'profile':
+        return <ProfileSettings {...commonProps} />;
+      case 'accounts':
+        return <AccountsSettings {...commonProps} />;
+      case 'billing':
+        return <BillingSettings {...commonProps} />;
+      default:
+        return <ProfileSettings {...commonProps} />;
+    }
   };
-
-  switch (activeTab) {
-    case 'workspace':
-      return <WorkspaceSettings {...commonProps} />;
-    case 'accounts':
-      return <AccountsSettings {...commonProps} />;
-    case 'members':
-      return <MembersSettings {...commonProps} />;
-    case 'billing':
-      return <BillingSettings {...commonProps} />;
-    case 'profile':
-      return <ProfileSettings {...commonProps} />;
-    default:
-      return <WorkspaceSettings {...commonProps} />;
-  }
-};
 
   return (
     <div className="settings-hub">
@@ -89,6 +81,5 @@ const tabItems = [
     </div>
   );
 };
-
 
 export default SettingsHub;

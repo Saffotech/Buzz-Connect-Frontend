@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios'; // Add this import
+import toast from 'react-hot-toast'; // Add this import
 import {
   BarChart3,
   Calendar,
@@ -14,12 +16,15 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
+import mgalogo from '../assets/img/mgalogo.png';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
+  const [name, setName] = useState('Loading...');
+  const [email, setEmail] = useState('Loading...');
 
   const navigationItems = [
     {
@@ -78,6 +83,42 @@ const Layout = ({ children }) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
+  // Load profile data from the correct API endpoint
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (res.data.success) {
+          setName(res.data.data.displayName || 'User');
+          setEmail(res.data.data.email || 'No Email');
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        // Don't show toast error in layout - it might be too intrusive
+        // Only set fallback values
+        setName('User');
+        setEmail('No Email');
+      }
+    };
+
+    if (token) {
+      fetchProfile();
+    } else {
+      // Reset to loading state when no token
+      setName('Loading...');
+      setEmail('Loading...');
+    }
+  }, [token]);
+
+  // Handle user profile click
+  const handleUserProfileClick = () => {
+    navigate('/settings?tab=profile');
+    setIsSidebarOpen(false); // Close sidebar on mobile
+  };
+
   return (
     <div className="app-layout">
       {/* Mobile Header */}
@@ -91,7 +132,7 @@ const Layout = ({ children }) => {
         <div className="app-logo">
           <h1>BuzzConnect</h1>
         </div>
-        <div className="header-user">
+        <div className="header-user" onClick={handleUserProfileClick}>
           <User size={20} />
         </div>
       </header>
@@ -100,8 +141,7 @@ const Layout = ({ children }) => {
       <aside className={`app-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="app-logo">
-            <h1>BuzzConnect</h1>
-            <p>Social Media Manager</p>
+            <img src={mgalogo} alt="MGA Logo" className="logo-img" />
           </div>
           <button
             className="sidebar-close"
@@ -138,14 +178,15 @@ const Layout = ({ children }) => {
           <div
             className="user-info"
             style={{ cursor: 'pointer' }}
-            onClick={() => navigate('/settings?tab=profile')} // ✅ Go directly to Profile tab
+            onClick={handleUserProfileClick}
+            title="Click to view profile settings"
           >
             <div className="user-avatar">
               <User size={20} />
             </div>
             <div className="user-details">
-              <p className="user-name">{user?.displayName || user?.email || 'User'}</p>
-              <p className="user-email">{user?.email}</p>
+              <p className="user-name">{name}</p>
+              <p className="user-email">{email}</p>
             </div>
           </div>
           <button className="logout-btn" onClick={handleLogout}>

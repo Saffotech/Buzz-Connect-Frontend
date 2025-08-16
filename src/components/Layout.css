@@ -301,7 +301,7 @@
 
 .app-main {
   margin-left: 260px;        
-  padding: 20px;
+  /* padding: 20px; */
   min-height: 100vh;         
   background-color: #f9f9f9;  
 }

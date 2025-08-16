@@ -10,6 +10,8 @@ import {
   Filter,
   Download,
   Instagram,
+  Globe,
+  Facebook,
   Twitter,
   Eye,
   ChevronDown,
@@ -54,10 +56,12 @@ const Analytics = () => {
 
   // Platform options
   const platformOptions = [
-    { value: 'all', label: 'All Platforms', icon: '🌐' },
-    { value: 'instagram', label: 'Instagram', icon: '📷' },
-    { value: 'twitter', label: 'Twitter', icon: '🐦' },
-    { value: 'facebook', label: 'Facebook', icon: '👥' }
+       { value: 'all', label: 'All Platforms', icon: <Globe size={24} /> },
+    { value: 'instagram', label: 'Instagram', icon:<Instagram size={24} /> },
+    { value: 'twitter', label: 'Twitter', icon: <Twitter size={24} /> },
+    { value: 'facebook', label: 'Facebook', icon: <Facebook size={24} /> }
+	
+
   ];
 
   // Fetch analytics data
