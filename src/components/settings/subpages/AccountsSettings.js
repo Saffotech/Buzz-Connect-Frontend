@@ -76,7 +76,8 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     // ✅ Redirect with token and userId
-    window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${user._id}&token=${storedToken}`;
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+    window.location.href = `${apiUrl}/api/auth/instagram?userId=${user._id}&token=${storedToken}`;
   };
 
   const handleDeleteAccount = async (accountId) => {
