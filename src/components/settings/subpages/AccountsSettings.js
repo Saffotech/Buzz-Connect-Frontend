@@ -78,7 +78,7 @@ const handleConnectMeta = async () => {
       // window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
 
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      window.location.href = `${apiUrl}/api/auth/instagram?token=${storedToken}`;
+      window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
     } else {
       toast.error("Failed to get user data");
     }
