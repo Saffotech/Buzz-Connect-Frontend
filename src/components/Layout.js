@@ -127,12 +127,12 @@ const Layout = ({ children }) => {
         >
           <Menu size={24} />
         </button>
-        <div className="app-logo">
-          <h1>BuzzConnect</h1>
-        </div>
-        <div className="header-user" onClick={handleUserProfileClick}>
-          <User size={20} />
-        </div>
+        // <div className="app-logo">
+        //   <h1>BuzzConnect</h1>
+        // </div>
+        // <div className="header-user" onClick={handleUserProfileClick}>
+        //   <User size={20} />
+        // </div>
       </header>
 
       {/* Sidebar */}
