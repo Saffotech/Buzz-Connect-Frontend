@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios'; // Add this import
-import toast from 'react-hot-toast'; // Add this import
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import {
   BarChart3,
   Calendar,
@@ -20,6 +20,7 @@ import './Layout.css';
 import mgalogo from '../assets/img/mgalogo.png';
 
 const Layout = ({ children }) => {
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default to true for desktop
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ const Layout = ({ children }) => {
   const { user, logout, token } = useAuth();
   const [name, setName] = useState('Loading...');
   const [email, setEmail] = useState('Loading...');
+
 
   // Check if it's mobile view
   useEffect(() => {
@@ -46,42 +48,12 @@ const Layout = ({ children }) => {
   }, []);
 
   const navigationItems = [
-    {
-      name: 'Dashboard',
-      path: '/dashboard',
-      icon: BarChart3,
-      description: 'Overview and quick stats'
-    },
-    {
-      name: 'Planner',
-      path: '/planner',
-      icon: Calendar,
-      description: 'Content calendar and scheduling'
-    },
-    {
-      name: 'Content',
-      path: '/content',
-      icon: FolderOpen,
-      description: 'Posts and media library'
-    },
-    {
-      name: 'Analytics',
-      path: '/analytics',
-      icon: TrendingUp,
-      description: 'Performance insights'
-    },
-    {
-      name: 'AI Assistant',
-      path: '/ai-assistant',
-      icon: Sparkles,
-      description: 'Content generation tools'
-    },
-    {
-      name: 'Settings',
-      path: '/settings',
-      icon: Settings,
-      description: 'Account and preferences'
-    }
+    { name: 'Dashboard', path: '/dashboard', icon: BarChart3, description: 'Overview and quick stats' },
+    { name: 'Planner', path: '/planner', icon: Calendar, description: 'Content calendar and scheduling' },
+    { name: 'Content', path: '/content', icon: FolderOpen, description: 'Posts and media library' },
+    { name: 'Analytics', path: '/analytics', icon: TrendingUp, description: 'Performance insights' },
+    { name: 'AI Assistant', path: '/ai-assistant', icon: Sparkles, description: 'Content generation tools' },
+    { name: 'Settings', path: '/settings', icon: Settings, description: 'Account and preferences' }
   ];
 
   const handleNavigation = (path) => {
@@ -109,22 +81,20 @@ const Layout = ({ children }) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  // Load profile data from the correct API endpoint
+  // Load profile data
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (res.data.success) {
           setName(res.data.data.displayName || 'User');
           setEmail(res.data.data.email || 'No Email');
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
-        // Don't show toast error in layout - it might be too intrusive
-        // Only set fallback values
         setName('User');
         setEmail('No Email');
       }
@@ -133,15 +103,14 @@ const Layout = ({ children }) => {
     if (token) {
       fetchProfile();
     } else {
-      // Reset to loading state when no token
       setName('Loading...');
       setEmail('Loading...');
     }
   }, [token]);
 
-  // Handle user profile click
   const handleUserProfileClick = () => {
     navigate('/settings?tab=profile');
+
     // Only close sidebar on mobile
     if (isMobile) {
       setIsSidebarOpen(false);
@@ -167,17 +136,17 @@ const Layout = ({ children }) => {
       </header>
 
       {/* Sidebar */}
-      <aside className={`app-sidebar ${isSidebarOpen ? 'open' : ''}`} 
-       onMouseEnter={() => !isMobile && setIsSidebarOpen(true)}
-      onMouseLeave={() => !isMobile && setIsSidebarOpen(false)}
+      <aside className={`app-sidebar ${isSidebarOpen ? 'open' : ''}`}
+        onMouseEnter={() => !isMobile && setIsSidebarOpen(true)}
+        onMouseLeave={() => !isMobile && setIsSidebarOpen(false)}
       >
         <div className="sidebar-header">
           <div className="app-logo"
-          onClick={handleSidebarToggle}
+            onClick={handleSidebarToggle}
           >
-           { isSidebarOpen ? <img src={mgalogo} alt="MGA Logo" className="logo-img" /> : <></> }
+            {isSidebarOpen ? <img src={mgalogo} alt="MGA Logo" className="logo-img" /> : <></>}
           </div>
-         
+
           <button
             className="sidebar-close"
             onClick={() => setIsSidebarOpen(false)}
@@ -186,7 +155,7 @@ const Layout = ({ children }) => {
           </button>
 
           <button
-          className='sidebar-toggle'
+            className='sidebar-toggle'
             onClick={handleSidebarToggle}
           >
             <Sidebar size={20} />
@@ -239,20 +208,26 @@ const Layout = ({ children }) => {
         </div>
       </aside>
 
-      {/* Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div
-          className="sidebar-overlay"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      {/* Overlay */}
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
 
-      {/* Main Content */}
-      <main className="app-main">
-        {children}
-      </main>
+      {/* Main */}
+      <main className="app-main">{children}</main>
     </div>
   );
 };
 
 export default Layout;
+
+
+
+
+
+
+
+
+
+
+
+
+

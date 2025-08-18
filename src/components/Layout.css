@@ -20,6 +20,7 @@
   align-items: center;
   justify-content: space-between;
   z-index: 1000;
+  transition: transform 0.3s ease; /* smooth hide/show */
 }
 
 .mobile-menu-btn {
@@ -179,6 +180,12 @@
 .nav-item.active .nav-item-description {
   opacity: 0.9;
 }
+
+.mobile-header.hidden {
+  transform: translateY(-100%);
+  /* transition: transform 0.3s ease; */
+}
+
 
 /* Sidebar Footer */
 .sidebar-footer {
@@ -422,5 +429,14 @@
 
   .sidebar-overlay {
     display: none !important;
+  }
+
+  .mobile-header {
+    display: flex;  /* visible only on mobile */
+  }
+
+  .app-main {
+    margin-left: 0;
+    padding-top: 60px; /* header height */
   }
 }
