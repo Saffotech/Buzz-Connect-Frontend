@@ -117,13 +117,8 @@ const AccountsSettings = ({ onNotify }) => {
           <p>Manage your connected social media accounts</p>
         </div>
 
-        <SettingsCard title="Connected Accounts">
-          {loading ? (
-            <p>Loading accounts...</p>
-          ) : (
-            <>
-              {/* Connection Buttons Section */}
-              <div className="connection-buttons" style={{ marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <SettingsCard title="Connected Accounts"
+        connAcc={ <div className="connection-buttons">
                 <button
                   onClick={handleConnectMeta}
                   className={`btn-primary ${isMetaConnected ? 'btn-connected' : ''}`}
@@ -172,7 +167,14 @@ const AccountsSettings = ({ onNotify }) => {
                     'Connect Twitter (Coming Soon)'
                   )}
                 </button>
-              </div>
+              </div>}
+        >
+          {loading ? (
+            <p>Loading accounts...</p>
+          ) : (
+            <>
+              {/* Connection Buttons Section */}
+             
 
               {/* Connected Accounts List */}
               {sortedAccounts.length > 0 ? (

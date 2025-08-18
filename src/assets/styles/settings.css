@@ -794,8 +794,11 @@
 }
 
 .connection-buttons {
-  padding: 16px 0;
-  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .btn-connected {

@@ -20,6 +20,7 @@
   align-items: center;
   justify-content: space-between;
   z-index: 1000;
+  transition: transform 0.3s ease; /* smooth hide/show */
 }
 
 .mobile-menu-btn {
@@ -156,6 +157,12 @@
   opacity: 0.9;
 }
 
+.mobile-header.hidden {
+  transform: translateY(-100%);
+  /* transition: transform 0.3s ease; */
+}
+
+
 /* Sidebar Footer */
 .sidebar-footer {
   padding: 1rem;
@@ -285,6 +292,20 @@
   .app-main {
     margin-left: 0;
   }
+
+  .mobile-header {
+    display: flex;       /* show on desktop */
+    position: fixed;     /* always fixed at top */
+    top: 0;
+    left: 260px;         /* push aside for sidebar */
+    right: 0;
+    transform: none !important; /* prevent hide/show effect */
+  }
+
+  .app-main {
+    margin-left: 260px;  /* leave space for sidebar */
+    padding-top: 60px;   /* leave space for fixed header */
+  }
 }
 
 .app-sidebar {
@@ -327,5 +348,14 @@
 
   .app-main {
     margin-left: 0;
+  }
+
+  .mobile-header {
+    display: flex;  /* visible only on mobile */
+  }
+
+  .app-main {
+    margin-left: 0;
+    padding-top: 60px; /* header height */
   }
 }
