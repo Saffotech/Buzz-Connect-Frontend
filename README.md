@@ -494,31 +494,26 @@ REACT_APP_GOOGLE_ANALYTICS_ID=GA-XXXXXXXXX
 
 ### Deployment Options
 
-#### Option 1: Netlify (Recommended)
+#### AWS Amplify (Current Production Setup)
 ```bash
-# Build and deploy to Netlify
-npm run build
+# Production deployment is automated via AWS Amplify
+# Connected to GitHub repository for auto-deploy
 
-# Drag and drop 'build' folder to Netlify
-# Or connect GitHub repository for auto-deploy
+# Production URL: https://d2o0fxjrjhmrjb.amplifyapp.com
+# Custom Domain: https://mgabrandbuzz.com (if configured)
+
+# UAT Environment: https://uat.d2o0fxjrjhmrjb.amplifyapp.com
+# Custom Domain: https://uat.mgabrandbuzz.com (if configured)
 ```
 
-#### Option 2: Vercel
+#### Manual Build (for testing)
 ```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Deploy
-vercel --prod
-```
-
-#### Option 3: Traditional Hosting
-```bash
-# Build the app
+# Build the app locally
 npm run build
 
-# Upload 'build' folder contents to your web server
-# Configure server to serve index.html for all routes
+# Test production build locally
+npm install -g serve
+serve -s build -l 3000
 ```
 
 ### Production Checklist
