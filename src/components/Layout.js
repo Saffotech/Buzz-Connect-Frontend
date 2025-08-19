@@ -119,6 +119,7 @@ const Layout = ({ children }) => {
   return (
     <div className="app-layout">
       {/* Mobile Header */}
+
       {isMobile && (
         <header className={`mobile-header ${showMobileHeader ? 'visible' : 'hidden'}`}>
           <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
@@ -130,7 +131,6 @@ const Layout = ({ children }) => {
           </div>
         </header>
       )}
-
       {/* Sidebar */}
       <aside
         className={`app-sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}
