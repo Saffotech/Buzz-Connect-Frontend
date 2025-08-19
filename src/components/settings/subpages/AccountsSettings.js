@@ -149,7 +149,7 @@ const AccountsSettings = ({ onNotify }) => {
                   )}
                 </button>
 
-                <button
+                {/* <button
                   onClick={handleConnectTwitter}
                   className="btn-secondary"
                   style={{
@@ -169,7 +169,7 @@ const AccountsSettings = ({ onNotify }) => {
                   ) : (
                     'Connect Twitter (Coming Soon)'
                   )}
-                </button>
+                </button> */}
               </div>}
         >
           {loading ? (
