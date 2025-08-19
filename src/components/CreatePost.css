@@ -1714,3 +1714,408 @@
 .connect-status.not-connected {
   color: red;
 }
+
+/* Platform Container */
+.platform-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Account Selector */
+.account-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--surface-color, #f8f9fa);
+  border: 1px solid var(--border-color, #e1e5e9);
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.account-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6c757d);
+  margin-bottom: 4px;
+}
+
+.account-dropdown {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, #e1e5e9);
+  border-radius: 6px;
+  background: white;
+  font-size: 0.875rem;
+  color: var(--text-primary, #212529);
+  transition: border-color 0.2s ease;
+}
+
+.account-dropdown:focus {
+  outline: none;
+  border-color: var(--primary-color, #007bff);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.account-dropdown option {
+  padding: 8px;
+  background: white;
+  color: var(--text-primary, #212529);
+}
+
+/* Platform Grid Updates */
+.platforms-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .platforms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+}
+
+/* Multi-Account Selection Styles */
+.account-multi-selector {
+  margin-top: 12px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.account-multi-selector:hover {
+  border-color: #dee2e6;
+  background: #f1f3f4;
+}
+
+.account-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 12px;
+}
+
+.account-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: #6c757d;
+  background: #e9ecef;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.accounts-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Custom Checkbox Styling */
+.account-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.account-checkbox-item:hover {
+  border-color: #0d6efd;
+  background: #f8f9ff;
+  /* transform: translateY(-1px); */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.account-checkbox-item:has(.account-checkbox:checked) {
+  border-color: #0d6efd;
+  background: #e7f1ff;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.1);
+}
+
+/* Hide default checkbox */
+.account-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Custom checkbox design */
+.checkbox-custom {
+  height: 20px;
+  width: 20px;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+/* Checkbox checked state */
+.account-checkbox:checked + .checkbox-custom {
+  background: #0d6efd;
+  border-color: #0d6efd;
+}
+
+/* Checkmark */
+.account-checkbox:checked + .checkbox-custom::after {
+  content: "";
+  position: absolute;
+  display: block;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Checkbox hover effect */
+.account-checkbox-item:hover .checkbox-custom {
+  border-color: #0d6efd;
+  transform: scale(1.05);
+}
+
+/* Checkbox focus effect */
+.account-checkbox:focus + .checkbox-custom {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+.account-name {
+  flex-grow: 1;
+  font-size: 14px;
+  color: #212529;
+  font-weight: 500;
+}
+
+.account-id {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 400;
+}
+
+/* Selection Controls */
+.account-selection-controls {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e9ecef;
+}
+
+.select-all-btn,
+.deselect-all-btn {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background: white;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.select-all-btn:hover:not(:disabled) {
+  border-color: #198754;
+  background: #d1e7dd;
+  color: #146c43;
+}
+
+.deselect-all-btn:hover:not(:disabled) {
+  border-color: #dc3545;
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.select-all-btn:disabled,
+.deselect-all-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8f9fa;
+}
+
+/* Platform button status updates */
+.platform-btn .connect-status {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.platform-btn.selected .connect-status {
+  font-weight: 600;
+  opacity: 1;
+}
+
+/* Scrollbar styling for account list */
+.accounts-checkbox-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.accounts-checkbox-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.accounts-checkbox-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.accounts-checkbox-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation for checkbox list appearance */
+.account-multi-selector {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 300px;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .account-multi-selector {
+    padding: 12px;
+  }
+  
+  .account-checkbox-item {
+    padding: 8px 10px;
+  }
+  
+  .account-label {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .account-selection-controls {
+    flex-direction: column;
+  }
+  
+  .select-all-btn,
+  .deselect-all-btn {
+    flex: none;
+  }
+}
+
+/* Enhanced visual feedback */
+.account-checkbox-item:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading state for checkbox */
+.account-checkbox-item.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.account-checkbox-item.loading .checkbox-custom {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+/* Success state animation */
+.account-checkbox-item.success {
+  animation: successPulse 0.3s ease-out;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Error state */
+.account-checkbox-item.error {
+  border-color: #dc3545;
+  background: #f8d7da;
+}
+
+.account-checkbox-item.error .checkbox-custom {
+  border-color: #dc3545;
+}
+
+/* Empty state */
+.accounts-checkbox-list:empty::after {
+  content: "No accounts available";
+  display: block;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 20px;
+  background: white;
+  border-radius: 6px;
+  border: 1px dashed #dee2e6;
+}
+
+/* Improved focus accessibility */
+.account-checkbox:focus-visible + .checkbox-custom {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+/* Platform container spacing */
+.platform-container {
+  position: relative;
+}
+
+.platform-container + .platform-container {
+  margin-top: 8px;
+}
+
+/* Smooth transitions for all interactive elements */
+.account-multi-selector * {
+  transition: all 0.2s ease;
+}
+
+/* Selection indicator for platform button */
+.platform-btn.selected.has-accounts::after {
+  content: "✓";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #198754;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+}
