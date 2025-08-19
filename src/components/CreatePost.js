@@ -42,7 +42,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   const [postData, setPostData] = useState({
     content: '',
     platforms: [],
-    selectedAccounts: {}, // { platformId: accountId }
+    selectedAccounts: {}, // { platformId: [accountId1, accountId2, ...] }
     scheduledDate: '',
     scheduledTime: '',
     images: [],
@@ -63,7 +63,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   const [toast, setToast] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
-// Fetch user profile and connected accounts on mount
+  // Fetch user profile and connected accounts on mount
   useEffect(() => {
     if (isOpen) {
       fetchUserProfile();
@@ -100,7 +100,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     const allPlatforms = [
       { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
       { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
-      { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2'},
+      { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2' },
     ];
 
     return allPlatforms.map(platform => ({
@@ -140,13 +140,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       return false;
     }
 
-    // Check if account is selected for platforms that require it
+    // Check if accounts are selected for platforms that require it
     const platformsRequiringAccounts = ['instagram', 'facebook'];
     for (const platform of postData.platforms) {
       if (platformsRequiringAccounts.includes(platform)) {
-        if (!postData.selectedAccounts[platform]) {
+        const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
+        if (selectedAccountsForPlatform.length === 0) {
           const platformName = platforms.find(p => p.id === platform)?.name;
-          showToast(`Please select an account for ${platformName}`, 'error');
+          showToast(`Please select at least one account for ${platformName}`, 'error');
           return false;
         }
       }
@@ -155,7 +156,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     return true;
   };
 
-    // Enhanced validation for form submission
+  // Enhanced validation for form submission
   const validateForm = () => {
     if (!postData.content.trim()) {
       setError('Content is required');
@@ -183,24 +184,21 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       return false;
     }
 
-
-    // Check if account is selected for platforms that require it
+    // Check if accounts are selected for platforms that require it
     const platformsRequiringAccounts = ['instagram', 'facebook'];
     for (const platform of postData.platforms) {
       if (platformsRequiringAccounts.includes(platform)) {
-        if (!postData.selectedAccounts[platform]) {
+        const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
+        if (selectedAccountsForPlatform.length === 0) {
           const platformName = platforms.find(p => p.id === platform)?.name;
-          setError(`Please select an account for ${platformName}`);
+          setError(`Please select at least one account for ${platformName}`);
           return false;
         }
       }
     }
 
-
-   
     return true;
   };
-
 
   // Handle preview tab click with validation
   const handlePreviewClick = () => {
@@ -209,23 +207,20 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     }
   };
 
-   const handlePlatformToggle = (platformId) => {
+  const handlePlatformToggle = (platformId) => {
     const platform = platforms.find(p => p.id === platformId);
     if (!platform || !platform.connected) return;
-
 
     setPostData(prev => {
       const newPlatforms = prev.platforms.includes(platformId)
         ? prev.platforms.filter(id => id !== platformId)
         : [...prev.platforms, platformId];
 
-
-      // Remove selected account if platform is deselected
+      // Remove selected accounts if platform is deselected
       const newSelectedAccounts = { ...prev.selectedAccounts };
       if (!newPlatforms.includes(platformId)) {
         delete newSelectedAccounts[platformId];
       }
-
 
       return {
         ...prev,
@@ -235,19 +230,43 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     });
   };
 
-
-  const handleAccountSelection = (platformId, accountId) => {
-    setPostData(prev => ({
-      ...prev,
-      selectedAccounts: {
-        ...prev.selectedAccounts,
-        [platformId]: accountId
+  // Updated account selection handler for multiple accounts
+  const handleAccountSelection = (platformId, accountId, isSelected) => {
+    setPostData(prev => {
+      const currentAccounts = prev.selectedAccounts[platformId] || [];
+      
+      let newAccounts;
+      if (isSelected) {
+        // Add account if not already present
+        newAccounts = currentAccounts.includes(accountId) 
+          ? currentAccounts 
+          : [...currentAccounts, accountId];
+      } else {
+        // Remove account
+        newAccounts = currentAccounts.filter(id => id !== accountId);
       }
-    }));
+
+      return {
+        ...prev,
+        selectedAccounts: {
+          ...prev.selectedAccounts,
+          [platformId]: newAccounts
+        }
+      };
+    });
   };
 
+  // Helper function to check if an account is selected
+  const isAccountSelected = (platformId, accountId) => {
+    const selectedAccounts = postData.selectedAccounts[platformId] || [];
+    return selectedAccounts.includes(accountId);
+  };
 
-
+  // Helper function to get selected accounts count for a platform
+  const getSelectedAccountsCount = (platformId) => {
+    const selectedAccounts = postData.selectedAccounts[platformId] || [];
+    return selectedAccounts.length;
+  };
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -276,7 +295,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       // Upload files to Cloudinary via API
       const response = await uploadMedia(files);
       console.log('Upload response:', response);
-      
+
       const uploadedImages = response.data.map(media => ({
         url: media.url,
         altText: media.originalName,
@@ -297,7 +316,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       console.error('Failed to upload images:', error);
       setError(error.message || 'Failed to upload images');
       showToast('Failed to upload images', 'error');
-      
+
       // Remove local previews on error
       setPostData(prev => ({
         ...prev,
@@ -321,7 +340,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     setIsSubmitting(true);
     setError(null);
 
-     if (!validateForm()) {
+    if (!validateForm()) {
       setIsSubmitting(false);
       return;
     }
@@ -692,7 +711,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                               <div className="suggestion-platforms">
                                 {suggestion.platforms.map(platform => {
                                   const Icon = platform === 'instagram' ? Instagram :
-                                              platform === 'twitter' ? Twitter : Facebook;
+                                    platform === 'twitter' ? Twitter : Facebook;
                                   return <Icon key={platform} size={14} />;
                                 })}
                               </div>
@@ -730,19 +749,20 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
               {/* Form Column */}
               <div className="form-column">
-                {/* Platform Selection */}
+                {/* Platform Selection - Updated with Multi-Account Selection */}
                 <div className="form-section">
                   <label className="section-label">Select Platforms</label>
                   <div className="platforms-grid">
-                      {platforms.map((platform) => {
+                    {platforms.map((platform) => {
                       const Icon = platform.icon;
                       const isSelected = postData.platforms.includes(platform.id);
+                      const selectedAccountsCount = getSelectedAccountsCount(platform.id);
+                      
                       return (
+                        <div key={platform.id} className="platform-container">
                           <button
-                            key={platform.id}
                             type="button"
-                            className={`platform-btn ${isSelected ? 'selected' : ''} ${!platform.connected ? 'not-connected-btn' : ''
-                              }`}
+                            className={`platform-btn ${isSelected ? 'selected' : ''} ${!platform.connected ? 'not-connected-btn' : ''}`}
                             onClick={(e) =>
                               platform.connected
                                 ? handlePlatformToggle(platform.id)
@@ -753,13 +773,91 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                             <Icon size={20} />
                             <span>{platform.name}</span>
                             <span className="connect-status">
-                              {platform.connected ? 'Connected' : 'Connect Now'}
+                              {platform.connected ? 
+                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected') 
+                                : 'Connect Now'
+                              }
                             </span>
                           </button>
-                        );
+
+                          {/* Multi-Account Selection with Checkboxes */}
+                          {isSelected && platform.connected && platform.accounts && platform.accounts.length > 0 && (
+                            <div className="account-multi-selector">
+                              <label className="account-label">
+                                Select {platform.name} Account{platform.accounts.length > 1 ? 's' : ''}:
+                                <span className="account-count">
+                                  ({selectedAccountsCount} of {platform.accounts.length} selected)
+                                </span>
+                              </label>
+                              <div className="accounts-checkbox-list">
+                                {platform.accounts.map((account) => {
+                                  const accountId = account.accountId || account.id;
+                                  const isChecked = isAccountSelected(platform.id, accountId);
+                                  
+                                  return (
+                                    <label key={accountId} className="account-checkbox-item">
+                                      <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={(e) => handleAccountSelection(platform.id, accountId, e.target.checked)}
+                                        className="account-checkbox"
+                                      />
+                                      <span className="checkbox-custom"></span>
+                                      <span className="account-name">
+                                        {account.username || account.name || accountId}
+                                        {account.pageId && (
+                                          <span className="account-id"> (ID: {account.pageId})</span>
+                                        )}
+                                      </span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                              
+                              {/* Select All / Deselect All buttons */}
+                              {platform.accounts.length > 1 && (
+                                <div className="account-selection-controls">
+                                  <button
+                                    type="button"
+                                    className="select-all-btn"
+                                    onClick={() => {
+                                      platform.accounts.forEach(account => {
+                                        const accountId = account.accountId || account.id;
+                                        if (!isAccountSelected(platform.id, accountId)) {
+                                          handleAccountSelection(platform.id, accountId, true);
+                                        }
+                                      });
+                                    }}
+                                    disabled={selectedAccountsCount === platform.accounts.length}
+                                  >
+                                    Select All
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="deselect-all-btn"
+                                    onClick={() => {
+                                      setPostData(prev => ({
+                                        ...prev,
+                                        selectedAccounts: {
+                                          ...prev.selectedAccounts,
+                                          [platform.id]: []
+                                        }
+                                      }));
+                                    }}
+                                    disabled={selectedAccountsCount === 0}
+                                  >
+                                    Deselect All
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
                     })}
                   </div>
                 </div>
+
 
                 {/* Content */}
                 <div className="form-section">
@@ -850,13 +948,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                       )}
                     </label>
                   </div>
-                  
+
                   {postData.images.length > 0 && (
                     <div className="uploaded-images">
                       {postData.images.map((image, index) => (
                         <div key={index} className="image-preview">
-                          <img 
-                            src={image.url || image} 
+                          <img
+                            src={image.url || image}
                             alt={image.altText || `Upload ${index + 1}`}
                             onError={(e) => {
                               console.error('Image failed to load:', image);
@@ -886,7 +984,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                     <Clock size={16} />
                     Scheduler
                   </label>
-                  
+
                   <div className="scheduler-options">
                     <div className="radio-group">
                       <label className="radio-option">
@@ -900,14 +998,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                         <span className="radio-custom"></span>
                         <div className="radio-content">
 
-                          <small 
+                          <small
                             className="radio-description"
                             data-tooltip="Post will be published immediately"
                           ><span className="radio-label">Schedule Now</span>
                           </small>
                         </div>
                       </label>
-                      
+
                       <label className="radio-option">
                         <input
                           type="radio"
@@ -917,18 +1015,18 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                           onChange={() => setIsScheduled(true)}
                         />
                         <span className="radio-custom"></span>
-                        <small 
+                        <small
                           className="radio-description"
                           data-tooltip="Choose a specific date and time for publishing"
                         >
-                          <div className="radio-content">                         
+                          <div className="radio-content">
                             <span className="radio-label">Schedule For Later</span>
                           </div>
                         </small>
-                       
+
                       </label>
                     </div>
-                    
+
                     {/* Date and Time inputs */}
                     {isScheduled && (
                       <div className="schedule-inputs">
@@ -972,7 +1070,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                   {postData.platforms.map(platformId => {
                     const platform = platforms.find(p => p.id === platformId);
                     const Icon = platform.icon;
-                    
+
                     return (
                       <div key={platformId} className={`platform-preview ${platformId}`} style={{ '--platform-color': platform.color }}>
                         <div className="platform-header">
@@ -982,8 +1080,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                         <div className="preview-post">
                           {postData.images.length > 0 && (
                             <div className="preview-images">
-                              <img 
-                                src={postData.images[0].url || postData.images[0]} 
+                              <img
+                                src={postData.images[0].url || postData.images[0]}
                                 alt={postData.images[0].altText || "Post preview"}
                                 onError={(e) => {
                                   console.error('Preview image failed to load');
@@ -997,14 +1095,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                             {/* Fixed hashtags rendering */}
                             {postData.hashtags && (
                               <div className="preview-hashtags">
-                                {(typeof postData.hashtags === 'string' ? 
-                                  postData.hashtags.split(' ') : 
+                                {(typeof postData.hashtags === 'string' ?
+                                  postData.hashtags.split(' ') :
                                   Array.isArray(postData.hashtags) ? postData.hashtags : []
                                 )
-                                .filter(tag => tag.startsWith('#'))
-                                .map((tag, index) => (
-                                  <span key={index} className="hashtag">{tag}</span>
-                                ))}
+                                  .filter(tag => tag.startsWith('#'))
+                                  .map((tag, index) => (
+                                    <span key={index} className="hashtag">{tag}</span>
+                                  ))}
                               </div>
                             )}
                           </div>

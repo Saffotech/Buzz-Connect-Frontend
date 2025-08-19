@@ -344,17 +344,20 @@ const Dashboard = () => {
 
           {/* Upcoming Posts */}
           <div className="upcoming-posts-section">
-            <div className="section-header">
-              <h3>Upcoming Posts</h3>
-              <button 
-                className="refresh-btn" 
-                onClick={handleRefreshPosts}
-                disabled={postsLoading}
-              >
-                <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
-                Refresh
-              </button>
-            </div>
+        <div className="header-with-button">
+          
+          <h3>Upcoming Posts</h3>
+          <button 
+            className="inline-refresh-btn" 
+            onClick={handleRefreshPosts}
+            disabled={postsLoading}
+          >
+            <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
+            Refresh
+          </button>
+        </div>
+
+
             
             {postsError && (
               <div className="error-message">

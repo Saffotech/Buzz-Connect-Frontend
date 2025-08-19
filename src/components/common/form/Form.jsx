@@ -4,6 +4,7 @@ import Input from '../input/Input';
 import Button from '../button/Button';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 import './Form.module.css';
 
 const Form = ({ isLogin, setIsLogin }) => {
@@ -43,7 +44,6 @@ const Form = ({ isLogin, setIsLogin }) => {
   const sendOTP = async (email) => {
     try {
       const response = await fetch('http://localhost:5000/api/auth/send-otp', {
-
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -296,7 +296,7 @@ const Form = ({ isLogin, setIsLogin }) => {
     try {
       const result = await updatePassword(formData.email, formData.newPassword);
       if (result?.success) {
-        toast.success('Password reset successfully! Redirecting to dashboard...');
+        toast.success('Password reset successfully!');
         
         // Reset form and redirect to dashboard
         setFormMode('auth');
@@ -313,9 +313,15 @@ const Form = ({ isLogin, setIsLogin }) => {
           confirmNewPassword: ''
         });
         
+        // Reset password visibility states
+        setShowPassword(false);
+        setShowConfirmPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmNewPassword(false);
+        
         // Redirect to dashboard after a short delay
         setTimeout(() => {
-          window.location.href = 'http://localhost:3000/dashboard'; // or use your routing method
+          window.location.href = 'http://localhost:3000/dashboard';
         }, 1500);
       } else {
         toast.error(result.message || 'Failed to reset password. Please try again.');
@@ -342,6 +348,11 @@ const Form = ({ isLogin, setIsLogin }) => {
       newPassword: '',
       confirmNewPassword: ''
     });
+    // Reset password visibility states
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmNewPassword(false);
   };
 
   const handleResendOTP = async () => {
@@ -392,7 +403,7 @@ const Form = ({ isLogin, setIsLogin }) => {
 
       <div className="form-group">
         <label>Password</label>
-        <div className="password-input">
+        <div className="password-input has-toggle">
           <Input
             type={showPassword ? 'text' : 'password'}
             name="password"
@@ -406,7 +417,7 @@ const Form = ({ isLogin, setIsLogin }) => {
             className="password-toggle"
             onClick={() => setShowPassword(!showPassword)}
           >
-            {showPassword ? '👁' : '👁‍🗨'}
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
       </div>
@@ -414,7 +425,7 @@ const Form = ({ isLogin, setIsLogin }) => {
       {!isLogin && (
         <div className="form-group">
           <label>Confirm Password</label>
-          <div className="password-input">
+          <div className="password-input has-toggle">
             <Input
               type={showConfirmPassword ? 'text' : 'password'}
               name="confirmPassword"
@@ -428,7 +439,7 @@ const Form = ({ isLogin, setIsLogin }) => {
               className="password-toggle"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
-              {showConfirmPassword ? '👁' : '👁‍🗨'}
+              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
           </div>
         </div>
@@ -629,7 +640,7 @@ const Form = ({ isLogin, setIsLogin }) => {
 
       <div className="form-group">
         <label>New Password</label>
-        <div className="password-input">
+        <div className="password-input has-toggle">
           <Input
             type={showNewPassword ? 'text' : 'password'}
             name="newPassword"
@@ -643,14 +654,14 @@ const Form = ({ isLogin, setIsLogin }) => {
             className="password-toggle"
             onClick={() => setShowNewPassword(!showNewPassword)}
           >
-            {showNewPassword ? '👁' : '👁‍🗨'}
+            {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
       </div>
 
       <div className="form-group">
         <label>Confirm New Password</label>
-        <div className="password-input">
+        <div className="password-input has-toggle">
           <Input
             type={showConfirmNewPassword ? 'text' : 'password'}
             name="confirmNewPassword"
@@ -664,7 +675,7 @@ const Form = ({ isLogin, setIsLogin }) => {
             className="password-toggle"
             onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
           >
-            {showConfirmNewPassword ? '👁' : '👁‍🗨'}
+            {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
       </div>

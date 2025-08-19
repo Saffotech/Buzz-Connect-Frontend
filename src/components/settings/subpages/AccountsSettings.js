@@ -57,19 +57,42 @@ const AccountsSettings = ({ onNotify }) => {
     fetchAccounts();
   }, [authToken, isLoading]);
 
-  const handleConnectMeta = () => {
-    const storedToken = authToken;
-    if (!storedToken) {
-      toast.error("User not logged in");
-      return;
-    }
-    if (!user?._id) {
-      toast.error("User ID not found");
-      return;
-    }
+const handleConnectMeta = async () => {
+  const storedToken = authToken;
+  if (!storedToken) {
+    toast.error("User not logged in");
+    return;
+  }
+
+  try {
+    // Fetch fresh user data from API before connecting
+    const res = await axios.get(
+      `${process.env.REACT_APP_API_URL}/api/auth/me`,
+      { headers: { Authorization: `Bearer ${storedToken}` } }
+    );
     
-    window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${user._id}&token=${storedToken}`;
-  };
+    if (res.data.success && res.data.data) {
+      const freshUser = res.data.data; // Correct path based on your API response
+      
+      // Now use fresh user ID - this will always work
+      // window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+    } else {
+      toast.error("Failed to get user data");
+    }
+  } catch (err) {
+    console.error("Error fetching user data:", err);
+    if (err.response?.status === 401) {
+      toast.error("Session expired, please login again");
+      logout(); // Call your logout function to clear state
+    } else {
+      toast.error("Failed to get user data");
+    }
+  }
+};
+
 
   const handleConnectTwitter = () => {
     toast.info("Twitter integration coming soon!");
@@ -117,13 +140,8 @@ const AccountsSettings = ({ onNotify }) => {
           <p>Manage your connected social media accounts</p>
         </div>
 
-        <SettingsCard title="Connected Accounts">
-          {loading ? (
-            <p>Loading accounts...</p>
-          ) : (
-            <>
-              {/* Connection Buttons Section */}
-              <div className="connection-buttons" style={{ marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <SettingsCard title="Connected Accounts"
+        connAcc={ <div className="connection-buttons">
                 <button
                   onClick={handleConnectMeta}
                   className={`btn-primary ${isMetaConnected ? 'btn-connected' : ''}`}
@@ -151,7 +169,7 @@ const AccountsSettings = ({ onNotify }) => {
                   )}
                 </button>
 
-                <button
+                {/* <button
                   onClick={handleConnectTwitter}
                   className="btn-secondary"
                   style={{
@@ -171,8 +189,15 @@ const AccountsSettings = ({ onNotify }) => {
                   ) : (
                     'Connect Twitter (Coming Soon)'
                   )}
-                </button>
-              </div>
+                </button> */}
+              </div>}
+        >
+          {loading ? (
+            <p>Loading accounts...</p>
+          ) : (
+            <>
+              {/* Connection Buttons Section */}
+             
 
               {/* Connected Accounts List */}
               {sortedAccounts.length > 0 ? (
