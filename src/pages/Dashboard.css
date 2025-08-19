@@ -1200,3 +1200,36 @@
     font-size: 1.25rem;
   }
 }
+
+.header-with-button {
+  display: flex;
+  align-items: center; /* vertically align heading and button */
+  justify-content: space-between;
+  gap: 8px; /* space between button and heading */
+  margin-bottom: 1rem;
+}
+
+.inline-refresh-btn {
+  padding: .5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f9f9f9;
+  margin-bottom: 15px;
+  background: #007bff;
+  color: white;
+  border-radius: 7px;
+}
+
+/* .inline-refresh-btn:hover {
+  background: #f1f1f1;
+} */
+
+.inline-refresh-btn:hover {
+  background: #1277e3; /* optional: light blue hover */
+  border-color: #0056b3; /* darker blue on hover */
+}

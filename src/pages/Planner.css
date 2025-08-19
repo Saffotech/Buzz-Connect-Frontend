@@ -677,6 +677,7 @@
 
 /* Buttons */
 .btn-primary {
+  white-space: nowrap;
   background: #3b82f6;
   color: white;
   border: none;

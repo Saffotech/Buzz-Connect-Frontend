@@ -6,8 +6,20 @@
 }
 
 .platform-grid.horizontal {
+  display: flex;
   flex-direction: row;
+  gap: 12px; /* space between buttons */
+  flex-wrap: nowrap; /* all in one line */
+  align-items: center; /* vertically center icons/buttons */
 }
+
+.platform-grid.horizontal .platform-btn {
+  flex: 0 0 auto; /* prevent buttons from stretching */
+}
+
+/* .platform-grid.horizontal {
+  flex-direction: row;
+} */
 
 .platform-grid.vertical {
   flex-direction: column;
@@ -30,7 +42,7 @@
   transition: all 0.2s ease;
   position: relative;
   min-width: 0; /* Allow text truncation */
-  flex: 0 0 auto;
+  flex: 0 0 auto; /* prevent buttons from stretching */
   /* border-color: rgba(0,0,0,0.08) !important; Default border color */
   /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
 }
@@ -294,17 +306,7 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .platform-grid.horizontal {
-    flex-direction: column;
-  }
-  
-  .platform-btn {
-    width: 100%;
-  }
-  
-  .platform-btn-content {
-    justify-content: flex-start;
-  }
+
 }
 
 

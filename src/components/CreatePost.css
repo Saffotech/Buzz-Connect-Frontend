@@ -1490,7 +1490,8 @@
 }
 
 .input-label.date-label::before {
-  font-size: 1rem;
+  white-space: nowrap; /* Keep "Date Range :" on one line */
+  font-weight: 500;
 }
 
 .input-label.time-label::before {
