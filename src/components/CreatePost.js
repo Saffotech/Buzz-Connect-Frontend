@@ -63,7 +63,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   const [toast, setToast] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
-// Fetch user profile and connected accounts on mount
+  // Fetch user profile and connected accounts on mount
   useEffect(() => {
     if (isOpen) {
       fetchUserProfile();
@@ -100,7 +100,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     const allPlatforms = [
       { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
       { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
-      { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2'},
+      { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2' },
     ];
 
     return allPlatforms.map(platform => ({
@@ -155,7 +155,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     return true;
   };
 
-    // Enhanced validation for form submission
+  // Enhanced validation for form submission
   const validateForm = () => {
     if (!postData.content.trim()) {
       setError('Content is required');
@@ -197,7 +197,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     }
 
 
-   
+
     return true;
   };
 
@@ -209,7 +209,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     }
   };
 
-   const handlePlatformToggle = (platformId) => {
+  const handlePlatformToggle = (platformId) => {
     const platform = platforms.find(p => p.id === platformId);
     if (!platform || !platform.connected) return;
 
@@ -276,7 +276,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       // Upload files to Cloudinary via API
       const response = await uploadMedia(files);
       console.log('Upload response:', response);
-      
+
       const uploadedImages = response.data.map(media => ({
         url: media.url,
         altText: media.originalName,
@@ -297,7 +297,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       console.error('Failed to upload images:', error);
       setError(error.message || 'Failed to upload images');
       showToast('Failed to upload images', 'error');
-      
+
       // Remove local previews on error
       setPostData(prev => ({
         ...prev,
@@ -321,7 +321,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     setIsSubmitting(true);
     setError(null);
 
-     if (!validateForm()) {
+    if (!validateForm()) {
       setIsSubmitting(false);
       return;
     }
@@ -692,7 +692,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                               <div className="suggestion-platforms">
                                 {suggestion.platforms.map(platform => {
                                   const Icon = platform === 'instagram' ? Instagram :
-                                              platform === 'twitter' ? Twitter : Facebook;
+                                    platform === 'twitter' ? Twitter : Facebook;
                                   return <Icon key={platform} size={14} />;
                                 })}
                               </div>
@@ -730,19 +730,19 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
               {/* Form Column */}
               <div className="form-column">
-                {/* Platform Selection */}
+
+                {/* Platform Selection - Updated with Account Selection */}
                 <div className="form-section">
                   <label className="section-label">Select Platforms</label>
                   <div className="platforms-grid">
-                      {platforms.map((platform) => {
+                    {platforms.map((platform) => {
                       const Icon = platform.icon;
                       const isSelected = postData.platforms.includes(platform.id);
                       return (
+                        <div key={platform.id} className="platform-container">
                           <button
-                            key={platform.id}
                             type="button"
-                            className={`platform-btn ${isSelected ? 'selected' : ''} ${!platform.connected ? 'not-connected-btn' : ''
-                              }`}
+                            className={`platform-btn ${isSelected ? 'selected' : ''} ${!platform.connected ? 'not-connected-btn' : ''}`}
                             onClick={(e) =>
                               platform.connected
                                 ? handlePlatformToggle(platform.id)
@@ -756,10 +756,34 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                               {platform.connected ? 'Connected' : 'Connect Now'}
                             </span>
                           </button>
-                        );
+
+                          {/* Account Selection Dropdown */}
+                          {isSelected && platform.connected && platform.accounts && platform.accounts.length > 0 && (
+                            <div className="account-selector">
+                              <label className="account-label">
+                                Select {platform.name} Account:
+                              </label>
+                              <select
+                                value={postData.selectedAccounts[platform.id] || ''}
+                                onChange={(e) => handleAccountSelection(platform.id, e.target.value)}
+                                className="account-dropdown"
+                                required
+                              >
+                                <option value="">Choose account...</option>
+                                {platform.accounts.map((account) => (
+                                  <option key={account.accountId || account.id} value={account.accountId || account.id}>
+                                    {account.username || account.name || account.accountId}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                      );
                     })}
                   </div>
                 </div>
+
 
                 {/* Content */}
                 <div className="form-section">
@@ -850,13 +874,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                       )}
                     </label>
                   </div>
-                  
+
                   {postData.images.length > 0 && (
                     <div className="uploaded-images">
                       {postData.images.map((image, index) => (
                         <div key={index} className="image-preview">
-                          <img 
-                            src={image.url || image} 
+                          <img
+                            src={image.url || image}
                             alt={image.altText || `Upload ${index + 1}`}
                             onError={(e) => {
                               console.error('Image failed to load:', image);
@@ -886,7 +910,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                     <Clock size={16} />
                     Scheduler
                   </label>
-                  
+
                   <div className="scheduler-options">
                     <div className="radio-group">
                       <label className="radio-option">
@@ -900,14 +924,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                         <span className="radio-custom"></span>
                         <div className="radio-content">
 
-                          <small 
+                          <small
                             className="radio-description"
                             data-tooltip="Post will be published immediately"
                           ><span className="radio-label">Schedule Now</span>
                           </small>
                         </div>
                       </label>
-                      
+
                       <label className="radio-option">
                         <input
                           type="radio"
@@ -917,18 +941,18 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                           onChange={() => setIsScheduled(true)}
                         />
                         <span className="radio-custom"></span>
-                        <small 
+                        <small
                           className="radio-description"
                           data-tooltip="Choose a specific date and time for publishing"
                         >
-                          <div className="radio-content">                         
+                          <div className="radio-content">
                             <span className="radio-label">Schedule For Later</span>
                           </div>
                         </small>
-                       
+
                       </label>
                     </div>
-                    
+
                     {/* Date and Time inputs */}
                     {isScheduled && (
                       <div className="schedule-inputs">
@@ -972,7 +996,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                   {postData.platforms.map(platformId => {
                     const platform = platforms.find(p => p.id === platformId);
                     const Icon = platform.icon;
-                    
+
                     return (
                       <div key={platformId} className={`platform-preview ${platformId}`} style={{ '--platform-color': platform.color }}>
                         <div className="platform-header">
@@ -982,8 +1006,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                         <div className="preview-post">
                           {postData.images.length > 0 && (
                             <div className="preview-images">
-                              <img 
-                                src={postData.images[0].url || postData.images[0]} 
+                              <img
+                                src={postData.images[0].url || postData.images[0]}
                                 alt={postData.images[0].altText || "Post preview"}
                                 onError={(e) => {
                                   console.error('Preview image failed to load');
@@ -997,14 +1021,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                             {/* Fixed hashtags rendering */}
                             {postData.hashtags && (
                               <div className="preview-hashtags">
-                                {(typeof postData.hashtags === 'string' ? 
-                                  postData.hashtags.split(' ') : 
+                                {(typeof postData.hashtags === 'string' ?
+                                  postData.hashtags.split(' ') :
                                   Array.isArray(postData.hashtags) ? postData.hashtags : []
                                 )
-                                .filter(tag => tag.startsWith('#'))
-                                .map((tag, index) => (
-                                  <span key={index} className="hashtag">{tag}</span>
-                                ))}
+                                  .filter(tag => tag.startsWith('#'))
+                                  .map((tag, index) => (
+                                    <span key={index} className="hashtag">{tag}</span>
+                                  ))}
                               </div>
                             )}
                           </div>
