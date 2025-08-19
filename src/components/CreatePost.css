@@ -193,7 +193,6 @@
   font-weight: 600;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
-  justify-content: space-between;
 }
 
 /* AI Hashtag Button */
@@ -1491,7 +1490,8 @@
 }
 
 .input-label.date-label::before {
-  font-size: 1rem;
+  white-space: nowrap; /* Keep "Date Range :" on one line */
+  font-weight: 500;
 }
 
 .input-label.time-label::before {
@@ -1689,4 +1689,28 @@
 .date-input-wrapper:hover::after,
 .time-input-wrapper:hover::after {
   transform: rotate(180deg);
+}
+.platform-btn.disabled {
+  opacity: 0.6;
+  pointer-events: auto; /* allow the link inside to still be clickable */
+}
+
+.not-connected-link {
+  color: #ef4444; /* red-500 */
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.not-connected-link:hover {
+  color: #dc2626; /* darker red on hover */
+}
+.connect-status {
+  font-size: 12px;
+}
+.connect-status.connected {
+  color: green;
+}
+.connect-status.not-connected {
+  color: red;
 }

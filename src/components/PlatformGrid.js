@@ -4,6 +4,7 @@ import { useConnectedPlatforms } from "../hooks/useApi";
 import { usePlatformGridTracking } from "../hooks/useAnalytics";
 import { getPlatformIcon } from "../utils/platform-helpers";
 import "./PlatformGrid.css";
+import { useNavigate } from "react-router-dom";
 
 /**
  * PlatformButton - Sub-component for individual platform selection
@@ -16,20 +17,25 @@ const PlatformButton = ({
   showLabel = true,
 }) => {
   const Icon = getPlatformIcon(platform.id);
+  const navigate = useNavigate();
 
   const handleClick = () => {
-    if (!disabled && platform.connected) {
+    if (!platform.connected) {
+      // Redirect if not connected
+      navigate('/settings?tab=accounts');
+      return;
+    }
+    if (!disabled) {
       onSelect(platform.id);
     }
   };
 
   return (
     <button
-      className={`platform-btn ${isSelected ? "selected" : ""} ${
-        !platform.connected ? "disabled" : ""
-      } ${disabled ? "disabled" : ""}`}
+      className={`platform-btn ${isSelected ? "selected" : ""} ${!platform.connected ? "not-connected" : ""
+        } ${disabled ? "disabled" : ""}`}
       onClick={handleClick}
-      disabled={disabled || !platform.connected}
+      disabled={disabled}
       title={
         platform.connected ? platform.name : `${platform.name} - Not Connected`
       }
@@ -58,13 +64,14 @@ const PlatformButton = ({
         {!platform.connected && (
           <div className="not-connected-badge">
             <AlertCircle size={12} />
-            <span>Not Connected</span>
+            <span>Connect Now</span>
           </div>
         )}
       </div>
     </button>
   );
 };
+
 
 /**
  * PlatformGridSkeleton - Loading skeleton for the platform grid
@@ -136,43 +143,66 @@ const PlatformGrid = ({
   const handlePlatformSelect = (platformId) => {
     if (disabled) return;
 
+    const platformData = platforms.find((p) => p.id === platformId);
+    if (!platformData?.connected) {
+      // Redirect if not connected
+      navigate('/settings?tab=accounts');
+      return;
+    }
+
     const wasSelected = selectedPlatforms.includes(platformId);
     let newSelection;
 
     if (multiSelect) {
-      // Multi-select mode
       newSelection = wasSelected
         ? selectedPlatforms.filter((id) => id !== platformId)
         : [...selectedPlatforms, platformId];
     } else {
-      // Single-select mode
       newSelection = wasSelected ? [] : [platformId];
     }
 
-    // Track platform selection analytics
     trackSelection(platformId, !wasSelected, context);
-
     onPlatformChange(newSelection);
   };
+
 
   // Filter platforms based on props
   const filteredPlatforms = React.useMemo(() => {
     let filtered = platforms;
 
-    // Filter by connection status
+    // If only connected ones should be shown
     if (showOnlyConnected) {
       filtered = filtered.filter((platform) => platform.connected);
     }
 
-    // Filter by allowed platforms
     if (allowedPlatforms && Array.isArray(allowedPlatforms)) {
       filtered = filtered.filter((platform) =>
         allowedPlatforms.includes(platform.id)
       );
     }
 
+    // Priority order
+    const priorityOrder = ["instagram", "facebook", "twitter"];
+
+    // Step 1: Sort by priority first
+    filtered.sort((a, b) => {
+      const aPriority = priorityOrder.indexOf(a.id);
+      const bPriority = priorityOrder.indexOf(b.id);
+
+      // Both in priority list → keep defined order
+      if (aPriority !== -1 && bPriority !== -1) return aPriority - bPriority;
+      // One in priority list → move it first
+      if (aPriority !== -1) return -1;
+      if (bPriority !== -1) return 1;
+
+      // Otherwise alphabetical
+      return a.name.localeCompare(b.name);
+    });
+
     return filtered;
   }, [platforms, showOnlyConnected, allowedPlatforms]);
+
+
 
   // Loading state
   if (loading) {
@@ -214,23 +244,16 @@ const PlatformGrid = ({
   return (
     <div className={`platform-grid ${layout} ${disabled ? "disabled" : ""}`}>
       {filteredPlatforms.map((platform) => (
-        // <PlatformButton
-        //   key={platform.id}
-        //   platform={platform}
-        //   isSelected={selectedPlatforms.includes(platform.id)}
-        //   onSelect={handlePlatformSelect}
-        //   disabled={disabled}
-        //   showLabel={showLabels}
-        // />
         <PlatformButton
           key={platform.id}
           platform={platform}
-          isSelected={selectedPlatforms.includes(platform.id)}
+          isSelected={platform.connected && selectedPlatforms.includes(platform.id)} // ✅ Only allow if connected
           onSelect={handlePlatformSelect}
           disabled={disabled}
           showLabel={showLabels}
           style={{ "--platform-color": platform.color }}
         />
+
       ))}
     </div>
   );

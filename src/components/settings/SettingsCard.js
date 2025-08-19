@@ -3,6 +3,7 @@ import React from 'react';
 const SettingsCard = ({ 
   title, 
   description, 
+  connAcc, 
   children, 
   headerAction,
   className = '' 
@@ -20,6 +21,7 @@ const SettingsCard = ({
               {headerAction}
             </div>
           )}
+        {connAcc}
         </div>
       )}
       <div className="card-content">

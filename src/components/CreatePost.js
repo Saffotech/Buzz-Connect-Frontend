@@ -18,20 +18,31 @@ import {
   Copy,
   AlertCircle,
   CheckCircle,
-  Info
+  Info,
+  ChevronDown
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
 import { PLATFORMS, PLATFORM_CONFIGS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import './CreatePost.css';
 import Loader from '../components/common/Loader';
+import axios from 'axios';
+import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
-const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
+const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   const { uploadMedia } = useMedia();
+  const { user, token } = useAuth();
+  const navigate = useNavigate();
+
+
+  const [userProfile, setUserProfile] = useState(null);
+
 
   const [postData, setPostData] = useState({
     content: '',
     platforms: [],
+    selectedAccounts: {}, // { platformId: accountId }
     scheduledDate: '',
     scheduledTime: '',
     images: [],
@@ -50,12 +61,61 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
-  const platforms = [
-    { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F', connected: true },
-    { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2', connected: true },
-    { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2', connected: false }
-  ];
+// Fetch user profile and connected accounts on mount
+  useEffect(() => {
+    if (isOpen) {
+      fetchUserProfile();
+    }
+  }, [isOpen]);
+
+
+  const handleConnectClick = (e) => {
+    e.stopPropagation(); // prevent triggering toggle
+    navigate('/settings?tab=accounts');
+  };
+
+
+  const fetchUserProfile = async () => {
+    setLoadingProfile(true);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setUserProfile(response.data.data); // same pattern as working code
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      showToast('Failed to load user profile', 'error');
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+
+  // Generate platforms array based on connected accounts
+  const getAvailablePlatforms = () => {
+    const allPlatforms = [
+      { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
+      { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
+      { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2'},
+    ];
+
+    return allPlatforms.map(platform => ({
+      ...platform,
+      connected: userProfile?.connectedPlatforms?.includes(platform.id) || false,
+      accounts: userProfile?.connectedAccounts?.filter(acc => acc.platform === platform.id) || []
+    }));
+  };
+
+  const platforms = userProfile ? getAvailablePlatforms() : [];
+
+  // Images are now required for all platforms
+  const areImagesRequired = () => {
+    return postData.platforms.length > 0; // Images required if any platform is selected
+  };
 
   // Toast notification function
   const showToast = (message, type = 'info', duration = 3000) => {
@@ -73,8 +133,74 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
       showToast('Please select at least one platform', 'error');
       return false;
     }
+
+    // Check if images are required but not provided
+    if (areImagesRequired() && postData.images.length === 0) {
+      showToast('Images are required for all posts', 'error');
+      return false;
+    }
+
+    // Check if account is selected for platforms that require it
+    const platformsRequiringAccounts = ['instagram', 'facebook'];
+    for (const platform of postData.platforms) {
+      if (platformsRequiringAccounts.includes(platform)) {
+        if (!postData.selectedAccounts[platform]) {
+          const platformName = platforms.find(p => p.id === platform)?.name;
+          showToast(`Please select an account for ${platformName}`, 'error');
+          return false;
+        }
+      }
+    }
+
     return true;
   };
+
+    // Enhanced validation for form submission
+  const validateForm = () => {
+    if (!postData.content.trim()) {
+      setError('Content is required');
+      return false;
+    }
+
+
+    if (postData.platforms.length === 0) {
+      setError('Please select at least one platform');
+      return false;
+    }
+
+
+    // Check character limits
+    const charCount = getCharacterCount();
+    if (charCount.remaining < 0) {
+      setError('Content exceeds character limit');
+      return false;
+    }
+
+
+    // Check if images are required but not provided
+    if (areImagesRequired() && postData.images.length === 0) {
+      setError('Images are required for all posts');
+      return false;
+    }
+
+
+    // Check if account is selected for platforms that require it
+    const platformsRequiringAccounts = ['instagram', 'facebook'];
+    for (const platform of postData.platforms) {
+      if (platformsRequiringAccounts.includes(platform)) {
+        if (!postData.selectedAccounts[platform]) {
+          const platformName = platforms.find(p => p.id === platform)?.name;
+          setError(`Please select an account for ${platformName}`);
+          return false;
+        }
+      }
+    }
+
+
+   
+    return true;
+  };
+
 
   // Handle preview tab click with validation
   const handlePreviewClick = () => {
@@ -83,14 +209,45 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     }
   };
 
-  const handlePlatformToggle = (platformId) => {
+   const handlePlatformToggle = (platformId) => {
+    const platform = platforms.find(p => p.id === platformId);
+    if (!platform || !platform.connected) return;
+
+
+    setPostData(prev => {
+      const newPlatforms = prev.platforms.includes(platformId)
+        ? prev.platforms.filter(id => id !== platformId)
+        : [...prev.platforms, platformId];
+
+
+      // Remove selected account if platform is deselected
+      const newSelectedAccounts = { ...prev.selectedAccounts };
+      if (!newPlatforms.includes(platformId)) {
+        delete newSelectedAccounts[platformId];
+      }
+
+
+      return {
+        ...prev,
+        platforms: newPlatforms,
+        selectedAccounts: newSelectedAccounts
+      };
+    });
+  };
+
+
+  const handleAccountSelection = (platformId, accountId) => {
     setPostData(prev => ({
       ...prev,
-      platforms: prev.platforms.includes(platformId)
-        ? prev.platforms.filter(id => id !== platformId)
-        : [...prev.platforms, platformId]
+      selectedAccounts: {
+        ...prev.selectedAccounts,
+        [platformId]: accountId
+      }
     }));
   };
+
+
+
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -164,11 +321,17 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     setIsSubmitting(true);
     setError(null);
 
+     if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Prepare post data for API
       const apiPostData = {
         content: postData.content,
         platforms: postData.platforms,
+        selectedAccounts: postData.selectedAccounts,
         images: postData.images.map(img => ({
           url: img.url || img,
           altText: img.altText || 'Post image'
@@ -211,6 +374,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
     setPostData({
       content: '',
       platforms: [],
+      selectedAccounts: {},
       scheduledDate: '',
       scheduledTime: '',
       images: [],
@@ -570,22 +734,29 @@ const CreatePost = ({ isOpen, onClose, onPostCreated }) => {
                 <div className="form-section">
                   <label className="section-label">Select Platforms</label>
                   <div className="platforms-grid">
-                    {platforms.map(platform => {
+                      {platforms.map((platform) => {
                       const Icon = platform.icon;
+                      const isSelected = postData.platforms.includes(platform.id);
                       return (
-                        <button
-                          key={platform.id}
-                          type="button"
-                          className={`platform-btn ${postData.platforms.includes(platform.id) ? 'selected' : ''} ${!platform.connected ? 'disabled' : ''}`}
-                          onClick={() => platform.connected && handlePlatformToggle(platform.id)}
-                          disabled={!platform.connected}
-                          style={{ '--platform-color': platform.color }}
-                        >
-                          <Icon size={20} />
-                          <span>{platform.name}</span>
-                          {!platform.connected && <span className="not-connected">Not Connected</span>}
-                        </button>
-                      );
+                          <button
+                            key={platform.id}
+                            type="button"
+                            className={`platform-btn ${isSelected ? 'selected' : ''} ${!platform.connected ? 'not-connected-btn' : ''
+                              }`}
+                            onClick={(e) =>
+                              platform.connected
+                                ? handlePlatformToggle(platform.id)
+                                : handleConnectClick(e)
+                            }
+                            style={{ '--platform-color': platform.color }}
+                          >
+                            <Icon size={20} />
+                            <span>{platform.name}</span>
+                            <span className="connect-status">
+                              {platform.connected ? 'Connected' : 'Connect Now'}
+                            </span>
+                          </button>
+                        );
                     })}
                   </div>
                 </div>

@@ -482,24 +482,6 @@ export const useConnectedPlatforms = () => {
     // Get connected accounts from user data
     let connectedAccounts = data?.data?.connectedAccounts || [];
 
-    // Add mock connected accounts for development/testing
-    if (connectedAccounts.length === 0) {
-      connectedAccounts = [
-        {
-          platform: 'instagram',
-          username: 'buzzconnect_demo',
-          connected: true,
-          connectedAt: new Date().toISOString()
-        },
-        {
-          platform: 'twitter',
-          username: 'buzzconnect_demo',
-          connected: true,
-          connectedAt: new Date().toISOString()
-        }
-      ];
-    }
-
     // Import platform constants and helpers
     const { PLATFORMS, PLATFORM_CONFIGS } = require('../utils/constants');
 
