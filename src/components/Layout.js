@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
-import mgalogo from '../assets/img/mgalogo.png';
+import mgalogo from '../assets/img/Logo.png';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
