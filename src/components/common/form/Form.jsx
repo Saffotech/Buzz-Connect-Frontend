@@ -4,10 +4,16 @@ import Input from '../input/Input';
 import Button from '../button/Button';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 import './Form.module.css';
 
 const Form = ({ isLogin, setIsLogin }) => {
   const { login, register, isLoading } = useAuth();
+  
+  // Form modes: 'auth', 'forgot', 'otp', 'reset'
+  const [formMode, setFormMode] = useState('auth');
+  const [otpVerified, setOtpVerified] = useState(false);
+  
   const [formData, setFormData] = useState({
     displayName: '',
     email: '',
@@ -15,10 +21,16 @@ const Form = ({ isLogin, setIsLogin }) => {
     confirmPassword: '',
     rememberMe: false,
     acceptTerms: false,
+    otp: '',
+    newPassword: '',
+    confirmNewPassword: ''
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [apiLoading, setApiLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,21 +40,97 @@ const Form = ({ isLogin, setIsLogin }) => {
     }));
   };
 
+  // API call functions
+  const sendOTP = async (email) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/send-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, message: data.message };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      console.error('Send OTP error:', error);
+      return { success: false, message: 'Failed to send OTP' };
+    }
+  };
+
+  const verifyOTP = async (email, otp) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, message: data.message };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      console.error('Verify OTP error:', error);
+      return { success: false, message: 'Failed to verify OTP' };
+    }
+  };
+
+  const updatePassword = async (email, newPassword) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/update-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email,
+          newPassword 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, message: data.message };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      console.error('Update password error:', error);
+      return { success: false, message: 'Failed to update password' };
+    }
+  };
 
   const validateForm = () => {
     const { displayName, email, password, confirmPassword } = formData;
+    
     if (!email || !password) {
       toast.error('Please fill in all required fields');
       return false;
     }
+    
     if (!email.includes('@')) {
       toast.error('Please enter a valid email address');
       return false;
     }
+    
     if (password.length < 6) {
       toast.error('Password must be at least 6 characters long');
       return false;
     }
+    
     if (!isLogin) {
       if (!displayName) {
         toast.error('Please enter your name');
@@ -53,21 +141,61 @@ const Form = ({ isLogin, setIsLogin }) => {
         return false;
       }
     }
-
-
+    
     if (!isLogin && !formData.acceptTerms) {
       toast.error('Please accept the terms and conditions');
       return false;
     }
-
-
+    
     return true;
   };
 
+  const validateEmail = () => {
+    if (!formData.email) {
+      toast.error('Please enter your email address');
+      return false;
+    }
+    if (!formData.email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return false;
+    }
+    return true;
+  };
+
+  const validateOTP = () => {
+    if (!formData.otp || formData.otp.length < 4) {
+      toast.error('Please enter a valid OTP');
+      return false;
+    }
+    return true;
+  };
+
+  const validateResetPassword = () => {
+    const { newPassword, confirmNewPassword } = formData;
+    
+    if (!newPassword || !confirmNewPassword) {
+      toast.error('Please fill in all required fields');
+      return false;
+    }
+    
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters long');
+      return false;
+    }
+    
+    if (newPassword !== confirmNewPassword) {
+      toast.error('Passwords do not match');
+      return false;
+    }
+    
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (!validateForm()) return;
+
     try {
       let result;
       if (isLogin) {
@@ -82,6 +210,7 @@ const Form = ({ isLogin, setIsLogin }) => {
           password: formData.password
         });
       }
+
       if (result?.success) {
         setFormData({
           displayName: '',
@@ -97,165 +226,506 @@ const Form = ({ isLogin, setIsLogin }) => {
     }
   };
 
+  // Step 1: Send OTP to email
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!validateEmail()) return;
 
-  return (
-    <>
-      <form onSubmit={handleSubmit} className="auth-form">
-        {/* Name for Signup */}
-        {!isLogin && (
+    setApiLoading(true);
+    try {
+      const result = await sendOTP(formData.email);
+      if (result?.success) {
+        toast.success('OTP sent to your email!');
+        setFormMode('otp');
+      } else {
+        toast.error(result.message || 'Failed to send OTP. Please try again.');
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      toast.error('Failed to send OTP. Please try again.');
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  // Step 2: Verify OTP
+  const handleOTPVerification = async (e) => {
+    e.preventDefault();
+    
+    if (!validateOTP()) return;
+
+    setApiLoading(true);
+    try {
+      const result = await verifyOTP(formData.email, formData.otp);
+      if (result?.success) {
+        toast.success('OTP verified successfully!');
+        setOtpVerified(true);
+        setFormMode('reset');
+      } else {
+        toast.error(result.message || 'Invalid OTP. Please try again.');
+      }
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      toast.error('Invalid OTP. Please try again.');
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  // Step 3: Reset Password
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!validateResetPassword()) return;
+    if (!otpVerified) {
+      toast.error('Please verify OTP first');
+      return;
+    }
+
+    // Debug: Check if email is available
+    console.log('Email for password reset:', formData.email);
+    
+    if (!formData.email) {
+      toast.error('Email is missing. Please start over.');
+      handleBackToLogin();
+      return;
+    }
+
+    setApiLoading(true);
+    try {
+      const result = await updatePassword(formData.email, formData.newPassword);
+      if (result?.success) {
+        toast.success('Password reset successfully!');
+        
+        // Reset form and redirect to dashboard
+        setFormMode('auth');
+        setOtpVerified(false);
+        setFormData({
+          displayName: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          rememberMe: false,
+          acceptTerms: false,
+          otp: '',
+          newPassword: '',
+          confirmNewPassword: ''
+        });
+        
+        // Reset password visibility states
+        setShowPassword(false);
+        setShowConfirmPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmNewPassword(false);
+        
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          window.location.href = 'http://localhost:3000/dashboard';
+        }, 1500);
+      } else {
+        toast.error(result.message || 'Failed to reset password. Please try again.');
+      }
+    } catch (error) {
+      console.error('Reset password error:', error);
+      toast.error('Failed to reset password. Please try again.');
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setFormMode('auth');
+    setOtpVerified(false);
+    setFormData({
+      displayName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      rememberMe: false,
+      acceptTerms: false,
+      otp: '',
+      newPassword: '',
+      confirmNewPassword: ''
+    });
+    // Reset password visibility states
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmNewPassword(false);
+  };
+
+  const handleResendOTP = async () => {
+    setApiLoading(true);
+    try {
+      const result = await sendOTP(formData.email);
+      if (result?.success) {
+        toast.success('OTP resent to your email!');
+      } else {
+        toast.error(result.message || 'Failed to resend OTP. Please try again.');
+      }
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+      toast.error('Failed to resend OTP. Please try again.');
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  // Render different forms based on mode
+  const renderAuthForm = () => (
+    <form className="auth-form" onSubmit={handleSubmit}>
+      {!isLogin && (
+        <div className="form-group">
+          <label>Full Name</label>
           <Input
-            label="Full Name"
-            id="displayName"
+            type="text"
             name="displayName"
+            placeholder="Enter your full name"
             value={formData.displayName}
             onChange={handleInputChange}
-            placeholder="Enter your full name"
             required
           />
-        )}
+        </div>
+      )}
 
-
+      <div className="form-group">
+        <label>Email</label>
         <Input
-          label="Email"
-          id="email"
-          name="email"
           type="email"
+          name="email"
+          placeholder="Enter your email"
           value={formData.email}
           onChange={handleInputChange}
-          placeholder="Enter your email"
           required
         />
+      </div>
 
-
-        <Input
-          label="Password"
-          id="password"
-          name="password"
-          type={showPassword ? 'text' : 'password'}
-          value={formData.password}
-          onChange={handleInputChange}
-          placeholder="Enter your password"
-          required
-          minLength={6}
-          showToggle
-          showPassword={showPassword}
-          togglePassword={() => setShowPassword(!showPassword)}
-        />
-
-
-        {!isLogin && (
+      <div className="form-group">
+        <label>Password</label>
+        <div className="password-input has-toggle">
           <Input
-            label="Confirm Password"
-            id="confirmPassword"
-            name="confirmPassword"
-            type={showConfirmPassword ? 'text' : 'password'}
-            value={formData.confirmPassword}
+            type={showPassword ? 'text' : 'password'}
+            name="password"
+            placeholder="Enter your password"
+            value={formData.password}
             onChange={handleInputChange}
-            placeholder="Confirm your password"
             required
-            minLength={6}
-            showToggle
-            showPassword={showConfirmPassword}
-            togglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
           />
-        )}
-
-
-        {!isLogin && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5em',
-            fontSize: '0.95em',
-            color: '#374151',
-            marginBottom: '1rem'
-          }}>
-            <input
-              type="checkbox"
-              id="acceptTerms"
-              name="acceptTerms"
-              checked={formData.acceptTerms}
-              onChange={handleInputChange}
-            />
-            <label htmlFor="acceptTerms" style={{
-              fontSize: '0.875rem',
-              color: '#6b7280'
-            }}>
-              I accept the <a href="#" target="_blank" style={{
-                textDecoration: 'none',
-                color: '#3b82f6'
-              }}>Terms and Conditions</a>
-            </label>
-          </div>
-        )}
-
-
-        {/* Remember Me & Forgot password for Login */}
-        {isLogin && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1rem'
-          }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.95em', color: '#374151' }}>
-              <input
-                type="checkbox"
-                name="rememberMe"
-                checked={formData.rememberMe}
-                onChange={handleInputChange}
-                style={{ accentColor: "#3b82f6" }}
-              />
-              Remember me
-            </label>
-            <a href="#" className="forgot-password" tabIndex={0}>Forgot Password?</a>
-          </div>
-        )}
-
-
-        <Button type="submit" disabled={isLoading} className="primary-btn auth-submit">
-          {isLoading ? 'Loading...' : isLogin ? 'Sign In' : 'Sign Up'}
-        </Button>
-      </form>
-
-
-      {/* Separator and social section
-      <div className="separator"><span>Or continue with</span></div>
-      <div className="social-section">
-        <div className="social-icons">
-          Add your logic if you want actual sign in / connect - here just UI
-          <button type="button" className="social-icon-btn twitter-btn" disabled={isLoading}>
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path fill="#1DA1F2" d="M24 4.557a9.902 9.902 0 0 1-2.828.775A4.932 4.932 0 0 0 23.337 3.1a9.868 9.868 0 0 1-3.127 1.195 4.924 4.924 0 0 0-8.397 4.49A13.978 13.978 0 0 1 1.671 3.149a4.822 4.822 0 0 0-.666 2.475c0 1.708.87 3.215 2.188 4.099A4.904 4.904 0 0 1 .96 8.208v.061a4.927 4.927 0 0 0 3.95 4.827c-.423.115-.87.176-1.329.176-.324 0-.637-.03-.945-.086.637 1.984 2.487 3.429 4.682 3.467A9.869 9.869 0 0 1 0 21.543a13.95 13.95 0 0 0 7.548 2.211c9.051 0 14.002-7.496 14.002-13.986 0-.213-.005-.425-.014-.636A10.012 10.012 0 0 0 24 4.557z"></path></svg>
-          </button>
-          <button type="button" className="social-icon-btn instagram-btn" disabled={isLoading}>
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><radialGradient id="IG" cx="1" cy="1" r="1.5" gradientTransform="scale(1.5 1)"> <stop stopColor="#E4405F" /> <stop offset=".35" stopColor="#FDCB5D" /> <stop offset="1" stopColor="#833AB4" /></radialGradient><rect width="24" height="24" rx="4" fill="url(#IG)"/><path fill="#FFF" d="M12 15.655a3.655 3.655 0 1 1 0-7.31 3.655 3.655 0 0 1 0 7.31Zm0-6A2.345 2.345 0 1 0 12 14a2.345 2.345 0 0 0 0-4.691Zm5.5-.236a1.054 1.054 0 1 1-2.108 0 1.054 1.054 0 0 1 2.108 0Z"/><circle cx="12" cy="12" r="4.8" stroke="#fff" strokeWidth="2"/></svg>
+          <button
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </button>
         </div>
-      </div> */}
+      </div>
 
+      {!isLogin && (
+        <div className="form-group">
+          <label>Confirm Password</label>
+          <div className="password-input has-toggle">
+            <Input
+              type={showConfirmPassword ? 'text' : 'password'}
+              name="confirmPassword"
+              placeholder="Confirm your password"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+        </div>
+      )}
 
-      {/* Footer Switch between Login/Signup */}
-      <div style={{
+      {isLogin && (
+        <div style={{
           display: 'flex',
-          justifyContent: 'center',
-          gap: '0.5rem',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem'
         }}>
-        <p>
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
-           
-        </p>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.95em', color: '#374151' }}>
+            <input
+              type="checkbox"
+              name="rememberMe"
+              checked={formData.rememberMe}
+              onChange={handleInputChange}
+              style={{ accentColor: "#3b82f6" }}
+            />
+            Remember me
+          </label>
+          <button
+            type="button"
+            className="forgot-password"
+            onClick={() => setFormMode('forgot')}
+          >
+            Forgot Password?
+          </button>
+        </div>
+      )}
+
+      {!isLogin && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5em',
+          fontSize: '0.95em',
+          color: '#374151',
+          marginBottom: '1rem'
+        }}>
+          <input
+            type="checkbox"
+            id="acceptTerms"
+            name="acceptTerms"
+            checked={formData.acceptTerms}
+            onChange={handleInputChange}
+          />
+          <label htmlFor="acceptTerms" style={{
+            fontSize: '0.875rem',
+            color: '#6b7280'
+          }}>
+            I accept the <a href="#" target="_blank" style={{
+              textDecoration: 'none',
+              color: '#3b82f6'
+            }}>Terms and Conditions</a>
+          </label>
+        </div>
+      )}
+
+      <Button
+        type="submit"
+        className="primary-btn auth-submit"
+        disabled={isLoading}
+      >
+        {isLoading && <div className="spinner" />}
+        {isLogin ? 'Sign In' : 'Create Account'}
+      </Button>
+    </form>
+  );
+
+  const renderForgotPasswordForm = () => (
+    <form className="auth-form" onSubmit={handleForgotPassword}>
+      <div className="form-header">
+        <h3>Forgot Password</h3>
+        <p>Enter your email address to receive an OTP</p>
+      </div>
+
+      <div className="form-group">
+        <label>Email Address</label>
+        <Input
+          type="email"
+          name="email"
+          placeholder="Enter your email address"
+          value={formData.email}
+          onChange={handleInputChange}
+          required
+        />
+      </div>
+
+      <Button
+        type="submit"
+        className="primary-btn auth-submit"
+        disabled={apiLoading}
+      >
+        {apiLoading && <div className="spinner" />}
+        Send OTP
+      </Button>
+
+      <div className="auth-footer">
         <button
           type="button"
           className="auth-switch"
-          onClick={() => setIsLogin(!isLogin)}
-          disabled={isLoading}
+          onClick={handleBackToLogin}
         >
-          {isLogin ? "Sign Up now" : "Sign In"}
+          Back to Login
         </button>
       </div>
+    </form>
+  );
+
+  const renderOTPForm = () => (
+    <form className="auth-form" onSubmit={handleOTPVerification}>
+      <div className="form-header">
+        <h3>Verify OTP</h3>
+        <div className="verification-text">
+          We've sent a verification code to {formData.email}
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label>Enter OTP</label>
+        <Input
+          type="text"
+          name="otp"
+          placeholder="Enter 6-digit OTP"
+          value={formData.otp}
+          onChange={handleInputChange}
+          maxLength="6"
+          required
+        />
+      </div>
+
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: '1rem',
+        alignItems: 'center',
+        marginBottom: '1rem'
+      }}>
+        <button
+          type="button"
+          className="resend-btn"
+          onClick={handleResendOTP}
+          disabled={apiLoading}
+          style={{ 
+            padding: '0.5rem 1rem',
+            backgroundColor: '#6b7280',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          {apiLoading ? 'Resending...' : 'Resend OTP'}
+        </button>
+
+        <Button
+          type="submit"
+          className="primary-btn auth-submit"
+          disabled={apiLoading}
+        >
+          {apiLoading && <div className="spinner" />}
+          Verify OTP
+        </Button>
+      </div>
+
+      <div className="auth-footer">
+        <button
+          type="button"
+          className="auth-switch"
+          onClick={handleBackToLogin}
+        >
+          Back to Login
+        </button>
+      </div>
+    </form>
+  );
+
+  const renderResetPasswordForm = () => (
+    <form className="auth-form" onSubmit={handleResetPassword}>
+      <div className="form-header">
+        <h3>Reset Password</h3>
+        <p>Create a new password for {formData.email}</p>
+      </div>
+
+      {/* Display email for confirmation */}
+      <div className="form-group">
+        <label>Email (Read-only)</label>
+        <Input
+          type="email"
+          name="email"
+          value={formData.email}
+          readOnly
+          style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }}
+        />
+      </div>
+
+      <div className="form-group">
+        <label>New Password</label>
+        <div className="password-input has-toggle">
+          <Input
+            type={showNewPassword ? 'text' : 'password'}
+            name="newPassword"
+            placeholder="Enter new password"
+            value={formData.newPassword}
+            onChange={handleInputChange}
+            required
+          />
+          <button
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowNewPassword(!showNewPassword)}
+          >
+            {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label>Confirm New Password</label>
+        <div className="password-input has-toggle">
+          <Input
+            type={showConfirmNewPassword ? 'text' : 'password'}
+            name="confirmNewPassword"
+            placeholder="Confirm new password"
+            value={formData.confirmNewPassword}
+            onChange={handleInputChange}
+            required
+          />
+          <button
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+          >
+            {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+      </div>
+
+      <Button
+        type="submit"
+        className="primary-btn auth-submit"
+        disabled={apiLoading}
+      >
+        {apiLoading && <div className="spinner" />}
+        Reset Password
+      </Button>
+
+      <div className="auth-footer">
+        <button
+          type="button"
+          className="auth-switch"
+          onClick={handleBackToLogin}
+        >
+          Back to Login
+        </button>
+      </div>
+    </form>
+  );
+
+  return (
+    <>
+      {/* Conditional form rendering */}
+      {formMode === 'auth' && renderAuthForm()}
+      {formMode === 'forgot' && renderForgotPasswordForm()}
+      {formMode === 'otp' && renderOTPForm()}
+      {formMode === 'reset' && renderResetPasswordForm()}
+
+      {/* Footer - only show in auth mode */}
+      {formMode === 'auth' && (
+        <div className="auth-footer">
+          <p>
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            <button
+              type="button"
+              className="auth-switch"
+              onClick={() => setIsLogin(!isLogin)}
+            >
+              {isLogin ? 'Sign Up' : 'Sign In'}
+            </button>
+          </p>
+        </div>
+      )}
     </>
   );
 };
-
 
 export default Form;

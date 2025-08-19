@@ -72,7 +72,7 @@ const AIAssistant = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="tab-navigation">
+      <div className="tab-navigation responsive-tabs">
         {tabs.map(tab => {
           const IconComponent = tab.icon;
           return (
