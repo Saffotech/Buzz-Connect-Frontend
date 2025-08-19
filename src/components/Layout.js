@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
-import mgalogo from '../assets/img/mgalogo.png';
+import mgalogo from '../assets/img/Logo.png';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -119,6 +119,7 @@ const Layout = ({ children }) => {
   return (
     <div className="app-layout">
       {/* Mobile Header */}
+
       {isMobile && (
         <header className={`mobile-header ${showMobileHeader ? 'visible' : 'hidden'}`}>
           <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
@@ -130,7 +131,6 @@ const Layout = ({ children }) => {
           </div>
         </header>
       )}
-
       {/* Sidebar */}
       <aside
         className={`app-sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}
