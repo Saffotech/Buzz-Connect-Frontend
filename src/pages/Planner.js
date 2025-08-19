@@ -23,6 +23,8 @@ import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import { useDashboardData } from '../hooks/useApi';
 import apiClient from '../utils/api';
 import './Planner.css';
+import PostDetailModal from "../components/PostDetailModal";
+
 
 const Planner = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
@@ -39,6 +41,10 @@ const Planner = () => {
   const [calendarPosts, setCalendarPosts] = useState([]);
   const [draftPosts, setDraftPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [showPostDetail, setShowPostDetail] = useState(false);
+
+
 
   const {
     posts,
@@ -389,8 +395,8 @@ const Planner = () => {
                   setShowCreatePost(true);
                 }}
                 onPostClick={(post) => {
-                  // Open post detail modal
-                  console.log('Post clicked:', post);
+                  setSelectedPost(post);
+                  setShowPostDetail(true);
                 }}
                 loading={loading}
               />
@@ -404,8 +410,8 @@ const Planner = () => {
                   setShowCreatePost(true);
                 }}
                 onPostClick={(post) => {
-                  // Open post detail modal
-                  console.log('Post clicked:', post);
+                  setSelectedPost(post);
+                  setShowPostDetail(true);
                 }}
                 loading={loading}
               />
@@ -424,6 +430,12 @@ const Planner = () => {
         onPostCreated={handleCreatePost}
         initialData={selectedDate ? { scheduledDate: selectedDate } : undefined}
       />
+      {showPostDetail && (
+        <PostDetailModal
+          post={selectedPost}
+          onClose={() => setShowPostDetail(false)}
+        />
+      )}
     </div>
   );
 };
