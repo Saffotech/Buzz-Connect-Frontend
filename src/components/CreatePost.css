@@ -643,7 +643,10 @@
 }
 
 .platform-preview.facebook {
-  border-left: 4px solid #1877F2;
+  border-bottom: 4px solid #1877F2;
+}
+.platform-preview.facebook .preview-images img {
+  height: auto;
 }
 
 .preview-text {

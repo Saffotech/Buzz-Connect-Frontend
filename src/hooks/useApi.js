@@ -325,7 +325,9 @@ export const useDashboardData = () => {
     posts: [],
     analytics: null,
     instagramStatus: null,
-    media: []
+    media: [],
+    stats: null,          
+    upcomingPosts: []      
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -345,14 +347,17 @@ export const useDashboardData = () => {
         return;
       }
 
-      // Fetch all data concurrently
-      const [userRes, postsRes, analyticsRes, statusRes, mediaRes] = await Promise.allSettled([
+      // ✅ Fetch dashboard data as primary source
+      const [dashboardRes, userRes, postsRes, analyticsRes, statusRes, mediaRes] = await Promise.allSettled([
+        apiClient.getDashboard(),    // ✅ Primary dashboard data
         apiClient.getCurrentUser(),
         apiClient.getPosts(),
         apiClient.getAnalyticsOverview(),
         apiClient.getInstagramStatus(),
         apiClient.getMedia()
       ]);
+
+      const dashboardApiData = dashboardRes.status === 'fulfilled' ? dashboardRes.value?.data : null;
 
       const dashboardData = {
         user: userRes.status === 'fulfilled' ? userRes.value?.data : null,
@@ -361,7 +366,12 @@ export const useDashboardData = () => {
         analytics: analyticsRes.status === 'fulfilled' ? analyticsRes.value?.data : null,
         instagramStatus: statusRes.status === 'fulfilled' ? statusRes.value?.data : null,
         media: mediaRes.status === 'fulfilled' ?
-          (Array.isArray(mediaRes.value?.data) ? mediaRes.value.data : []) : []
+          (Array.isArray(mediaRes.value?.data) ? mediaRes.value.data : []) : [],
+        
+        // ✅ Use dashboard API data
+        stats: dashboardApiData?.stats || null,
+        upcomingPosts: dashboardApiData?.upcomingPosts || [],
+        analyticsOverview: dashboardApiData?.analyticsOverview || null
       };
 
       // Cache the result
@@ -373,7 +383,7 @@ export const useDashboardData = () => {
       setData(dashboardData);
 
       // Check for any errors
-      const errors = [userRes, postsRes, analyticsRes, statusRes, mediaRes]
+      const errors = [dashboardRes, userRes, postsRes, analyticsRes, statusRes, mediaRes]
         .filter(res => res.status === 'rejected')
         .map(res => res.reason?.message || 'Unknown error');
 
@@ -457,6 +467,7 @@ export const useDashboardData = () => {
     analytics: data.analytics,
     instagramStatus: data.instagramStatus,
     media: data.media,
+    data: data, // ✅ Return complete data object for easy access
 
     // States
     loading,

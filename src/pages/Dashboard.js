@@ -28,6 +28,8 @@ import apiClient from '../utils/api';
 import './Dashboard.css';
 import { platformColors } from '../utils/constants';
 import Loader from '../components/common/Loader';
+import Logo from "../assets/img/Logo.png";
+
 
 const Dashboard = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
@@ -47,7 +49,8 @@ const Dashboard = () => {
     loading: dashboardLoading,
     error: dashboardError,
     createPost: apiCreatePost,
-    refetch: refetchDashboard
+    refetch: refetchDashboard,
+    data
   } = useDashboardData();
 
   // Fetch posts from API
@@ -203,14 +206,25 @@ const Dashboard = () => {
   ).length;
 
   // Real analytics data with fallbacks
+  // const stats = {
+  //   followers: userStats?.totalFollowers || analytics?.totalFollowers || user?.followers || '0',
+  //   engagement: userStats?.avgEngagementRate ? 
+  //     `${userStats.avgEngagementRate.toFixed(1)}%` : 
+  //     (analytics?.avgEngagementRate ? `${analytics.avgEngagementRate.toFixed(1)}%` : '0%'),
+  //   postsThisMonth: postsThisMonth || '0',
+  //   reach: userStats?.totalReach || analytics?.totalReach || '0'
+  // };
   const stats = {
-    followers: userStats?.totalFollowers || analytics?.totalFollowers || user?.followers || '0',
-    engagement: userStats?.avgEngagementRate ? 
-      `${userStats.avgEngagementRate.toFixed(1)}%` : 
-      (analytics?.avgEngagementRate ? `${analytics.avgEngagementRate.toFixed(1)}%` : '0%'),
-    postsThisMonth: postsThisMonth || '0',
-    reach: userStats?.totalReach || analytics?.totalReach || '0'
+    followers: data?.stats?.totalFollowers?.toLocaleString() || '0',
+    engagement: data?.analyticsOverview?.avgEngagementRate 
+      ? `${data.analyticsOverview.avgEngagementRate.toFixed(1)}%` 
+      : '0%',
+    postsThisMonth: data?.stats?.publishedPosts || '0', // or totalPosts if you prefer
+    reach: data?.analyticsOverview?.totalReach?.toLocaleString() || '0'
   };
+
+    const upcomingPostsFromAPI = data?.upcomingPosts || [];
+
 
   // Show notification temporarily
   useEffect(() => {
@@ -256,10 +270,10 @@ const Dashboard = () => {
       )}
 
       {/* Dashboard Header */}
-      <div className="dashboard-header">
+      {/* <div className="dashboard-header">
         <div className="header-left">
           <div className="logo">
-            <h1>BuzzConnect</h1>
+           <img src={Logo} alt="BuzzConnect Logo" />
           </div>
         </div>
         <div className="header-right">
@@ -290,160 +304,228 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Three Column Layout */}
       <div className="dashboard-layout">
         {/* Center Column: Core Content */}
         <div className="dashboard-center">
           {/* Performance Snapshot */}
-          <div className="performance-snapshot">
-            <div className="stats-grid">
-              <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
-                <div className="stat-icon followers">
-                  <Users size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{stats.followers}</h3>
-                  <p>Total Followers</p>
-                  <span className="stat-change positive">+12% this month</span>
-                </div>
-              </div>
-              <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
-                <div className="stat-icon engagement">
-                  <Heart size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{stats.engagement}</h3>
-                  <p>Engagement Rate</p>
-                  <span className="stat-change positive">+2.1% this week</span>
-                </div>
-              </div>
-              <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
-                <div className="stat-icon posts">
-                  <Image size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{stats.postsThisMonth}</h3>
-                  <p>Posts This Month</p>
-                  <span className="stat-change neutral">+{stats.postsThisMonth} this month</span>
-                </div>
-              </div>
-              <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
-                <div className="stat-icon reach">
-                  <TrendingUp size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{stats.reach}</h3>
-                  <p>Total Reach</p>
-                  <span className="stat-change positive">+18% this month</span>
-                </div>
-              </div>
-            </div>
+        <div className="performance-snapshot">
+           <div className="stats-grid">
+  {/* Row 1 */}
+  <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
+    <div className="stat-icon followers">
+      <Users size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{data?.stats?.totalFollowers?.toLocaleString() || '0'}</h3>
+      <p>Total Followers</p>
+      <span className="stat-change positive">
+        {data?.stats?.connectedPlatforms || 0} platforms connected
+      </span>
+    </div>
+  </div>
+  
+  <div className="stat-card clickable">
+    <div className="stat-icon posts">
+      <Image size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{data?.stats?.totalPosts || 0}</h3>
+      <p>Total Posts</p>
+      <span className="stat-change positive">
+        All time posts created
+      </span>
+    </div>
+  </div>
+  
+  <div className="stat-card clickable" onClick={() => navigate('/planner')}>
+    <div className="stat-icon scheduled">
+      <Calendar size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{data?.stats?.scheduledPosts || 0}</h3>
+      <p>Scheduled Posts</p>
+      <span className="stat-change neutral">
+        Awaiting publication
+      </span>
+    </div>
+  </div>
+
+  {/* Row 2 */}
+  <div className="stat-card clickable">
+    <div className="stat-icon published">
+      <TrendingUp size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{data?.stats?.publishedPosts || 0}</h3>
+      <p>Published Posts</p>
+      <span className="stat-change positive">
+        Live on social media
+      </span>
+    </div>
+  </div>
+  
+<div className="stat-card clickable" onClick={() => navigate('/content?tab=media')}>
+  <div className="stat-icon media">
+    <Upload size={24} />
+  </div>
+  <div className="stat-content">
+    <h3>{data?.stats?.mediaFiles || 0}</h3>
+    <p>Media Files</p>
+    <span className="stat-change neutral">
+      Images and videos stored
+    </span>
+  </div>
+</div>
+
+  
+  <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
+    <div className="stat-icon engagement">
+      <Heart size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0'}%</h3>
+      <p>Engagement Rate</p>
+      <span className="stat-change positive">
+        {data?.analyticsOverview?.totalLikes || 0} total likes
+      </span>
+    </div>
+  </div>
+</div>
+
           </div>
 
           {/* Upcoming Posts */}
-          <div className="upcoming-posts-section">
-        <div className="header-with-button">
-          
-          <h3>Upcoming Posts</h3>
-          <button 
-            className="inline-refresh-btn" 
-            onClick={handleRefreshPosts}
-            disabled={postsLoading}
-          >
-            <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
-            Refresh
-          </button>
-        </div>
+    <div className="upcoming-posts-section">
+    <div className="header-with-button">
+      
+      <h3>Upcoming Posts</h3>
+      <button 
+        className="inline-refresh-btn" 
+        onClick={handleRefreshPosts}
+        disabled={postsLoading}
+      >
+        <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
+        Refresh
+      </button>
+    </div>
 
 
-            
-            {postsError && (
-              <div className="error-message">
-                <AlertCircle size={16} />
-                <span>{postsError}</span>
-                <button onClick={() => fetchPosts(true)}>Retry</button>
-              </div>
-            )}
-            
-            <div className="upcoming-posts-scroll">
-              {postsLoading && posts.length === 0 ? (
-                <div className="loading-posts">
-                         <Loader/>
+        
+        {postsError && (
+          <div className="error-message">
+            <AlertCircle size={16} />
+            <span>{postsError}</span>
+            <button onClick={() => fetchPosts(true)}>Retry</button>
+          </div>
+        )}
+        
+        <div className="upcoming-posts-scroll">
+          {postsLoading && posts.length === 0 ? (
+            <div className="loading-posts">
+                     <Loader/>
 
-                </div>
-              ) : upcomingPosts.length > 0 ? (
-                upcomingPosts.slice(0, 5).flatMap(post => {
-                  // Defensive platforms array
-                  const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ? 
-                    post.platforms : ['instagram'];
+            </div>
+          ) : upcomingPosts.length > 0 ? (
+            upcomingPosts.slice(0, 5).flatMap(post => {
+              // Defensive platforms array
+              const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ? 
+                post.platforms : ['instagram'];
 
-                  // For each platform, create a separate card
-                  return platformsArray.map(platform => {
-                    const primary = platform.toLowerCase();
-                    const colorMap = {
-                      instagram: '#E4405F',
-                      twitter: '#1DA1F2',
-                      facebook: '#1877F2',
-                    };
-                    const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
+              // For each platform, create a separate card
+              return platformsArray.map(platform => {
+                const primary = platform.toLowerCase();
+                const colorMap = {
+                  instagram: '#E4405F',
+                  twitter: '#1DA1F2',
+                  facebook: '#1877F2',
+                };
+                const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
 
-                    return (
-                      <div
-                        key={`${post._id}-${primary}`}
-                        className={`upcoming-post-card platform-preview ${primary}`}
-                        style={style}
-                      >
-                        <div className="platform-header">
-                          <Clock size={16} />
-                          <span className="schedule-time">
-                            {new Date(post.scheduledDate).toLocaleDateString('en-US', {
-                              weekday: 'short',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                          <span className="platform-name">{primary}</span>
-                        </div>
+                return (
+                  <div
+                    key={`${post._id}-${primary}`}
+                    className={`upcoming-post-card platform-preview ${primary}`}
+                    style={style}
+                  >
+                    <div className="platform-header">
+                      <Clock size={16} />
+                      <span className="schedule-time">
+                        {new Date(post.scheduledDate).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                      <span className="platform-name">{primary}</span>
+                    </div>
 
-                        {post.images?.length > 0 && (
-                          <div className="preview-images">
-                            {post.images.slice(0, 4).map((img, i) => {
-                              const src = typeof img === 'string' ? img : img.url;
-                              return <img key={i} src={src} alt="" />;
-                            })}
-                          </div>
-                        )}
-
-                        <div className="preview-text">
-                          <p>{post.content.substring(0, 80)}{post.content.length > 80 ? '…' : ''}</p>
-                        </div>
-
-                        <div className="preview-hashtags">
-                          {post.hashtags?.slice(0, 3).map((hashtag, i) => (
-                            <span key={i} className="hashtag">{hashtag}</span>
-                          )) || <span className="hashtag">#{primary}</span>}
-                        </div>
-
-                        <div className="post-status">
-                          <span className={`status-badge ${post.status}`}>
-                            {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-                          </span>
-                        </div>
+                    {post.images?.length > 0 && (
+                      <div className="preview-images">
+                        {post.images.slice(0, 4).map((img, i) => {
+                          const src = typeof img === 'string' ? img : img.url;
+                          return <img key={i} src={src} alt="" />;
+                        })}
                       </div>
-                    );
-                  });
-                })
-              ) : (
-                <div className="empty-upcoming">
-                  <Calendar size={32} />
-                  <p>No upcoming posts scheduled</p>
-                  <p className="empty-subtitle">Create posts with future dates to see them here</p>
-                </div>
-              )}
+                    )}
+
+                    <div className="preview-text">
+                      <p>{post.content.substring(0, 80)}{post.content.length > 80 ? '…' : ''}</p>
+                    </div>
+
+                    <div className="preview-hashtags">
+                      {post.hashtags?.slice(0, 3).map((hashtag, i) => (
+                        <span key={i} className="hashtag">{hashtag}</span>
+                      )) || <span className="hashtag">#{primary}</span>}
+                    </div>
+
+                    <div className="post-status">
+                      <span className={`status-badge ${post.status}`}>
+                        {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              });
+            })
+          ) : (
+            <div className="empty-upcoming">
+              <Calendar size={32} />
+              <p>No upcoming posts scheduled</p>
+              <p className="empty-subtitle">Create posts with future dates to see them here</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+           {/* ✅ Updated Recent Activity to use API stats */}
+          <div className="dashboard-stats-summary">
+            <h3>Quick Summary</h3>
+            <div className="summary-grid">
+              <div className="summary-item">
+                <span className="summary-label">Media Files</span>
+                <span className="summary-value">{data?.stats?.mediaFiles || 0}</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Connected Platforms</span>
+                <span className="summary-value">{data?.stats?.connectedPlatforms || 0}</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Published Posts</span>
+                <span className="summary-value">{data?.stats?.publishedPosts || 0}</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Total Engagement</span>
+                <span className="summary-value">
+                  {(data?.analyticsOverview?.totalLikes || 0) + 
+                   (data?.analyticsOverview?.totalComments || 0) + 
+                   (data?.analyticsOverview?.totalShares || 0)}
+                </span>
+              </div>
             </div>
           </div>
           
