@@ -501,33 +501,6 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-
-           {/* ✅ Updated Recent Activity to use API stats */}
-          <div className="dashboard-stats-summary">
-            <h3>Quick Summary</h3>
-            <div className="summary-grid">
-              <div className="summary-item">
-                <span className="summary-label">Media Files</span>
-                <span className="summary-value">{data?.stats?.mediaFiles || 0}</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Connected Platforms</span>
-                <span className="summary-value">{data?.stats?.connectedPlatforms || 0}</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Published Posts</span>
-                <span className="summary-value">{data?.stats?.publishedPosts || 0}</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Total Engagement</span>
-                <span className="summary-value">
-                  {(data?.analyticsOverview?.totalLikes || 0) + 
-                   (data?.analyticsOverview?.totalComments || 0) + 
-                   (data?.analyticsOverview?.totalShares || 0)}
-                </span>
-              </div>
-            </div>
-          </div>
           
           {/* Top Performing Post */}
           {(() => {
