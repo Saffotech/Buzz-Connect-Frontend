@@ -1,24 +1,50 @@
 import React from "react";
 import "./PostDetailModal.css";
-import { X, Calendar, Clock, Heart, MessageCircle, Share } from "lucide-react";
+import { X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, Bookmark, Send, Eye, Instagram, Facebook, Twitter } from "lucide-react";
 
 const PostDetailModal = ({ post, onClose }) => {
   if (!post) return null;
 
   const platform = post.platforms?.[0]?.toLowerCase() || "post";
 
+  // Debug platform detection
+  console.log("Platform detected:", platform);
+  console.log("Post platforms array:", post.platforms);
+
   const getPlatformStyle = () => {
     switch (platform) {
       case "instagram":
-        return { background: "linear-gradient(90deg, #f58529, #dd2a7b, #8134af, #515bd4)" };
+        return { 
+          gradient: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
+          primary: "#E1306C",
+          text: "#262626",
+          hashtag: "#00376b"
+        };
       case "facebook":
-        return { background: "#1877f2" };
+        return { 
+          gradient: "linear-gradient(135deg, #1877f2, #42a5f5)",
+          primary: "#1877f2",
+          text: "#1c1e21",
+          hashtag: "#385898"
+        };
       case "twitter":
-        return { background: "#1da1f2" };
+        return { 
+          gradient: "linear-gradient(135deg, #1da1f2, #14171a)",
+          primary: "#1da1f2",
+          text: "#0f1419",
+          hashtag: "#1d9bf0"
+        };
       default:
-        return { background: "#6b7280" };
+        return { 
+          gradient: "linear-gradient(135deg, #667eea, #764ba2)",
+          primary: "#667eea",
+          text: "#2d3748",
+          hashtag: "#667eea"
+        };
     }
   };
+
+  const platformStyle = getPlatformStyle();
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -27,7 +53,7 @@ const PostDetailModal = ({ post, onClose }) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric'
     });
   };
@@ -48,90 +74,130 @@ const PostDetailModal = ({ post, onClose }) => {
     return {
       likes: post.likes || post.engagement?.likes || 0,
       comments: post.comments || post.engagement?.comments || 0,
-      shares: post.shares || post.engagement?.shares || 0
+      shares: post.shares || post.engagement?.shares || 0,
+      views: post.views || post.engagement?.views || 0
     };
   };
 
   const engagement = getEngagementStats();
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
+    <div className="post-detail-overlay" onClick={onClose}>
+      <div className="post-detail-container" onClick={(e) => e.stopPropagation()}>
+        <button className="post-detail-close-btn" onClick={onClose}>
           <X size={20} />
         </button>
 
-        <div className="platform-header" style={getPlatformStyle()}>
-          <span>{platform.charAt(0).toUpperCase() + platform.slice(1)}</span>
-        </div>
-
-        {post.images?.length > 0 && (
-          <div className="post-image">
-            <img
-              src={
-                typeof post.images[0] === "string"
-                  ? post.images[0]
-                  : post.images[0]?.url || ""
-              }
-              alt="Post media"
-              onError={(e) => {
-                e.target.src = "https://via.placeholder.com/500x300?text=Image+Not+Found";
-              }}
-            />
-          </div>
-        )}
-
-        <div className="post-content">
-          <p>{post.content}</p>
-          
-          {/* Hashtags section */}
-          {(post.tags && post.tags.length > 0) || (post.hashtags && post.hashtags.length > 0) ? (
-            <div className="tags">
-              {(post.tags || post.hashtags || []).map((tag, i) => (
-                <span key={i} className="tag">#{tag}</span>
-              ))}
+        {/* Platform Header */}
+        <div className="post-detail-header" style={{ background: platformStyle.gradient }}>
+          <div className="post-detail-platform-info">
+            <div className="post-detail-platform-icon">
+              {platform === 'instagram' && <Instagram size={20} color="white" />}
+              {platform === 'facebook' && <Facebook size={20} color="white" />}
+              {platform === 'twitter' && <Twitter size={20} color="white" />}
+              {platform === 'post' && <MessageCircle size={20} color="white" />}
             </div>
-          ) : null}
+            <div className="post-detail-platform-details">
+              <span className="post-detail-platform-name">
+                {platform.charAt(0).toUpperCase() + platform.slice(1)}
+              </span>
+              <span className="post-detail-post-type">Post</span>
+            </div>
+          </div>
         </div>
 
-        {/* Post metadata - date, time, and engagement stats */}
-        <div className="post-metadata">
-          {(post.date || post.scheduledDate || post.createdAt) && (
-            <div className="post-date-time">
-              <div className="date-item">
-                <Calendar size={16} />
-                <span>{formatDate(post.date || post.scheduledDate || post.createdAt)}</span>
-              </div>
-              <div className="date-item">
-                <Clock size={16} />
-                <span>{formatTime(post.date || post.scheduledDate || post.createdAt)}</span>
-              </div>
+        {/* Main Content Area - Horizontal Layout */}
+        <div className="post-detail-main-content">
+          {/* Post Image */}
+          {post.images?.length > 0 && (
+            <div className="post-detail-image-container">
+              <img
+                className="post-detail-image"
+                src={
+                  typeof post.images[0] === "string"
+                    ? post.images[0]
+                    : post.images[0]?.url || ""
+                }
+                alt="Post media"
+                onError={(e) => {
+                  e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
+                }}
+              />
             </div>
           )}
+
+          {/* Post Content */}
+          <div className="post-detail-content">
+            <p className="post-detail-text">{post.content}</p>
+            
+            {/* Hashtags section */}
+            {(post.tags && post.tags.length > 0) || (post.hashtags && post.hashtags.length > 0) ? (
+              <div className="post-detail-tags">
+                {(post.tags || post.hashtags || []).map((tag, i) => (
+                  <span 
+                    key={i} 
+                    className="post-detail-tag" 
+                    style={{ color: platformStyle.hashtag }}
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
           
-          {/* Engagement stats */}
-          <div className="engagement-stats">
-            <div className="stat">
-              <Heart size={16} />
+        </div>
+        {/* Engagement Actions */}
+        <div className="post-detail-engagement">
+          <div className="post-detail-action-buttons">
+            <button className="post-detail-action-btn" style={{ color: platformStyle.primary }}>
+              <Heart size={22} />
               <span>{engagement.likes}</span>
-            </div>
-            <div className="stat">
-              <MessageCircle size={16} />
+            </button>
+            <button className="post-detail-action-btn">
+              <MessageCircle size={22} />
               <span>{engagement.comments}</span>
-            </div>
-            <div className="stat">
-              <Share size={16} />
+            </button>
+            <button className="post-detail-action-btn">
+              {platform === 'twitter' ? <Share size={22} /> : <Send size={22} />}
               <span>{engagement.shares}</span>
-            </div>
+            </button>
+            {engagement.views > 0 && (
+              <button className="post-detail-action-btn">
+                <Eye size={22} />
+                <span>{engagement.views}</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Status information if available */}
-        {post.status && (
-          <div className="post-status">
-            Status: <span className={`status ${post.status}`}>{post.status}</span>
+        {/* Post metadata - date, time and status */}
+        <div className="post-detail-metadata">
+          <div className="post-detail-datetime-section">
+            {(post.date || post.scheduledDate || post.createdAt) && (
+              <>
+                <div className="post-detail-metadata-item">
+                  <Calendar size={16} />
+                  <span className="post-detail-metadata-text">{formatDate(post.date || post.scheduledDate || post.createdAt)}</span>
+                </div>
+                <div className="post-detail-metadata-item">
+                  <Clock size={16} />
+                  <span className="post-detail-metadata-text">{formatTime(post.date || post.scheduledDate || post.createdAt)}</span>
+                </div>
+              </>
+            )}
           </div>
-        )}
+          
+          {/* Status on the right */}
+          {post.status && (
+            <div className="post-detail-status-section">
+              <span className="post-detail-status-label">Status:</span>
+              <span className={`post-detail-status-badge post-detail-status-${post.status.toLowerCase()}`}>
+                {post.status}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
