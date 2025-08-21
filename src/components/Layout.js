@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import toast from 'react-hot-toast';
 import {
   BarChart3,
   Calendar,
@@ -13,39 +12,67 @@ import {
   Menu,
   X,
   User,
+  ChevronDown,
   Sidebar
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
+import Logo from "../assets/img/Logo.png";
 import mgalogo from '../assets/img/mgalogo.png';
+import { useDashboardData } from '../hooks/useApi';
+
 
 const Layout = ({ children }) => {
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Default to true for desktop
-  const [isMobile, setIsMobile] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!window.innerWidth > 768);
+  const [insideSidebar, setInsideSidebar] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showMobileHeader, setShowMobileHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, token } = useAuth();
+  const { logout, token } = useAuth();
   const [name, setName] = useState('Loading...');
   const [email, setEmail] = useState('Loading...');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
 
-  // Check if it's mobile view
+  const {
+    user,
+  } = useDashboardData();
+
+  // Detect mobile/desktop
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-      // On desktop, always keep sidebar open by default
-      if (window.innerWidth > 768) {
+
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile) {
         setIsSidebarOpen(true);
-      } else {
-        setIsSidebarOpen(false);
+        setShowMobileHeader(true); // always show header on desktop
       }
     };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Scroll behavior (only mobile)
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleScroll = () => {
+      if (window.scrollY > lastScrollY) {
+        // scrolling down → hide header
+        setShowMobileHeader(false);
+      } else {
+        // scrolling up → show header
+        setShowMobileHeader(true);
+      }
+      setLastScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMobile, lastScrollY]);
 
   const navigationItems = [
     { name: 'Dashboard', path: '/dashboard', icon: BarChart3, description: 'Overview and quick stats' },
@@ -58,14 +85,7 @@ const Layout = ({ children }) => {
 
   const handleNavigation = (path) => {
     navigate(path);
-    // Only close sidebar on mobile
-    if (isMobile) {
-      setIsSidebarOpen(false);
-    }
-  };
-
-  const handleSidebarToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+    if (isMobile) setIsSidebarOpen(false);
   };
 
   const handleLogout = async () => {
@@ -88,7 +108,6 @@ const Layout = ({ children }) => {
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
         if (res.data.success) {
           setName(res.data.data.displayName || 'User');
           setEmail(res.data.data.email || 'No Email');
@@ -99,129 +118,155 @@ const Layout = ({ children }) => {
         setEmail('No Email');
       }
     };
-
-    if (token) {
-      fetchProfile();
-    } else {
-      setName('Loading...');
-      setEmail('Loading...');
-    }
+    if (token) fetchProfile();
   }, [token]);
 
   const handleUserProfileClick = () => {
     navigate('/settings?tab=profile');
-
-    // Only close sidebar on mobile
-    if (isMobile) {
-      setIsSidebarOpen(false);
-    }
+    if (isMobile) setIsSidebarOpen(false);
   };
+
+
+  const enterSidebar = (bool) => !isMobile && setIsSidebarOpen(bool);
 
   return (
     <div className="app-layout">
       {/* Mobile Header */}
-      <header className="mobile-header">
-        <button
-          className="mobile-menu-btn"
-          onClick={handleSidebarToggle}
-        >
-          <Menu size={24} />
-        </button>
-      </header>
+      {isMobile && (
+        <header className={`mobile-header ${showMobileHeader ? 'visible' : 'hidden'}`}>
+          <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(prev => !prev)}>
+            {isSidebarOpen ?
+              <X size={24} /> :
+              <Menu size={24} />
+            }
+          </button>
+          <div className="app-logo"><h1>BuzzConnect</h1></div>
+          <div className="header-user" onClick={handleUserProfileClick}>
+            <User size={20} />
+          </div>
+        </header>
+      )}
+
+      <div className="dashboard-header">
+        <div className="header-left">
+          <div className="logo">
+            {/* <h1>BuzzConnect</h1> */}
+            <img src={Logo} alt="BuzzConnect Logo" className='logo-img'/>
+          </div>
+        </div>
+        <div className="header-right">
+          <span className="welcome-message">
+            Welcome back,
+            {user?.displayName || user?.email || 'User'}!
+          </span>
+          <div className="user-profile-dropdown">
+            <button
+              className="user-avatar-btn"
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+            >
+              <div className="user-avatar">
+                {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
+              </div>
+              <ChevronDown size={16} />
+            </button>
+            {showUserDropdown && (
+              <div className="dropdown-menu">
+                <button onClick={() => navigate('/settings?tab=profile')} className="dropdown-item">
+                  <Settings size={16} />
+                  Settings
+                </button>
+                <button onClick={handleLogout} className="dropdown-item logout">
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+
+
+      {/* Overlay for mobile */}
+      {isMobile && isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
+      )}
 
       {/* Sidebar */}
-      <aside className={`app-sidebar ${isSidebarOpen ? 'open' : ''}`}
-        onMouseEnter={() => !isMobile && setIsSidebarOpen(true)}
-        onMouseLeave={() => !isMobile && setIsSidebarOpen(false)}
-      >
-        <div className="sidebar-header">
-          <div className="app-logo"
-            onClick={handleSidebarToggle}
-          >
-            {isSidebarOpen ? <img src={mgalogo} alt="MGA Logo" className="logo-img" /> : <></>}
-          </div>
+      <div className='bxd'>
+        <aside
+          className={`app-sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}
+          onMouseEnter={() => enterSidebar(true)}
+          onMouseLeave={() => enterSidebar(false)}
+        >
+          {/* <div className="sidebar-header">
+          {isSidebarOpen && <img src={mgalogo} alt="MGA Logo" className="logo-img" />}
+          {isMobile ? (
+            <button className="sidebar-close" onClick={() => setIsSidebarOpen(false)}>
+              <X size={20} />
+            </button>
+          ) : (
+            <button  className={`sidebar-toggle ${!isSidebarToggleSelected ? 'sidebar-selected' : '' } `} onClick={() => setIsSidebarToggleSelected(prev => !prev)}>
+              {isSidebarToggleSelected ?
+              <Sidebar size={20} />
+              :
+              !isSidebarOpen ?
+              <img src={mgalogoNeat} alt="MGA Logo" />
+              :
+              <Sidebar size={20} />
+              }
+            </button>
+          )}
+        </div> */}
 
-          <button
-            className="sidebar-close"
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <X size={20} />
-          </button>
 
-          <button
-            className='sidebar-toggle'
-            onClick={handleSidebarToggle}
-          >
-            <Sidebar size={20} />
-          </button>
-        </div>
 
-        <nav className="sidebar-nav">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = isActivePath(item.path);
-
-            return (
-              <button
-                key={item.path}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-                onClick={() => handleNavigation(item.path)}
-                data-tooltip={item.name}
-              >
-                <div className="nav-item-content">
-                  <Icon size={20} />
-                  <div className="nav-item-text">
-                    <span className="nav-item-name">{item.name}</span>
-                    <span className="nav-item-description">{item.description}</span>
+          <nav className="sidebar-nav">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = isActivePath(item.path);
+              return (
+                <button
+                  key={item.path}
+                  className={`nav-item ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavigation(item.path)}
+                  data-tooltip={!isSidebarOpen && !isMobile ? item.name : ''}
+                >
+                  <div className="nav-item-content">
+                    <Icon size={20} />
+                    {isSidebarOpen && (
+                      <div className="nav-item-text">
+                        <span className="nav-item-name">{item.name}</span>
+                        <span className="nav-item-description">{item.description}</span>
+                      </div>
+                    )}
                   </div>
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="sidebar-footer">
+            <div className="user-info" onClick={handleUserProfileClick}>
+              <div className="user-avatar"><User size={20} /></div>
+              {isSidebarOpen && (
+                <div className="user-details">
+                  <p className="user-name">{name}</p>
+                  <p className="user-email">{email}</p>
                 </div>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="sidebar-footer">
-          <div
-            className="user-info"
-            style={{ cursor: 'pointer' }}
-            onClick={handleUserProfileClick}
-            title="Click to view profile settings"
-          >
-            <div className="user-avatar">
-              <User size={20} />
+              )}
             </div>
-            <div className="user-details">
-              <p className="user-name">{name}</p>
-              <p className="user-email">{email}</p>
-            </div>
+            <button className="logout-btn" onClick={handleLogout}>
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
           </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Overlay */}
-      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />}
-
-      {/* Main */}
-      <main className="app-main">{children}</main>
+        </aside>
+        {/* Main */}
+        <main className={`app-main ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>{children}</main>
+      </div>
     </div>
   );
 };
 
 export default Layout;
-
-
-
-
-
-
-
-
-
-
-
-
-
