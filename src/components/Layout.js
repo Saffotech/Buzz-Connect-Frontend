@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import toast from 'react-hot-toast';
 import {
   BarChart3,
   Calendar,
@@ -13,23 +12,37 @@ import {
   Menu,
   X,
   User,
+  ChevronDown,
   Sidebar
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
-import mgalogo from '../assets/img/Logo.png';
+import Logo from "../assets/img/Logo.png";
+import { useDashboardData } from '../hooks/useApi';
+
 
 const Layout = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!window.innerWidth > 768);
+  const [insideSidebar, setInsideSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showMobileHeader, setShowMobileHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+
+
 
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, token } = useAuth();
   const [name, setName] = useState('Loading...');
   const [email, setEmail] = useState('Loading...');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+
+
+  const {
+    user,
+  } = useDashboardData();
 
   // Detect mobile/desktop
   useEffect(() => {
@@ -116,14 +129,20 @@ const Layout = ({ children }) => {
     if (isMobile) setIsSidebarOpen(false);
   };
 
+
+  const enterSidebar = (bool) => !isMobile && setIsSidebarOpen(bool);
+
   return (
     <div className="app-layout">
       {/* Mobile Header */}
-
       {isMobile && (
         <header className={`mobile-header ${showMobileHeader ? 'visible' : 'hidden'}`}>
-          <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)}>
-            <Menu size={24} />
+          <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(prev => !prev)}>
+            {isSidebarOpen ?
+              <X size={24} /> :
+              <Menu size={24} />
+            }
+
           </button>
           <div className="app-logo"><h1>BuzzConnect</h1></div>
           <div className="header-user" onClick={handleUserProfileClick}>
@@ -131,78 +150,129 @@ const Layout = ({ children }) => {
           </div>
         </header>
       )}
-      {/* Sidebar */}
-      <aside
-        className={`app-sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}
-        onMouseEnter={() => !isMobile && setIsSidebarOpen(true)}
-        onMouseLeave={() => !isMobile && setIsSidebarOpen(false)}
-      >
-        <div className="sidebar-header">
-          {isSidebarOpen && <img src={mgalogo} alt="MGA Logo" className="logo-img" />}
-          {isMobile ? (
-            <button className="sidebar-close" onClick={() => setIsSidebarOpen(false)}>
-              <X size={20} />
-            </button>
-          ) : (
-            <button className="sidebar-toggle" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-              <Sidebar size={20} />
-            </button>
-          )}
+
+      <div className="dashboard-header">
+        <div className="header-left">
+          <div className="logo">
+            {/* <h1>BuzzConnect</h1> */}
+            <img src={Logo} alt="BuzzConnect Logo" className='logo-img'/>
+          </div>
         </div>
-
-        <nav className="sidebar-nav">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = isActivePath(item.path);
-            return (
-              <button
-                key={item.path}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-                onClick={() => handleNavigation(item.path)}
-                data-tooltip={!isSidebarOpen && !isMobile ? item.name : ''}
-              >
-                <div className="nav-item-content">
-                  <Icon size={20} />
-                  {isSidebarOpen && (
-                    <div className="nav-item-text">
-                      <span className="nav-item-name">{item.name}</span>
-                      <span className="nav-item-description">{item.description}</span>
-                    </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className="user-info" onClick={handleUserProfileClick}>
-            <div className="user-avatar"><User size={20} /></div>
-            {isSidebarOpen && (
-              <div className="user-details">
-                <p className="user-name">{name}</p>
-                <p className="user-email">{email}</p>
+        <div className="header-right">
+          <span className="welcome-message">
+            Welcome back,
+            {user?.displayName || user?.email || 'User'}!
+          </span>
+          <div className="user-profile-dropdown">
+            <button
+              className="user-avatar-btn"
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+            >
+              <div className="user-avatar">
+                {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
+              </div>
+              <ChevronDown size={16} />
+            </button>
+            {showUserDropdown && (
+              <div className="dropdown-menu">
+                <button onClick={() => navigate('/settings?tab=profile')} className="dropdown-item">
+                  <Settings size={16} />
+                  Settings
+                </button>
+                <button onClick={handleLogout} className="dropdown-item logout">
+                  <LogOut size={16} />
+                  Logout
+                </button>
               </div>
             )}
           </div>
-          {isSidebarOpen && (
-            <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={16} />
-              <span>Logout</span>
-            </button>
-          )}
         </div>
-      </aside>
+      </div>
+
+
 
       {/* Overlay for mobile */}
       {isMobile && isSidebarOpen && (
         <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
       )}
 
-      {/* Main */}
-      <main className="app-main">{children}</main>
+      {/* Sidebar */}
+      <div className='bxd'>
+        <aside
+          className={`app-sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}
+          onMouseEnter={() => enterSidebar(true)}
+          onMouseLeave={() => enterSidebar(false)}
+        >
+          {/* <div className="sidebar-header">
+          {isSidebarOpen && <img src={mgalogo} alt="MGA Logo" className="logo-img" />}
+          {isMobile ? (
+            <button className="sidebar-close" onClick={() => setIsSidebarOpen(false)}>
+              <X size={20} />
+            </button>
+          ) : (
+            <button  className={`sidebar-toggle ${!isSidebarToggleSelected ? 'sidebar-selected' : '' } `} onClick={() => setIsSidebarToggleSelected(prev => !prev)}>
+              {isSidebarToggleSelected ?
+              <Sidebar size={20} />
+              :
+              !isSidebarOpen ?
+              <img src={mgalogoNeat} alt="MGA Logo" />
+              :
+              <Sidebar size={20} />
+              }
+            </button>
+          )}
+        </div> */}
+
+
+
+          <nav className="sidebar-nav">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = isActivePath(item.path);
+              return (
+                <button
+                  key={item.path}
+                  className={`nav-item ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavigation(item.path)}
+                  data-tooltip={!isSidebarOpen && !isMobile ? item.name : ''}
+                >
+                  <div className="nav-item-content">
+                    <Icon size={20} />
+                    {isSidebarOpen && (
+                      <div className="nav-item-text">
+                        <span className="nav-item-name">{item.name}</span>
+                        <span className="nav-item-description">{item.description}</span>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="sidebar-footer">
+            <div className="user-info" onClick={handleUserProfileClick}>
+              <div className="user-avatar"><User size={20} /></div>
+              {isSidebarOpen && (
+                <div className="user-details">
+                  <p className="user-name">{name}</p>
+                  <p className="user-email">{email}</p>
+                </div>
+              )}
+            </div>
+            <button className="logout-btn" onClick={handleLogout}>
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </aside>
+        {/* Main */}
+        <main className={`app-main ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>{children}</main>
+      </div>
+
     </div>
   );
 };
 
 export default Layout;
+

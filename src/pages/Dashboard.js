@@ -28,6 +28,8 @@ import apiClient from '../utils/api';
 import './Dashboard.css';
 import { platformColors } from '../utils/constants';
 import Loader from '../components/common/Loader';
+import Logo from "../assets/img/Logo.png";
+
 
 const Dashboard = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
@@ -268,10 +270,10 @@ const Dashboard = () => {
       )}
 
       {/* Dashboard Header */}
-      <div className="dashboard-header">
+      {/* <div className="dashboard-header">
         <div className="header-left">
           <div className="logo">
-            <h1>BuzzConnect</h1>
+           <img src={Logo} alt="BuzzConnect Logo" />
           </div>
         </div>
         <div className="header-right">
@@ -302,7 +304,7 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Three Column Layout */}
       <div className="dashboard-layout">
