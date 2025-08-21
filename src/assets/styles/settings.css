@@ -1138,3 +1138,36 @@
   height: auto;
   min-height: 220px;
 }
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+  }
+  to { 
+    opacity: 1; 
+  }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.95); 
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1); 
+  }
+}
+
+@media (max-width: 640px) {
+  .modal-content {
+    margin: 16px !important;
+    width: calc(100% - 32px) !important;
+    max-width: none !important;
+  }
+
+  /* Stack buttons vertically on mobile */
+  .modal-content div:last-child {
+    flex-direction: column !important;
+  }
+}

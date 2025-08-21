@@ -10,8 +10,8 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="modal-overlay" 
+    <div
+      className="modal-overlay"
       onClick={onClose}
       style={{
         position: 'fixed',
@@ -28,14 +28,14 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
         animation: 'fadeIn 0.2s ease-out'
       }}
     >
-      <div 
-        className="modal-content" 
+      <div
+        className="modal-content"
         onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: 'white',
           borderRadius: '16px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-          maxWidth: '600px', // Increased from 440px to 600px
+          maxWidth: '600px',
           width: '90%',
           position: 'relative',
           overflow: 'hidden',
@@ -43,7 +43,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
         }}
       >
         {/* Close Button */}
-        <button 
+        <button
           onClick={onClose}
           style={{
             position: 'absolute',
@@ -72,103 +72,111 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
         >
           <X size={30} />
         </button>
-        
+
         {/* Header with Icon */}
-        <div style={{ 
-          padding: '32px 40px 24px 40px', // Increased horizontal padding
-          textAlign: 'center'
-        }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            backgroundColor: '#FEF2F2',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 20px auto',
-            border: '2px solid #FECACA'
-          }}>
-            <AlertTriangle size={28} style={{ color: '#EF4444' }} />
-          </div>
-          
-          <h3 style={{ 
-            margin: '0 0 12px 0', 
-            fontSize: '24px',
-            fontWeight: '700',
-            color: '#111827',
-            letterSpacing: '-0.025em'
-          }}>
-            Disconnect Account
-          </h3>
-          
-          <div style={{
-            backgroundColor: '#F9FAFB',
-            border: '1px solid #E5E7EB',
-            borderRadius: '12px',
-            padding: '20px', // Increased padding
-            margin: '20px 0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px' // Increased gap
-          }}>
-            {/* Platform Icon */}
-            <div style={{
-              width: '48px', // Increased size
-              height: '48px',
-              borderRadius: '10px',
-              backgroundColor: platform === 'Instagram' ? '#FDF2F8' : '#EFF6FF',
+        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'center' }}>
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              backgroundColor: '#FEF2F2',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: `1px solid ${platform === 'Instagram' ? '#FCE7F3' : '#DBEAFE'}`
-            }}>
-              {platform === 'Instagram' ? 
-                <Instagram size={24} style={{ color: '#E91E63' }} /> : 
+              margin: '0 auto 20px auto',
+              border: '2px solid #FECACA'
+            }}
+          >
+            <AlertTriangle size={28} style={{ color: '#EF4444' }} />
+          </div>
+
+          <h3
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#111827',
+              letterSpacing: '-0.025em'
+            }}
+          >
+            Disconnect Account
+          </h3>
+
+          <div
+            style={{
+              backgroundColor: '#F9FAFB',
+              border: '1px solid #E5E7EB',
+              borderRadius: '12px',
+              padding: '20px',
+              margin: '20px 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
+            }}
+          >
+            {/* Platform Icon */}
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                backgroundColor: platform === 'Instagram' ? '#FDF2F8' : '#EFF6FF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `1px solid ${platform === 'Instagram' ? '#FCE7F3' : '#DBEAFE'}`
+              }}
+            >
+              {platform === 'Instagram' ? (
+                <Instagram size={24} style={{ color: '#E91E63' }} />
+              ) : (
                 <Facebook size={24} style={{ color: '#1877F2' }} />
-              }
+              )}
             </div>
-            
+
             <div style={{ textAlign: 'left', flex: 1 }}>
-              <div style={{
-                fontSize: '18px', // Increased font size
-                fontWeight: '600',
-                color: '#111827',
-                marginBottom: '4px'
-              }}>
+              <div
+                style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#111827',
+                  marginBottom: '4px'
+                }}
+              >
                 {accountUsername}
               </div>
-              <div style={{
-                fontSize: '15px', // Increased font size
-                color: '#6B7280'
-              }}>
-                {platform}
-              </div>
+              <div style={{ fontSize: '15px', color: '#6B7280' }}>{platform}</div>
             </div>
           </div>
-          
-          <p style={{ 
-            margin: '0 0 32px 0', 
-            fontSize: '16px',
-            color: '#6B7280',
-            lineHeight: '1.6',
-            textAlign: 'center'
-          }}>
-            This action cannot be undone. You'll need to reconnect this account to continue using it for posting and automation.
+
+          <p
+            style={{
+              margin: '0 0 32px 0',
+              fontSize: '16px',
+              color: '#6B7280',
+              lineHeight: '1.6',
+              textAlign: 'center'
+            }}
+          >
+            This action cannot be undone. You'll need to reconnect this account to continue using it
+            for posting and automation.
           </p>
         </div>
-        
-        {/* Footer Buttons - Now in one line */}
-        <div style={{ 
-          padding: '0 40px 32px 40px', // Increased horizontal padding
-          display: 'flex', 
-          flexDirection: 'row', // Changed from 'column' to 'row'
-          justifyContent: 'space-between' // Align buttons to the right
-        }}>
+
+        {/* Footer Buttons */}
+        <div
+          style={{
+            padding: '0 40px 32px 40px',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between'
+          }}
+        >
           <button
             onClick={onClose}
             style={{
-              padding: '12px 24px', // Adjusted padding for horizontal layout
+              padding: '12px 24px',
               border: '1px solid #D1D5DB',
               backgroundColor: 'white',
               color: '#374151',
@@ -177,24 +185,16 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
               fontSize: '15px',
               fontWeight: '500',
               transition: 'all 0.2s ease',
-              minWidth: '180px' // Ensure minimum width
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#F9FAFB';
-              e.target.style.borderColor = '#9CA3AF';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#D1D5DB';
+              minWidth: '180px'
             }}
           >
             Cancel
           </button>
-          
+
           <button
             onClick={onConfirm}
             style={{
-              padding: '12px 24px', // Adjusted padding for horizontal layout
+              padding: '12px 24px',
               border: 'none',
               backgroundColor: '#EF4444',
               color: 'white',
@@ -208,17 +208,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
               justifyContent: 'center',
               gap: '8px',
               boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-              minWidth: '180px' // Ensure minimum width for primary button
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#DC2626';
-              e.target.style.transform = 'translateY(-1px)';
-              e.target.style.boxShadow = '0 4px 12px 0 rgba(239, 68, 68, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#EF4444';
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+              minWidth: '180px'
             }}
           >
             <Trash2 size={16} />
@@ -226,40 +216,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
           </button>
         </div>
       </div>
-
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        @keyframes slideUp {
-          from { 
-            opacity: 0;
-            transform: translateY(20px) scale(0.95); 
-          }
-          to { 
-            opacity: 1;
-            transform: translateY(0) scale(1); 
-          }
-        }
-
-        @media (max-width: 640px) {
-          .modal-content {
-            margin: 16px !important;
-            width: calc(100% - 32px) !important;
-            max-width: none !important;
-          }
-          
-          /* Stack buttons vertically on mobile */
-          .modal-content div:last-child {
-            flex-direction: column !important;
-          }
-        }
-      `}</style>
     </div>
-
   );
 };
 
@@ -273,7 +230,7 @@ const AccountsSettings = ({ onNotify }) => {
     accountUsername: '',
     platform: ''
   });
-  
+
   const platformIcons = {
     instagram: Instagram,
     twitter: Twitter,
@@ -282,63 +239,60 @@ const AccountsSettings = ({ onNotify }) => {
     youtube: Youtube
   };
 
-  const authToken = token || localStorage.getItem("token");
+  const authToken = token || localStorage.getItem('token');
 
   useEffect(() => {
     if (!authToken || isLoading) return;
-    
+
     const fetchAccounts = async () => {
       try {
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`,
-          { headers: { Authorization: `Bearer ${authToken}` } }
-        );
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`, {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
         let accounts = res.data.accounts || [];
-        
+
         // Add linked Facebook account if not already present
-        const instaAccount = accounts.find(acc => acc.platform === "instagram");
-        if (instaAccount && !accounts.some(acc => acc.platform === "facebook")) {
+        const instaAccount = accounts.find((acc) => acc.platform === 'instagram');
+        if (instaAccount && !accounts.some((acc) => acc.platform === 'facebook')) {
           const fbPic = instaAccount.fbProfilePicture || instaAccount.profilePicture || null;
           accounts.push({
             _id: `${instaAccount._id}-fb`,
-            username: instaAccount.fbUsername || "Facebook (linked via Instagram)",
-            platform: "facebook",
+            username: instaAccount.fbUsername || 'Facebook (linked via Instagram)',
+            platform: 'facebook',
             profilePicture: fbPic,
             noProfilePicture: !fbPic,
-            followerCount: instaAccount.fbFollowerCount ?? "-",
+            followerCount: instaAccount.fbFollowerCount ?? '-',
             accountName: instaAccount.accountName || instaAccount.username
           });
         }
-        
+
         setConnectedAccounts(accounts);
       } catch (err) {
-        console.error("Failed to fetch connected accounts", err);
-        toast.error("Failed to load accounts");
+        console.error('Failed to fetch connected accounts', err);
+        toast.error('Failed to load accounts');
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchAccounts();
   }, [authToken, isLoading]);
-
 
   // Group accounts by account name/owner
   const groupAccountsByName = (accounts) => {
     const grouped = {};
-    
-    accounts.forEach(account => {
-      const accountName = account.accountName || 
-                         account.username.split('.')[0] || 
-                         account.username.split('_')[0] ||
-                         account.username.toLowerCase();
-      
+    accounts.forEach((account) => {
+      const accountName =
+        account.accountName ||
+        account.username.split('.')[0] ||
+        account.username.split('_')[0] ||
+        account.username.toLowerCase();
+
       if (!grouped[accountName]) {
         grouped[accountName] = [];
       }
       grouped[accountName].push(account);
     });
-    
     return grouped;
   };
 
@@ -352,34 +306,28 @@ const AccountsSettings = ({ onNotify }) => {
   const handleConnectMeta = async () => {
     const storedToken = authToken;
     if (!storedToken) {
-      toast.error("User not logged in");
+      toast.error('User not logged in');
       return;
     }
 
-
     try {
-      const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/auth/me`,
-        { headers: { Authorization: `Bearer ${storedToken}` } }
-      );
-      
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${storedToken}` }
+      });
+
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
-        // window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
-        
-       
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
-
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
       } else {
-        toast.error("Failed to get user data");
+        toast.error('Failed to get user data');
       }
     } catch (err) {
-      console.error("Error fetching user data:", err);
+      console.error('Error fetching user data:', err);
       if (err.response?.status === 401) {
-        toast.error("Session expired, please login again");
+        toast.error('Session expired, please login again');
       } else {
-        toast.error("Failed to get user data");
+        toast.error('Failed to get user data');
       }
     }
   };
@@ -397,26 +345,18 @@ const AccountsSettings = ({ onNotify }) => {
     try {
       const { accountId } = confirmationModal;
       const baseId = accountId.replace('-fb', '');
-      
-      await axios.delete(
-        `${process.env.REACT_APP_API_URL}/api/auth/instagram/disconnect/${baseId}`,
-        { headers: { Authorization: `Bearer ${authToken}` } }
-      );
-      
-      setConnectedAccounts(prev =>
-        prev.filter(acc => acc._id !== baseId && acc._id !== `${baseId}-fb`)
-      );
-      
-      onNotify('success', 'Account disconnected successfully');
-      
-      // Close the modal
-      setConfirmationModal({
-        isOpen: false,
-        accountId: null,
-        accountUsername: '',
-        platform: ''
+
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/auth/instagram/disconnect/${baseId}`, {
+        headers: { Authorization: `Bearer ${authToken}` }
       });
-      
+
+      setConnectedAccounts((prev) =>
+        prev.filter((acc) => acc._id !== baseId && acc._id !== `${baseId}-fb`)
+      );
+
+      onNotify('success', 'Account disconnected successfully');
+
+      setConfirmationModal({ isOpen: false, accountId: null, accountUsername: '', platform: '' });
     } catch (err) {
       console.error('Failed to disconnect account', err);
       toast.error('Failed to disconnect account');
@@ -424,21 +364,13 @@ const AccountsSettings = ({ onNotify }) => {
   };
 
   const handleCancelDisconnect = () => {
-    setConfirmationModal({
-      isOpen: false,
-      accountId: null,
-      accountUsername: '',
-      platform: ''
-    });
+    setConfirmationModal({ isOpen: false, accountId: null, accountUsername: '', platform: '' });
   };
 
-  // Check if Meta (Instagram/Facebook) is connected
-
-  const isMetaConnected = connectedAccounts.some(acc => 
-    acc.platform === 'instagram' || acc.platform === 'facebook'
+  const isMetaConnected = connectedAccounts.some(
+    (acc) => acc.platform === 'instagram' || acc.platform === 'facebook'
   );
 
-  // Group and organize accounts
   const groupedAccounts = groupAccountsByName(connectedAccounts);
   const accountGroups = Object.entries(groupedAccounts).map(([name, accounts]) => ({
     name,
@@ -453,47 +385,18 @@ const AccountsSettings = ({ onNotify }) => {
           <p>Manage your connected social media accounts</p>
         </div>
 
-        <SettingsCard 
+        <SettingsCard
           title="Connected Accounts"
           connAcc={
             <div className="connection-buttons">
-              <button
-                onClick={handleConnectMeta}
-                className="btn-primary"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
+              <button onClick={handleConnectMeta} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Instagram size={16} />
                 <Facebook size={16} />
                 <Plus size={16} />
                 {isMetaConnected ? 'Add Another Meta Account' : 'Connect with Meta'}
               </button>
-
-                {/* <button
-                  onClick={handleConnectTwitter}
-                  className="btn-secondary"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    border: '2px solid #1da1f2',
-                    color: isTwitterConnected ? '#10b981' : '#1da1f2'
-                  }}
-                >
-                  <Twitter size={16} />
-                  {isTwitterConnected ? (
-                    <>
-                      <Check size={16} />
-                      Twitter Connected
-                    </>
-                  ) : (
-                    'Connect Twitter (Coming Soon)'
-                  )}
-                </button> */}
-              </div>}
+            </div>
+          }
         >
           {loading ? (
             <div className="loading-state">
@@ -513,7 +416,7 @@ const AccountsSettings = ({ onNotify }) => {
                           {group.accounts.length} platform{group.accounts.length !== 1 ? 's' : ''}
                         </span>
                       </div>
-                      
+
                       <div className="accounts-grid">
                         {group.accounts.map((account, index) => {
                           const PlatformIcon = platformIcons[account.platform];
@@ -522,11 +425,7 @@ const AccountsSettings = ({ onNotify }) => {
                               <div className="account-card-header">
                                 <div className="account-avatar">
                                   {account.profilePicture ? (
-                                    <img
-                                      src={account.profilePicture}
-                                      alt={account.username}
-                                      className="avatar-img"
-                                    />
+                                    <img src={account.profilePicture} alt={account.username} className="avatar-img" />
                                   ) : (
                                     <User size={32} strokeWidth={1.5} />
                                   )}
@@ -534,60 +433,40 @@ const AccountsSettings = ({ onNotify }) => {
                                     <PlatformIcon size={12} />
                                   </div>
                                 </div>
-                                
+
                                 <button
-                                  onClick={() => handleDeleteAccount(account._id)}
+                                  onClick={() => handleDisconnectClick(account)}
                                   className="account-delete-btn"
                                   title="Disconnect account"
                                 >
                                   <Trash2 size={14} />
                                 </button>
                               </div>
-                              
+
                               <div className="account-card-content">
                                 <h4 className="account-username">{account.username}</h4>
                                 <p className="platform-name">
                                   {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
                                 </p>
-                                <span className="followers-count">
-                                  {account.followerCount ?? "-"} followers
-                                </span>
-                                
-                                <div className="connection-status connection-connected">
-                                  <Check size={12} />
+                                <span className="followers-count">{account.followerCount ?? '-'} followers</span>
+                              </div>
+
+                              <div className="account-actions">
+                                <div className="connection-status connected">
+                                  <Check size={14} />
                                   Connected
                                 </div>
+                                <button
+                                  onClick={() => handleDisconnectClick(account)}
+                                  className="btn-danger-outline"
+                                >
+                                  <Trash2 size={16} />
+                                  Disconnect
+                                </button>
                               </div>
                             </div>
-
                           );
                         })}
-
-                          </div>
-                          <div className="account-details">
-                            <h4>{account.username}</h4>
-                            <p className="platform-name">
-                              {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
-                            </p>
-                            <span className="followers-count">
-                              {account.followerCount ?? "-"} followers
-                            </span>
-                          </div>
-                        </div>
-                        <div className="account-actions">
-                          <div className="connection-status connected">
-                            <Check size={14} />
-                            Connected
-                          </div>
-                          <button
-                            onClick={() => handleDisconnectClick(account)}
-                            className="btn-danger-outline"
-                          >
-                            <Trash2 size={16} />
-                            Disconnect
-                          </button>
-                        </div>
-
                       </div>
                     </div>
                   ))}
