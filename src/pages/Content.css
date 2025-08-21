@@ -263,24 +263,32 @@
 
 .filter-input {
   position: relative;
+  display: inline-block;
 }
 
 .filter-input svg {
   position: absolute;
-  left: 0.75rem;
+  left: 0rem; /* space from border */
   top: 50%;
   transform: translateY(-50%);
   color: #64748b;
+  width: 16px;   /* set size */
+  height: 16px;
+  pointer-events: none;
 }
 
 .filter-input input {
+  padding-right: 2.5rem; /* creates space between svg and text */
+}
+
+/* .filter-input input {
   width: 100%;
   padding: 0.75rem 0.75rem 0.75rem 2.5rem;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 0.875rem;
   background: white;
-}
+} */
 
 .filter-input input:focus {
   outline: none;

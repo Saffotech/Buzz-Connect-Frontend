@@ -169,7 +169,7 @@ const handleConnectMeta = async () => {
                   )}
                 </button>
 
-                <button
+                {/* <button
                   onClick={handleConnectTwitter}
                   className="btn-secondary"
                   style={{
@@ -189,7 +189,7 @@ const handleConnectMeta = async () => {
                   ) : (
                     'Connect Twitter (Coming Soon)'
                   )}
-                </button>
+                </button> */}
               </div>}
         >
           {loading ? (
