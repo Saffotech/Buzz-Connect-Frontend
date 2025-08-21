@@ -295,6 +295,11 @@ class ApiClient {
   async healthCheck() {
     return this.request('/health');
   }
+
+  async getDashboard() {
+  return this.request('/api/dashboard');
+}
+
 }
 
 // Create and export a singleton instance

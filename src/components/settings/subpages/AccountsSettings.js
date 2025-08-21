@@ -305,7 +305,8 @@ const AccountsSettings = ({ onNotify }) => {
             platform: "facebook",
             profilePicture: fbPic,
             noProfilePicture: !fbPic,
-            followerCount: instaAccount.fbFollowerCount ?? "-"
+            followerCount: instaAccount.fbFollowerCount ?? "-",
+            accountName: instaAccount.accountName || instaAccount.username
           });
         }
         
@@ -321,6 +322,33 @@ const AccountsSettings = ({ onNotify }) => {
     fetchAccounts();
   }, [authToken, isLoading]);
 
+
+  // Group accounts by account name/owner
+  const groupAccountsByName = (accounts) => {
+    const grouped = {};
+    
+    accounts.forEach(account => {
+      const accountName = account.accountName || 
+                         account.username.split('.')[0] || 
+                         account.username.split('_')[0] ||
+                         account.username.toLowerCase();
+      
+      if (!grouped[accountName]) {
+        grouped[accountName] = [];
+      }
+      grouped[accountName].push(account);
+    });
+    
+    return grouped;
+  };
+
+  const sortAccountsInGroup = (accounts) => {
+    return accounts.sort((a, b) => {
+      const order = { instagram: 1, facebook: 2, twitter: 3, linkedin: 4, youtube: 5 };
+      return (order[a.platform] || 999) - (order[b.platform] || 999);
+    });
+  };
+
   const handleConnectMeta = async () => {
     const storedToken = authToken;
     if (!storedToken) {
@@ -328,21 +356,21 @@ const AccountsSettings = ({ onNotify }) => {
       return;
     }
 
+
     try {
-      // Fetch fresh user data from API before connecting
       const res = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/auth/me`,
         { headers: { Authorization: `Bearer ${storedToken}` } }
       );
       
       if (res.data.success && res.data.data) {
-        const freshUser = res.data.data; // Correct path based on your API response
+        const freshUser = res.data.data;
+        // window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
         
-        // Now use fresh user ID - this will always work
-        window.location.href = `https://prawn-grand-foal.ngrok-free.app/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+       
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
 
-        // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-        // window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
       } else {
         toast.error("Failed to get user data");
       }
@@ -350,16 +378,10 @@ const AccountsSettings = ({ onNotify }) => {
       console.error("Error fetching user data:", err);
       if (err.response?.status === 401) {
         toast.error("Session expired, please login again");
-        logout(); // Call your logout function to clear state
       } else {
         toast.error("Failed to get user data");
       }
     }
-  };
-
-
-  const handleConnectTwitter = () => {
-    toast.info("Twitter integration coming soon!");
   };
 
   const handleDisconnectClick = (account) => {
@@ -411,18 +433,17 @@ const AccountsSettings = ({ onNotify }) => {
   };
 
   // Check if Meta (Instagram/Facebook) is connected
+
   const isMetaConnected = connectedAccounts.some(acc => 
     acc.platform === 'instagram' || acc.platform === 'facebook'
   );
-  
-  // Check if Twitter is connected
-  const isTwitterConnected = connectedAccounts.some(acc => acc.platform === 'twitter');
 
-  // Sort accounts: Instagram first, then Facebook, then Twitter
-  const sortedAccounts = connectedAccounts.sort((a, b) => {
-    const order = { instagram: 1, facebook: 2, twitter: 3 };
-    return (order[a.platform] || 999) - (order[b.platform] || 999);
-  });
+  // Group and organize accounts
+  const groupedAccounts = groupAccountsByName(connectedAccounts);
+  const accountGroups = Object.entries(groupedAccounts).map(([name, accounts]) => ({
+    name,
+    accounts: sortAccountsInGroup(accounts)
+  }));
 
   return (
     <div className="settings-subpage">
@@ -432,34 +453,24 @@ const AccountsSettings = ({ onNotify }) => {
           <p>Manage your connected social media accounts</p>
         </div>
 
-        <SettingsCard title="Connected Accounts"
-        connAcc={ <div className="connection-buttons">
-                <button
-                  onClick={handleConnectMeta}
-                  className={`btn-primary ${isMetaConnected ? 'btn-connected' : ''}`}
-                  disabled={isMetaConnected}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    backgroundColor: isMetaConnected ? '#10b981' : undefined,
-                    cursor: isMetaConnected ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  <Instagram size={16} />
-                  <Facebook size={16} />
-                  {isMetaConnected ? (
-                    <>
-                      <Check size={16} />
-                      Meta Connected
-                    </>
-                  ) : (
-                    <>
-                      <Plus size={16} />
-                      Connect with Meta
-                    </>
-                  )}
-                </button>
+        <SettingsCard 
+          title="Connected Accounts"
+          connAcc={
+            <div className="connection-buttons">
+              <button
+                onClick={handleConnectMeta}
+                className="btn-primary"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Instagram size={16} />
+                <Facebook size={16} />
+                <Plus size={16} />
+                {isMetaConnected ? 'Add Another Meta Account' : 'Connect with Meta'}
+              </button>
 
                 {/* <button
                   onClick={handleConnectTwitter}
@@ -485,32 +496,73 @@ const AccountsSettings = ({ onNotify }) => {
               </div>}
         >
           {loading ? (
-            <p>Loading accounts...</p>
+            <div className="loading-state">
+              <p>Loading accounts...</p>
+            </div>
           ) : (
             <>
-              {/* Connection Buttons Section */}
-             
-
-              {/* Connected Accounts List */}
-              {sortedAccounts.length > 0 ? (
-                <div className="accounts-list">
-                  {sortedAccounts.map((account, index) => {
-                    const PlatformIcon = platformIcons[account.platform];
-                    return (
-                      <div key={index} className="account-item">
-                        <div className="account-info">
-                          <div className="account-avatar">
-                            <img
-                              src={account.profilePicture || undefined}
-                              alt={account.username}
-                              style={{ display: account.profilePicture ? 'block' : 'none' }}
-                            />
-                            {(!account.profilePicture || account.noProfilePicture) && (
-                              <User size={36} strokeWidth={1.5} />
-                            )}
-                            <div className={`platform-badge ${account.platform}`}>
-                              <PlatformIcon size={12} />
+              {accountGroups.length > 0 ? (
+                <div className="accounts-container">
+                  {accountGroups.map((group, groupIndex) => (
+                    <div key={groupIndex} className="account-group">
+                      <div className="account-group-header">
+                        <h3 className="account-group-title">
+                          {group.name.charAt(0).toUpperCase() + group.name.slice(1)} Account
+                        </h3>
+                        <span className="account-count">
+                          {group.accounts.length} platform{group.accounts.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      
+                      <div className="accounts-grid">
+                        {group.accounts.map((account, index) => {
+                          const PlatformIcon = platformIcons[account.platform];
+                          return (
+                            <div key={index} className="account-card">
+                              <div className="account-card-header">
+                                <div className="account-avatar">
+                                  {account.profilePicture ? (
+                                    <img
+                                      src={account.profilePicture}
+                                      alt={account.username}
+                                      className="avatar-img"
+                                    />
+                                  ) : (
+                                    <User size={32} strokeWidth={1.5} />
+                                  )}
+                                  <div className={`platform-badge platform-${account.platform}`}>
+                                    <PlatformIcon size={12} />
+                                  </div>
+                                </div>
+                                
+                                <button
+                                  onClick={() => handleDeleteAccount(account._id)}
+                                  className="account-delete-btn"
+                                  title="Disconnect account"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                              
+                              <div className="account-card-content">
+                                <h4 className="account-username">{account.username}</h4>
+                                <p className="platform-name">
+                                  {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
+                                </p>
+                                <span className="followers-count">
+                                  {account.followerCount ?? "-"} followers
+                                </span>
+                                
+                                <div className="connection-status connection-connected">
+                                  <Check size={12} />
+                                  Connected
+                                </div>
+                              </div>
                             </div>
+
+                          );
+                        })}
+
                           </div>
                           <div className="account-details">
                             <h4>{account.username}</h4>
@@ -535,9 +587,10 @@ const AccountsSettings = ({ onNotify }) => {
                             Disconnect
                           </button>
                         </div>
+
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="empty-state">
