@@ -168,7 +168,7 @@
 .post-detail-image {
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover !important;
+  object-fit: contain !important;
   display: block !important;
   transition: transform 0.3s ease !important;
   border: none !important;
