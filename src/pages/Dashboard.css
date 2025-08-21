@@ -1233,3 +1233,50 @@
   background: #1277e3; /* optional: light blue hover */
   border-color: #0056b3; /* darker blue on hover */
 }
+
+/* Updated stats grid for 3x2 layout */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Add new stat icon styles */
+.stat-icon.scheduled {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-icon.published {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-icon.media {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.stat-icon.posts {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+.stat-icon.followers {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-icon.engagement {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
