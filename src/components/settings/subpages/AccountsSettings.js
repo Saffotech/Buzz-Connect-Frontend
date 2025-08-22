@@ -251,6 +251,9 @@ const AccountsSettings = ({ onNotify }) => {
         });
         let accounts = res.data.accounts || [];
 
+        // ADD THE DEBUG CODE HERE - BEFORE processing
+        console.log('Raw account data:', res.data.accounts);
+
         // Add linked Facebook account if not already present
         const instaAccount = accounts.find((acc) => acc.platform === 'instagram');
         if (instaAccount && !accounts.some((acc) => acc.platform === 'facebook')) {
@@ -266,6 +269,9 @@ const AccountsSettings = ({ onNotify }) => {
           });
         }
 
+        // ADD THE SECOND DEBUG CODE HERE - AFTER processing
+        console.log('Processed accounts:', accounts);
+
         setConnectedAccounts(accounts);
       } catch (err) {
         console.error('Failed to fetch connected accounts', err);
@@ -278,22 +284,219 @@ const AccountsSettings = ({ onNotify }) => {
     fetchAccounts();
   }, [authToken, isLoading]);
 
-  // Group accounts by account name/owner
-  const groupAccountsByName = (accounts) => {
-    const grouped = {};
-    accounts.forEach((account) => {
-      const accountName =
-        account.accountName ||
-        account.username.split('.')[0] ||
-        account.username.split('_')[0] ||
-        account.username.toLowerCase();
+// Updated grouping logic based on shared access tokens
+const groupAccountsByOwner = (accounts) => {
+  const groups = [];
+  const processedAccounts = new Set();
 
-      if (!grouped[accountName]) {
-        grouped[accountName] = [];
+  // Debug: Log all accounts to understand the data structure
+  console.log('All accounts:', accounts.map(acc => ({
+    id: acc._id,
+    username: acc.username,
+    platform: acc.platform,
+    accessToken: acc.accessToken ? acc.accessToken.substring(0, 20) + '...' : 'none' // Only show first 20 chars for privacy
+  })));
+
+  // Helper function to find all accounts that should be grouped together
+  const findRelatedAccounts = (startAccount, allAccounts) => {
+    const related = new Set([startAccount._id]);
+    const toProcess = [startAccount];
+    
+    while (toProcess.length > 0) {
+      const current = toProcess.shift();
+      
+      allAccounts.forEach(account => {
+        if (related.has(account._id)) return;
+        
+        if (shouldBeGrouped(current, account)) {
+          related.add(account._id);
+          toProcess.push(account);
+        }
+      });
+    }
+    
+    return allAccounts.filter(acc => related.has(acc._id));
+  };
+
+  // Updated grouping logic - prioritize access token matching
+  const shouldBeGrouped = (account1, account2) => {
+    // Same account
+    if (account1._id === account2._id) return false;
+
+    // Don't group same platform accounts
+    if (account1.platform === account2.platform) return false;
+
+    // Method 1: Same access token (HIGHEST PRIORITY for Meta accounts)
+    if (account1.accessToken && account2.accessToken && 
+        account1.accessToken === account2.accessToken) {
+      console.log(`Access token match found: ${account1.username} <-> ${account2.username}`);
+      return true;
+    }
+
+    // Method 2: Check for direct Meta connections
+    if (areDirectlyConnected(account1, account2)) {
+      console.log(`Direct connection found: ${account1.username} <-> ${account2.username}`);
+      return true;
+    }
+
+    // Method 3: Name similarity (for business pages under same user)
+    if (haveRelatedNames(account1, account2)) {
+      console.log(`Name similarity found: ${account1.username} <-> ${account2.username}`);
+      return true;
+    }
+
+    return false;
+  };
+
+  // Check for direct connections (existing logic)
+  const areDirectlyConnected = (acc1, acc2) => {
+    // Check ID patterns
+    const baseId1 = acc1._id.replace('-fb', '');
+    const baseId2 = acc2._id.replace('-fb', '');
+    if (baseId1 === baseId2) return true;
+
+    // Check explicit connection fields
+    if (acc1.connectedTo === acc2._id || acc2.connectedTo === acc1._id) return true;
+    
+    // Check Facebook user ID
+    if (acc1.fbUserId && acc2.fbUserId && acc1.fbUserId === acc2.fbUserId) return true;
+    
+    return false;
+  };
+
+  // Enhanced name matching for business relationships
+  const haveRelatedNames = (acc1, acc2) => {
+    const name1 = (acc1.accountName || acc1.username || '').toLowerCase();
+    const name2 = (acc2.accountName || acc2.username || '').toLowerCase();
+    
+    if (!name1 || !name2) return false;
+
+    // Only apply name matching for Meta platforms
+    const metaPlatforms = ['instagram', 'facebook'];
+    if (!metaPlatforms.includes(acc1.platform) || !metaPlatforms.includes(acc2.platform)) {
+      return false;
+    }
+
+    // Check for personal name to business page relationships
+    const personalNamePattern = /^[a-z]+ [a-z]+$/;
+    const businessKeywords = ['developer', 'dev', 'design', 'designer', 'studio', 'agency', 'company'];
+
+    // Case: Personal name (e.g., "neal kumar") + Business page (e.g., "frontend developer")
+    if (personalNamePattern.test(name1)) {
+      const [firstName, lastName] = name1.split(' ');
+      const hasBusinessKeyword = businessKeywords.some(keyword => name2.includes(keyword));
+      
+      if (hasBusinessKeyword && (name2.includes(firstName) || name2.includes(lastName))) {
+        return true;
       }
-      grouped[accountName].push(account);
+    }
+
+    if (personalNamePattern.test(name2)) {
+      const [firstName, lastName] = name2.split(' ');
+      const hasBusinessKeyword = businessKeywords.some(keyword => name1.includes(keyword));
+      
+      if (hasBusinessKeyword && (name1.includes(firstName) || name1.includes(lastName))) {
+        return true;
+      }
+    }
+
+    // Check for similar base names (removing business keywords)
+    const cleanName = (name) => {
+      return name
+        .replace(/\b(developer|dev|design|designer|studio|agency|page|official|business)\b/g, '')
+        .replace(/[._\s-]+/g, '')
+        .trim();
+    };
+
+    const clean1 = cleanName(name1);
+    const clean2 = cleanName(name2);
+
+    if (clean1.length >= 3 && clean2.length >= 3) {
+      if (clean1.includes(clean2) || clean2.includes(clean1)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  // Build groups
+  accounts.forEach(account => {
+    if (processedAccounts.has(account._id)) return;
+
+    const relatedAccounts = findRelatedAccounts(account, accounts);
+    
+    // Mark all related accounts as processed
+    relatedAccounts.forEach(acc => processedAccounts.add(acc._id));
+
+    // Sort accounts by platform priority (Instagram first, then Facebook)
+    const sortedAccounts = relatedAccounts.sort((a, b) => {
+      const platformOrder = { instagram: 1, facebook: 2, twitter: 3, linkedin: 4, youtube: 5 };
+      return (platformOrder[a.platform] || 999) - (platformOrder[b.platform] || 999);
     });
-    return grouped;
+
+    // Choose the best group name - prefer personal names over business pages
+    const groupName = sortedAccounts.reduce((best, current) => {
+      const currentName = current.accountName || current.username;
+      const bestName = best;
+
+      // Skip generic names
+      if (currentName.includes('linked via') || currentName.includes('(')) {
+        return bestName;
+      }
+
+      // Prefer personal names (First Last format) over business pages
+      const personalNamePattern = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
+      const isCurrentPersonal = personalNamePattern.test(currentName);
+      const isBestPersonal = personalNamePattern.test(bestName);
+
+      if (isCurrentPersonal && !isBestPersonal) return currentName;
+      if (isBestPersonal && !isCurrentPersonal) return bestName;
+
+      // If both are personal or both are business, prefer the first one (Instagram account usually comes first)
+      return bestName;
+    }, sortedAccounts[0].accountName || sortedAccounts[0].username);
+
+    groups.push({
+      id: `group-${account._id}`,
+      name: groupName,
+      accounts: sortedAccounts
+    });
+  });
+
+  console.log('Final groups:', groups.map(g => ({
+    name: g.name,
+    accounts: g.accounts.map(a => `${a.username} (${a.platform})`)
+  })));
+
+  return groups;
+};
+
+
+  // ADD THE FALLBACK FUNCTION RIGHT HERE - AFTER groupAccountsByOwner
+  const addFallbackGrouping = (groups, accounts) => {
+    // Find any ungrouped Meta accounts
+    const groupedAccountIds = new Set(groups.flatMap(g => g.accounts.map(a => a._id)));
+    const ungroupedMetaAccounts = accounts.filter(acc => 
+      !groupedAccountIds.has(acc._id) && 
+      (acc.platform === 'instagram' || acc.platform === 'facebook')
+    );
+
+    if (ungroupedMetaAccounts.length > 1) {
+      // Group all ungrouped Meta accounts together
+      const fallbackGroup = {
+        id: 'fallback-meta-group',
+        name: 'Connected Meta Accounts',
+        accounts: ungroupedMetaAccounts.sort((a, b) => {
+          const order = { instagram: 1, facebook: 2 };
+          return (order[a.platform] || 999) - (order[b.platform] || 999);
+        })
+      };
+      
+      groups.push(fallbackGroup);
+    }
+
+    return groups;
   };
 
   const sortAccountsInGroup = (accounts) => {
@@ -371,10 +574,10 @@ const AccountsSettings = ({ onNotify }) => {
     (acc) => acc.platform === 'instagram' || acc.platform === 'facebook'
   );
 
-  const groupedAccounts = groupAccountsByName(connectedAccounts);
-  const accountGroups = Object.entries(groupedAccounts).map(([name, accounts]) => ({
-    name,
-    accounts: sortAccountsInGroup(accounts)
+  // Use the correct function name
+  const accountGroups = groupAccountsByOwner(connectedAccounts).map(group => ({
+    ...group,
+    accounts: sortAccountsInGroup(group.accounts)
   }));
 
   return (
@@ -408,14 +611,14 @@ const AccountsSettings = ({ onNotify }) => {
                 <div className="accounts-container">
                   {accountGroups.map((group, groupIndex) => (
                     <div key={groupIndex} className="account-group">
-                      <div className="account-group-header">
+                      {/* <div className="account-group-header">
                         <h3 className="account-group-title">
-                          {group.name.charAt(0).toUpperCase() + group.name.slice(1)} Account
+                          {group.name.charAt(0).toUpperCase() + group.name.slice(1)}
                         </h3>
                         <span className="account-count">
                           {group.accounts.length} platform{group.accounts.length !== 1 ? 's' : ''}
                         </span>
-                      </div>
+                      </div> */}
 
                       <div className="accounts-grid">
                         {group.accounts.map((account, index) => {
@@ -456,13 +659,13 @@ const AccountsSettings = ({ onNotify }) => {
                                   <Check size={14} />
                                   Connected
                                 </div>
-                                <button
+                                {/* <button
                                   onClick={() => handleDisconnectClick(account)}
                                   className="btn-danger-outline"
                                 >
                                   <Trash2 size={16} />
                                   Disconnect
-                                </button>
+                                </button> */}
                               </div>
                             </div>
                           );
