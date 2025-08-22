@@ -12,7 +12,7 @@ import Analytics from './pages/Analytics';
 import AIAssistant from './pages/AIAssistant';
 import SettingsPage from './pages/Settings';
 import { trackPageView } from "./utils/analytics-helpers";
-
+import PageNotFound from './components/common/pagenotfound/PageNotFound';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -137,6 +137,8 @@ const AppRoutes = () => {
           path="/"
           element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />}
         />
+        {/* 404 Route - Must be last */}
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </div>
   );

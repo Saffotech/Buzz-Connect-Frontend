@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import {
   Sparkles,
   Hash,
@@ -13,6 +13,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import PlatformGrid from '../components/PlatformGrid';
+import apiClient from '../utils/api';
 
 import { TONE_OPTIONS, DEFAULTS } from '../utils/constants';
 import './AIAssistant.css';
@@ -20,6 +21,7 @@ import './AIAssistant.css';
 const AIAssistant = () => {
   const [activeTab, setActiveTab] = useState('generator');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null); // Add error state
 
   // Tab configuration
   const tabs = [
@@ -44,20 +46,45 @@ const AIAssistant = () => {
   ];
 
   const renderTabContent = () => {
-    switch (activeTab) {
-      case 'generator':
-        return <ContentGeneratorTab loading={loading} setLoading={setLoading} />;
-      case 'hashtags':
-        return <HashtagSuggesterTab loading={loading} setLoading={setLoading} />;
-      case 'optimizer':
-        return <ContentOptimizerTab loading={loading} setLoading={setLoading} />;
-      default:
-        return <ContentGeneratorTab loading={loading} setLoading={setLoading} />;
+  switch (activeTab) {
+    case 'generator':
+      return <ContentGeneratorTab loading={loading} setLoading={setLoading} setError={setError} />;
+    case 'hashtags':
+      return <HashtagSuggesterTab loading={loading} setLoading={setLoading} setError={setError} />;
+    case 'optimizer':
+      return <ContentOptimizerTab loading={loading} setLoading={setLoading} setError={setError} />;
+    default:
+      return <ContentGeneratorTab loading={loading} setLoading={setLoading} setError={setError} />;
+  }
+};
+// Add this useEffect to test API connection when component mounts
+useEffect(() => {
+  const testConnection = async () => {
+    try {
+      const response = await apiClient.healthCheck();
+      console.log('API Health Check:', response);
+    } catch (error) {
+      console.error('API connection failed:', error);
+      setError('Unable to connect to AI services. Please check your connection.');
     }
   };
 
+  testConnection();
+}, []);
+
+
+
   return (
     <div className="ai-assistant-page">
+      {/* Add error message display */}
+      {error && (
+        <div className="error-message">
+          <AlertCircle size={16} />
+          <span>{error}</span>
+          <button onClick={() => setError(null)}>×</button>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="ai-assistant-header">
         <div className="header-content">
@@ -104,7 +131,7 @@ const AIAssistant = () => {
 };
 
 // Content Generator Tab Component
-const ContentGeneratorTab = ({ loading, setLoading }) => {
+  const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
   const [formData, setFormData] = useState({
     prompt: '',
     tone: DEFAULTS.DEFAULT_TONE,
@@ -121,43 +148,96 @@ const ContentGeneratorTab = ({ loading, setLoading }) => {
     }));
   };
 
+const generateContent = async () => {
+  if (!formData.prompt.trim()) return;
+
+  setLoading(true);
+      setError(null); // Clear previous errors
 
 
-  const generateContent = async () => {
-    if (!formData.prompt.trim()) return;
+  try {
+      const response = await apiClient.generateContent({
+        prompt: formData.prompt,
+        tone: formData.tone,
+        platforms: formData.platforms,
+        includeHashtags: formData.includeHashtags,
+        maxLength: formData.maxLength
+      });
 
-    setLoading(true);
+    console.log('API Response:', response);
 
-    try {
-      // Mock API call - replace with actual API integration
-      await new Promise(resolve => setTimeout(resolve, 2000));
+    if (response.success && response.data) {
+      const suggestions = [];
+      
+      // Handle the response structure from your API
+      Object.entries(response.data.content).forEach(([platform, data]) => {
+        suggestions.push({
+          id: `${platform}-${Date.now()}`,
+          content: data.content,
+          hashtags: extractHashtagsFromContent(data.content), // Extract hashtags from content
+          tone: response.data.options.tone,
+          characterCount: data.characterCount,
+          platform: platform,
+          withinLimit: data.withinLimit
+        });
+      });
 
-      const mockSuggestions = [
-        {
-          id: 1,
-          content: "🌱 Introducing our revolutionary eco-friendly water bottle! Made from 100% recycled materials, it's not just hydration - it's a statement for our planet. Join the sustainability movement today!",
-          hashtags: ["#EcoFriendly", "#Sustainability", "#GreenLiving", "#ZeroWaste"],
-          tone: formData.tone,
-          characterCount: 187,
-          platform: 'instagram'
-        },
-        {
-          id: 2,
-          content: "Stay hydrated, stay sustainable! 💧 Our new eco-friendly water bottle combines style with environmental responsibility. Every sip makes a difference!",
-          hashtags: ["#SustainableLiving", "#EcoBottle", "#GreenChoice"],
-          tone: formData.tone,
-          characterCount: 156,
-          platform: 'twitter'
-        }
-      ];
+      setSuggestions(suggestions);
+    } else {
+      throw new Error('Invalid response format');
+    }
 
-      setSuggestions(mockSuggestions);
-    } catch (error) {
+  } catch (error) {
       console.error('Error generating content:', error);
+      setError(error.message || 'Failed to generate content. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+};
+
+// Helper function to extract hashtags from content
+const extractHashtagsFromContent = (content) => {
+  const hashtagRegex = /#\w+/g;
+  const matches = content.match(hashtagRegex);
+  return matches || [];
+};
+
+
+  // const generateContent = async () => {
+  //   if (!formData.prompt.trim()) return;
+
+  //   setLoading(true);
+
+  //   try {
+  //     // Mock API call - replace with actual API integration
+  //     await new Promise(resolve => setTimeout(resolve, 2000));
+
+  //     const mockSuggestions = [
+  //       {
+  //         id: 1,
+  //         content: "🌱 Introducing our revolutionary eco-friendly water bottle! Made from 100% recycled materials, it's not just hydration - it's a statement for our planet. Join the sustainability movement today!",
+  //         hashtags: ["#EcoFriendly", "#Sustainability", "#GreenLiving", "#ZeroWaste"],
+  //         tone: formData.tone,
+  //         characterCount: 187,
+  //         platform: 'instagram'
+  //       },
+  //       {
+  //         id: 2,
+  //         content: "Stay hydrated, stay sustainable! 💧 Our new eco-friendly water bottle combines style with environmental responsibility. Every sip makes a difference!",
+  //         hashtags: ["#SustainableLiving", "#EcoBottle", "#GreenChoice"],
+  //         tone: formData.tone,
+  //         characterCount: 156,
+  //         platform: 'twitter'
+  //       }
+  //     ];
+
+  //     setSuggestions(mockSuggestions);
+  //   } catch (error) {
+  //     console.error('Error generating content:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
@@ -335,30 +415,60 @@ const HashtagSuggesterTab = ({ loading, setLoading }) => {
       [field]: value
     }));
   };
-
   const suggestHashtags = async () => {
-    if (!formData.content.trim()) return;
+  if (!formData.content.trim()) return;
 
-    setLoading(true);
-    try {
-      // Mock API call - replace with actual API integration
-      await new Promise(resolve => setTimeout(resolve, 1500));
+  setLoading(true);
+  try {
+    // Use real API instead of mock
+    const response = await apiClient.suggestHashtags({
+      content: formData.content,
+      platform: formData.platform,
+      count: formData.count
+    });
 
-      const mockHashtags = [
-        '#SocialMedia', '#Marketing', '#ContentCreation', '#DigitalMarketing',
-        '#Branding', '#Engagement', '#SocialMediaTips', '#OnlineMarketing',
-        '#ContentStrategy', '#SocialMediaMarketing', '#InfluencerMarketing',
-        '#SocialMediaManager', '#ContentMarketing', '#SocialMediaStrategy'
-      ];
+    console.log('Hashtag API Response:', response);
 
-      setHashtags(mockHashtags);
+    if (response.success && response.data.hashtags) {
+      setHashtags(response.data.hashtags);
       setSelectedHashtags([]);
-    } catch (error) {
-      console.error('Error suggesting hashtags:', error);
-    } finally {
-      setLoading(false);
+    } else {
+      throw new Error('Invalid response format');
     }
-  };
+
+  } catch (error) {
+    console.error('Error suggesting hashtags:', error);
+    alert('Failed to suggest hashtags. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+  // const suggestHashtags = async () => {
+  //   if (!formData.content.trim()) return;
+
+  //   setLoading(true);
+  //   try {
+  //     // Mock API call - replace with actual API integration
+  //     await new Promise(resolve => setTimeout(resolve, 1500));
+
+  //     const mockHashtags = [
+  //       '#SocialMedia', '#Marketing', '#ContentCreation', '#DigitalMarketing',
+  //       '#Branding', '#Engagement', '#SocialMediaTips', '#OnlineMarketing',
+  //       '#ContentStrategy', '#SocialMediaMarketing', '#InfluencerMarketing',
+  //       '#SocialMediaManager', '#ContentMarketing', '#SocialMediaStrategy'
+  //     ];
+
+  //     setHashtags(mockHashtags);
+  //     setSelectedHashtags([]);
+  //   } catch (error) {
+  //     console.error('Error suggesting hashtags:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const toggleHashtag = (hashtag) => {
     setSelectedHashtags(prev =>
@@ -496,35 +606,71 @@ const ContentOptimizerTab = ({ loading, setLoading }) => {
       [field]: value
     }));
   };
-
   const optimizeContent = async () => {
-    if (!formData.content.trim()) return;
+  if (!formData.content.trim()) return;
 
-    setLoading(true);
-    try {
-      // Mock API call - replace with actual API integration
-      await new Promise(resolve => setTimeout(resolve, 2000));
+  setLoading(true);
+  try {
+    // Use real API instead of mock
+    const response = await apiClient.optimizeContent({
+      content: formData.content,
+      targetPlatform: formData.platform
+    });
 
-      const mockOptimizedContent = {
-        original: formData.content,
-        optimized: formData.content + " 🚀 Ready to take action? Click the link in our bio! #CallToAction #Engagement #SocialMedia",
-        improvements: [
-          "Added engaging emoji to catch attention",
-          "Included clear call-to-action",
-          "Optimized character length for " + formData.platform,
-          "Added relevant hashtags for better discoverability",
-          "Enhanced engagement potential with action-oriented language"
-        ],
-        platform: formData.platform
+    console.log('Optimize API Response:', response);
+
+    if (response.success && response.data) {
+      const optimizedData = {
+        original: response.data.original,
+        optimized: response.data.optimizedContent,
+        improvements: response.data.improvements || [],
+        suggestions: response.data.suggestions || [],
+        platform: response.data.platform
       };
 
-      setOptimizedContent(mockOptimizedContent);
-    } catch (error) {
-      console.error('Error optimizing content:', error);
-    } finally {
-      setLoading(false);
+      setOptimizedContent(optimizedData);
+    } else {
+      throw new Error('Invalid response format');
     }
-  };
+
+  } catch (error) {
+    console.error('Error optimizing content:', error);
+    alert('Failed to optimize content. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+  // const optimizeContent = async () => {
+  //   if (!formData.content.trim()) return;
+
+  //   setLoading(true);
+  //   try {
+  //     // Mock API call - replace with actual API integration
+  //     await new Promise(resolve => setTimeout(resolve, 2000));
+
+  //     const mockOptimizedContent = {
+  //       original: formData.content,
+  //       optimized: formData.content + " 🚀 Ready to take action? Click the link in our bio! #CallToAction #Engagement #SocialMedia",
+  //       improvements: [
+  //         "Added engaging emoji to catch attention",
+  //         "Included clear call-to-action",
+  //         "Optimized character length for " + formData.platform,
+  //         "Added relevant hashtags for better discoverability",
+  //         "Enhanced engagement potential with action-oriented language"
+  //       ],
+  //       platform: formData.platform
+  //     };
+
+  //     setOptimizedContent(mockOptimizedContent);
+  //   } catch (error) {
+  //     console.error('Error optimizing content:', error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const copyOptimized = () => {
     if (optimizedContent) {
