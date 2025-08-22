@@ -477,10 +477,6 @@ const PostsSubPage = ({
             <option value="twitter">Twitter</option>
           </select>
 
-
-        
-
-
           {/* Date Range Dropdown Style */}
           <div className="date-range-dropdown">
             <span className="date-label">Date Range :</span>
@@ -711,6 +707,7 @@ const MediaLibrarySubPage = ({
   {/* Type Dropdown */}
   <select
     value={filters.type}
+    id='ftype'
     onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
   >
     <option value="all">All Types</option>
@@ -735,6 +732,7 @@ const MediaLibrarySubPage = ({
     <Tag size={16} />
     <input
       type="text"
+      id='tagssrch'
       placeholder="Search by tags..."
       value={filters.tags}
       onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value }))}
@@ -745,6 +743,7 @@ const MediaLibrarySubPage = ({
   <select
     value={filters.sort}
     onChange={(e) => setFilters(prev => ({ ...prev, sort: e.target.value }))}
+    id='srtdrp'
   >
     <option value="newest">Newest First</option>
     <option value="oldest">Oldest First</option>

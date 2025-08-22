@@ -226,67 +226,69 @@ const Analytics = () => {
       </div>
 
       {/* Global Filter Bar */}
-      <div className="analytics-filters">
-        <div className="filter-group">
-          <label>
-            <Calendar size={16} />
-            Date Range
-          </label>
-          <div className="filter-dropdown">
-            <select
-              value={filters.dateRange}
-              onChange={(e) => handleDateRangeChange(e.target.value)}
-              className="filter-select"
-            >
-              {dateRangeOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} className="dropdown-icon" />
-          </div>
-
-          {filters.dateRange === 'custom' && (
-            <div className="custom-date-inputs">
-              <input
-                type="date"
-                value={filters.customDateRange.start}
-                onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                className="date-input"
-              />
-              <span>to</span>
-              <input
-                type="date"
-                value={filters.customDateRange.end}
-                onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                className="date-input"
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="filter-group">
-          <label>
-            <Filter size={16} />
-            Platforms
-          </label>
-          <div className="platform-filters">
-            {platformOptions.map(platform => (
-              <button
-                key={platform.value}
-                onClick={() => handlePlatformChange(platform.value)}
-                className={`platform-filter ${
-                  filters.platforms.includes(platform.value) ? 'active' : ''
-                }`}
+        <div className="analytics-filters">
+          <div className="filter-group">
+            <label>
+              <Calendar size={16} />
+              Date Range
+            </label>
+            <div className="filter-dropdown">
+              <select
+                value={filters.dateRange}
+                onChange={(e) => handleDateRangeChange(e.target.value)}
+                className="filter-select"
               >
-                <span className="platform-icon">{platform.icon}</span>
-                {platform.label}
-              </button>
-            ))}
+                {dateRangeOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="dropdown-icon" />
+            </div>
+
+            {filters.dateRange === 'custom' && (
+              <div className="custom-date-inputs">
+                <input
+                  type="date"
+                  value={filters.customDateRange.start}
+                  onChange={(e) => handleCustomDateChange('start', e.target.value)}
+                  className="date-input"
+                />
+                <span>to</span>
+                <input
+                  type="date"
+                  value={filters.customDateRange.end}
+                  onChange={(e) => handleCustomDateChange('end', e.target.value)}
+                  className="date-input"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Platforms filter */}
+          <div className="filter-group">
+            <label>
+              <Filter size={16} />
+              Platforms
+            </label>
+            <div className="platform-filters">
+              {platformOptions.map(platform => (
+                <button
+                  key={platform.value}
+                  onClick={() => handlePlatformChange(platform.value)}
+                  className={`platform-filter ${
+                    filters.platforms.includes(platform.value) ? 'active' : ''
+                  }`}
+                >
+                  <span className="platform-icon">{platform.icon}</span>
+                  {platform.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+
 
       {/* Loading State */}
       {loading && (

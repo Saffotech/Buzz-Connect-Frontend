@@ -19,7 +19,8 @@
   position: sticky;
   top: 0;
   z-index: 100000;
-  height: 12vh;
+  /* height: 12vh; */
+  height: 80px;
 }
 
 

@@ -34,7 +34,9 @@ const Layout = ({ children }) => {
   const [name, setName] = useState('Loading...');
   const [email, setEmail] = useState('Loading...');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-
+  const goToDashboard = () => {
+    window.location.href = "/dashboard";
+  };
 
   const {
     user,
@@ -141,8 +143,25 @@ const Layout = ({ children }) => {
             }
           </button>
           <div className="app-logo"><h1>BuzzConnect</h1></div>
-          <div className="header-user" onClick={handleUserProfileClick}>
-            <User size={20} />
+          <div className="header-user" onClick={
+            () => {
+              setShowUserDropdown(!showUserDropdown);
+              handleUserProfileClick
+            }}>
+            <User size={20}
+            />
+            {showUserDropdown && (
+              <div className="dropdown-menu">
+                <button onClick={() => navigate('/settings?tab=profile')} className="dropdown-item">
+                  <Settings size={16} />
+                  Settings
+                </button>
+                <button onClick={handleLogout} className="dropdown-item logout">
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </header>
       )}
@@ -151,7 +170,7 @@ const Layout = ({ children }) => {
         <div className="header-left">
           <div className="logo">
             {/* <h1>BuzzConnect</h1> */}
-            <img src={Logo} alt="BuzzConnect Logo" className='logo-img'/>
+            <img src={Logo} alt="BuzzConnect Logo" className='logo-img' onClick={goToDashboard}  style={{ cursor: "pointer" }}/>
           </div>
         </div>
         <div className="header-right">
@@ -247,7 +266,7 @@ const Layout = ({ children }) => {
           </nav>
 
           <div className="sidebar-footer">
-            <div className="user-info" onClick={handleUserProfileClick}>
+            <div className="user-info" onClick={handleUserProfileClick}   style={{ cursor: "pointer" }}>
               <div className="user-avatar"><User size={20} /></div>
               {isSidebarOpen && (
                 <div className="user-details">
@@ -263,7 +282,7 @@ const Layout = ({ children }) => {
           </div>
         </aside>
         {/* Main */}
-        <main className={`app-main ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>{children}</main>
+        <main className={`app-main `}>{children}</main>
       </div>
     </div>
   );
