@@ -306,7 +306,14 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-
+.platform-grid.horizontal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* space between buttons */
+  flex-wrap: nowrap; /* all in one line */
+  align-items: flex-start; /* vertically center icons/buttons */
+  margin-top: 1rem;
+}
 }
 
 
