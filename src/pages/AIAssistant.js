@@ -88,12 +88,14 @@ useEffect(() => {
       {/* Page Header */}
       <div className="ai-assistant-header">
         <div className="header-content">
-          <div className="header-icon">
-            <Wand2 size={32} />
-          </div>
-          <div className="header-text">
-            <h1>AI Assistant</h1>
-            <p>Your creative partner for generating, optimizing, and enhancing social media content</p>
+          <div className='ai-hd'>
+            <div className="header-icon">
+              <Wand2 size={32} />
+            </div>
+            <div className="header-text">
+              <h1>AI Assistant</h1>
+              <p>Your creative partner for generating, optimizing, and enhancing social media content</p>
+            </div>
           </div>
         </div>
       </div>

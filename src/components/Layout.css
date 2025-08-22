@@ -1,3 +1,5 @@
+layout.css
+
 /* Layout.css */
 .app-layout {
   /* display: flex; */
@@ -8,6 +10,7 @@
 
 .bxd {
   display: flex;
+ 
 }
 
 /* Mobile Header */
@@ -71,10 +74,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.logo-img{
-  max-width: 135px;
 }
 
 .app-logo {
@@ -296,8 +295,6 @@
   min-height: 100vh;
   background-color: #f8fafc;
   padding: 0;
-  overflow-x: hidden;
-
 }
 
 /* Responsive Design */
@@ -331,6 +328,7 @@
 
   .app-main {
     margin-left: 0 !important;
+    padding-top: 60px;
   }
 
   .sidebar-toggle {
@@ -339,6 +337,9 @@
 }
 
 @media (min-width: 769px) {
+  .bxd {
+     margin-top: 12vh;
+  }
   .app-sidebar {
     /* position: static; */
     transform: translateX(0) !important;
@@ -459,6 +460,7 @@
   .app-main {
     margin-left: 5rem;
   }
+
   .sidebar-close {
     display: none;
   }
@@ -476,7 +478,4 @@
   }
 
 
-  .app-main {
-    margin-left: 0;
-  }
 }

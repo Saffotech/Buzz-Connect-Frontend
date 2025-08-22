@@ -129,7 +129,7 @@
 
 /* remove the header divider for last card */
 .settings-card:last-child .card-header {
-  border-bottom: none;
+  /* border-bottom: none; */
 }
 
 .card-header {
@@ -544,7 +544,7 @@
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5); /* or whatever dim you prefer */
-  z-index: 50; /* must be higher than sidebar */
+  z-index: 5000000; /* must be higher than sidebar */
 }
 .modal-overlay {
   backdrop-filter: blur(3px);
