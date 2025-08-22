@@ -13,13 +13,14 @@ import {
   X,
   User,
   ChevronDown,
-  Sidebar
+  Sidebar,
+  MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
 import Logo from "../assets/img/Logo.png";
 import { useDashboardData } from '../hooks/useApi';
-
+import FeedbackModal from '../components/common/Feedback/FeedbackModal';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(!window.innerWidth > 768);
@@ -27,20 +28,19 @@ const Layout = ({ children }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showMobileHeader, setShowMobileHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-
-
-
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, token } = useAuth();
   const [name, setName] = useState('Loading...');
   const [email, setEmail] = useState('Loading...');
+
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const goToDashboard = () => {
     window.location.href = "/dashboard";
   };
-
 
   const {
     user,
@@ -78,6 +78,18 @@ const Layout = ({ children }) => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isMobile, lastScrollY]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserDropdown && !event.target.closest('.user-profile-dropdown')) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserDropdown]);
 
   const navigationItems = [
     { name: 'Dashboard', path: '/dashboard', icon: BarChart3, description: 'Overview and quick stats' },
@@ -129,8 +141,43 @@ const Layout = ({ children }) => {
   const handleUserProfileClick = () => {
     navigate('/settings?tab=profile');
     if (isMobile) setIsSidebarOpen(false);
+    setShowUserDropdown(false);
   };
 
+  // Handle feedback submission
+  const handleFeedbackSubmit = async (feedbackData) => {
+    try {
+      // Create FormData for file upload support
+      const formData = new FormData();
+      formData.append('type', feedbackData.type);
+      formData.append('message', feedbackData.message);
+      formData.append('satisfied', feedbackData.satisfied);
+      formData.append('email', feedbackData.email);
+      if (feedbackData.attachment) {
+        formData.append('attachment', feedbackData.attachment);
+      }
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/feedback`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data.success) {
+        alert('Thank you for your feedback! We appreciate your input.');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      // For now, show success even if API fails (you can change this behavior)
+      alert('Thank you for your feedback! We appreciate your input.');
+      throw error;
+    }
+  };
 
   const enterSidebar = (bool) => !isMobile && setIsSidebarOpen(bool);
 
@@ -194,7 +241,17 @@ const Layout = ({ children }) => {
             </button>
             {showUserDropdown && (
               <div className="dropdown-menu">
-                <button onClick={() => navigate('/settings?tab=profile')} className="dropdown-item">
+                <button 
+                  onClick={() => {
+                    setShowFeedbackModal(true);
+                    setShowUserDropdown(false);
+                  }} 
+                  className="dropdown-item"
+                >
+                  <MessageCircle size={16} />
+                  Feedback
+                </button>
+                <button onClick={handleUserProfileClick} className="dropdown-item">
                   <Settings size={16} />
                   Settings
                 </button>
@@ -289,6 +346,12 @@ const Layout = ({ children }) => {
         <main className={`app-main `}>{children}</main>
       </div>
 
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onSubmit={handleFeedbackSubmit}
+      />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import {
   Plus,
   Instagram,
   Twitter,
+  Facebook,
   Heart,
   MessageCircle,
   Share,
@@ -11,7 +12,6 @@ import {
   Search,
   Grid,
   List,
-  Loader,
   AlertCircle,
   Upload,
   Play,
@@ -24,8 +24,13 @@ import {
   Trash2,
   X,
   MoreHorizontal,
-  Download
+  Download,
+  Clock,
+  RefreshCw,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   useDashboardData,
   useMedia
@@ -35,17 +40,22 @@ import PostDetail from '../components/PostDetail';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import apiClient from '../utils/api';
 import './Content.css';
+import Loader from '../components/common/Loader'
+
 
 const Content = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
   // Main Content Hub state
-  const [activeTab, setActiveTab] = useState('posts'); // 'posts' or 'media'
+  const [activeTab, setActiveTab] = useState('posts');
   const [notification, setNotification] = useState(null);
 
   // Posts state
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showPostDetail, setShowPostDetail] = useState(false);
-  const [postsViewMode, setPostsViewMode] = useState('grid'); // 'grid' or 'list'
+  const [postsViewMode, setPostsViewMode] = useState('grid');
   const [postsFilters, setPostsFilters] = useState({
     status: 'all',
     platform: 'all',
@@ -57,7 +67,7 @@ const Content = () => {
   // Enhanced Media state
   const [mediaList, setMediaList] = useState([]);
   const [mediaLoading, setMediaLoading] = useState(false);
-  const [mediaViewMode, setMediaViewMode] = useState('grid'); // 'grid' or 'list'
+  const [mediaViewMode, setMediaViewMode] = useState('grid');
   const [mediaFilters, setMediaFilters] = useState({
     type: 'all',
     folder: 'all',
@@ -67,23 +77,50 @@ const Content = () => {
     page: 1
   });
 
-  // Basic media hook (using existing functionality)
+  // Basic media hook
   const { media: basicMedia, loading: basicLoading, refetch: refetchMedia, uploadMedia } = useMedia();
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showMediaPreview, setShowMediaPreview] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
+  // ✅ Use dashboard data (same as dashboard component)
   const {
+    user,
     posts,
     loading,
     error: dashboardError,
     createPost: apiCreatePost,
     deletePost: apiDeletePost,
-    refetch: refetchDashboard
+    refetch: refetchDashboard,
+    data // This contains the dashboard API data including upcomingPosts
   } = useDashboardData();
 
-  // Ensure posts is always an array
-  const postsArray = Array.isArray(posts) ? posts : [];
+  // ✅ Get all posts from dashboard data and API upcoming posts
+  const allPosts = [
+    ...(Array.isArray(posts) ? posts : []),
+    ...(data?.upcomingPosts || [])
+  ];
+
+  // ✅ Remove duplicates based on _id
+  const uniquePosts = allPosts.filter((post, index, self) => 
+    index === self.findIndex(p => p._id === post._id)
+  );
+
+  // Handle URL tab parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const tabFromUrl = urlParams.get('tab');
+    if (tabFromUrl && ['posts', 'media'].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [location.search]);
+
+  // Handle tab changes and update URL
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    const newUrl = `/content?tab=${tab}`;
+    navigate(newUrl, { replace: true });
+  };
 
   const handleCreatePost = async (postData) => {
     try {
@@ -117,11 +154,10 @@ const Content = () => {
     setShowPostDetail(true);
   };
 
-  // Basic media handling
+  // Media handling
   const currentMedia = basicMedia || [];
   const currentLoading = basicLoading;
 
-  // Handle filter changes (simplified)
   const handleFilterChange = (newFilters) => {
     setMediaFilters(prev => ({
       ...prev,
@@ -129,7 +165,6 @@ const Content = () => {
     }));
   };
 
-  // Handle search (simplified)
   const handleSearch = (searchTerm) => {
     setMediaFilters(prev => ({
       ...prev,
@@ -137,34 +172,24 @@ const Content = () => {
     }));
   };
 
-  // Handle pagination (simplified)
   const handleLoadMore = () => {
-    // Basic implementation - will be enhanced later
     console.log('Load more media');
   };
 
   const handleMediaUpload = async (files) => {
     try {
-      // ✅ Close modal immediately when upload starts
       setShowUploadModal(false);
-
-      // Show uploading notification
       setNotification({ type: 'info', message: 'Uploading media...' });
 
-      // Use the same upload method as CreatePost
       const response = await uploadMedia(files);
       console.log('Upload successful:', response);
 
-      // Show success notification
       setNotification({
         type: 'success',
         message: `Successfully uploaded ${files.length} file(s)`
       });
 
-      // Refresh media list and close modal
       refetchMedia();
-
-
     } catch (error) {
       console.error('Failed to upload media:', error);
       setNotification({
@@ -176,48 +201,54 @@ const Content = () => {
 
   const handleMediaDelete = async (mediaId) => {
     try {
-      // ✅ Close modal immediately when delete starts
       setShowMediaPreview(false);
       await apiClient.request(`/api/media/${mediaId}`, { method: 'DELETE' });
       setNotification({ type: 'success', message: 'Media deleted successfully' });
-      refetchMedia(); // Refresh media list
+      refetchMedia();
     } catch (error) {
       console.error('Failed to delete media:', error);
       setNotification({ type: 'error', message: 'Failed to delete media' });
     }
   };
 
-  // Filter posts based on all filters and search query
-  const filteredPosts = postsArray.filter(post => {
-    const matchesStatus = postsFilters.status === 'all' || post.status === postsFilters.status;
-    const matchesPlatform = postsFilters.platform === 'all' ||
-      (post.platforms && post.platforms.includes(postsFilters.platform));
-    const matchesHashtag = !postsFilters.hashtag ||
-      (post.hashtags && post.hashtags.some(tag =>
-        tag.toLowerCase().includes(postsFilters.hashtag.toLowerCase())
-      ));
-    const matchesSearch = !postsSearchQuery ||
-      post.content.toLowerCase().includes(postsSearchQuery.toLowerCase()) ||
-      (post.hashtags && post.hashtags.some(tag =>
-        tag.toLowerCase().includes(postsSearchQuery.toLowerCase())
-      ));
+  // ✅ Filter posts based on all filters and search query
+  const filteredPosts = uniquePosts.filter(post => {
+  if (!post) return false;
 
-    // Date range filtering
-    let matchesDateRange = true;
-    if (postsFilters.dateRange.start || postsFilters.dateRange.end) {
-      const postDate = new Date(post.createdAt || post.publishedAt || post.scheduledDate);
-      if (postsFilters.dateRange.start) {
-        matchesDateRange = matchesDateRange && postDate >= new Date(postsFilters.dateRange.start);
-      }
-      if (postsFilters.dateRange.end) {
-        matchesDateRange = matchesDateRange && postDate <= new Date(postsFilters.dateRange.end);
-      }
+  const postStatus = post.status || 'draft';
+  const postPlatforms = post.platforms || [];
+  const postHashtags = post.hashtags || [];
+  const postContent = post.content || '';
+
+  const matchesStatus = postsFilters.status === 'all' || postStatus === postsFilters.status;
+  const matchesPlatform = postsFilters.platform === 'all' || 
+    postPlatforms.includes(postsFilters.platform);
+  const matchesHashtag = !postsFilters.hashtag ||
+    postHashtags.some(tag =>
+      (tag || '').toLowerCase().includes(postsFilters.hashtag.toLowerCase())
+    );
+  const matchesSearch = !postsSearchQuery ||
+    postContent.toLowerCase().includes(postsSearchQuery.toLowerCase()) ||
+    postHashtags.some(tag =>
+      (tag || '').toLowerCase().includes(postsSearchQuery.toLowerCase())
+    );
+
+  // Date range filtering with safety checks
+  let matchesDateRange = true;
+  if (postsFilters.dateRange.start || postsFilters.dateRange.end) {
+    const postDate = new Date(post.createdAt || post.publishedAt || post.scheduledDate || Date.now());
+    if (postsFilters.dateRange.start) {
+      matchesDateRange = matchesDateRange && postDate >= new Date(postsFilters.dateRange.start);
     }
+    if (postsFilters.dateRange.end) {
+      matchesDateRange = matchesDateRange && postDate <= new Date(postsFilters.dateRange.end);
+    }
+  }
 
-    return matchesStatus && matchesPlatform && matchesHashtag && matchesSearch && matchesDateRange;
-  });
+  return matchesStatus && matchesPlatform && matchesHashtag && matchesSearch && matchesDateRange;
+});
 
-  // Filter media based on filters
+  // Filter and sort media
   const mediaArray = Array.isArray(mediaList) ? mediaList : [];
   const filteredMedia = mediaArray.filter(media => {
     if (!media) return false;
@@ -234,7 +265,6 @@ const Content = () => {
     return matchesType && matchesFolder && matchesTags;
   });
 
-  // Sort media
   const sortedMedia = [...filteredMedia].sort((a, b) => {
     switch (mediaFilters.sort) {
       case 'oldest':
@@ -267,8 +297,9 @@ const Content = () => {
   if (loading) {
     return (
       <div className="page-loading">
-        <Loader className="spinner" size={48} />
-        <p>Loading your content...</p>
+        <Loader />
+        {/* <Loader className="spinner" size={48} />
+        <p>Loading your content...</p> */}
       </div>
     );
   }
@@ -308,17 +339,17 @@ const Content = () => {
       <div className="content-hub-nav">
         <button
           className={`nav-tab ${activeTab === 'posts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('posts')}
+          onClick={() => handleTabChange('posts')}
         >
           <FileText size={18} />
-          Posts
+          Posts ({uniquePosts.length})
         </button>
         <button
           className={`nav-tab ${activeTab === 'media' ? 'active' : ''}`}
-          onClick={() => setActiveTab('media')}
+          onClick={() => handleTabChange('media')}
         >
           <Image size={18} />
-          Media Library
+          Media Library ({currentMedia.length})
         </button>
       </div>
 
@@ -338,6 +369,8 @@ const Content = () => {
             onCreatePost={() => setShowCreatePost(true)}
             onPostClick={handlePostClick}
             onRefetch={refetchDashboard}
+            onEditPost={handleEditPost}
+            onDeletePost={handleDeletePost}
           />
         ) : (
           <MediaLibrarySubPage
@@ -362,7 +395,10 @@ const Content = () => {
       {/* Modals */}
       <CreatePost
         isOpen={showCreatePost}
-        onClose={() => setShowCreatePost(false)}
+        onClose={() => {
+          setShowCreatePost(false);
+          setSelectedPost(null);
+        }}
         onPostCreated={handleCreatePost}
         initialData={selectedPost}
       />
@@ -391,7 +427,7 @@ const Content = () => {
   );
 };
 
-// Posts Sub-Page Component
+// ✅ Updated Posts Sub-Page Component
 const PostsSubPage = ({
   posts,
   loading,
@@ -404,7 +440,9 @@ const PostsSubPage = ({
   setSearchQuery,
   onCreatePost,
   onPostClick,
-  onRefetch
+  onRefetch,
+  onEditPost,
+  onDeletePost
 }) => {
   const clearFilters = () => {
     setFilters({
@@ -415,6 +453,15 @@ const PostsSubPage = ({
     });
     setSearchQuery('');
   };
+
+  // ✅ Count posts by status for filter labels
+  const postCounts = {
+  all: posts.length,
+  draft: posts.filter(p => (p?.status || 'draft') === 'draft').length,
+  scheduled: posts.filter(p => (p?.status || 'draft') === 'scheduled').length,
+  published: posts.filter(p => (p?.status || 'draft') === 'published').length,
+  failed: posts.filter(p => (p?.status || 'draft') === 'failed').length
+};
 
   if (loading) {
     return (
@@ -454,18 +501,17 @@ const PostsSubPage = ({
           </div>
         </div>
         <div className="filters-bar">
-          {/* Status Dropdown */}
+          {/* ✅ Enhanced Status Dropdown with counts */}
           <select
             value={filters.status}
             onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
           >
-            <option value="all">All Posts</option>
-            <option value="draft">Draft</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="published">Published</option>
-            <option value="failed">Failed</option>
+            <option value="all">All Posts ({postCounts.all})</option>
+            <option value="draft">Draft ({postCounts.draft})</option>
+            <option value="scheduled">Scheduled ({postCounts.scheduled})</option>
+            <option value="published">Published ({postCounts.published})</option>
+            <option value="failed">Failed ({postCounts.failed})</option>
           </select>
-
 
           {/* Platform Dropdown */}
           <select
@@ -474,12 +520,13 @@ const PostsSubPage = ({
           >
             <option value="all">All Platforms</option>
             <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
             <option value="twitter">Twitter</option>
           </select>
 
           {/* Date Range Dropdown Style */}
           <div className="date-range-dropdown">
-            <span className="date-label">Date Range :</span>
+            <span className="date-label">Date Range:</span>
             <input
               type="date"
               value={filters.dateRange.start}
@@ -503,10 +550,19 @@ const PostsSubPage = ({
             />
           </div>
 
-
+          {/* ✅ Clear Filters Button */}
+          <button className="clear-filters-btn" onClick={clearFilters}>
+            Clear All
+          </button>
         </div>
 
         <div className="control-actions">
+          {/* ✅ Refresh Button */}
+          <button className="refresh-btn" onClick={onRefetch} disabled={loading}>
+            <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+            Refresh
+          </button>
+
           <div className="view-controls">
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
@@ -529,61 +585,117 @@ const PostsSubPage = ({
         </div>
       </div>
 
-      {/* Main Layout: Sidebar + Content */}
-      <div className="posts-layout">
-        {/* Posts Grid/List */}
-        <div className="posts-content">
-          <div className={`posts-container ${viewMode}`}>
-            {posts.length === 0 ? (
-              <div className="empty-state">
-                <FileText size={48} />
-                <h3>No posts found</h3>
-                <p>
-                  {searchQuery || filters.status !== 'all' || filters.platform !== 'all' || filters.hashtag || filters.dateRange.start || filters.dateRange.end
-                    ? 'Try adjusting your search or filters'
-                    : 'Create your first post to get started!'
-                  }
-                </p>
-                {(!searchQuery && filters.status === 'all' && filters.platform === 'all' && !filters.hashtag && !filters.dateRange.start && !filters.dateRange.end) && (
-                  <button onClick={onCreatePost} className="btn-primary">
-                    <Plus size={18} />
-                    Create Your First Post
-                  </button>
-                )}
-              </div>
-            ) : (
-              posts.map(post => (
-                <PostCard key={post._id || post.id} post={post} onClick={() => onPostClick(post)} />
-              ))
-            )}
-          </div>
-        </div>
+      {/* Posts Grid/List */}
+      <div className="posts-content">
+<div className={`posts-container ${viewMode}`}>
+  {posts.length === 0 ? (
+    <div className="empty-state">
+      <FileText size={48} />
+      <h3>No posts found</h3>
+      <p>
+        {searchQuery || filters.status !== 'all' || filters.platform !== 'all' || filters.hashtag || filters.dateRange.start || filters.dateRange.end
+          ? 'Try adjusting your search or filters'
+          : 'Create your first post to get started!'
+        }
+      </p>
+      {(!searchQuery && filters.status === 'all' && filters.platform === 'all' && !filters.hashtag && !filters.dateRange.start && !filters.dateRange.end) && (
+        <button onClick={onCreatePost} className="btn-primary">
+          <Plus size={18} />
+          Create Your First Post
+        </button>
+      )}
+    </div>
+  ) : (
+    // ✅ Use flatMap to create separate cards for each platform (like dashboard)
+    posts.flatMap(post => {
+      // ✅ Same logic as dashboard upcoming posts
+      const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ? 
+        post.platforms : ['instagram'];
+
+      // ✅ For each platform, create a separate card
+      return platformsArray.map(platform => (
+        <PlatformPostCard 
+          key={`${post._id || post.id}-${platform}`}
+          post={post} 
+          platform={platform}
+          onClick={() => onPostClick(post)}
+          onEdit={() => onEditPost(post)}
+          onDelete={() => onDeletePost(post._id || post.id)}
+        />
+      ));
+    })
+  )}
+</div>
+
       </div>
     </div>
   );
 };
 
-// Post Card Component
-const PostCard = ({ post, onClick }) => {
+// ✅ New PlatformPostCard Component (similar to dashboard upcoming posts)
+const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
   const [showActions, setShowActions] = useState(false);
+
+  // ✅ Add safety check for post object
+  if (!post) {
+    return null;
+  }
 
   const handleEdit = (e) => {
     e.stopPropagation();
-    // This will be handled by parent component
-    console.log('Edit post:', post._id);
+    onEdit();
   };
 
   const handleDelete = (e) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to delete this post?')) {
-      // This will be handled by parent component
-      console.log('Delete post:', post._id);
+      onDelete();
     }
   };
 
+  // ✅ Platform-specific styling (same as dashboard)
+  const primary = platform.toLowerCase();
+  const colorMap = {
+    instagram: '#E4405F',
+    twitter: '#1DA1F2',
+    facebook: '#1877F2',
+  };
+  const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
+
+  // ✅ Get platform icon
+  const getPlatformIcon = (platform) => {
+    switch (platform?.toLowerCase()) {
+      case 'instagram': return Instagram;
+      case 'facebook': return Facebook;
+      case 'twitter': return Twitter;
+      default: return FileText;
+    }
+  };
+
+  const PlatformIcon = getPlatformIcon(platform);
+
+  // ✅ Determine which date to show with safety checks
+  const getDisplayDate = () => {
+    if (post.status === 'scheduled' && post.scheduledDate) {
+      return new Date(post.scheduledDate);
+    }
+    if (post.publishedAt) {
+      return new Date(post.publishedAt);
+    }
+    if (post.createdAt) {
+      return new Date(post.createdAt);
+    }
+    return new Date();
+  };
+
+  const displayDate = getDisplayDate();
+  const postStatus = post.status || 'draft';
+  const postContent = post.content || '';
+
   return (
     <div
-      className="post-card"
+      className={`platform-post-card platform-preview ${primary}`}
+      style={style}
       onClick={onClick}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -600,66 +712,72 @@ const PostCard = ({ post, onClick }) => {
         </div>
       )}
 
-      <div className="post-header">
-        <div className="platform-badges">
-          {post.platforms?.map(platform => {
-            const Icon = platform === 'instagram' ? Instagram : Twitter;
-            return (
-              <div key={platform} className="platform-badge">
-                <Icon size={16} />
-                <span>{platform}</span>
-              </div>
-            );
-          })}
+      {/* Platform Header (same as dashboard) */}
+      <div className="platform-header">
+        <div className="platform-info">
+          <PlatformIcon size={16} />
+          <span className="platform-name">{primary}</span>
         </div>
-        <span className="post-date">
-          {post.status === 'scheduled'
-            ? new Date(post.scheduledDate).toLocaleDateString()
-            : new Date(post.createdAt).toLocaleDateString()
-          }
-        </span>
+        <div className="schedule-info">
+          {postStatus === 'scheduled' && <Clock size={16} />}
+          <span className="schedule-time">
+            {displayDate.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        </div>
       </div>
 
-      {post.images && post.images.length > 0 && (
-        <div className="post-image">
-          <img
-            src={post.images[0].url || post.images[0]}
-            alt={post.images[0].altText || "Post content"}
-          />
-          {post.images.length > 1 && (
-            <div className="image-count">+{post.images.length - 1}</div>
+      {/* Post Images (same as dashboard) */}
+      {post.images && Array.isArray(post.images) && post.images.length > 0 && (
+        <div className="preview-images">
+          {post.images.slice(0, 4).map((img, i) => {
+            const src = typeof img === 'string' ? img : (img?.url || '');
+            if (!src) return null;
+            return <img key={i} src={src} alt={`Post image ${i + 1}`} />;
+          }).filter(Boolean)}
+          {post.images.length > 4 && (
+            <div className="image-count">+{post.images.length - 4}</div>
           )}
         </div>
       )}
 
-      <div className="post-content">
-        <p>{post.content}</p>
-        {post.hashtags && post.hashtags.length > 0 && (
-          <div className="post-hashtags">
-            {post.hashtags.slice(0, 3).map((tag, index) => (
-              <span key={index} className="hashtag">{tag}</span>
-            ))}
-            {post.hashtags.length > 3 && (
-              <span className="hashtag-more">+{post.hashtags.length - 3} more</span>
-            )}
-          </div>
-        )}
+      {/* Post Content (same as dashboard) */}
+      <div className="preview-text">
+        <p>{postContent.substring(0, 80)}{postContent.length > 80 ? '…' : ''}</p>
       </div>
 
+      {/* Hashtags (same as dashboard) */}
+      <div className="preview-hashtags">
+        {post.hashtags?.slice(0, 3).map((hashtag, i) => (
+          <span key={i} className="hashtag">{hashtag}</span>
+        )) || <span className="hashtag">#{primary}</span>}
+      </div>
+
+      {/* Post Stats */}
       <div className="post-stats">
         <span><Heart size={14} /> {post.totalEngagement || 0}</span>
         <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
         <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
       </div>
 
+      {/* Status Badge (same as dashboard) */}
       <div className="post-status">
-        <span className={`status-badge ${post.status}`}>
-          {post.status}
+        <span className={`status-badge ${postStatus}`}>
+          {postStatus === 'published' && <CheckCircle size={12} />}
+          {postStatus === 'failed' && <XCircle size={12} />}
+          {postStatus === 'scheduled' && <Clock size={12} />}
+          {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
         </span>
       </div>
     </div>
   );
 };
+
 
 // Media Library Sub-Page Component
 const MediaLibrarySubPage = ({
