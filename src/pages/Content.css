@@ -1301,6 +1301,10 @@
   .metadata-grid {
     grid-template-columns: 1fr;
   }
+
+.post-stats {
+padding: 0;
+}
 }
 
 @media (max-width: 480px) {
@@ -1514,6 +1518,44 @@
   padding: 0 6px;
   height: 36px;
   background-color: #fff;
+  margin-left: 8px; /* spacing on desktop */
+}
+ #tagssrch {
+    padding-left: 2rem;
+  }
+/* Mobile Responsive Fix */
+@media (max-width: 768px) {
+  .date-label {
+    white-space: nowrap;
+    font-size: 14px;
+  }
+ 
+  #srtdrp {
+    margin-top: 1rem;
+  }
+   #ftype {
+    margin-bottom: 1rem;
+    margin-right: 1rem;
+   }
+  .filters-bar {
+    display: block;
+  }
+  .date-range-dropdown {
+    align-items: flex-start;   /* left align content */
+    width: 100%;               /* take full width */
+    height: auto;              /* auto height for stacked inputs */
+    margin: 8px 0 0 0;         /* move below filters */
+    padding: 8px;              /* more padding for touch UI */
+  }
+
+  .date-range-dropdown input {
+    width: 100%;               /* make inputs full width */
+    margin-top: 4px;
+  }
+
+  .date-separator {
+    margin: 4px 0;
+  }
 }
 
 

@@ -43,8 +43,8 @@
 .header-user {
   padding: 8px;
   border-radius: 50%;
-  background-color: #f1f5f9;
-  color: #64748b;
+  background-color: #1076db;
+  color: hwb(215 95% 0%);
 }
 
 .app-sidebar {
@@ -57,7 +57,7 @@
   transform: scaleX(0);
   transform-origin: right;
   transition: transform 0.001s cubic-bezier(0.4, 0, 0.2, 1);
-  
+  z-index: 1000000;
 }
 
 .app-sidebar.open {
@@ -457,6 +457,7 @@
   }
 
   .app-main {
+    margin-left: 5rem;
   }
   .sidebar-close {
     display: none;
