@@ -4,6 +4,7 @@ import SettingsCard from '../SettingsCard';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';
+import { Eye, EyeOff } from 'lucide-react';
 
 const ProfileSettings = ({ onNotify }) => {
   const { user, token } = useAuth();
@@ -16,6 +17,11 @@ const ProfileSettings = ({ onNotify }) => {
   const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
   const [verifyingPassword, setVerifyingPassword] = useState(false);
   const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  // Password visibility states
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Load profile data from the correct API endpoint
   useEffect(() => {
@@ -110,6 +116,10 @@ const ProfileSettings = ({ onNotify }) => {
         setNewPassword('');
         setConfirmPassword('');
         setCurrentPasswordVerified(false);
+        // Reset password visibility states
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
         
         if (onNotify) {
           onNotify('Password updated successfully');
@@ -130,6 +140,10 @@ const ProfileSettings = ({ onNotify }) => {
     setNewPassword('');
     setConfirmPassword('');
     setCurrentPasswordVerified(false);
+    // Reset password visibility states
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
   };
 
   // Handle current password input change
@@ -183,13 +197,22 @@ const ProfileSettings = ({ onNotify }) => {
               <div className="form-group">
                 <label>Current Password *</label>
                 <div className="password-verify-group">
-                  <input
-                    type="password"
-                    value={currentPassword}
-                    onChange={handleCurrentPasswordChange}
-                    placeholder="Enter your current password"
-                    disabled={currentPasswordVerified}
-                  />
+                  <div className="password-input has-toggle">
+                    <input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={currentPassword}
+                      onChange={handleCurrentPasswordChange}
+                      placeholder="Enter your current password"
+                      disabled={currentPasswordVerified}
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    >
+                      {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
                   {!currentPasswordVerified && (
                     <button 
                       className="btn-secondary verify-btn"
@@ -207,24 +230,42 @@ const ProfileSettings = ({ onNotify }) => {
 
               <div className="form-group">
                 <label>New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter new password (min 6 characters)"
-                  disabled={!currentPasswordVerified}
-                />
+                <div className="password-input has-toggle">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password (min 6 characters)"
+                    disabled={!currentPasswordVerified}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group">
                 <label>Confirm New Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your new password"
-                  disabled={!currentPasswordVerified}
-                />
+                <div className="password-input has-toggle">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm your new password"
+                    disabled={!currentPasswordVerified}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
 
               <div className="button-group">

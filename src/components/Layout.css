@@ -73,6 +73,10 @@
   justify-content: space-between;
 }
 
+.logo-img{
+  max-width: 135px;
+}
+
 .app-logo {
   cursor: pointer;
   display: flex;
@@ -327,7 +331,6 @@
 
   .app-main {
     margin-left: 0 !important;
-    padding-top: 60px;
   }
 
   .sidebar-toggle {
@@ -456,7 +459,6 @@
   .app-main {
     margin-left: 5rem;
   }
-
   .sidebar-close {
     display: none;
   }
@@ -474,5 +476,7 @@
   }
 
 
+  .app-main {
+    margin-left: 0;
+  }
 }
-

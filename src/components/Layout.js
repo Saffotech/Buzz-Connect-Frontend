@@ -18,7 +18,6 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import './Layout.css';
 import Logo from "../assets/img/Logo.png";
-import mgalogo from '../assets/img/mgalogo.png';
 import { useDashboardData } from '../hooks/useApi';
 
 
@@ -28,6 +27,10 @@ const Layout = ({ children }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showMobileHeader, setShowMobileHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+
+
+
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, token } = useAuth();
@@ -38,13 +41,13 @@ const Layout = ({ children }) => {
     window.location.href = "/dashboard";
   };
 
+
   const {
     user,
   } = useDashboardData();
 
   // Detect mobile/desktop
   useEffect(() => {
-
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
@@ -141,6 +144,7 @@ const Layout = ({ children }) => {
               <X size={24} /> :
               <Menu size={24} />
             }
+
           </button>
           <div className="app-logo"><h1>BuzzConnect</h1></div>
           <div className="header-user" onClick={
@@ -284,8 +288,10 @@ const Layout = ({ children }) => {
         {/* Main */}
         <main className={`app-main `}>{children}</main>
       </div>
+
     </div>
   );
 };
 
 export default Layout;
+
