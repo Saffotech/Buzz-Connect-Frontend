@@ -16,7 +16,8 @@ import {
   CheckCircle,
   Sidebar,
   GripVertical,
-  MoreHorizontal
+  MoreHorizontal,
+  Image
 } from 'lucide-react';
 import CreatePost from '../components/CreatePost';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
@@ -355,10 +356,12 @@ const Planner = () => {
                     </div>
                   </div>
                   {draft.images && draft.images.length > 0 && (
-                    <div className="draft-media-indicator">
-                      <span>{draft.images.length} 📷</span>
-                    </div>
-                  )}
+  <div className="draft-media-indicator">
+    <Image size={14} />
+    <span>{draft.images.length}</span>
+  </div>
+)}
+
                   <div className="draft-actions">
                     <button
                       className="draft-edit-btn"
@@ -462,38 +465,38 @@ const MonthView = ({ currentDate, posts, filters, onDateClick, onPostClick, load
   };
 
   const getPostsForDate = (date) => {
-    // Ensure posts is an array before filtering
-    const postsArray = Array.isArray(posts) ? posts : [];
+  const postsArray = Array.isArray(posts) ? posts : [];
 
-    return postsArray.filter(post => {
-      if (!post || !post.status) return false;
-      
-      // Apply status filter
-      if (!filters.statuses.includes(post.status)) return false;
-      
-      // Apply platform filter
-      if (post.platforms && post.platforms.length > 0 && 
-          !post.platforms.some(p => filters.platforms.includes(p))) {
-        return false;
-      }
+  return postsArray.filter(post => {
+    if (!post || !post.status) return false;
+    
+    // Apply status filter
+    if (!filters.statuses.includes(post.status)) return false;
+    
+    // Apply platform filter
+    if (post.platforms && post.platforms.length > 0 && 
+        !post.platforms.some(p => filters.platforms.includes(p))) {
+      return false;
+    }
 
-      // Get the appropriate date based on post status
-      let postDate;
-      if (post.status === 'published' && post.publishedAt) {
-        postDate = new Date(post.publishedAt);
-      } else if (post.scheduledDate) {
-        postDate = new Date(post.scheduledDate);
-      } else {
-        postDate = new Date(post.createdAt);
-      }
+    // Get the appropriate date based on post status
+    let postDate;
+    if (post.status === 'published' && post.publishedAt) {
+      postDate = new Date(post.publishedAt);
+    } else if (post.scheduledDate) {
+      postDate = new Date(post.scheduledDate);
+    } else {
+      postDate = new Date(post.createdAt);
+    }
 
-      // Compare dates (ignore time)
-      const dateStr = date.toISOString().split('T')[0];
-      const postDateStr = postDate.toISOString().split('T')[0];
-      
-      return dateStr === postDateStr;
-    });
-  };
+    // Fix: Use local date comparison to avoid timezone issues
+    const calendarDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const postLocalDate = new Date(postDate.getFullYear(), postDate.getMonth(), postDate.getDate());
+    
+    return calendarDate.getTime() === postLocalDate.getTime();
+  });
+};
+
 
   const isToday = (date) => {
     const today = new Date();
@@ -726,11 +729,13 @@ const PostCard = ({ post, onClick }) => {
           </span>
         ))}
       </div>
-      {post.images && post.images.length > 0 && (
-        <div className="post-media-indicator">
-          📷 {post.images.length}
-        </div>
-      )}
+     {post.images && post.images.length > 0 && (
+  <div className="post-media-indicator">
+    <Image size={12} />
+    <span>{post.images.length}</span>
+  </div>
+)}
+
     </div>
   );
 };

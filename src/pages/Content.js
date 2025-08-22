@@ -40,7 +40,7 @@ import PostDetail from '../components/PostDetail';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import apiClient from '../utils/api';
 import './Content.css';
-import Loader from '../components/common/Loader'
+import Loader from '../components/common/Loader';
 
 
 const Content = () => {
