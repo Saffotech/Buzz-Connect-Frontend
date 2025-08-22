@@ -879,8 +879,10 @@
 
 /* Active tab */
 .responsive-tabs .tab-button.active {
-  background: #007bff;
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
   color: white;
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
 }
 
 /* Mobile view adjustments */

@@ -121,6 +121,17 @@
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
 }
 
+/* keep side + top padding, remove only bottom */
+.settings-card:last-child .card-content {
+  padding: 0.5rem 1.5rem 0 1.5rem; /* top | right | bottom | left */
+  border-bottom: none; /* in case some extra line appears */
+}
+
+/* remove the header divider for last card */
+.settings-card:last-child .card-header {
+  border-bottom: none;
+}
+
 .card-header {
   padding: 1.5rem;
   border-bottom: 1px solid #e2e8f0;
@@ -147,8 +158,9 @@
   flex-shrink: 0;
 }
 
+
 .card-content {
-  padding: 1.5rem;
+  padding: 1.5em;;
 }
 
 /* Buttons */
@@ -720,9 +732,9 @@
   }
   
   .card-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
+    flex-wrap: nowrap; 
+    justify-content: space-between;
+    align-items: center;
   }
   
   .account-item,
@@ -802,6 +814,7 @@
   display: flex;
   gap: 10px;
   margin-top: 20px;
+  margin-bottom: 1rem;
 }
 
 
@@ -901,7 +914,6 @@
 .accounts-container {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
 }
 
 .account-group {
@@ -1170,4 +1182,146 @@
   .modal-content div:last-child {
     flex-direction: column !important;
   }
+}
+
+/* Container fixes */
+.settings-subpage {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.settings-content {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* Settings card container */
+.settings-card {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Accounts container - prevent overflow */
+.accounts-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.account-group {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fixed grid that respects container boundaries */
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Account cards - prevent overflow */
+.account-card {
+  width: 100%; /* Allow cards to shrink */
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Account group header */
+.account-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.account-group-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1f2937;
+  flex: 1;
+}
+
+.account-count {
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Responsive grid adjustments */
+@media (min-width: 768px) {
+  .accounts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .accounts-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .accounts-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1440px) {
+  .accounts-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Mobile responsive - stack cards */
+@media (max-width: 767px) {
+  .settings-content {
+    padding: 0 16px;
+  }
+  
+  .accounts-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .account-group-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .account-count {
+    align-self: flex-end;
+  }
+}
+
+/* Ensure no horizontal scrolling */
+body, html {
+  overflow-x: hidden;
+}
+
+/* If you have a main container wrapper */
+.main-container,
+.app-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
