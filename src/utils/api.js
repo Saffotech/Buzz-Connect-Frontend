@@ -1,5 +1,5 @@
 // API Configuration and Client
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 class ApiClient {
   constructor() {
@@ -227,42 +227,25 @@ class ApiClient {
 
   // AI Content endpoints
   async generateContent(options = {}) {
-    const {
-      prompt,
-      platforms = ['instagram'],
-      tone = 'casual',
-      includeHashtags = true,
-      includeEmojis = true
-    } = options;
-
     return this.request('/api/ai/generate-content', {
       method: 'POST',
-      body: JSON.stringify({
-        prompt,
-        platforms,
-        tone,
-        includeHashtags,
-        includeEmojis
-      })
+      body: JSON.stringify(options)
     });
   }
 
   async suggestHashtags(options = {}) {
-    const {
-      content,
-      platform = 'instagram',
-      count = 10
-    } = options;
-
     return this.request('/api/ai/suggest-hashtags', {
       method: 'POST',
-      body: JSON.stringify({
-        content,
-        platform,
-        count
-      })
+      body: JSON.stringify(options)
     });
   }
+  async optimizeContent(options = {}) {
+    return this.request('/api/ai/optimize-content', {
+      method: 'POST',
+      body: JSON.stringify(options)
+    });
+  }
+  
 
   async analyzeContent(options = {}) {
     const {

@@ -1,5 +1,5 @@
 // components/Form.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Input from '../input/Input';
 import Button from '../button/Button';
 import { useAuth } from '../../../hooks/useAuth';
@@ -9,6 +9,27 @@ import './Form.module.css';
 
 const Form = ({ isLogin, setIsLogin }) => {
   const { login, register, isLoading } = useAuth();
+
+  useEffect(() => {
+  const blockEvents = (e) => e.preventDefault();
+
+  const inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+  inputs.forEach(input => {
+    input.addEventListener('copy', blockEvents);
+    input.addEventListener('cut', blockEvents);
+    input.addEventListener('paste', blockEvents);
+    input.addEventListener('contextmenu', blockEvents);
+  });
+
+  return () => {
+    inputs.forEach(input => {
+      input.removeEventListener('copy', blockEvents);
+      input.removeEventListener('cut', blockEvents);
+      input.removeEventListener('paste', blockEvents);
+      input.removeEventListener('contextmenu', blockEvents);
+    });
+  };
+}, []);
   
   // Form modes: 'auth', 'forgot', 'otp', 'reset'
   const [formMode, setFormMode] = useState('auth');
@@ -410,6 +431,10 @@ const Form = ({ isLogin, setIsLogin }) => {
             placeholder="Enter your password"
             value={formData.password}
             onChange={handleInputChange}
+            onCopy={(e) => e.preventDefault()}
+            onCut={(e) => e.preventDefault()}
+            onPaste={(e) => e.preventDefault()}
+            onContextMenu={(e) => e.preventDefault()}
             required
           />
           <button
@@ -432,6 +457,10 @@ const Form = ({ isLogin, setIsLogin }) => {
               placeholder="Confirm your password"
               value={formData.confirmPassword}
               onChange={handleInputChange}
+              onCopy={(e) => e.preventDefault()}
+              onCut={(e) => e.preventDefault()}
+              onPaste={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
               required
             />
             <button

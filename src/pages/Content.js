@@ -40,7 +40,7 @@ import PostDetail from '../components/PostDetail';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import apiClient from '../utils/api';
 import './Content.css';
-import Loader from '../components/common/Loader'
+import Loader from '../components/common/Loader';
 
 
 const Content = () => {
@@ -558,10 +558,10 @@ const PostsSubPage = ({
 
         <div className="control-actions">
           {/* ✅ Refresh Button */}
-          <button className="refresh-btn" onClick={onRefetch} disabled={loading}>
+          {/* <button className="refresh-btn" onClick={onRefetch} disabled={loading}>
             <RefreshCw size={16} className={loading ? 'spinning' : ''} />
             Refresh
-          </button>
+          </button> */}
 
           <div className="view-controls">
             <button

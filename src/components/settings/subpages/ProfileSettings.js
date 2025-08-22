@@ -30,7 +30,7 @@ const ProfileSettings = ({ onNotify }) => {
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (res.data.success) {
           setName(res.data.data.displayName || 'N/A');
           setEmail(res.data.data.email || 'N/A');
@@ -101,9 +101,9 @@ const ProfileSettings = ({ onNotify }) => {
     try {
       const res = await axios.put(
         `${process.env.REACT_APP_API_URL}/api/users/update-password`,
-        { 
-          currentPassword, 
-          newPassword 
+        {
+          currentPassword,
+          newPassword
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -120,7 +120,7 @@ const ProfileSettings = ({ onNotify }) => {
         setShowCurrentPassword(false);
         setShowNewPassword(false);
         setShowConfirmPassword(false);
-        
+
         if (onNotify) {
           onNotify('Password updated successfully');
         }
@@ -161,19 +161,19 @@ const ProfileSettings = ({ onNotify }) => {
         <SettingsCard title="Profile Information">
           <div className="form-group">
             <label>Name</label>
-            <input 
-              type="text" 
-              value={name} 
-              readOnly 
+            <input
+              type="text"
+              value={name}
+              readOnly
               className="readonly-input"
             />
           </div>
           <div className="form-group">
             <label>Email</label>
-            <input 
-              type="email" 
-              value={email} 
-              readOnly 
+            <input
+              type="email"
+              value={email}
+              readOnly
               className="readonly-input"
             />
           </div>
@@ -183,8 +183,8 @@ const ProfileSettings = ({ onNotify }) => {
           title="Password"
           headerAction={
             !showPasswordForm && (
-              <button 
-                className="btn-primary" 
+              <button
+                className="btn-primary"
                 onClick={() => setShowPasswordForm(true)}
               >
                 Update Password
@@ -214,7 +214,7 @@ const ProfileSettings = ({ onNotify }) => {
                     </button>
                   </div>
                   {!currentPasswordVerified && (
-                    <button 
+                    <button
                       className="btn-secondary verify-btn"
                       onClick={verifyCurrentPassword}
                       disabled={!currentPassword.trim() || verifyingPassword}
@@ -237,6 +237,10 @@ const ProfileSettings = ({ onNotify }) => {
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Enter new password (min 6 characters)"
                     disabled={!currentPasswordVerified}
+                    onCopy={(e) => e.preventDefault()}
+                    onCut={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    onContextMenu={(e) => e.preventDefault()}
                   />
                   <button
                     type="button"
@@ -257,6 +261,10 @@ const ProfileSettings = ({ onNotify }) => {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your new password"
                     disabled={!currentPasswordVerified}
+                    onCopy={(e) => e.preventDefault()}
+                    onCut={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    onContextMenu={(e) => e.preventDefault()}
                   />
                   <button
                     type="button"
@@ -269,15 +277,15 @@ const ProfileSettings = ({ onNotify }) => {
               </div>
 
               <div className="button-group">
-                <button 
-                  className="btn-primary" 
+                <button
+                  className="btn-primary"
                   onClick={handlePasswordUpdate}
                   disabled={!currentPasswordVerified || updatingPassword || !newPassword || !confirmPassword}
                 >
                   {updatingPassword ? 'Updating...' : 'Update Password'}
                 </button>
-                <button 
-                  className="btn-secondary" 
+                <button
+                  className="btn-secondary"
                   onClick={handleCancelPasswordUpdate}
                   disabled={updatingPassword}
                 >

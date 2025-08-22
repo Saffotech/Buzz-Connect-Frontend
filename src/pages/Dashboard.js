@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Users,
   Heart,
@@ -18,7 +18,9 @@ import {
   Clock,
   Activity,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
+  X,
+  Link2
 } from 'lucide-react';
 import { useDashboardData } from '../hooks/useApi';
 import { useNavigate } from 'react-router-dom';
@@ -40,7 +42,32 @@ const Dashboard = () => {
   const [userStats, setUserStats] = useState(null);
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
   const navigate = useNavigate();
+
+  const handleMediaUpload = async (files) => {
+    try {
+      setShowUploadModal(false);
+      setNotification({ type: 'info', message: 'Uploading media...' });
+
+      const response = await uploadMedia(files);
+      console.log('Upload successful:', response);
+
+      setNotification({
+        type: 'success',
+        message: `Successfully uploaded ${files.length} file(s)`
+      });
+
+      refetchMedia();
+    } catch (error) {
+      console.error('Failed to upload media:', error);
+      setNotification({
+        type: 'error',
+        message: error.message || 'Failed to upload media'
+      });
+    }
+  };
 
   const {
     user,
@@ -56,10 +83,10 @@ const Dashboard = () => {
   // Fetch posts from API
   const fetchPosts = async (refresh = false) => {
     if (!refresh && posts.length > 0) return; // Avoid unnecessary refetches
-    
+
     setPostsLoading(true);
     setPostsError(null);
-    
+
     try {
       const response = await apiClient.request('/api/posts', {
         method: 'GET',
@@ -75,15 +102,15 @@ const Dashboard = () => {
       if (response.success && response.data) {
         const fetchedPosts = response.data.posts || [];
         setPosts(fetchedPosts);
-        
+
         // Filter upcoming posts (scheduled status and future dates)
         const now = new Date();
-        const upcoming = fetchedPosts.filter(post => 
-          post.status === 'scheduled' && 
+        const upcoming = fetchedPosts.filter(post =>
+          post.status === 'scheduled' &&
           new Date(post.scheduledDate) > now
         );
         setUpcomingPosts(upcoming);
-        
+
         // Calculate user stats from posts
         calculateUserStats(fetchedPosts);
       } else {
@@ -116,20 +143,20 @@ const Dashboard = () => {
 
     const published = postsData.filter(post => post.status === 'published');
     const scheduled = postsData.filter(post => post.status === 'scheduled');
-    
+
     // Calculate engagement from platformPosts
     let totalEngagement = 0;
     let totalReach = 0;
     let totalFollowers = 0;
-    
+
     postsData.forEach(post => {
       if (post.platformPosts && Array.isArray(post.platformPosts)) {
         post.platformPosts.forEach(platformPost => {
           if (platformPost.analytics) {
             const analytics = platformPost.analytics;
-            totalEngagement += (analytics.likes || 0) + 
-                             (analytics.comments || 0) + 
-                             (analytics.shares || 0);
+            totalEngagement += (analytics.likes || 0) +
+              (analytics.comments || 0) +
+              (analytics.shares || 0);
             totalReach += analytics.reach || 0;
           }
         });
@@ -140,7 +167,7 @@ const Dashboard = () => {
       }
     });
 
-    const avgEngagementRate = published.length > 0 ? 
+    const avgEngagementRate = published.length > 0 ?
       postsData.reduce((sum, post) => sum + (post.avgEngagementRate || 0), 0) / published.length : 0;
 
     setUserStats({
@@ -166,10 +193,10 @@ const Dashboard = () => {
       const response = await apiCreatePost(postData);
       setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
       setShowCreatePost(false);
-      
+
       // Refresh posts after creating new one
       fetchPosts(true);
-      
+
       return response;
     } catch (error) {
       setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
@@ -206,24 +233,32 @@ const Dashboard = () => {
   ).length;
 
   // Real analytics data with fallbacks
-  // const stats = {
-  //   followers: userStats?.totalFollowers || analytics?.totalFollowers || user?.followers || '0',
-  //   engagement: userStats?.avgEngagementRate ? 
-  //     `${userStats.avgEngagementRate.toFixed(1)}%` : 
-  //     (analytics?.avgEngagementRate ? `${analytics.avgEngagementRate.toFixed(1)}%` : '0%'),
-  //   postsThisMonth: postsThisMonth || '0',
-  //   reach: userStats?.totalReach || analytics?.totalReach || '0'
-  // };
-  const stats = {
-    followers: data?.stats?.totalFollowers?.toLocaleString() || '0',
-    engagement: data?.analyticsOverview?.avgEngagementRate 
-      ? `${data.analyticsOverview.avgEngagementRate.toFixed(1)}%` 
-      : '0%',
-    postsThisMonth: data?.stats?.publishedPosts || '0', // or totalPosts if you prefer
-    reach: data?.analyticsOverview?.totalReach?.toLocaleString() || '0'
-  };
 
-    const upcomingPostsFromAPI = data?.upcomingPosts || [];
+  // const stats = {
+  //   followers: data?.stats?.totalFollowers?.toLocaleString() || '0',
+  //   engagement: data?.analyticsOverview?.avgEngagementRate
+  //     ? `${data.analyticsOverview.avgEngagementRate.toFixed(1)}%`
+  //     : '0%',
+  //   postsThisMonth: data?.stats?.publishedPosts || '0', // or totalPosts if you prefer
+  //   reach: data?.analyticsOverview?.totalReach?.toLocaleString() || '0'
+  // };
+
+
+  // In Dashboard.js, update the stats calculation
+// Update the connection status check
+const isConnected = data?.stats?.connectedPlatforms > 0;
+
+// Simplified stats object - let individual cards handle the connection logic
+const stats = {
+  followers: isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0',
+  engagement: isConnected ? (data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0') : '0',
+  postsThisMonth: isConnected ? (data?.stats?.publishedPosts?.toLocaleString() || '0') : '0',
+  reach: isConnected ? (data?.analyticsOverview?.totalReach?.toLocaleString() || '0') : '0'
+};
+
+
+
+  const upcomingPostsFromAPI = data?.upcomingPosts || [];
 
 
   // Show notification temporarily
@@ -240,7 +275,7 @@ const Dashboard = () => {
   if (dashboardLoading || (postsLoading && posts.length === 0)) {
     return (
       <div className="page-loading">
-        <Loader/>
+        <Loader />
       </div>
     );
   }
@@ -269,86 +304,59 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Dashboard Header */}
-      {/* <div className="dashboard-header">
-        <div className="header-left">
-          <div className="logo">
-           <img src={Logo} alt="BuzzConnect Logo" />
-          </div>
-        </div>
-        <div className="header-right">
-          <span className="welcome-message">
-            Welcome back, {user?.displayName || user?.email || 'User'}!
-          </span>
-          <div className="user-profile-dropdown">
-            <button
-              className="user-avatar-btn"
-              onClick={() => setShowUserDropdown(!showUserDropdown)}
-            >
-              <div className="user-avatar">
-                {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
-              </div>
-              <ChevronDown size={16} />
-            </button>
-            {showUserDropdown && (
-              <div className="dropdown-menu">
-                <button onClick={() => navigate('/settings?tab=profile')} className="dropdown-item">
-                  <Settings size={16} />
-                  Settings
-                </button>
-                <button onClick={handleLogout} className="dropdown-item logout">
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div> */}
 
       {/* Three Column Layout */}
       <div className="dashboard-layout">
         {/* Center Column: Core Content */}
         <div className="dashboard-center">
           {/* Performance Snapshot */}
-        <div className="performance-snapshot">
+          <div className="performance-snapshot">
            <div className="stats-grid">
   {/* Row 1 */}
-  <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
+  <div className="stat-card clickable" onClick={() => navigate('/settings?tab=accounts')}>
     <div className="stat-icon followers">
       <Users size={24} />
     </div>
     <div className="stat-content">
-      <h3>{data?.stats?.totalFollowers?.toLocaleString() || '0'}</h3>
+      <h3>{isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0'}</h3>
       <p>Total Followers</p>
-      <span className="stat-change positive">
-        {data?.stats?.connectedPlatforms || 0} platforms connected
+      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+        {isConnected 
+          ? `${data?.stats?.connectedPlatforms || 0} platforms connected`
+          : 'No platforms connected'
+        }
       </span>
     </div>
   </div>
-  
-  <div className="stat-card clickable">
+
+  <div className="stat-card clickable" onClick={() => navigate('/content')}>
     <div className="stat-icon posts">
       <Image size={24} />
     </div>
     <div className="stat-content">
-      <h3>{data?.stats?.totalPosts || 0}</h3>
+      <h3>{isConnected ? (data?.stats?.totalPosts || 0) : 0}</h3>
       <p>Total Posts</p>
-      <span className="stat-change positive">
-        All time posts created
+      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+        {isConnected 
+          ? 'All time posts created'
+          : 'Connect accounts to create posts'
+        }
       </span>
     </div>
   </div>
-  
+
   <div className="stat-card clickable" onClick={() => navigate('/planner')}>
     <div className="stat-icon scheduled">
       <Calendar size={24} />
     </div>
     <div className="stat-content">
-      <h3>{data?.stats?.scheduledPosts || 0}</h3>
+      <h3>{isConnected ? (data?.stats?.scheduledPosts || 0) : 0}</h3>
       <p>Scheduled Posts</p>
-      <span className="stat-change neutral">
-        Awaiting publication
+      <span className={`stat-change ${isConnected ? 'neutral' : 'neutral'}`}>
+        {isConnected 
+          ? 'Awaiting publication'
+          : 'Connect accounts to schedule'
+        }
       </span>
     </div>
   </div>
@@ -359,149 +367,158 @@ const Dashboard = () => {
       <TrendingUp size={24} />
     </div>
     <div className="stat-content">
-      <h3>{data?.stats?.publishedPosts || 0}</h3>
+      <h3>{isConnected ? (data?.stats?.publishedPosts || 0) : 0}</h3>
       <p>Published Posts</p>
-      <span className="stat-change positive">
-        Live on social media
+      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+        {isConnected 
+          ? 'Live on social media'
+          : 'Connect accounts to publish'
+        }
       </span>
     </div>
   </div>
-  
-<div className="stat-card clickable" onClick={() => navigate('/content?tab=media')}>
-  <div className="stat-icon media">
-    <Upload size={24} />
-  </div>
-  <div className="stat-content">
-    <h3>{data?.stats?.mediaFiles || 0}</h3>
-    <p>Media Files</p>
-    <span className="stat-change neutral">
-      Images and videos stored
-    </span>
-  </div>
-</div>
 
-  
+  <div className="stat-card clickable" onClick={() => navigate('/content?tab=media')}>
+    <div className="stat-icon media">
+      <Upload size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{isConnected ? (data?.stats?.mediaFiles || 0) : 0}</h3>
+      <p>Media Files</p>
+      <span className={`stat-change ${isConnected ? 'neutral' : 'neutral'}`}>
+        {isConnected 
+          ? 'Images and videos stored'
+          : 'Connect accounts to upload media'
+        }
+      </span>
+    </div>
+  </div>
+
   <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
     <div className="stat-icon engagement">
       <Heart size={24} />
     </div>
     <div className="stat-content">
-      <h3>{data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0'}%</h3>
+      <h3>{isConnected ? (data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0') : '0'}%</h3>
       <p>Engagement Rate</p>
-      <span className="stat-change positive">
-        {data?.analyticsOverview?.totalLikes || 0} total likes
+      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+        {isConnected 
+          ? `${data?.analyticsOverview?.totalLikes || 0} total likes`
+          : 'Connect accounts for engagement'
+        }
       </span>
     </div>
   </div>
 </div>
 
+
           </div>
 
           {/* Upcoming Posts */}
-    <div className="upcoming-posts-section">
-    <div className="header-with-button">
-      
-      <h3>Upcoming Posts</h3>
-      <button 
-        className="inline-refresh-btn" 
-        onClick={handleRefreshPosts}
-        disabled={postsLoading}
-      >
-        <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
-        Refresh
-      </button>
-    </div>
+          <div className="upcoming-posts-section">
+            <div className="header-with-button">
 
-
-        
-        {postsError && (
-          <div className="error-message">
-            <AlertCircle size={16} />
-            <span>{postsError}</span>
-            <button onClick={() => fetchPosts(true)}>Retry</button>
-          </div>
-        )}
-        
-        <div className="upcoming-posts-scroll">
-          {postsLoading && posts.length === 0 ? (
-            <div className="loading-posts">
-                     <Loader/>
-
+              <h3>Upcoming Posts</h3>
+              <button
+                className="inline-refresh-btn"
+                onClick={handleRefreshPosts}
+                disabled={postsLoading}
+              >
+                <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
+                Refresh
+              </button>
             </div>
-          ) : upcomingPosts.length > 0 ? (
-            upcomingPosts.slice(0, 5).flatMap(post => {
-              // Defensive platforms array
-              const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ? 
-                post.platforms : ['instagram'];
 
-              // For each platform, create a separate card
-              return platformsArray.map(platform => {
-                const primary = platform.toLowerCase();
-                const colorMap = {
-                  instagram: '#E4405F',
-                  twitter: '#1DA1F2',
-                  facebook: '#1877F2',
-                };
-                const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
 
-                return (
-                  <div
-                    key={`${post._id}-${primary}`}
-                    className={`upcoming-post-card platform-preview ${primary}`}
-                    style={style}
-                  >
-                    <div className="platform-header">
-                      <Clock size={16} />
-                      <span className="schedule-time">
-                        {new Date(post.scheduledDate).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                      <span className="platform-name">{primary}</span>
-                    </div>
 
-                    {post.images?.length > 0 && (
-                      <div className="preview-images">
-                        {post.images.slice(0, 4).map((img, i) => {
-                          const src = typeof img === 'string' ? img : img.url;
-                          return <img key={i} src={src} alt="" />;
-                        })}
+            {postsError && (
+              <div className="error-message">
+                <AlertCircle size={16} />
+                <span>{postsError}</span>
+                <button onClick={() => fetchPosts(true)}>Retry</button>
+              </div>
+            )}
+
+            <div className="upcoming-posts-scroll">
+              {postsLoading && posts.length === 0 ? (
+                <div className="loading-posts">
+                  <Loader />
+
+                </div>
+              ) : upcomingPosts.length > 0 ? (
+                upcomingPosts.slice(0, 5).flatMap(post => {
+                  // Defensive platforms array
+                  const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ?
+                    post.platforms : ['instagram'];
+
+                  // For each platform, create a separate card
+                  return platformsArray.map(platform => {
+                    const primary = platform.toLowerCase();
+                    const colorMap = {
+                      instagram: '#E4405F',
+                      twitter: '#1DA1F2',
+                      facebook: '#1877F2',
+                    };
+                    const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
+
+                    return (
+                      <div
+                        key={`${post._id}-${primary}`}
+                        className={`upcoming-post-card platform-preview ${primary}`}
+                        style={style}
+                      >
+                        <div className="platform-header">
+                          <Clock size={16} />
+                          <span className="schedule-time">
+                            {new Date(post.scheduledDate).toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                          <span className="platform-name">{primary}</span>
+                        </div>
+
+                        {post.images?.length > 0 && (
+                          <div className="preview-images">
+                            {post.images.slice(0, 4).map((img, i) => {
+                              const src = typeof img === 'string' ? img : img.url;
+                              return <img key={i} src={src} alt="" />;
+                            })}
+                          </div>
+                        )}
+
+                        <div className="preview-text">
+                          <p>{post.content.substring(0, 80)}{post.content.length > 80 ? '…' : ''}</p>
+                        </div>
+
+                        <div className="preview-hashtags">
+                          {post.hashtags?.slice(0, 3).map((hashtag, i) => (
+                            <span key={i} className="hashtag">{hashtag}</span>
+                          )) || <span className="hashtag">#{primary}</span>}
+                        </div>
+
+                        <div className="post-status">
+                          <span className={`status-badge ${post.status}`}>
+                            {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+                          </span>
+                        </div>
                       </div>
-                    )}
-
-                    <div className="preview-text">
-                      <p>{post.content.substring(0, 80)}{post.content.length > 80 ? '…' : ''}</p>
-                    </div>
-
-                    <div className="preview-hashtags">
-                      {post.hashtags?.slice(0, 3).map((hashtag, i) => (
-                        <span key={i} className="hashtag">{hashtag}</span>
-                      )) || <span className="hashtag">#{primary}</span>}
-                    </div>
-
-                    <div className="post-status">
-                      <span className={`status-badge ${post.status}`}>
-                        {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              });
-            })
-          ) : (
-            <div className="empty-upcoming">
-              <Calendar size={32} />
-              <p>No upcoming posts scheduled</p>
-              <p className="empty-subtitle">Create posts with future dates to see them here</p>
+                    );
+                  });
+                })
+              ) : (
+                <div className="empty-upcoming">
+                  <Calendar size={32} />
+                  <p>No upcoming posts scheduled</p>
+                  <p className="empty-subtitle">Create posts with future dates to see them here</p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
-          
+          </div>
+
           {/* Top Performing Post */}
           {(() => {
             // Find top performing post from fetched posts
@@ -581,7 +598,10 @@ const Dashboard = () => {
                 <Calendar size={18} />
                 Plan Content
               </button>
-              <button className="btn-secondary action-btn" onClick={() => document.getElementById('media-upload').click()}>
+              <button className="btn-secondary action-btn" onClick={
+                // () => document.getElementById('media-upload').click()
+                () => setShowUploadModal(true)
+              }>
                 <Upload size={18} />
                 Upload Media
               </button>
@@ -681,7 +701,7 @@ const Dashboard = () => {
               )}
               {postsLoading && (
                 <div className="loading-activity">
-                        <Loader/>
+                  <Loader />
 
                 </div>
               )}
@@ -696,6 +716,120 @@ const Dashboard = () => {
         onClose={() => setShowCreatePost(false)}
         onPostCreated={handleCreatePost}
       />
+
+      <MediaUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={handleMediaUpload}
+      />
+    </div>
+  );
+};
+
+const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
+  const [dragActive, setDragActive] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const fileInputRef = useRef(null);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFiles(Array.from(e.dataTransfer.files));
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFiles(Array.from(e.target.files));
+    }
+  };
+
+  const handleUpload = () => {
+    if (selectedFiles.length > 0) {
+      onUpload(selectedFiles);
+      setSelectedFiles([]);
+    }
+  };
+
+  const handleAreaClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content upload-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Upload Media</h3>
+          <button className="modal-close" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="modal-body">
+          <div
+            className={`upload-area ${dragActive ? 'drag-active' : ''}`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={handleAreaClick}
+          >
+            <Upload size={48} />
+            <h4>Drag and drop files here</h4>
+            <p>or click to select files</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/*"
+              onChange={handleFileSelect}
+              className="file-input"
+            />
+          </div>
+
+          {selectedFiles.length > 0 && (
+            <div className="selected-files">
+              <h4>Selected Files ({selectedFiles.length})</h4>
+              <div className="file-list">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="file-item">
+                    <span>{file.name}</span>
+                    <span className="file-size">{Math.round(file.size / 1024)}KB</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleUpload}
+            disabled={selectedFiles.length === 0}
+          >
+            Upload {selectedFiles.length > 0 ? `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}` : ''}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
