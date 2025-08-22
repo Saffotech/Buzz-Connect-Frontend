@@ -37,7 +37,6 @@ const Layout = ({ children }) => {
   const [name, setName] = useState('Loading...');
   const [email, setEmail] = useState('Loading...');
 
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const goToDashboard = () => {
     window.location.href = "/dashboard";
   };
