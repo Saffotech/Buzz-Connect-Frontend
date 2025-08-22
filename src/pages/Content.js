@@ -558,10 +558,10 @@ const PostsSubPage = ({
 
         <div className="control-actions">
           {/* ✅ Refresh Button */}
-          <button className="refresh-btn" onClick={onRefetch} disabled={loading}>
+          {/* <button className="refresh-btn" onClick={onRefetch} disabled={loading}>
             <RefreshCw size={16} className={loading ? 'spinning' : ''} />
             Refresh
-          </button>
+          </button> */}
 
           <div className="view-controls">
             <button
