@@ -29,6 +29,7 @@ const Layout = ({ children }) => {
   const [showMobileHeader, setShowMobileHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
