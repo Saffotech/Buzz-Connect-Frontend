@@ -113,7 +113,7 @@ const FeedbackModal = ({ isOpen, onClose, onSubmit }) => {
           </div>
           <div className="header-content">
             <h2>Feedback for BuzzConnect</h2>
-            <p>Help us improve your experience</p>
+            <p id='hexp'>Help us improve your experience</p>
           </div>
           <button className="close-button" onClick={handleCancel}>
             <X size={20} />

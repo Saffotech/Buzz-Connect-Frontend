@@ -14,7 +14,11 @@ const Input = ({
   showToggle = false,
   showPassword = false,
   togglePassword,
-  minLength
+  minLength,
+  title,
+  onCopy,
+  onCut,
+  onPaste
 }) => {
   return (
     <div className="form-group">
@@ -29,6 +33,10 @@ const Input = ({
           placeholder={placeholder}
           required={required}
           minLength={minLength}
+          title={title}
+          onCopy={onCopy}
+          onCut={onCut}
+          onPaste={onPaste}
         />
         {showToggle && (
           <button

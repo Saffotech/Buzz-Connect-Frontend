@@ -731,6 +731,11 @@
   .planner-layout {
     flex-direction: column;
     height: auto;
+
+  }
+
+  .planner-page{
+    width: 100vw;
   }
 
   .content-pool {
