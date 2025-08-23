@@ -957,7 +957,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                         disabled={isGenerating || !postData.content.trim()}
                         title="Generate hashtags with AI"
                       >
-                        {isGenerating ? <Loader /> : <Sparkles size={14} />}
+                        {isGenerating ? <></> : <Sparkles size={14} />}
                         AI
                       </button>
                     </label>
@@ -1059,7 +1059,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                           type="radio"
                           name="scheduler"
                           value="now"
-                          checked={!isScheduled}
+                          // checked={!isScheduled}
                           onChange={() => setIsScheduled(false)}
                         />
                         <span className="radio-custom"></span>
@@ -1193,7 +1193,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
             >
               {isSubmitting ? (
                 <>
-                  <Loader className="spinner" size={16} />
+                  {/* <Loader className="spinner" size={16} /> */}
                   {isScheduled ? 'Scheduling...' : 'Publishing...'}
                 </>
               ) : isScheduled ? (

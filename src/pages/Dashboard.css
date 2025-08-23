@@ -376,10 +376,19 @@
 
 
 .upcoming-posts-scroll {
-  display: block;
+  display: grid;
+  /* flex-wrap: wrap; */
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
   padding: 0;
+}
+
+.ctBtn{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  align-items: center;
 }
 
 
@@ -443,6 +452,7 @@
 
 .upcoming-post-card .platform-header .schedule-time {
   text-align: left !important;
+  white-space: nowrap;
 }
 
 

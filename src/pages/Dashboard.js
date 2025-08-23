@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  ChevronUp,
   Upload,
   Clock,
   Activity,
@@ -37,13 +38,36 @@ const Dashboard = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [slicePosts, setSlicePosts] = useState(0);
   const [posts, setPosts] = useState([]);
   const [upcomingPosts, setUpcomingPosts] = useState([]);
   const [userStats, setUserStats] = useState(null);
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  // useEffect(() => {
+  //   if (upcomingPosts.length === 1) {
+  //     setSlicePosts(1);
+  //   } else {
+  //     setSlicePosts(upcomingPosts.length);
+  //   }
+  // }, [upcomingPosts]);
+  const getTotalPlatformCount = (posts) => {
+    return posts.reduce((count, post) => {
+      if (Array.isArray(post.platforms) && post.platforms.length > 0) {
+        return count + post.platforms.length;
+      }
+      return count + 1; // default to 1 (instagram fallback)
+    }, 0);
+  };
+  useEffect(() => {
+    const totalCards = getTotalPlatformCount(upcomingPosts);
+    setSlicePosts(totalCards);
 
+    if (slicePosts > 1){
+      setSlicePosts (1)
+    }
+  }, [upcomingPosts]);
   const navigate = useNavigate();
 
   const handleMediaUpload = async (files) => {
@@ -245,16 +269,16 @@ const Dashboard = () => {
 
 
   // In Dashboard.js, update the stats calculation
-// Update the connection status check
-const isConnected = data?.stats?.connectedPlatforms > 0;
+  // Update the connection status check
+  const isConnected = data?.stats?.connectedPlatforms > 0;
 
-// Simplified stats object - let individual cards handle the connection logic
-const stats = {
-  followers: isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0',
-  engagement: isConnected ? (data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0') : '0',
-  postsThisMonth: isConnected ? (data?.stats?.publishedPosts?.toLocaleString() || '0') : '0',
-  reach: isConnected ? (data?.analyticsOverview?.totalReach?.toLocaleString() || '0') : '0'
-};
+  // Simplified stats object - let individual cards handle the connection logic
+  const stats = {
+    followers: isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0',
+    engagement: isConnected ? (data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0') : '0',
+    postsThisMonth: isConnected ? (data?.stats?.publishedPosts?.toLocaleString() || '0') : '0',
+    reach: isConnected ? (data?.analyticsOverview?.totalReach?.toLocaleString() || '0') : '0'
+  };
 
 
 
@@ -311,105 +335,105 @@ const stats = {
         <div className="dashboard-center">
           {/* Performance Snapshot */}
           <div className="performance-snapshot">
-           <div className="stats-grid">
-  {/* Row 1 */}
-  <div className="stat-card clickable" onClick={() => navigate('/settings?tab=accounts')}>
-    <div className="stat-icon followers">
-      <Users size={24} />
-    </div>
-    <div className="stat-content">
-      <h3>{isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0'}</h3>
-      <p>Total Followers</p>
-      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
-        {isConnected 
-          ? `${data?.stats?.connectedPlatforms || 0} platforms connected`
-          : 'No platforms connected'
-        }
-      </span>
-    </div>
-  </div>
+            <div className="stats-grid">
+              {/* Row 1 */}
+              <div className="stat-card clickable" onClick={() => navigate('/settings?tab=accounts')}>
+                <div className="stat-icon followers">
+                  <Users size={24} />
+                </div>
+                <div className="stat-content">
+                  <h3>{isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0'}</h3>
+                  <p>Total Followers</p>
+                  <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+                    {isConnected
+                      ? `${data?.stats?.connectedPlatforms || 0} platforms connected`
+                      : 'No platforms connected'
+                    }
+                  </span>
+                </div>
+              </div>
 
-  <div className="stat-card clickable" onClick={() => navigate('/content')}>
-    <div className="stat-icon posts">
-      <Image size={24} />
-    </div>
-    <div className="stat-content">
-      <h3>{isConnected ? (data?.stats?.totalPosts || 0) : 0}</h3>
-      <p>Total Posts</p>
-      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
-        {isConnected 
-          ? 'All time posts created'
-          : 'Connect accounts to create posts'
-        }
-      </span>
-    </div>
-  </div>
+              <div className="stat-card clickable" onClick={() => navigate('/content')}>
+                <div className="stat-icon posts">
+                  <Image size={24} />
+                </div>
+                <div className="stat-content">
+                  <h3>{isConnected ? (data?.stats?.totalPosts || 0) : 0}</h3>
+                  <p>Total Posts</p>
+                  <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+                    {isConnected
+                      ? 'All time posts created'
+                      : 'Connect accounts to create posts'
+                    }
+                  </span>
+                </div>
+              </div>
 
-  <div className="stat-card clickable" onClick={() => navigate('/planner')}>
-    <div className="stat-icon scheduled">
-      <Calendar size={24} />
-    </div>
-    <div className="stat-content">
-      <h3>{isConnected ? (data?.stats?.scheduledPosts || 0) : 0}</h3>
-      <p>Scheduled Posts</p>
-      <span className={`stat-change ${isConnected ? 'neutral' : 'neutral'}`}>
-        {isConnected 
-          ? 'Awaiting publication'
-          : 'Connect accounts to schedule'
-        }
-      </span>
-    </div>
-  </div>
+              <div className="stat-card clickable" onClick={() => navigate('/planner')}>
+                <div className="stat-icon scheduled">
+                  <Calendar size={24} />
+                </div>
+                <div className="stat-content">
+                  <h3>{isConnected ? (data?.stats?.scheduledPosts || 0) : 0}</h3>
+                  <p>Scheduled Posts</p>
+                  <span className={`stat-change ${isConnected ? 'neutral' : 'neutral'}`}>
+                    {isConnected
+                      ? 'Awaiting publication'
+                      : 'Connect accounts to schedule'
+                    }
+                  </span>
+                </div>
+              </div>
 
-  {/* Row 2 */}
-  <div className="stat-card clickable">
-    <div className="stat-icon published">
-      <TrendingUp size={24} />
-    </div>
-    <div className="stat-content">
-      <h3>{isConnected ? (data?.stats?.publishedPosts || 0) : 0}</h3>
-      <p>Published Posts</p>
-      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
-        {isConnected 
-          ? 'Live on social media'
-          : 'Connect accounts to publish'
-        }
-      </span>
-    </div>
-  </div>
+              {/* Row 2 */}
+              <div className="stat-card clickable">
+                <div className="stat-icon published">
+                  <TrendingUp size={24} />
+                </div>
+                <div className="stat-content">
+                  <h3>{isConnected ? (data?.stats?.publishedPosts || 0) : 0}</h3>
+                  <p>Published Posts</p>
+                  <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+                    {isConnected
+                      ? 'Live on social media'
+                      : 'Connect accounts to publish'
+                    }
+                  </span>
+                </div>
+              </div>
 
-  <div className="stat-card clickable" onClick={() => navigate('/content?tab=media')}>
-    <div className="stat-icon media">
-      <Upload size={24} />
-    </div>
-    <div className="stat-content">
-      <h3>{isConnected ? (data?.stats?.mediaFiles || 0) : 0}</h3>
-      <p>Media Files</p>
-      <span className={`stat-change ${isConnected ? 'neutral' : 'neutral'}`}>
-        {isConnected 
-          ? 'Images and videos stored'
-          : 'Connect accounts to upload media'
-        }
-      </span>
-    </div>
-  </div>
+              <div className="stat-card clickable" onClick={() => navigate('/content?tab=media')}>
+                <div className="stat-icon media">
+                  <Upload size={24} />
+                </div>
+                <div className="stat-content">
+                  <h3>{isConnected ? (data?.stats?.mediaFiles || 0) : 0}</h3>
+                  <p>Media Files</p>
+                  <span className={`stat-change ${isConnected ? 'neutral' : 'neutral'}`}>
+                    {isConnected
+                      ? 'Images and videos stored'
+                      : 'Connect accounts to upload media'
+                    }
+                  </span>
+                </div>
+              </div>
 
-  <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
-    <div className="stat-icon engagement">
-      <Heart size={24} />
-    </div>
-    <div className="stat-content">
-      <h3>{isConnected ? (data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0') : '0'}%</h3>
-      <p>Engagement Rate</p>
-      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
-        {isConnected 
-          ? `${data?.analyticsOverview?.totalLikes || 0} total likes`
-          : 'Connect accounts for engagement'
-        }
-      </span>
-    </div>
-  </div>
-</div>
+              <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
+                <div className="stat-icon engagement">
+                  <Heart size={24} />
+                </div>
+                <div className="stat-content">
+                  <h3>{isConnected ? (data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0') : '0'}%</h3>
+                  <p>Engagement Rate</p>
+                  <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+                    {isConnected
+                      ? `${data?.analyticsOverview?.totalLikes || 0} total likes`
+                      : 'Connect accounts for engagement'
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
 
 
           </div>
@@ -425,7 +449,8 @@ const stats = {
                 disabled={postsLoading}
               >
                 <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
-                
+                <span style={{ marginLeft: "6px" }}>Refresh Now</span>
+
               </button>
             </div>
 
@@ -446,7 +471,8 @@ const stats = {
 
                 </div>
               ) : upcomingPosts.length > 0 ? (
-                upcomingPosts.slice(0, 5).flatMap(post => {
+                upcomingPosts.slice(0, slicePosts).flatMap(post => {
+                  console.log('plo', post)
                   // Defensive platforms array
                   const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ?
                     post.platforms : ['instagram'];
@@ -459,7 +485,12 @@ const stats = {
                       twitter: '#1DA1F2',
                       facebook: '#1877F2',
                     };
-                    const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
+                    const style = {
+                      '--platform-color': colorMap[primary] || colorMap['instagram'],
+                      border: '1px solid ' + colorMap[primary] || colorMap['instagram'],
+                      borderBottom: '6px solid ' + colorMap[primary] || colorMap['instagram']
+                    }
+
 
                     return (
                       <div
@@ -508,7 +539,9 @@ const stats = {
                       </div>
                     );
                   });
-                })
+                },
+
+                )
               ) : (
                 <div className="empty-upcoming">
                   <Calendar size={32} />
@@ -516,6 +549,32 @@ const stats = {
                   <p className="empty-subtitle">Create posts with future dates to see them here</p>
                 </div>
               )}
+
+
+            </div>
+            <div className='ctBtn'>
+
+              <button
+                className="inline-refresh-btn"
+                style={{ width: 'fit-content' }}
+                onClick={() => {
+                  if (slicePosts > 1) {
+                    setSlicePosts(1);
+                  } else {
+                    const totalCards = getTotalPlatformCount(upcomingPosts);
+                    setSlicePosts(totalCards);
+                  }
+                }}
+                disabled={postsLoading}
+              >
+                {slicePosts <= 1 ?
+                  <ChevronDown size={16} /> :
+                  <ChevronUp size={16} />
+                }
+                <span style={{ marginLeft: "6px" }}>
+                  View {slicePosts <= 1 ? 'More' : 'Less'}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -600,10 +659,10 @@ const stats = {
               </button>
               <button className="btn-secondary action-btn" onClick={
                 // () => document.getElementById('media-upload').click()
-                () => setShowUploadModal(true)
+                () => navigate('/ai-assistant')
               }>
                 <Upload size={18} />
-                Upload Media
+                 AI Assistant
               </button>
               <input
                 id="media-upload"

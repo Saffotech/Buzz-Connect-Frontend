@@ -414,14 +414,14 @@ const Analytics = () => {
       <div className="analytics-header">
         <h1>Analytics</h1>
         <p>Track your social media performance and discover insights to grow your audience</p>
-        <button 
+        {/* <button 
           className="refresh-analytics-btn"
           onClick={() => fetchAnalyticsData()}
           disabled={loading}
         >
           <RefreshCw size={16} className={loading ? 'spinning' : ''} />
           Refresh Data
-        </button>
+        </button> */}
       </div>
 
       {/* Global Filter Bar */}
@@ -610,7 +610,7 @@ const Analytics = () => {
           </div>
 
           {/* Engagement Trends Chart */}
-          <div className="analytics-section">
+          {/* <div className="analytics-section">
             <h2>Engagement Trends</h2>
             <div className="chart-container">
               <div className="chart-header">
@@ -641,7 +641,7 @@ const Analytics = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Platform Performance Breakdown */}
           <div className="analytics-section">
@@ -659,12 +659,12 @@ const Analytics = () => {
                           {platform.charAt(0).toUpperCase() + platform.slice(1)}
                         </span>
                       </div>
-                      <button
+                      {/* <button
                         className="platform-filter-btn"
                         onClick={() => handlePlatformChange(platform)}
                       >
                         Filter by {platform}
-                      </button>
+                      </button> */}
                     </div>
                     <div className="platform-metrics-grid">
                       <div className="platform-metric">
@@ -695,7 +695,7 @@ const Analytics = () => {
           </div>
 
           {/* Top Content Analysis */}
-          <div className="analytics-section">
+          {/* <div className="analytics-section">
             <div className="section-header">
               <h2>Top Content Analysis</h2>
               <div className="sort-controls">
@@ -780,7 +780,7 @@ const Analytics = () => {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       )}
     </div>

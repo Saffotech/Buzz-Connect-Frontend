@@ -750,7 +750,7 @@ const Form = ({ isLogin, setIsLogin, formMode, setFormMode }) => {
       {formMode === 'auth' && (
         <div className="auth-footer">
           <p>
-            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            {isLogin ? "Don't have an account?  " : "Already have an account?  "}
             <button
               type="button"
               className="auth-switch"
