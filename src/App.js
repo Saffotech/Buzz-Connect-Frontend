@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { HelmetProvider, Helmet } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Loader from './components/common/Loader'
 import Layout from './components/Layout';
@@ -14,56 +15,177 @@ import SettingsPage from './pages/Settings';
 import { trackPageView } from "./utils/analytics-helpers";
 import PageNotFound from './components/common/pagenotfound/PageNotFound';
 
+// Meta tags configuration for different routes
+const getMetaTags = (pathname) => {
+  switch (pathname) {
+    case '/auth':
+      return {
+        title: "Login & Sign Up |MGA Buzz Connect ",
+        description: "Log in or create a new account with MGA Buzz Connect - the AI-powered social media management tool for businesses and agencies.",
+        keywords: "MGA Buzz Connect login, MGA Buzz Connect sign up, social media tool login, create MGA Buzz Connect account, marketing software signup",
+        ogTitle: "MGA Buzz Connect - Login & Sign Up",
+        ogDescription: "Access MGA Buzz Connect to manage, schedule, and analyze your social media from one place. Log in or sign up to get started.",
+        ogUrl: "https://mgabrandbuzz.com/auth",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+      };
+    case '/dashboard':
+      return {
+        title: "Dashboard | MGA Buzz Connect",
+        description: "Manage your social media accounts, view analytics, and schedule posts from your MGA Buzz Connect dashboard.",
+        keywords: "social media dashboard, analytics, post scheduling",
+        ogTitle: "Dashboard - MGA Buzz Connect",
+        ogDescription: "Manage your social media accounts from one centralized dashboard.",
+        ogUrl: "https://mgabrandbuzz.com/dashboard",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+      };
+    case '/planner':
+      return {
+        title: " Planner | MGA Buzz Connect",
+        description: "Plan and schedule your social media content with MGA Buzz Connect's intelligent content planner.",
+        keywords: "content planning, social media scheduler, content calendar",
+        ogTitle: "Content Planner - MGA Buzz Connect",
+        ogDescription: "Plan and schedule your social media content efficiently.",
+        ogUrl: "https://mgabrandbuzz.com/planner",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+      };
+    case '/analytics':
+      return {
+        title: "Analytics | MGA Buzz Connect",
+        description: "View detailed analytics and insights for your social media performance with MGA Buzz Connect.",
+        keywords: "social media analytics, performance metrics, insights",
+        ogTitle: "Analytics - MGA Buzz Connect",
+        ogDescription: "Get detailed insights into your social media performance.",
+        ogUrl: "https://mgabrandbuzz.com/analytics",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+      };
+    case '/ai-assistant':
+      return {
+        title: "AI Assistant | MGA Buzz Connect",
+        description: "Get AI-powered assistance for your social media content creation and strategy.",
+        keywords: "AI assistant, content creation, social media AI",
+        ogTitle: "AI Assistant - MGA Buzz Connect",
+        ogDescription: "AI-powered assistance for social media management.",
+        ogUrl: "https://mgabrandbuzz.com/ai-assistant",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+      };
+      case '/content':
+  return {
+    title: "Content Management | MGA Buzz Connect",
+    description: "Plan, create, and organize all your social media posts and media assets in one place. Access your content drafts and media library.",
+    keywords: "social media content, content planner, media library, content management, social media posts",
+    ogTitle: "Content Management - MGA Buzz Connect",
+    ogDescription: "Plan, create, and organize your social media posts and media assets.",
+    ogUrl: "https://mgabrandbuzz.com/content",
+    ogImage: "https://mgabrandbuzz.com/assets/img/og-image-content.jpg" // A specific image for this page is best
+  };
+case '/settings':
+  return {
+    title: "Account Settings | MGA Buzz Connect",
+    description: "Manage your MGA Buzz Connect account settings, connected social profiles, team members, and subscription details.",
+    keywords: "account settings, social media profiles, manage subscription, team management",
+    ogTitle: "Account Settings - MGA Buzz Connect",
+    ogDescription: "Manage your account, profiles, and subscription settings.",
+    ogUrl: "https://mgabrandbuzz.com/settings",
+    ogImage: "https://mgabrandbuzz.com/assets/img/og-image-settings.jpg" // A specific image for this page is best
+  };
+
+    default:
+      return {
+        title: "MGA Buzz Connect - AI-Powered Social Media Management",
+        description: "Manage, schedule, and analyze your social media from one place with MGA Buzz Connect.",
+        keywords: "social media management, AI tools, content scheduling",
+        ogTitle: "MGA Buzz Connect",
+        ogDescription: "AI-powered social media management platform.",
+        ogUrl: "https://mgabrandbuzz.com",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+      };
+  }
+};
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
- if (isLoading) {
-  return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh'
-    }}>
-      <Loader />
-    </div>
-  );
-}
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
+      }}>
+        <Loader />
+      </div>
+    );
+  }
 
   return isAuthenticated ? children : <Navigate to="/auth" replace />;
 };
 
-// Public Route Component (redirects to dashboard if authenticated)
+// Public Route Component
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-  return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh'
-    }}>
-      <Loader />
-    </div>
-  );
-}
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
+      }}>
+        <Loader />
+      </div>
+    );
+  }
 
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+};
+
+// Dynamic Meta Tags Component
+const DynamicMetaTags = () => {
+  const location = useLocation();
+  const metaTags = getMetaTags(location.pathname);
+
+  return (
+    <Helmet>
+      <title>{metaTags.title}</title>
+      <meta name="description" content={metaTags.description} />
+      <meta name="keywords" content={metaTags.keywords} />
+      <meta name="robots" content="index, follow" />
+      <meta name="author" content="MGA Buzz Connect" />
+      
+      {/* Open Graph */}
+      <meta property="og:title" content={metaTags.ogTitle} />
+      <meta property="og:description" content={metaTags.ogDescription} />
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={metaTags.ogUrl} />
+      <meta property="og:image" content={metaTags.ogImage} />
+      
+      {/* Twitter */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={metaTags.ogTitle} />
+      <meta name="twitter:description" content={metaTags.ogDescription} />
+      <meta name="twitter:image" content={metaTags.ogImage} />
+    </Helmet>
+  );
 };
 
 // App Routes Component
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
-    const location = useLocation();
+  const location = useLocation();
+  
   // Track page views whenever route changes
   useEffect(() => {
     trackPageView(location.pathname + location.search);
   }, [location]);
+  
   return (
     <div className="App">
+      {/* Add Dynamic Meta Tags */}
+      <DynamicMetaTags />
+      
       <Routes>
         <Route
           path="/auth"
@@ -137,7 +259,6 @@ const AppRoutes = () => {
           path="/"
           element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />}
         />
-        {/* 404 Route - Must be last */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </div>
@@ -147,33 +268,35 @@ const AppRoutes = () => {
 // Main App Component
 function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: '#4ade80',
-              secondary: '#fff',
-            },
-          },
-          error: {
+    <HelmetProvider>
+      <AuthProvider>
+        <AppRoutes />
+        <Toaster
+          position="top-right"
+          toastOptions={{
             duration: 4000,
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
+            style: {
+              background: '#363636',
+              color: '#fff',
             },
-          },
-        }}
-      />
-    </AuthProvider>
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 4000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
+      </AuthProvider>
+    </HelmetProvider>
   );
 }
 
