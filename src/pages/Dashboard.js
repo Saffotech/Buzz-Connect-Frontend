@@ -19,7 +19,8 @@ import {
   Activity,
   ExternalLink,
   RefreshCw,
-  X
+  X,
+  Link2
 } from 'lucide-react';
 import { useDashboardData } from '../hooks/useApi';
 import { useNavigate } from 'react-router-dom';
@@ -232,22 +233,30 @@ const Dashboard = () => {
   ).length;
 
   // Real analytics data with fallbacks
+
   // const stats = {
-  //   followers: userStats?.totalFollowers || analytics?.totalFollowers || user?.followers || '0',
-  //   engagement: userStats?.avgEngagementRate ? 
-  //     `${userStats.avgEngagementRate.toFixed(1)}%` : 
-  //     (analytics?.avgEngagementRate ? `${analytics.avgEngagementRate.toFixed(1)}%` : '0%'),
-  //   postsThisMonth: postsThisMonth || '0',
-  //   reach: userStats?.totalReach || analytics?.totalReach || '0'
+  //   followers: data?.stats?.totalFollowers?.toLocaleString() || '0',
+  //   engagement: data?.analyticsOverview?.avgEngagementRate
+  //     ? `${data.analyticsOverview.avgEngagementRate.toFixed(1)}%`
+  //     : '0%',
+  //   postsThisMonth: data?.stats?.publishedPosts || '0', // or totalPosts if you prefer
+  //   reach: data?.analyticsOverview?.totalReach?.toLocaleString() || '0'
   // };
-  const stats = {
-    followers: data?.stats?.totalFollowers?.toLocaleString() || '0',
-    engagement: data?.analyticsOverview?.avgEngagementRate
-      ? `${data.analyticsOverview.avgEngagementRate.toFixed(1)}%`
-      : '0%',
-    postsThisMonth: data?.stats?.publishedPosts || '0', // or totalPosts if you prefer
-    reach: data?.analyticsOverview?.totalReach?.toLocaleString() || '0'
-  };
+
+
+  // In Dashboard.js, update the stats calculation
+// Update the connection status check
+const isConnected = data?.stats?.connectedPlatforms > 0;
+
+// Simplified stats object - let individual cards handle the connection logic
+const stats = {
+  followers: isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0',
+  engagement: isConnected ? (data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0') : '0',
+  postsThisMonth: isConnected ? (data?.stats?.publishedPosts?.toLocaleString() || '0') : '0',
+  reach: isConnected ? (data?.analyticsOverview?.totalReach?.toLocaleString() || '0') : '0'
+};
+
+
 
   const upcomingPostsFromAPI = data?.upcomingPosts || [];
 
@@ -295,42 +304,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Dashboard Header */}
-      {/* <div className="dashboard-header">
-        <div className="header-left">
-          <div className="logo">
-           <img src={Logo} alt="BuzzConnect Logo" />
-          </div>
-        </div>
-        <div className="header-right">
-          <span className="welcome-message">
-            Welcome back, {user?.displayName || user?.email || 'User'}!
-          </span>
-          <div className="user-profile-dropdown">
-            <button
-              className="user-avatar-btn"
-              onClick={() => setShowUserDropdown(!showUserDropdown)}
-            >
-              <div className="user-avatar">
-                {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
-              </div>
-              <ChevronDown size={16} />
-            </button>
-            {showUserDropdown && (
-              <div className="dropdown-menu">
-                <button onClick={() => navigate('/settings?tab=profile')} className="dropdown-item">
-                  <Settings size={16} />
-                  Settings
-                </button>
-                <button onClick={handleLogout} className="dropdown-item logout">
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div> */}
 
       {/* Three Column Layout */}
       <div className="dashboard-layout">
@@ -338,88 +311,106 @@ const Dashboard = () => {
         <div className="dashboard-center">
           {/* Performance Snapshot */}
           <div className="performance-snapshot">
-            <div className="stats-grid">
-              {/* Row 1 */}
-              <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
-                <div className="stat-icon followers">
-                  <Users size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{data?.stats?.totalFollowers?.toLocaleString() || '0'}</h3>
-                  <p>Total Followers</p>
-                  <span className="stat-change positive">
-                    {data?.stats?.connectedPlatforms || 0} platforms connected
-                  </span>
-                </div>
-              </div>
+           <div className="stats-grid">
+  {/* Row 1 */}
+  <div className="stat-card clickable" onClick={() => navigate('/settings?tab=accounts')}>
+    <div className="stat-icon followers">
+      <Users size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0'}</h3>
+      <p>Total Followers</p>
+      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+        {isConnected 
+          ? `${data?.stats?.connectedPlatforms || 0} platforms connected`
+          : 'No platforms connected'
+        }
+      </span>
+    </div>
+  </div>
 
-              <div className="stat-card clickable">
-                <div className="stat-icon posts">
-                  <Image size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{data?.stats?.totalPosts || 0}</h3>
-                  <p>Total Posts</p>
-                  <span className="stat-change positive">
-                    All time posts created
-                  </span>
-                </div>
-              </div>
+  <div className="stat-card clickable" onClick={() => navigate('/content')}>
+    <div className="stat-icon posts">
+      <Image size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{isConnected ? (data?.stats?.totalPosts || 0) : 0}</h3>
+      <p>Total Posts</p>
+      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+        {isConnected 
+          ? 'All time posts created'
+          : 'Connect accounts to create posts'
+        }
+      </span>
+    </div>
+  </div>
 
-              <div className="stat-card clickable" onClick={() => navigate('/planner')}>
-                <div className="stat-icon scheduled">
-                  <Calendar size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{data?.stats?.scheduledPosts || 0}</h3>
-                  <p>Scheduled Posts</p>
-                  <span className="stat-change neutral">
-                    Awaiting publication
-                  </span>
-                </div>
-              </div>
+  <div className="stat-card clickable" onClick={() => navigate('/planner')}>
+    <div className="stat-icon scheduled">
+      <Calendar size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{isConnected ? (data?.stats?.scheduledPosts || 0) : 0}</h3>
+      <p>Scheduled Posts</p>
+      <span className={`stat-change ${isConnected ? 'neutral' : 'neutral'}`}>
+        {isConnected 
+          ? 'Awaiting publication'
+          : 'Connect accounts to schedule'
+        }
+      </span>
+    </div>
+  </div>
 
-              {/* Row 2 */}
-              <div className="stat-card clickable">
-                <div className="stat-icon published">
-                  <TrendingUp size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{data?.stats?.publishedPosts || 0}</h3>
-                  <p>Published Posts</p>
-                  <span className="stat-change positive">
-                    Live on social media
-                  </span>
-                </div>
-              </div>
+  {/* Row 2 */}
+  <div className="stat-card clickable">
+    <div className="stat-icon published">
+      <TrendingUp size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{isConnected ? (data?.stats?.publishedPosts || 0) : 0}</h3>
+      <p>Published Posts</p>
+      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+        {isConnected 
+          ? 'Live on social media'
+          : 'Connect accounts to publish'
+        }
+      </span>
+    </div>
+  </div>
 
-              <div className="stat-card clickable" onClick={() => navigate('/content?tab=media')}>
-                <div className="stat-icon media">
-                  <Upload size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{data?.stats?.mediaFiles || 0}</h3>
-                  <p>Media Files</p>
-                  <span className="stat-change neutral">
-                    Images and videos stored
-                  </span>
-                </div>
-              </div>
+  <div className="stat-card clickable" onClick={() => navigate('/content?tab=media')}>
+    <div className="stat-icon media">
+      <Upload size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{isConnected ? (data?.stats?.mediaFiles || 0) : 0}</h3>
+      <p>Media Files</p>
+      <span className={`stat-change ${isConnected ? 'neutral' : 'neutral'}`}>
+        {isConnected 
+          ? 'Images and videos stored'
+          : 'Connect accounts to upload media'
+        }
+      </span>
+    </div>
+  </div>
 
+  <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
+    <div className="stat-icon engagement">
+      <Heart size={24} />
+    </div>
+    <div className="stat-content">
+      <h3>{isConnected ? (data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0') : '0'}%</h3>
+      <p>Engagement Rate</p>
+      <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
+        {isConnected 
+          ? `${data?.analyticsOverview?.totalLikes || 0} total likes`
+          : 'Connect accounts for engagement'
+        }
+      </span>
+    </div>
+  </div>
+</div>
 
-              <div className="stat-card clickable" onClick={() => navigate('/analytics')}>
-                <div className="stat-icon engagement">
-                  <Heart size={24} />
-                </div>
-                <div className="stat-content">
-                  <h3>{data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0'}%</h3>
-                  <p>Engagement Rate</p>
-                  <span className="stat-change positive">
-                    {data?.analyticsOverview?.totalLikes || 0} total likes
-                  </span>
-                </div>
-              </div>
-            </div>
 
           </div>
 
