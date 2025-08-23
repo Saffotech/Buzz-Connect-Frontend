@@ -1102,6 +1102,44 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
     }
   };
 
+  const handleDownload = async () => {
+    try {
+      // Fetch the file as a blob
+      const response = await fetch(media.url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+
+      const blob = await response.blob();
+      
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = media.filename || `media-${media._id || media.id}`;
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download file. Please try again.');
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content preview-modal" onClick={(e) => e.stopPropagation()}>
@@ -1186,11 +1224,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
 
         <div className="modal-footer">
           <div className="footer-left">
-            <button className="btn-secondary">
-              <Edit size={16} />
-              Edit Details
-            </button>
-            <button className="btn-secondary">
+            <button className="btn-secondary" onClick={handleDownload}>
               <Download size={16} />
               Download
             </button>
