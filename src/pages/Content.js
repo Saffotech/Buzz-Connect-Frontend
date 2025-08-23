@@ -46,7 +46,7 @@ import Loader from '../components/common/Loader';
 const Content = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Main Content Hub state
   const [activeTab, setActiveTab] = useState('posts');
   const [notification, setNotification] = useState(null);
@@ -101,8 +101,11 @@ const Content = () => {
     ...(data?.upcomingPosts || [])
   ];
 
+  console.log('xs',allPosts);
+
+
   // ✅ Remove duplicates based on _id
-  const uniquePosts = allPosts.filter((post, index, self) => 
+  const uniquePosts = allPosts.filter((post, index, self) =>
     index === self.findIndex(p => p._id === post._id)
   );
 
@@ -213,40 +216,42 @@ const Content = () => {
 
   // ✅ Filter posts based on all filters and search query
   const filteredPosts = uniquePosts.filter(post => {
-  if (!post) return false;
+    if (!post) return false;
+    console.log('plix', post)
+    const postStatus = post.status || 'draft';
+    const postPlatforms = post.platforms || [];
+    const postHashtags = post.hashtags || [];
+    const postContent = post.content || '';
 
-  const postStatus = post.status || 'draft';
-  const postPlatforms = post.platforms || [];
-  const postHashtags = post.hashtags || [];
-  const postContent = post.content || '';
+    const postImages = post.images || [];
 
-  const matchesStatus = postsFilters.status === 'all' || postStatus === postsFilters.status;
-  const matchesPlatform = postsFilters.platform === 'all' || 
-    postPlatforms.includes(postsFilters.platform);
-  const matchesHashtag = !postsFilters.hashtag ||
-    postHashtags.some(tag =>
-      (tag || '').toLowerCase().includes(postsFilters.hashtag.toLowerCase())
-    );
-  const matchesSearch = !postsSearchQuery ||
-    postContent.toLowerCase().includes(postsSearchQuery.toLowerCase()) ||
-    postHashtags.some(tag =>
-      (tag || '').toLowerCase().includes(postsSearchQuery.toLowerCase())
-    );
+    const matchesStatus = postsFilters.status === 'all' || postStatus === postsFilters.status;
+    const matchesPlatform = postsFilters.platform === 'all' ||
+      postPlatforms.includes(postsFilters.platform);
+    const matchesHashtag = !postsFilters.hashtag ||
+      postHashtags.some(tag =>
+        (tag || '').toLowerCase().includes(postsFilters.hashtag.toLowerCase())
+      );
+    const matchesSearch = !postsSearchQuery ||
+      postContent.toLowerCase().includes(postsSearchQuery.toLowerCase()) ||
+      postHashtags.some(tag =>
+        (tag || '').toLowerCase().includes(postsSearchQuery.toLowerCase())
+      );
 
-  // Date range filtering with safety checks
-  let matchesDateRange = true;
-  if (postsFilters.dateRange.start || postsFilters.dateRange.end) {
-    const postDate = new Date(post.createdAt || post.publishedAt || post.scheduledDate || Date.now());
-    if (postsFilters.dateRange.start) {
-      matchesDateRange = matchesDateRange && postDate >= new Date(postsFilters.dateRange.start);
+    // Date range filtering with safety checks
+    let matchesDateRange = true;
+    if (postsFilters.dateRange.start || postsFilters.dateRange.end) {
+      const postDate = new Date(post.createdAt || post.publishedAt || post.scheduledDate || Date.now());
+      if (postsFilters.dateRange.start) {
+        matchesDateRange = matchesDateRange && postDate >= new Date(postsFilters.dateRange.start);
+      }
+      if (postsFilters.dateRange.end) {
+        matchesDateRange = matchesDateRange && postDate <= new Date(postsFilters.dateRange.end);
+      }
     }
-    if (postsFilters.dateRange.end) {
-      matchesDateRange = matchesDateRange && postDate <= new Date(postsFilters.dateRange.end);
-    }
-  }
 
-  return matchesStatus && matchesPlatform && matchesHashtag && matchesSearch && matchesDateRange;
-});
+    return postImages && matchesStatus && matchesPlatform && matchesHashtag && matchesSearch && matchesDateRange;
+  });
 
   // Filter and sort media
   const mediaArray = Array.isArray(mediaList) ? mediaList : [];
@@ -456,12 +461,12 @@ const PostsSubPage = ({
 
   // ✅ Count posts by status for filter labels
   const postCounts = {
-  all: posts.length,
-  draft: posts.filter(p => (p?.status || 'draft') === 'draft').length,
-  scheduled: posts.filter(p => (p?.status || 'draft') === 'scheduled').length,
-  published: posts.filter(p => (p?.status || 'draft') === 'published').length,
-  failed: posts.filter(p => (p?.status || 'draft') === 'failed').length
-};
+    all: posts.length,
+    draft: posts.filter(p => (p?.status || 'draft') === 'draft').length,
+    scheduled: posts.filter(p => (p?.status || 'draft') === 'scheduled').length,
+    published: posts.filter(p => (p?.status || 'draft') === 'published').length,
+    failed: posts.filter(p => (p?.status || 'draft') === 'failed').length
+  };
 
   if (loading) {
     return (
@@ -587,45 +592,46 @@ const PostsSubPage = ({
 
       {/* Posts Grid/List */}
       <div className="posts-content">
-<div className={`posts-container ${viewMode}`}>
-  {posts.length === 0 ? (
-    <div className="empty-state">
-      <FileText size={48} />
-      <h3>No posts found</h3>
-      <p>
-        {searchQuery || filters.status !== 'all' || filters.platform !== 'all' || filters.hashtag || filters.dateRange.start || filters.dateRange.end
-          ? 'Try adjusting your search or filters'
-          : 'Create your first post to get started!'
-        }
-      </p>
-      {(!searchQuery && filters.status === 'all' && filters.platform === 'all' && !filters.hashtag && !filters.dateRange.start && !filters.dateRange.end) && (
-        <button onClick={onCreatePost} className="btn-primary">
-          <Plus size={18} />
-          Create Your First Post
-        </button>
-      )}
-    </div>
-  ) : (
-    // ✅ Use flatMap to create separate cards for each platform (like dashboard)
-    posts.flatMap(post => {
-      // ✅ Same logic as dashboard upcoming posts
-      const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ? 
-        post.platforms : ['instagram'];
+        <div className={`posts-container ${viewMode}`}>
+          {posts.length === 0 ? (
+            <div className="empty-state">
+              <FileText size={48} />
+              <h3>No posts found</h3>
+              <p>
+                {searchQuery || filters.status !== 'all' || filters.platform !== 'all' || filters.hashtag || filters.dateRange.start || filters.dateRange.end
+                  ? 'Try adjusting your search or filters'
+                  : 'Create your first post to get started!'
+                }
+              </p>
+              {(!searchQuery && filters.status === 'all' && filters.platform === 'all' && !filters.hashtag && !filters.dateRange.start && !filters.dateRange.end) && (
+                <button onClick={onCreatePost} className="btn-primary">
+                  <Plus size={18} />
+                  Create Your First Post
+                </button>
+              )}
+            </div>
+          ) : (
+            // ✅ Use flatMap to create separate cards for each platform (like dashboard)
+            posts.flatMap(post => {
+              console.log('pl',post)
+              // ✅ Same logic as dashboard upcoming posts
+              const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ?
+                post.platforms : ['instagram'];
 
-      // ✅ For each platform, create a separate card
-      return platformsArray.map(platform => (
-        <PlatformPostCard 
-          key={`${post._id || post.id}-${platform}`}
-          post={post} 
-          platform={platform}
-          onClick={() => onPostClick(post)}
-          onEdit={() => onEditPost(post)}
-          onDelete={() => onDeletePost(post._id || post.id)}
-        />
-      ));
-    })
-  )}
-</div>
+              // ✅ For each platform, create a separate card
+              return platformsArray.map(platform => (
+                <PlatformPostCard
+                  key={`${post._id || post.id}-${platform}`}
+                  post={post}
+                  platform={platform}
+                  onClick={() => onPostClick(post)}
+                  onEdit={() => onEditPost(post)}
+                  onDelete={() => onDeletePost(post._id || post.id)}
+                />
+              ));
+            })
+          )}
+        </div>
 
       </div>
     </div>
@@ -821,58 +827,58 @@ const MediaLibrarySubPage = ({
             Upload New Media
           </button>
         </div>
-         <div className="filters-bar">
-  {/* Type Dropdown */}
-  <select
-    value={filters.type}
-    id='ftype'
-    onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
-  >
-    <option value="all">All Types</option>
-    <option value="image">Image</option>
-    <option value="video">Video</option>
-  </select>
+        <div className="filters-bar">
+          {/* Type Dropdown */}
+          <select
+            value={filters.type}
+            id='ftype'
+            onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+          >
+            <option value="all">All Types</option>
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+          </select>
 
-  {/* Folder Dropdown */}
-  <select
-    value={filters.folder}
-    onChange={(e) => setFilters(prev => ({ ...prev, folder: e.target.value }))}
-  >
-    <option value="all">All Folders ({media.length})</option>
-    <option value="general">General</option>
-    <option value="posts">Posts</option>
-    <option value="profile">Profile</option>
-    <option value="campaigns">Campaigns</option>
-  </select>
+          {/* Folder Dropdown */}
+          <select
+            value={filters.folder}
+            onChange={(e) => setFilters(prev => ({ ...prev, folder: e.target.value }))}
+          >
+            <option value="all">All Folders ({media.length})</option>
+            <option value="general">General</option>
+            <option value="posts">Posts</option>
+            <option value="profile">Profile</option>
+            <option value="campaigns">Campaigns</option>
+          </select>
 
-  {/* Tags Input */}
-  <div className="filter-input">
-    <Tag size={16} />
-    <input
-      type="text"
-      id='tagssrch'
-      placeholder="Search by tags..."
-      value={filters.tags}
-      onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value }))}
-    />
-  </div>
+          {/* Tags Input */}
+          <div className="filter-input">
+            <Tag size={16} />
+            <input
+              type="text"
+              id='tagssrch'
+              placeholder="Search by tags..."
+              value={filters.tags}
+              onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value }))}
+            />
+          </div>
 
-  {/* Sort By Dropdown */}
-  <select
-    value={filters.sort}
-    onChange={(e) => setFilters(prev => ({ ...prev, sort: e.target.value }))}
-    id='srtdrp'
-  >
-    <option value="newest">Newest First</option>
-    <option value="oldest">Oldest First</option>
-    <option value="mostUsed">Most Used</option>
-  </select>
+          {/* Sort By Dropdown */}
+          <select
+            value={filters.sort}
+            onChange={(e) => setFilters(prev => ({ ...prev, sort: e.target.value }))}
+            id='srtdrp'
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="mostUsed">Most Used</option>
+          </select>
 
-  {/* Clear All */}
-  <button className="clear-filters-btn" onClick={clearFilters}>
-    Clear All
-  </button>
-</div>
+          {/* Clear All */}
+          <button className="clear-filters-btn" onClick={clearFilters}>
+            Clear All
+          </button>
+        </div>
 
 
         <div className="control-right">
@@ -896,7 +902,7 @@ const MediaLibrarySubPage = ({
       {/* Main Layout: Sidebar + Content */}
       <div className="media-layout">
         {/* Filtering Sidebar */}
-       
+
 
         {/* Media Grid/List */}
         <div className="media-content">
@@ -1117,23 +1123,23 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
       }
 
       const blob = await response.blob();
-      
+
       // Create a temporary URL for the blob
       const url = window.URL.createObjectURL(blob);
-      
+
       // Create a temporary anchor element and trigger download
       const link = document.createElement('a');
       link.href = url;
       link.download = media.filename || `media-${media._id || media.id}`;
-      
+
       // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up the blob URL
       window.URL.revokeObjectURL(url);
-      
+
     } catch (error) {
       console.error('Download failed:', error);
       alert('Failed to download file. Please try again.');

@@ -35,7 +35,7 @@ const AuthPage = () => {
 
         <div className="auth-footer">
           <p>
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            {isLogin ? "Don't have an account?  " : "Already have an account? "}
             <button
               type="button"
               className="auth-switch"
