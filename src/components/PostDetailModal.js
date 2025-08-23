@@ -5,10 +5,12 @@ import { X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, Bookma
 const PostDetailModal = ({ post, onClose }) => {
   if (!post) return null;
 
-  const platform = post.platforms?.[0]?.toLowerCase() || "post";
+  // ✅ Fixed: Use the selected platform from the clicked icon, fallback to first platform
+  const platform = post.selectedPlatform?.toLowerCase() || post.platforms?.[0]?.toLowerCase() || "post";
 
   // Debug platform detection
   console.log("Platform detected:", platform);
+  console.log("Selected platform:", post.selectedPlatform);
   console.log("Post platforms array:", post.platforms);
 
   const getPlatformStyle = () => {

@@ -10,6 +10,7 @@ import {
   Clock,
   Instagram,
   Twitter,
+  Facebook,
   Check,
   X,
   AlertCircle,
@@ -36,16 +37,14 @@ const Planner = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    platforms: ['instagram', 'twitter'],
-    statuses: ['scheduled', 'published', 'failed', 'draft']
+    platforms: [],
+    statuses: []
   });
   const [calendarPosts, setCalendarPosts] = useState([]);
   const [draftPosts, setDraftPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showPostDetail, setShowPostDetail] = useState(false);
-
-
 
   const {
     posts,
@@ -57,16 +56,14 @@ const Planner = () => {
   const fetchCalendarPosts = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch all posts and filter them client-side for better reliability
       const response = await apiClient.request('/api/posts', {
         params: {
-          limit: 100 // Increase limit to get more posts
+          limit: 100
         }
       });
 
-      // Extract posts from the response structure
       const postsData = response?.data?.posts || response?.data || [];
-      console.log('Fetched posts:', postsData); // Debug log
+      console.log('Fetched posts:', postsData);
       
       setCalendarPosts(postsData);
     } catch (error) {
@@ -87,7 +84,6 @@ const Planner = () => {
         }
       });
 
-      // Extract posts from the response structure
       const draftsData = response?.data?.posts || response?.data || [];
       setDraftPosts(draftsData);
     } catch (error) {
@@ -106,7 +102,6 @@ const Planner = () => {
       setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
       setShowCreatePost(false);
 
-      // Refresh data
       await Promise.all([fetchCalendarPosts(), fetchDraftPosts()]);
 
       return response;
@@ -151,7 +146,6 @@ const Planner = () => {
     }
   };
 
-  // Calendar date calculations
   const getCalendarStartDate = () => {
     if (viewMode === 'month') {
       const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -180,7 +174,6 @@ const Planner = () => {
     }
   };
 
-  // Filter functions
   const togglePlatformFilter = (platform) => {
     setFilters(prev => ({
       ...prev,
@@ -222,7 +215,6 @@ const Planner = () => {
         </div>
 
         <div className="header-center">
-          {/* View Toggles */}
           <div className="view-toggles">
             <button
               className={`view-toggle ${viewMode === 'month' ? 'active' : ''}`}
@@ -238,7 +230,6 @@ const Planner = () => {
             </button>
           </div>
 
-          {/* Date Navigator */}
           <div className="date-navigator">
             <button className="nav-btn" onClick={() => navigateDate(-1)}>
               <ChevronLeft size={20} />
@@ -254,7 +245,6 @@ const Planner = () => {
         </div>
 
         <div className="header-right">
-          {/* Filters */}
           <div className="filters-section">
             <button
               className={`filter-btn ${showFilters ? 'active' : ''}`}
@@ -282,6 +272,13 @@ const Planner = () => {
                     >
                       <Twitter size={16} />
                       Twitter
+                    </button>
+                    <button
+                      className={`filter-option ${filters.platforms.includes('facebook') ? 'active' : ''}`}
+                      onClick={() => togglePlatformFilter('facebook')}
+                    >
+                      <Facebook size={16} />
+                      Facebook
                     </button>
                   </div>
                 </div>
@@ -323,7 +320,6 @@ const Planner = () => {
             )}
           </div>
 
-          {/* Primary Action */}
           <button className="btn-primary" onClick={() => setShowCreatePost(true)}>
             <Plus size={18} />
             Create Post
@@ -351,16 +347,17 @@ const Planner = () => {
                         <span key={platform} className={`platform-icon ${platform}`}>
                           {platform === 'instagram' && <Instagram size={14} />}
                           {platform === 'twitter' && <Twitter size={14} />}
+                          {platform === 'facebook' && <Facebook size={14} />}
                         </span>
                       ))}
                     </div>
                   </div>
                   {draft.images && draft.images.length > 0 && (
-  <div className="draft-media-indicator">
-    <Image size={14} />
-    <span>{draft.images.length}</span>
-  </div>
-)}
+                    <div className="draft-media-indicator">
+                      <Image size={14} />
+                      <span>{draft.images.length}</span>
+                    </div>
+                  )}
 
                   <div className="draft-actions">
                     <button
@@ -456,7 +453,7 @@ const MonthView = ({ currentDate, posts, filters, onDateClick, onPostClick, load
     const days = [];
     const current = new Date(startDate);
 
-    for (let i = 0; i < 42; i++) { // 6 weeks * 7 days
+    for (let i = 0; i < 42; i++) {
       days.push(new Date(current));
       current.setDate(current.getDate() + 1);
     }
@@ -465,38 +462,38 @@ const MonthView = ({ currentDate, posts, filters, onDateClick, onPostClick, load
   };
 
   const getPostsForDate = (date) => {
-  const postsArray = Array.isArray(posts) ? posts : [];
+    const postsArray = Array.isArray(posts) ? posts : [];
 
-  return postsArray.filter(post => {
-    if (!post || !post.status) return false;
-    
-    // Apply status filter
-    if (!filters.statuses.includes(post.status)) return false;
-    
-    // Apply platform filter
-    if (post.platforms && post.platforms.length > 0 && 
-        !post.platforms.some(p => filters.platforms.includes(p))) {
-      return false;
-    }
+    return postsArray.filter(post => {
+      if (!post || !post.status) return false;
+      
+      // ✅ Show all posts if no status filters are selected
+      if (filters.statuses.length > 0 && !filters.statuses.includes(post.status)) {
+        return false;
+      }
+      
+      // ✅ Show all posts if no platform filters are selected
+      if (filters.platforms.length > 0 && 
+          post.platforms && post.platforms.length > 0 && 
+          !post.platforms.some(p => filters.platforms.includes(p))) {
+        return false;
+      }
 
-    // Get the appropriate date based on post status
-    let postDate;
-    if (post.status === 'published' && post.publishedAt) {
-      postDate = new Date(post.publishedAt);
-    } else if (post.scheduledDate) {
-      postDate = new Date(post.scheduledDate);
-    } else {
-      postDate = new Date(post.createdAt);
-    }
+      let postDate;
+      if (post.status === 'published' && post.publishedAt) {
+        postDate = new Date(post.publishedAt);
+      } else if (post.scheduledDate) {
+        postDate = new Date(post.scheduledDate);
+      } else {
+        postDate = new Date(post.createdAt);
+      }
 
-    // Fix: Use local date comparison to avoid timezone issues
-    const calendarDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const postLocalDate = new Date(postDate.getFullYear(), postDate.getMonth(), postDate.getDate());
-    
-    return calendarDate.getTime() === postLocalDate.getTime();
-  });
-};
-
+      const calendarDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const postLocalDate = new Date(postDate.getFullYear(), postDate.getMonth(), postDate.getDate());
+      
+      return calendarDate.getTime() === postLocalDate.getTime();
+    });
+  };
 
   const isToday = (date) => {
     const today = new Date();
@@ -536,16 +533,11 @@ const MonthView = ({ currentDate, posts, filters, onDateClick, onPostClick, load
             >
               <div className="day-number">{date.getDate()}</div>
               <div className="day-posts">
-                {dayPosts.slice(0, 3).map(post => (
-                  <PostCard
-                    key={post._id || post.id}
-                    post={post}
-                    onClick={() => onPostClick(post)}
-                  />
-                ))}
-                {dayPosts.length > 3 && (
-                  <div className="more-posts">+{dayPosts.length - 3} more</div>
-                )}
+                {/* ✅ Show social media icons instead of post cards */}
+                <PostIconsDisplay 
+                  posts={dayPosts} 
+                  onPostClick={onPostClick}
+                />
               </div>
             </div>
           );
@@ -573,22 +565,18 @@ const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loadi
   };
 
   const getPostsForDate = (date) => {
-    // Ensure posts is an array before filtering
     const postsArray = Array.isArray(posts) ? posts : [];
 
     return postsArray.filter(post => {
       if (!post || !post.status) return false;
       
-      // Apply status filter
       if (!filters.statuses.includes(post.status)) return false;
       
-      // Apply platform filter
       if (post.platforms && post.platforms.length > 0 && 
           !post.platforms.some(p => filters.platforms.includes(p))) {
         return false;
       }
 
-      // Get the appropriate date based on post status
       let postDate;
       if (post.status === 'published' && post.publishedAt) {
         postDate = new Date(post.publishedAt);
@@ -598,7 +586,6 @@ const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loadi
         postDate = new Date(post.createdAt);
       }
 
-      // Compare dates (ignore time)
       const dateStr = date.toISOString().split('T')[0];
       const postDateStr = postDate.toISOString().split('T')[0];
       
@@ -644,13 +631,11 @@ const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loadi
               onClick={() => onDateClick(date)}
             >
               <div className="day-posts">
-                {dayPosts.map(post => (
-                  <PostCard
-                    key={post._id || post.id}
-                    post={post}
-                    onClick={() => onPostClick(post)}
-                  />
-                ))}
+                {/* ✅ Show social media icons instead of post cards */}
+                <PostIconsDisplay 
+                  posts={dayPosts} 
+                  onPostClick={onPostClick}
+                />
               </div>
             </div>
           );
@@ -660,82 +645,126 @@ const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loadi
   );
 };
 
-// Post Card Component
-const PostCard = ({ post, onClick }) => {
+// ✅ Updated PostIconsDisplay Component
+const PostIconsDisplay = ({ posts, onPostClick }) => {
+  // Group posts by time slots for better organization
+  const groupPostsByTime = (posts) => {
+    const grouped = {};
+    
+    posts.forEach(post => {
+      let date;
+      if (post.status === 'published' && post.publishedAt) {
+        date = new Date(post.publishedAt);
+      } else if (post.scheduledDate) {
+        date = new Date(post.scheduledDate);
+      } else {
+        date = new Date(post.createdAt);
+      }
+      
+      const timeKey = date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      if (!grouped[timeKey]) {
+        grouped[timeKey] = [];
+      }
+      grouped[timeKey].push(post);
+    });
+    
+    return grouped;
+  };
+
+  const getPlatformIcon = (platform) => {
+    switch (platform?.toLowerCase()) {
+      case 'instagram': return Instagram;
+      case 'twitter': return Twitter;
+      case 'facebook': return Facebook;
+      default: return Instagram;
+    }
+  };
+
+  const getPlatformColor = (platform) => {
+    const colorMap = {
+      instagram: '#E4405F',
+      twitter: '#1DA1F2',
+      facebook: '#1877F2',
+    };
+    return colorMap[platform?.toLowerCase()] || '#E4405F';
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
-      case 'scheduled': return '#f59e0b';
-      case 'published': return '#10b981';
-      case 'failed': return '#ef4444';
-      case 'draft': return '#6b7280';
-      default: return '#6b7280';
+      case 'scheduled': return '#F59E0B';
+      case 'published': return '#10B981';
+      case 'failed': return '#EF4444';
+      case 'draft': return '#6B7280';
+      default: return '#6B7280';
     }
   };
 
-  const getPostTime = () => {
-    let date;
-    if (post.status === 'published' && post.publishedAt) {
-      date = new Date(post.publishedAt);
-    } else if (post.scheduledDate) {
-      date = new Date(post.scheduledDate);
-    } else {
-      date = new Date(post.createdAt);
-    }
-    
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
+  // ✅ Create a platform-specific post object
+  const createPlatformPost = (originalPost, platform) => {
+    return {
+      ...originalPost,
+      selectedPlatform: platform, // Add the selected platform
+      platformSpecificData: {
+        platform: platform,
+        originalPost: originalPost
+      }
+    };
   };
 
-  const getStatusIcon = () => {
-    switch (post.status) {
-      case 'scheduled':
-        return <Clock size={12} />;
-      case 'published':
-        return <CheckCircle size={12} />;
-      case 'failed':
-        return <X size={12} />;
-      case 'draft':
-        return <AlertCircle size={12} />;
-      default:
-        return <AlertCircle size={12} />;
-    }
-  };
+  if (!posts || posts.length === 0) {
+    return null;
+  }
+
+  const groupedPosts = groupPostsByTime(posts);
 
   return (
-    <div
-      className="post-card"
-      style={{ borderLeftColor: getStatusColor(post.status) }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      draggable
-    >
-      <div className="post-header">
-        <div className="post-time">{getPostTime()}</div>
-        <div className="post-status">
-          {getStatusIcon()}
+    <div className="post-icons-container">
+      {Object.entries(groupedPosts).map(([time, timePosts]) => (
+        <div key={time} className="time-slot">
+          <div className="time-label">{time}</div>
+          <div className="post-icons-row">
+            {timePosts.map(post => {
+              const platforms = post.platforms && post.platforms.length > 0 
+                ? post.platforms 
+                : ['instagram'];
+              
+              return platforms.map(platform => {
+                const PlatformIcon = getPlatformIcon(platform);
+                const platformColor = getPlatformColor(platform);
+                const statusColor = getStatusColor(post.status);
+                
+                // ✅ Create platform-specific post for the click handler
+                const platformPost = createPlatformPost(post, platform);
+                
+                return (
+                  <div
+                    key={`${post._id || post.id}-${platform}`}
+                    className="social-icon-wrapper"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // ✅ Pass the platform-specific post object
+                      onPostClick(platformPost);
+                    }}
+                    style={{
+                      '--platform-color': platformColor,
+                      '--status-color': statusColor
+                    }}
+                    title={`${platform.toUpperCase()} - ${post.status} - ${post.content.substring(0, 50)}...`}
+                  >
+                    <PlatformIcon size={16} />
+                    <div className="status-indicator"></div>
+                  </div>
+                );
+              });
+            })}
+          </div>
         </div>
-      </div>
-      <div className="post-content">{post.content.substring(0, 30)}...</div>
-      <div className="post-platforms">
-        {post.platforms?.map(platform => (
-          <span key={platform} className={`platform-badge ${platform}`}>
-            {platform === 'instagram' && <Instagram size={12} />}
-            {platform === 'twitter' && <Twitter size={12} />}
-          </span>
-        ))}
-      </div>
-     {post.images && post.images.length > 0 && (
-  <div className="post-media-indicator">
-    <Image size={12} />
-    <span>{post.images.length}</span>
-  </div>
-)}
-
+      ))}
     </div>
   );
 };
