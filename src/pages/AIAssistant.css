@@ -16,9 +16,21 @@
   gap: 1rem;
 }
 
+.hxt{
+  width: 50vw;
+}
+
+.ai-hd {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  width: max-content;
+}
+
 .header-icon {
-  width: 64px;
-  height: 64px;
+  width: 75px;
+  height:75px;
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
   border-radius: 16px;
   display: flex;

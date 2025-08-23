@@ -479,99 +479,116 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   };
 
   // AI Content Generation (keeping existing functionality)
- const generateAIContent = async () => {
-  if (!aiPrompt.trim()) return;
+  // Update the generateAIContent function with platform validation:
+  const generateAIContent = async () => {
+    // Check if platforms are selected
+    if (postData.platforms.length === 0) {
+      showToast('Please select at least one social media platform first', 'error');
+      return;
+    }
 
-  setIsGenerating(true);
-  setError(null);
-  showToast('Generating AI content...', 'info');
+    if (!aiPrompt.trim()) {
+      showToast('Please enter a prompt for AI content generation', 'error');
+      return;
+    }
 
-  try {
-    const selectedPlatforms = postData.platforms.length > 0 ? postData.platforms : ['instagram'];
-    
-    // Use the exact structure that works in Swagger
-    const response = await apiClient.generateContent({
-      prompt: aiPrompt,
-      tone: 'casual', // or allow user selection
-      platforms: selectedPlatforms,
-      includeHashtags: true,
-      maxLength: 280 // adjust based on platforms
-    });
+    setIsGenerating(true);
+    setError(null);
+    showToast('Generating AI content...', 'info');
 
-    console.log('AI Response:', response);
-
-    if (response.success && response.data) {
-      const suggestions = [];
+    try {
+      const selectedPlatforms = postData.platforms;
       
-      // Handle the response structure from your Swagger example
-      Object.entries(response.data.content).forEach(([platform, data]) => {
-        suggestions.push({
-          id: `${platform}-${Date.now()}`,
-          content: data.content,
-          hashtags: '', // Extract hashtags from content if needed
-          tone: response.data.options.tone,
-          platforms: [platform],
-          characterCount: data.characterCount,
-          withinLimit: data.withinLimit,
-          provider: 'openai'
-        });
+      // Use the exact structure that works in Swagger
+      const response = await apiClient.generateContent({
+        prompt: aiPrompt,
+        tone: 'casual', // or allow user selection
+        platforms: selectedPlatforms,
+        includeHashtags: true,
+        maxLength: 280 // adjust based on platforms
       });
 
-      setAiSuggestions(suggestions);
-      showToast(`Generated ${suggestions.length} AI suggestions`, 'success');
-    } else {
-      throw new Error('Invalid response format');
+      console.log('AI Response:', response);
+
+      if (response.success && response.data) {
+        const suggestions = [];
+        
+        // Handle the response structure from your Swagger example
+        Object.entries(response.data.content).forEach(([platform, data]) => {
+          suggestions.push({
+            id: `${platform}-${Date.now()}`,
+            content: data.content,
+            hashtags: '', // Extract hashtags from content if needed
+            tone: response.data.options.tone,
+            platforms: [platform],
+            characterCount: data.characterCount,
+            withinLimit: data.withinLimit,
+            provider: 'openai'
+          });
+        });
+
+        setAiSuggestions(suggestions);
+        showToast(`Generated ${suggestions.length} AI suggestions`, 'success');
+      } else {
+        throw new Error('Invalid response format');
+      }
+
+    } catch (error) {
+      console.error('AI generation failed:', error);
+      setError('Failed to generate AI content. Please try again.');
+      showToast('Failed to generate AI content', 'error');
+    } finally {
+      setIsGenerating(false);
     }
+  };
 
-  } catch (error) {
-    console.error('AI generation failed:', error);
-    setError('Failed to generate AI content. Please try again.');
-    showToast('Failed to generate AI content', 'error');
-  } finally {
-    setIsGenerating(false);
-  }
-};
-
+  // Update the generateHashtags function with platform validation:
   const generateHashtags = async () => {
-  if (!postData.content.trim()) {
-    showToast('Please enter some content first to generate hashtags', 'error');
-    return;
-  }
-
-  setIsGenerating(true);
-  setError(null);
-  showToast('Generating hashtags...', 'info');
-
-  try {
-    const selectedPlatform = postData.platforms.length > 0 ? postData.platforms[0] : 'instagram';
-
-    // Use the exact structure that works in Swagger
-    const response = await apiClient.suggestHashtags({
-      content: postData.content,
-      platform: selectedPlatform,
-      count: 10
-    });
-
-    console.log('Hashtag Response:', response);
-
-    if (response.success && response.data.hashtags) {
-      const newHashtags = response.data.hashtags.join(' ');
-      setPostData(prev => ({
-        ...prev,
-        hashtags: prev.hashtags ? `${prev.hashtags} ${newHashtags}` : newHashtags
-      }));
-      showToast(`Added ${response.data.hashtags.length} hashtags`, 'success');
-    } else {
-      throw new Error('Invalid response format');
+    // Check if platforms are selected
+    if (postData.platforms.length === 0) {
+      showToast('Please select at least one social media platform first', 'error');
+      return;
     }
-  } catch (error) {
-    console.error('Hashtag generation failed:', error);
-    setError('Failed to generate hashtags. Please try again.');
-    showToast('Failed to generate hashtags', 'error');
-  } finally {
-    setIsGenerating(false);
-  }
-};
+
+    if (!postData.content.trim()) {
+      showToast('Please enter some content first to generate hashtags', 'error');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    showToast('Generating hashtags...', 'info');
+
+    try {
+      const selectedPlatform = postData.platforms[0]; // Use the first selected platform
+
+      // Use the exact structure that works in Swagger
+      const response = await apiClient.suggestHashtags({
+        content: postData.content,
+        platform: selectedPlatform,
+        count: 10
+      });
+
+      console.log('Hashtag Response:', response);
+
+      if (response.success && response.data.hashtags) {
+        const newHashtags = response.data.hashtags.join(' ');
+        setPostData(prev => ({
+          ...prev,
+          hashtags: prev.hashtags ? `${prev.hashtags} ${newHashtags}` : newHashtags
+        }));
+        showToast(`Added ${response.data.hashtags.length} hashtags`, 'success');
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Hashtag generation failed:', error);
+      setError('Failed to generate hashtags. Please try again.');
+      showToast('Failed to generate hashtags', 'error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
 
   const applyAISuggestion = (suggestion) => {

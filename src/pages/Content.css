@@ -11,7 +11,7 @@
 .page-header {
   background: white;
   border-bottom: 1px solid #e2e8f0;
-  padding: 2rem 2rem 1rem 2rem;
+  padding: 1rem 2rem;
 }
 
 .header-content-left{
@@ -24,14 +24,18 @@
 .header-content h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #1e293b !important;
   margin: 0 0 0.5rem 0;
 }
 
 .header-content p {
-  color: #64748b;
+  color: #64748b !important;
   margin: 0;
   font-size: 1rem;
+}
+
+#hexp {
+  color: white !important;
 }
 
 /* Content Hub Navigation */
@@ -268,7 +272,7 @@
 
 .filter-input svg {
   position: absolute;
-  left: 0rem; /* space from border */
+  left: 0.5rem; /* space from border */
   top: 50%;
   transform: translateY(-50%);
   color: #64748b;
@@ -702,6 +706,7 @@
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: max-content;
 }
 
 .media-card:hover {
@@ -924,7 +929,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000 !important;
+  z-index: 1000000 !important;
   padding: 1rem;
 }
 

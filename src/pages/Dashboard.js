@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Users,
   Heart,
@@ -19,6 +19,7 @@ import {
   Activity,
   ExternalLink,
   RefreshCw,
+  X,
   Link2
 } from 'lucide-react';
 import { useDashboardData } from '../hooks/useApi';
@@ -41,7 +42,32 @@ const Dashboard = () => {
   const [userStats, setUserStats] = useState(null);
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
   const navigate = useNavigate();
+
+  const handleMediaUpload = async (files) => {
+    try {
+      setShowUploadModal(false);
+      setNotification({ type: 'info', message: 'Uploading media...' });
+
+      const response = await uploadMedia(files);
+      console.log('Upload successful:', response);
+
+      setNotification({
+        type: 'success',
+        message: `Successfully uploaded ${files.length} file(s)`
+      });
+
+      refetchMedia();
+    } catch (error) {
+      console.error('Failed to upload media:', error);
+      setNotification({
+        type: 'error',
+        message: error.message || 'Failed to upload media'
+      });
+    }
+  };
 
   const {
     user,
@@ -216,6 +242,7 @@ const Dashboard = () => {
   //   postsThisMonth: data?.stats?.publishedPosts || '0', // or totalPosts if you prefer
   //   reach: data?.analyticsOverview?.totalReach?.toLocaleString() || '0'
   // };
+
 
   // In Dashboard.js, update the stats calculation
 // Update the connection status check
@@ -398,7 +425,7 @@ const stats = {
                 disabled={postsLoading}
               >
                 <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
-                Refresh
+                
               </button>
             </div>
 
@@ -571,7 +598,10 @@ const stats = {
                 <Calendar size={18} />
                 Plan Content
               </button>
-              <button className="btn-secondary action-btn" onClick={() => document.getElementById('media-upload').click()}>
+              <button className="btn-secondary action-btn" onClick={
+                // () => document.getElementById('media-upload').click()
+                () => setShowUploadModal(true)
+              }>
                 <Upload size={18} />
                 Upload Media
               </button>
@@ -686,6 +716,120 @@ const stats = {
         onClose={() => setShowCreatePost(false)}
         onPostCreated={handleCreatePost}
       />
+
+      <MediaUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={handleMediaUpload}
+      />
+    </div>
+  );
+};
+
+const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
+  const [dragActive, setDragActive] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const fileInputRef = useRef(null);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFiles(Array.from(e.dataTransfer.files));
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFiles(Array.from(e.target.files));
+    }
+  };
+
+  const handleUpload = () => {
+    if (selectedFiles.length > 0) {
+      onUpload(selectedFiles);
+      setSelectedFiles([]);
+    }
+  };
+
+  const handleAreaClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content upload-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Upload Media</h3>
+          <button className="modal-close" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="modal-body">
+          <div
+            className={`upload-area ${dragActive ? 'drag-active' : ''}`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={handleAreaClick}
+          >
+            <Upload size={48} />
+            <h4>Drag and drop files here</h4>
+            <p>or click to select files</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,video/*"
+              onChange={handleFileSelect}
+              className="file-input"
+            />
+          </div>
+
+          {selectedFiles.length > 0 && (
+            <div className="selected-files">
+              <h4>Selected Files ({selectedFiles.length})</h4>
+              <div className="file-list">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="file-item">
+                    <span>{file.name}</span>
+                    <span className="file-size">{Math.round(file.size / 1024)}KB</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleUpload}
+            disabled={selectedFiles.length === 0}
+          >
+            Upload {selectedFiles.length > 0 ? `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}` : ''}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

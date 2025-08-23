@@ -14,7 +14,7 @@
 .page-header {
   background: white;
   border-bottom: 1px solid #e2e8f0;
-  padding: 2rem 0;
+  padding: 1rem 0;
 }
 
 .header-content {
@@ -24,7 +24,7 @@
 }
 
 .page-header h1 {
-  font-size: 2rem;
+  font-size: 1.9rem;
   font-weight: 700;
   color: #1e293b;
   margin: 0 0 0.5rem 0;
@@ -544,7 +544,7 @@
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5); /* or whatever dim you prefer */
-  z-index: 50; /* must be higher than sidebar */
+  z-index: 5000000; /* must be higher than sidebar */
 }
 .modal-overlay {
   backdrop-filter: blur(3px);

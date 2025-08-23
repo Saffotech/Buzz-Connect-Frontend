@@ -16,9 +16,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
+  position: fixed;
+  width: 100%;
   top: 0;
-  z-index: 100000;
+  z-index: 1000;
   height: 12vh;
 }
 
@@ -375,7 +376,7 @@
 
 
 .upcoming-posts-scroll {
-  display: grid;
+  display: block;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
   padding: 0;
