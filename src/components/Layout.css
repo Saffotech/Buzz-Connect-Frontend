@@ -297,6 +297,10 @@ layout.css
   padding: 0;
 }
 
+.notification.success{
+  z-index: 1000000000;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .mobile-header {

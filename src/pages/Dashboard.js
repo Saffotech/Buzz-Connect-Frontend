@@ -425,7 +425,7 @@ const stats = {
                 disabled={postsLoading}
               >
                 <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
-                Refresh
+                
               </button>
             </div>
 

@@ -92,7 +92,7 @@ useEffect(() => {
             <div className="header-icon">
               <Wand2 size={32} />
             </div>
-            <div className="header-text">
+            <div className="header-text hxt">
               <h1>AI Assistant</h1>
               <p>Your creative partner for generating, optimizing, and enhancing social media content</p>
             </div>

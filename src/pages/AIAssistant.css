@@ -16,6 +16,10 @@
   gap: 1rem;
 }
 
+.hxt{
+  width: 50vw;
+}
+
 .ai-hd {
   display: flex;
   gap: 1rem;

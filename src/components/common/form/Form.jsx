@@ -7,8 +7,10 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff } from 'lucide-react';
 import './Form.module.css';
 
-const Form = ({ isLogin, setIsLogin }) => {
+const Form = ({ isLogin, setIsLogin, formMode, setFormMode }) => {
   const { login, register, isLoading } = useAuth();
+
+  
 
   useEffect(() => {
   const blockEvents = (e) => e.preventDefault();
@@ -20,7 +22,7 @@ const Form = ({ isLogin, setIsLogin }) => {
     input.addEventListener('paste', blockEvents);
     input.addEventListener('contextmenu', blockEvents);
   });
-
+ 
   return () => {
     inputs.forEach(input => {
       input.removeEventListener('copy', blockEvents);
@@ -32,7 +34,6 @@ const Form = ({ isLogin, setIsLogin }) => {
 }, []);
   
   // Form modes: 'auth', 'forgot', 'otp', 'reset'
-  const [formMode, setFormMode] = useState('auth');
   const [otpVerified, setOtpVerified] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -435,6 +436,7 @@ const Form = ({ isLogin, setIsLogin }) => {
             onCut={(e) => e.preventDefault()}
             onPaste={(e) => e.preventDefault()}
             onContextMenu={(e) => e.preventDefault()}
+            title="Copy Paste is not permitted"
             required
           />
           <button
@@ -461,6 +463,8 @@ const Form = ({ isLogin, setIsLogin }) => {
               onCut={(e) => e.preventDefault()}
               onPaste={(e) => e.preventDefault()}
               onContextMenu={(e) => e.preventDefault()}
+              title="Copy Paste is not permitted"
+
               required
             />
             <button
@@ -491,13 +495,13 @@ const Form = ({ isLogin, setIsLogin }) => {
             />
             Remember me
           </label>
-          <button
-            type="button"
+          <a
+          style={{cursor: 'pointer'}}
             className="forgot-password"
             onClick={() => setFormMode('forgot')}
           >
             Forgot Password?
-          </button>
+          </a>
         </div>
       )}
 
@@ -545,6 +549,7 @@ const Form = ({ isLogin, setIsLogin }) => {
       <div className="form-header">
         <h3>Forgot Password</h3>
         <p>Enter your email address to receive an OTP</p>
+        <br />
       </div>
 
       <div className="form-group">
@@ -676,6 +681,8 @@ const Form = ({ isLogin, setIsLogin }) => {
             placeholder="Enter new password"
             value={formData.newPassword}
             onChange={handleInputChange}
+              title="Copy Paste is not permitted"
+
             required
           />
           <button
@@ -697,6 +704,7 @@ const Form = ({ isLogin, setIsLogin }) => {
             placeholder="Confirm new password"
             value={formData.confirmNewPassword}
             onChange={handleInputChange}
+            title="Copy Paste is not permitted"
             required
           />
           <button
