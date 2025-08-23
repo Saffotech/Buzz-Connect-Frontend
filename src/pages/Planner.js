@@ -330,7 +330,7 @@ const Planner = () => {
       {/* Main Layout: Two-Panel */}
       <div className="planner-layout">
         {/* Left Sidebar: Content Pool */}
-        <div className={`content-pool ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        {/* <div className={`content-pool ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <div className="content-pool-header">
             <h3>Unscheduled Drafts</h3>
             <span className="draft-count">{draftPosts.length}</span>
@@ -380,7 +380,7 @@ const Planner = () => {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Main Area: Calendar Grid */}
         <div className="calendar-main">

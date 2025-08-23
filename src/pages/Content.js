@@ -46,7 +46,7 @@ import Loader from '../components/common/Loader';
 const Content = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Main Content Hub state
   const [activeTab, setActiveTab] = useState('posts');
   const [notification, setNotification] = useState(null);
@@ -101,8 +101,11 @@ const Content = () => {
     ...(data?.upcomingPosts || [])
   ];
 
+  console.log('xs',allPosts);
+
+
   // ✅ Remove duplicates based on _id
-  const uniquePosts = allPosts.filter((post, index, self) => 
+  const uniquePosts = allPosts.filter((post, index, self) =>
     index === self.findIndex(p => p._id === post._id)
   );
 
@@ -218,40 +221,42 @@ const Content = () => {
 
   // ✅ Filter posts based on all filters and search query
   const filteredPosts = uniquePosts.filter(post => {
-  if (!post) return false;
+    if (!post) return false;
+    console.log('plix', post)
+    const postStatus = post.status || 'draft';
+    const postPlatforms = post.platforms || [];
+    const postHashtags = post.hashtags || [];
+    const postContent = post.content || '';
 
-  const postStatus = post.status || 'draft';
-  const postPlatforms = post.platforms || [];
-  const postHashtags = post.hashtags || [];
-  const postContent = post.content || '';
+    const postImages = post.images || [];
 
-  const matchesStatus = postsFilters.status === 'all' || postStatus === postsFilters.status;
-  const matchesPlatform = postsFilters.platform === 'all' || 
-    postPlatforms.includes(postsFilters.platform);
-  const matchesHashtag = !postsFilters.hashtag ||
-    postHashtags.some(tag =>
-      (tag || '').toLowerCase().includes(postsFilters.hashtag.toLowerCase())
-    );
-  const matchesSearch = !postsSearchQuery ||
-    postContent.toLowerCase().includes(postsSearchQuery.toLowerCase()) ||
-    postHashtags.some(tag =>
-      (tag || '').toLowerCase().includes(postsSearchQuery.toLowerCase())
-    );
+    const matchesStatus = postsFilters.status === 'all' || postStatus === postsFilters.status;
+    const matchesPlatform = postsFilters.platform === 'all' ||
+      postPlatforms.includes(postsFilters.platform);
+    const matchesHashtag = !postsFilters.hashtag ||
+      postHashtags.some(tag =>
+        (tag || '').toLowerCase().includes(postsFilters.hashtag.toLowerCase())
+      );
+    const matchesSearch = !postsSearchQuery ||
+      postContent.toLowerCase().includes(postsSearchQuery.toLowerCase()) ||
+      postHashtags.some(tag =>
+        (tag || '').toLowerCase().includes(postsSearchQuery.toLowerCase())
+      );
 
-  // Date range filtering with safety checks
-  let matchesDateRange = true;
-  if (postsFilters.dateRange.start || postsFilters.dateRange.end) {
-    const postDate = new Date(post.createdAt || post.publishedAt || post.scheduledDate || Date.now());
-    if (postsFilters.dateRange.start) {
-      matchesDateRange = matchesDateRange && postDate >= new Date(postsFilters.dateRange.start);
+    // Date range filtering with safety checks
+    let matchesDateRange = true;
+    if (postsFilters.dateRange.start || postsFilters.dateRange.end) {
+      const postDate = new Date(post.createdAt || post.publishedAt || post.scheduledDate || Date.now());
+      if (postsFilters.dateRange.start) {
+        matchesDateRange = matchesDateRange && postDate >= new Date(postsFilters.dateRange.start);
+      }
+      if (postsFilters.dateRange.end) {
+        matchesDateRange = matchesDateRange && postDate <= new Date(postsFilters.dateRange.end);
+      }
     }
-    if (postsFilters.dateRange.end) {
-      matchesDateRange = matchesDateRange && postDate <= new Date(postsFilters.dateRange.end);
-    }
-  }
 
-  return matchesStatus && matchesPlatform && matchesHashtag && matchesSearch && matchesDateRange;
-});
+    return postImages && matchesStatus && matchesPlatform && matchesHashtag && matchesSearch && matchesDateRange;
+  });
 
   // Filter and sort media
   const mediaArray = Array.isArray(mediaList) ? mediaList : [];
@@ -948,7 +953,6 @@ const MediaLibrarySubPage = ({
             Upload New Media
           </button>
         </div>
-
         <div className="filters-bar">
           {/* ✅ Fixed Search Input */}
           <div className="search-section">
@@ -1254,23 +1258,23 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
       }
 
       const blob = await response.blob();
-      
+
       // Create a temporary URL for the blob
       const url = window.URL.createObjectURL(blob);
-      
+
       // Create a temporary anchor element and trigger download
       const link = document.createElement('a');
       link.href = url;
       link.download = media.filename || `media-${media._id || media.id}`;
-      
+
       // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up the blob URL
       window.URL.revokeObjectURL(url);
-      
+
     } catch (error) {
       console.error('Download failed:', error);
       alert('Failed to download file. Please try again.');

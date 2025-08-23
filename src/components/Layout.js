@@ -193,25 +193,39 @@ const Layout = ({ children }) => {
 
           </button>
           <div className="app-logo"><h1>BuzzConnect</h1></div>
-          <div className="header-user" onClick={
-            () => {
-              setShowUserDropdown(!showUserDropdown);
-              handleUserProfileClick
-            }}>
-            <User size={20}
-            />
-            {showUserDropdown && (
-              <div className="dropdown-menu">
-                <button onClick={() => navigate('/settings?tab=profile')} className="dropdown-item">
-                  <Settings size={16} />
-                  Settings
-                </button>
-                <button onClick={handleLogout} className="dropdown-item logout">
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </div>
-            )}
+          <div className="header-right">
+            <div className="user-profile-dropdown">
+              <button
+                className="user-avatar-btn"
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+              >
+                <div className="user-avatar">
+                  {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
+                </div>
+              </button>
+              {showUserDropdown && (
+                <div className="dropdown-menu">
+                  <button
+                    onClick={() => {
+                      setShowFeedbackModal(true);
+                      setShowUserDropdown(false);
+                    }}
+                    className="dropdown-item"
+                  >
+                    <MessageCircle size={16} />
+                    Feedback
+                  </button>
+                  <button onClick={handleUserProfileClick} className="dropdown-item">
+                    <Settings size={16} />
+                    Settings
+                  </button>
+                  <button onClick={handleLogout} className="dropdown-item logout">
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
       )}
@@ -220,7 +234,7 @@ const Layout = ({ children }) => {
         <div className="header-left">
           <div className="logo">
             {/* <h1>BuzzConnect</h1> */}
-            <img src={Logo} alt="BuzzConnect Logo" className='logo-img' onClick={goToDashboard}  style={{ cursor: "pointer" }}/>
+            <img src={Logo} alt="BuzzConnect Logo" className='logo-img' onClick={goToDashboard} style={{ cursor: "pointer" }} />
           </div>
         </div>
         <div className="header-right">
@@ -240,11 +254,11 @@ const Layout = ({ children }) => {
             </button>
             {showUserDropdown && (
               <div className="dropdown-menu">
-                <button 
+                <button
                   onClick={() => {
                     setShowFeedbackModal(true);
                     setShowUserDropdown(false);
-                  }} 
+                  }}
                   className="dropdown-item"
                 >
                   <MessageCircle size={16} />
@@ -326,7 +340,7 @@ const Layout = ({ children }) => {
           </nav>
 
           <div className="sidebar-footer">
-            <div className="user-info" onClick={handleUserProfileClick}   style={{ cursor: "pointer" }}>
+            <div className="user-info" onClick={handleUserProfileClick} style={{ cursor: "pointer" }}>
               <div className="user-avatar"><User size={20} /></div>
               {isSidebarOpen && (
                 <div className="user-details">
