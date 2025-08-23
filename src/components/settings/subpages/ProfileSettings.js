@@ -241,6 +241,7 @@ const ProfileSettings = ({ onNotify }) => {
                     onCut={(e) => e.preventDefault()}
                     onPaste={(e) => e.preventDefault()}
                     onContextMenu={(e) => e.preventDefault()}
+                    title="Copy Paste is not permitted"
                   />
                   <button
                     type="button"
@@ -265,6 +266,8 @@ const ProfileSettings = ({ onNotify }) => {
                     onCut={(e) => e.preventDefault()}
                     onPaste={(e) => e.preventDefault()}
                     onContextMenu={(e) => e.preventDefault()}
+                    title="Copy Paste is not permitted"
+
                   />
                   <button
                     type="button"

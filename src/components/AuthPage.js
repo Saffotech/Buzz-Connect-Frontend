@@ -5,7 +5,8 @@ import './AuthPage.css';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
-
+  // const [isForgot, setIsForgot] = useState(true);
+  const [formMode, setFormMode] = useState('auth'); // ⬅️ moved here
 
   return (
     <div className="auth-split-container">
@@ -19,12 +20,13 @@ const AuthPage = () => {
           Add more brand cards here
         </div> */}
       </div>
-     
+
       {/* Right Side: Auth Form */}
       <div className="auth-form-side">
         <div className="auth-card">
           <img src={require("../assets/img/Logo.png")} alt="BuzzConnect Logo" className="logo" />
           {/* Toggle Tabs for Sign In / Sign Up */}
+          {formMode != 'forgot' ? 
           <div className="auth-tabs">
             <button
               className={`auth-tab${isLogin ? ' active' : ''}`}
@@ -39,10 +41,17 @@ const AuthPage = () => {
               Sign Up
             </button>
           </div>
+          : ''}
 
 
           {/* Form */}
-          <Form isLogin={isLogin} setIsLogin={setIsLogin} />
+          <Form
+            isLogin={isLogin}
+            setIsLogin={setIsLogin}
+            formMode={formMode}
+            setFormMode={setFormMode}
+          // onModeChange={(mode) => mode == 'forgot' ? setIsForgot(true) : setIsForgot(false)}
+          />
         </div>
       </div>
     </div>

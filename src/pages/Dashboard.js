@@ -434,7 +434,7 @@ const Dashboard = () => {
                 disabled={postsLoading}
               >
                 <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
-                Refresh
+                
               </button>
             </div>
 

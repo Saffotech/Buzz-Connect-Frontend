@@ -34,6 +34,10 @@
   font-size: 1rem;
 }
 
+#hexp {
+  color: white !important;
+}
+
 /* Content Hub Navigation */
 .content-hub-nav {
   background: white;
@@ -702,6 +706,7 @@
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: max-content;
 }
 
 .media-card:hover {
