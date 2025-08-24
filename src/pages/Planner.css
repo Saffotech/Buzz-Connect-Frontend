@@ -871,9 +871,10 @@
 /* Social Media Icons Display */
 .post-icons-container {
   display: flex;
-  flex-direction: column;
+  /* flex-direction: column; */
   gap: 4px;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .time-slot {
