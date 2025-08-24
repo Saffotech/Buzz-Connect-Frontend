@@ -205,12 +205,12 @@ const Planner = () => {
       {/* Header / Control Bar */}
       <div className="planner-header">
         <div className="header-left">
-          <button
+          {/* <button
             className="sidebar-toggle"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           >
             <Sidebar size={20} />
-          </button>
+          </button> */}
           <h1>Content Planner</h1>
         </div>
 
@@ -256,7 +256,7 @@ const Planner = () => {
 
             {showFilters && (
               <div className="filters-dropdown">
-                <div className="filter-group">
+                {/* <div className="filter-group">
                   <label>Platforms</label>
                   <div className="filter-options">
                     <button
@@ -281,7 +281,7 @@ const Planner = () => {
                       Facebook
                     </button>
                   </div>
-                </div>
+                </div> */}
 
                 <div className="filter-group">
                   <label>Status</label>
@@ -726,7 +726,7 @@ const PostIconsDisplay = ({ posts, onPostClick }) => {
     <div className="post-icons-container">
       {Object.entries(groupedPosts).map(([time, timePosts]) => (
         <div key={time} className="time-slot">
-          <div className="time-label">{time}</div>
+          {/* <div className="time-label">{time}</div> */}
           <div className="post-icons-row">
             {timePosts.map(post => {
               const platforms = post.platforms && post.platforms.length > 0 
