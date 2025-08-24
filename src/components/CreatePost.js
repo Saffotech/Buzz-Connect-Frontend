@@ -1,3 +1,5 @@
+//before changing entire code showing 6 account including personal profile 
+
 import { useState, useEffect } from 'react';
 import {
   X,
@@ -98,7 +100,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     const allPlatforms = [
       { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
       { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
-      { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2' },
+      // { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2' },
     ];
 
     return allPlatforms.map(platform => ({
@@ -378,82 +380,110 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+  e.preventDefault();
+  setIsSubmitting(true);
+  setError(null);
 
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
+  if (!validateForm()) {
+    setIsSubmitting(false);
+    return;
+  }
 
-    try {
-      // Clean up selectedAccounts to remove null values and empty arrays
-      const cleanedSelectedAccounts = {};
-      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-        const validAccounts = accounts.filter(account => account != null && account !== '');
-        if (validAccounts.length > 0) {
-          cleanedSelectedAccounts[platform] = validAccounts;
-        }
-      });
-
-      // Prepare post data for API (matching Swagger structure)
-      const apiPostData = {
-        content: postData.content,
-        platforms: postData.platforms,
-        selectedAccounts: cleanedSelectedAccounts,
-        images: postData.images.map(img => ({
-          url: img.url,
-          altText: img.altText || 'Post image',
-          publicId: img.publicId || null
-        })),
-        hashtags: Array.isArray(postData.hashtags)
-          ? postData.hashtags
-          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-        mentions: Array.isArray(postData.mentions)
-          ? postData.mentions
-          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-        metadata: {
-          category: postData.metadata?.category || 'other'
-        }
-      };
-
-      // Add scheduled date if scheduling
-      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-        apiPostData.scheduledDate = scheduledDateTime.toISOString();
+  try {
+    // Clean up selectedAccounts to remove null values and empty arrays
+    const cleanedSelectedAccounts = {};
+    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+      const validAccounts = accounts.filter(account => account != null && account !== '');
+      if (validAccounts.length > 0) {
+        cleanedSelectedAccounts[platform] = validAccounts;
       }
+    });
 
-      console.log('Submitting post data:', apiPostData);
+    // Prepare post data for API (matching Swagger structure)
+    const apiPostData = {
+      content: postData.content,
+      platforms: postData.platforms,
+      selectedAccounts: cleanedSelectedAccounts,
+      images: postData.images.map(img => ({
+        url: img.url,
+        altText: img.altText || 'Post image',
+        publicId: img.publicId || null
+      })),
+      hashtags: Array.isArray(postData.hashtags)
+        ? postData.hashtags
+        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+      mentions: Array.isArray(postData.mentions)
+        ? postData.mentions
+        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+      metadata: {
+        category: postData.metadata?.category || 'other'
+      }
+    };
 
-      showToast(isScheduled ? 'Scheduling post...' : 'Creating post...', 'info');
+    console.log('Submitting post data:', apiPostData);
 
-      // Create post via API
-      const response = await onPostCreated(apiPostData);
+    let response;
+    
+    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+      // SCHEDULED POST - Create first, then schedule
+      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+      apiPostData.scheduledDate = scheduledDateTime.toISOString();
       
-      console.log('Post creation response:', response);
-
-      const successMessage = isScheduled 
-        ? 'Post scheduled successfully!' 
-        : response?.data?.status === 'published' 
-          ? 'Post published successfully!' 
-          : 'Post created successfully!';
-
-      showToast(successMessage, 'success');
-
-      // Reset form on success
-      resetForm();
-      onClose();
-
-    } catch (error) {
-      console.error('Failed to create post:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-      setError(errorMessage);
-      showToast('Failed to create post', 'error');
-    } finally {
-      setIsSubmitting(false);
+      showToast('Scheduling post...', 'info');
+      response = await onPostCreated(apiPostData);
+      
+    } else {
+      // PUBLISH NOW - Create and immediately publish
+      showToast('Creating and publishing post...', 'info');
+      
+      // Step 1: Create the post as draft
+      const createResponse = await onPostCreated(apiPostData);
+      console.log('Post created:', createResponse);
+      
+      if (!createResponse?.data?._id) {
+        throw new Error('Failed to create post - no ID returned');
+      }
+      
+      // Step 2: Immediately publish the created post
+      const postId = createResponse.data._id;
+      console.log('Publishing post with ID:', postId);
+      
+      const publishResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      console.log('Publish response:', publishResponse);
+      response = publishResponse;
     }
-  };
+    
+    console.log('Final response:', response);
+
+    const successMessage = isScheduled 
+      ? 'Post scheduled successfully!' 
+      : response?.data?.status === 'published' 
+        ? 'Post published successfully!' 
+        : 'Post created successfully!';
+
+    showToast(successMessage, 'success');
+
+    // Reset form on success
+    resetForm();
+    onClose();
+
+  } catch (error) {
+    console.error('Failed to create/publish post:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+    setError(errorMessage);
+    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   const resetForm = () => {
     setPostData({
@@ -1059,7 +1089,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                           type="radio"
                           name="scheduler"
                           value="now"
-                          // checked={!isScheduled}
+                          checked={!isScheduled}
                           onChange={() => setIsScheduled(false)}
                         />
                         <span className="radio-custom"></span>
