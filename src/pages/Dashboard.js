@@ -21,6 +21,7 @@ import {
   ExternalLink,
   RefreshCw,
   X,
+  Sparkles,
   Link2
 } from 'lucide-react';
 import { useDashboardData } from '../hooks/useApi';
@@ -64,8 +65,8 @@ const Dashboard = () => {
     const totalCards = getTotalPlatformCount(upcomingPosts);
     setSlicePosts(totalCards);
 
-    if (slicePosts > 1){
-      setSlicePosts (1)
+    if (slicePosts > 1) {
+      setSlicePosts(1)
     }
   }, [upcomingPosts]);
   const navigate = useNavigate();
@@ -464,7 +465,7 @@ const Dashboard = () => {
               </div>
             )}
 
-            <div className="upcoming-posts-scroll">
+            <div className={`upcoming-posts-scroll ${upcomingPosts.length == 0 ? 'upsflx' : ''}`}>
               {postsLoading && posts.length === 0 ? (
                 <div className="loading-posts">
                   <Loader />
@@ -540,7 +541,6 @@ const Dashboard = () => {
                     );
                   });
                 },
-
                 )
               ) : (
                 <div className="empty-upcoming">
@@ -552,30 +552,20 @@ const Dashboard = () => {
 
 
             </div>
-            <div className='ctBtn'>
-
-              <button
-                className="inline-refresh-btn"
-                style={{ width: 'fit-content' }}
-                onClick={() => {
-                  if (slicePosts > 1) {
-                    setSlicePosts(1);
-                  } else {
-                    const totalCards = getTotalPlatformCount(upcomingPosts);
-                    setSlicePosts(totalCards);
-                  }
-                }}
-                disabled={postsLoading}
-              >
-                {slicePosts <= 1 ?
-                  <ChevronDown size={16} /> :
-                  <ChevronUp size={16} />
-                }
-                <span style={{ marginLeft: "6px" }}>
-                  View {slicePosts <= 1 ? 'More' : 'Less'}
-                </span>
-              </button>
-            </div>
+            {upcomingPosts.length > 0 &&
+              <div className='ctBtn'>
+                <button
+                  className="inline-refresh-btn"
+                  style={{ width: 'fit-content' }}
+                  onClick={() => {
+                    navigate('/content')
+                  }}
+                  disabled={postsLoading}
+                >
+                  View All
+                </button>
+              </div>
+            }
           </div>
 
           {/* Top Performing Post */}
@@ -661,8 +651,8 @@ const Dashboard = () => {
                 // () => document.getElementById('media-upload').click()
                 () => navigate('/ai-assistant')
               }>
-                <Upload size={18} />
-                 AI Assistant
+                <Sparkles size ={18} />
+                AI Assistant
               </button>
               <input
                 id="media-upload"
