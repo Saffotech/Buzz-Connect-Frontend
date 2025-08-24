@@ -1,9 +1,50 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./PostDetailModal.css";
 import { X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, Bookmark, Send, Eye, Instagram, Facebook, Twitter } from "lucide-react";
 
-const PostDetailModal = ({ post, onClose }) => {
-  if (!post) return null;
+const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
+  // Add keyboard event listener for ESC key and body scroll management
+  useEffect(() => {
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape' && isOpen) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscapeKey);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  // Enhanced close handler
+  const handleClose = () => {
+    if (onClose && typeof onClose === 'function') {
+      onClose();
+    }
+  };
+
+  // Handle overlay click (close when clicking outside modal)
+  const handleOverlayClick = (event) => {
+    // Only close if clicking directly on the overlay, not on child elements
+    if (event.target === event.currentTarget) {
+      handleClose();
+    }
+  };
+
+  // Prevent modal content clicks from bubbling to overlay
+  const handleModalClick = (event) => {
+    event.stopPropagation();
+  };
+
+  // Don't render if not open or no post
+  if (!isOpen || !post) return null;
 
   // ✅ Fixed: Use the selected platform from the clicked icon, fallback to first platform
   const platform = post.selectedPlatform?.toLowerCase() || post.platforms?.[0]?.toLowerCase() || "post";
@@ -52,23 +93,35 @@ const PostDetailModal = ({ post, onClose }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "No date available";
     
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Invalid date";
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return "Invalid date";
+    }
   };
 
   // Format time for display
   const formatTime = (dateString) => {
     if (!dateString) return "";
     
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return "";
+    }
   };
 
   // Get engagement stats
@@ -83,10 +136,25 @@ const PostDetailModal = ({ post, onClose }) => {
 
   const engagement = getEngagementStats();
 
+  // Handle image source
+  const getImageSource = (image) => {
+    if (typeof image === "string") {
+      return image;
+    } else if (image && typeof image === "object") {
+      return image.url || image.src || image.path || "";
+    }
+    return "";
+  };
+
   return (
-    <div className="post-detail-overlay" onClick={onClose}>
-      <div className="post-detail-container" onClick={(e) => e.stopPropagation()}>
-        <button className="post-detail-close-btn" onClick={onClose}>
+    <div className="post-detail-overlay" onClick={handleOverlayClick}>
+      <div className="post-detail-container" onClick={handleModalClick}>
+        <button 
+          className="post-detail-close-btn" 
+          onClick={handleClose}
+          type="button"
+          aria-label="Close modal"
+        >
           <X size={20} />
         </button>
 
@@ -106,6 +174,23 @@ const PostDetailModal = ({ post, onClose }) => {
               <span className="post-detail-post-type">Post</span>
             </div>
           </div>
+
+            {/* Add action buttons for edit and delete if provided
+            {(onEdit || onDelete) && (
+              <div className="post-detail-header-actions">
+                {onEdit && (
+                  <button
+                    className="post-detail-header-action-btn"
+                    onClick={() => onEdit(post)}
+                    type="button"
+                    aria-label="Edit post"
+                    title="Edit post"
+                  >
+                    <MoreHorizontal size={18} color="white" />
+                  </button>
+                )}
+              </div>
+            )} */}
         </div>
 
         {/* Main Content Area - Horizontal Layout */}
@@ -115,22 +200,23 @@ const PostDetailModal = ({ post, onClose }) => {
             <div className="post-detail-image-container">
               <img
                 className="post-detail-image"
-                src={
-                  typeof post.images[0] === "string"
-                    ? post.images[0]
-                    : post.images[0]?.url || ""
-                }
+                src={getImageSource(post.images[0])}
                 alt="Post media"
                 onError={(e) => {
                   e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
                 }}
               />
+              {post.images.length > 1 && (
+                <div className="post-detail-image-count">
+                  +{post.images.length - 1} more
+                </div>
+              )}
             </div>
           )}
 
           {/* Post Content */}
           <div className="post-detail-content">
-            <p className="post-detail-text">{post.content}</p>
+            <p className="post-detail-text">{post.content || 'No content available'}</p>
             
             {/* Hashtags section */}
             {(post.tags && post.tags.length > 0) || (post.hashtags && post.hashtags.length > 0) ? (
@@ -147,25 +233,29 @@ const PostDetailModal = ({ post, onClose }) => {
               </div>
             ) : null}
           </div>
-          
         </div>
+
         {/* Engagement Actions */}
         <div className="post-detail-engagement">
           <div className="post-detail-action-buttons">
-            <button className="post-detail-action-btn" style={{ color: platformStyle.primary }}>
+            <button 
+              className="post-detail-action-btn" 
+              style={{ color: platformStyle.primary }}
+              type="button"
+            >
               <Heart size={22} />
               <span>{engagement.likes}</span>
             </button>
-            <button className="post-detail-action-btn">
+            <button className="post-detail-action-btn" type="button">
               <MessageCircle size={22} />
               <span>{engagement.comments}</span>
             </button>
-            <button className="post-detail-action-btn">
+            <button className="post-detail-action-btn" type="button">
               {platform === 'twitter' ? <Share size={22} /> : <Send size={22} />}
               <span>{engagement.shares}</span>
             </button>
             {engagement.views > 0 && (
-              <button className="post-detail-action-btn">
+              <button className="post-detail-action-btn" type="button">
                 <Eye size={22} />
                 <span>{engagement.views}</span>
               </button>
@@ -180,11 +270,15 @@ const PostDetailModal = ({ post, onClose }) => {
               <>
                 <div className="post-detail-metadata-item">
                   <Calendar size={16} />
-                  <span className="post-detail-metadata-text">{formatDate(post.date || post.scheduledDate || post.createdAt)}</span>
+                  <span className="post-detail-metadata-text">
+                    {formatDate(post.date || post.scheduledDate || post.createdAt)}
+                  </span>
                 </div>
                 <div className="post-detail-metadata-item">
                   <Clock size={16} />
-                  <span className="post-detail-metadata-text">{formatTime(post.date || post.scheduledDate || post.createdAt)}</span>
+                  <span className="post-detail-metadata-text">
+                    {formatTime(post.date || post.scheduledDate || post.createdAt)}
+                  </span>
                 </div>
               </>
             )}
@@ -195,7 +289,7 @@ const PostDetailModal = ({ post, onClose }) => {
             <div className="post-detail-status-section">
               <span className="post-detail-status-label">Status:</span>
               <span className={`post-detail-status-badge post-detail-status-${post.status.toLowerCase()}`}>
-                {post.status}
+                {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
               </span>
             </div>
           )}
