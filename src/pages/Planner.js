@@ -256,7 +256,7 @@ const Planner = () => {
 
             {showFilters && (
               <div className="filters-dropdown">
-                <div className="filter-group">
+                {/* <div className="filter-group">
                   <label>Platforms</label>
                   <div className="filter-options">
                     <button
@@ -281,7 +281,7 @@ const Planner = () => {
                       Facebook
                     </button>
                   </div>
-                </div>
+                </div> */}
 
                 <div className="filter-group">
                   <label>Status</label>
