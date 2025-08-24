@@ -383,6 +383,10 @@
   padding: 0;
 }
 
+.upsflx {
+  display: block !important;
+}
+
 .ctBtn{
   width: 100%;
   display: flex;
