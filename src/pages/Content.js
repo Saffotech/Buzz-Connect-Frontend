@@ -28,7 +28,8 @@ import {
   Clock,
   RefreshCw,
   CheckCircle,
-  XCircle
+  XCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -477,9 +478,11 @@ const Content = () => {
   );
 };
 
-// ✅ Updated PlatformPostCard Component - remove inline confirm
+// ✅ UPDATED: PlatformPostCard Component with Smart Image Detection
 const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
   const [showActions, setShowActions] = useState(false);
+  const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
+  const [imageAspectRatios, setImageAspectRatios] = useState(new Map()); // ✅ NEW: Track aspect ratios
 
   if (!post) {
     return null;
@@ -492,7 +495,7 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
 
   const handleDelete = (e) => {
     e.stopPropagation();
-    onDelete(); // ✅ Just call onDelete, confirmation handled by parent
+    onDelete();
   };
 
   const primary = platform.toLowerCase();
@@ -530,6 +533,80 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
   const displayDate = getDisplayDate();
   const postStatus = post.status || 'draft';
   const postContent = post.content || '';
+
+  // ✅ NEW: Function to handle image loading errors
+  const handleImageError = (imageIndex) => {
+    setImageLoadErrors(prev => new Set([...prev, imageIndex]));
+  };
+
+  // ✅ UPDATED: Enhanced image load handler with aspect ratio detection
+  const handleImageLoad = (e, imageIndex) => {
+    const img = e.target;
+    const container = img.parentNode;
+    container.classList.add('loaded');
+    
+    // ✅ NEW: Detect aspect ratio and apply appropriate styling
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    let aspectClass = '';
+    
+    if (aspectRatio > 2.5) {
+      // Very wide images (panoramic, banners, etc.)
+      aspectClass = 'wide';
+      img.style.objectFit = 'contain'; // Show full image
+      img.style.objectPosition = 'center';
+    } else if (aspectRatio < 0.6) {
+      // Very tall images (portraits, vertical screenshots)
+      aspectClass = 'tall';
+      img.style.objectFit = 'cover'; // Crop to fit nicely
+      img.style.objectPosition = 'center top';
+    } else {
+      // Normal aspect ratio images
+      img.style.objectFit = 'cover';
+      img.style.objectPosition = 'center';
+    }
+    
+    // Store aspect ratio info
+    setImageAspectRatios(prev => new Map(prev.set(imageIndex, aspectClass)));
+    
+    // Remove from error set if it was there
+    setImageLoadErrors(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(imageIndex);
+      return newSet;
+    });
+  };
+
+  // ✅ NEW: Get valid images and filter out broken ones
+  const getValidImages = () => {
+    if (!post.images || !Array.isArray(post.images)) {
+      return [];
+    }
+
+    return post.images
+      .map((img, index) => {
+        let src = '';
+        if (typeof img === 'string') {
+          src = img;
+        } else if (img && typeof img === 'object') {
+          src = img.url || img.src || img.path || '';
+        }
+        
+        return src ? { src, index } : null;
+      })
+      .filter(Boolean);
+  };
+
+  // ✅ NEW: Get CSS class based on image count
+  const getImageLayoutClass = (count) => {
+    if (count === 1) return 'single-image';
+    if (count === 2) return 'two-images';
+    if (count === 3) return 'three-images';
+    return 'four-plus-images';
+  };
+
+  const validImages = getValidImages();
+  const displayImages = validImages.slice(0, 4); // Show max 4 images
+  const layoutClass = getImageLayoutClass(displayImages.length);
 
   return (
     <div
@@ -571,33 +648,48 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
         </div>
       </div>
 
-      {/* Post Images */}
-      {post.images && Array.isArray(post.images) && post.images.length > 0 && (
-        <div className="preview-images">
-          {post.images.slice(0, 4).map((img, i) => {
-            let src = '';
-            if (typeof img === 'string') {
-              src = img;
-            } else if (img && typeof img === 'object') {
-              src = img.url || img.src || img.path || '';
+      {/* ✅ UPDATED: Smart Post Images with Adaptive Display */}
+      {displayImages.length > 0 && (
+        <div className={`preview-images ${layoutClass}`}>
+          {displayImages.map(({ src, index }) => {
+            // Skip images that failed to load
+            if (imageLoadErrors.has(index)) {
+              return null;
             }
             
-            if (!src) return null;
+            const aspectClass = imageAspectRatios.get(index) || '';
             
             return (
-              <div key={i} className="preview-image-container">
+              <div key={index} className={`preview-image-container ${aspectClass}`}>
                 <img 
                   src={src} 
-                  alt={`Post image ${i + 1}`}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
+                  alt={`Post image ${index + 1}`}
+                  loading="lazy"
+                  onError={() => handleImageError(index)}
+                  onLoad={(e) => handleImageLoad(e, index)}
+                  data-aspect={aspectClass} // ✅ NEW: CSS can use this attribute
                 />
               </div>
             );
           }).filter(Boolean)}
-          {post.images.length > 4 && (
-            <div className="image-count">+{post.images.length - 4}</div>
+          
+          {/* ✅ Image count overlay - only show if more than 4 images */}
+          {validImages.length > 4 && (
+            <div className="image-count">
+              +{validImages.length - 4}
+            </div>
+          )}
+          
+          {/* ✅ Show placeholder if no valid images loaded */}
+          {displayImages.length === 0 && post.images && post.images.length > 0 && (
+            <div className="preview-image-container">
+              <div className="image-error">
+                <FileText size={20} color="#999" />
+                <span style={{fontSize: '12px', color: '#999', marginTop: '4px'}}>
+                  Image unavailable
+                </span>
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -636,35 +728,44 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
   if (!isOpen) return null;
-
+  
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Delete Post</h3>
-          <button className="modal-close" onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-
+        <button className="modal-close" onClick={onClose}>
+          <X size={20} />
+        </button>
+        
         <div className="modal-body">
-          <div className="delete-warning">
-            <AlertCircle size={48} color="#ff4757" />
-            <h4>Are you sure you want to delete this post?</h4>
-            <p className="post-preview">"{postTitle}..."</p>
-            <p className="warning-text">
-              This action cannot be undone. The post will be permanently deleted.
-            </p>
+          <div className="warning-icon-container">
+            <div className="warning-icon-circle">
+              <AlertTriangle size={24} color="#ff4757" />
+            </div>
           </div>
+          
+          <h3 className="modal-title">Delete Post</h3>
+          
+          <div className="post-info-box">
+            <div className="post-icon">
+              <FileText size={20} color="#666" />
+            </div>
+            <div className="post-details">
+              <span className="post-name">{postTitle}</span>    
+            </div>
+          </div>
+          
+          <p className="warning-description">
+            This action cannot be undone. You'll need to recreate this post to continue using it for your blog.
+          </p>
         </div>
-
+        
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>
             Cancel
           </button>
           <button className="btn-danger" onClick={onConfirm}>
             <Trash2 size={16} />
-            Delete Post
+            Yes, Delete Post
           </button>
         </div>
       </div>
@@ -820,11 +921,11 @@ const PostsSubPage = ({
             value={filters.status}
             onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
           >
-            <option value="all">All Posts ({postCounts.all})</option>
-            <option value="draft">Draft ({postCounts.draft})</option>
-            <option value="scheduled">Scheduled ({postCounts.scheduled})</option>
-            <option value="published">Published ({postCounts.published})</option>
-            <option value="failed">Failed ({postCounts.failed})</option>
+            <option value="all">All Posts</option>
+            <option value="draft">Draft</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="published">Published</option>
+            <option value="failed">Failed</option>
           </select>
 
           <select

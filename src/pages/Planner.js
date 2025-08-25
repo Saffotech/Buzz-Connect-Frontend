@@ -433,6 +433,7 @@ const Planner = () => {
       {showPostDetail && (
         <PostDetailModal
           post={selectedPost}
+          isOpen={showPostDetail}
           onClose={() => setShowPostDetail(false)}
         />
       )}
@@ -547,7 +548,7 @@ const MonthView = ({ currentDate, posts, filters, onDateClick, onPostClick, load
   );
 };
 
-// Week View Component
+// Week View Component - Fixed getPostsForDate function
 const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loading }) => {
   const getWeekDays = () => {
     const startOfWeek = new Date(currentDate);
@@ -570,9 +571,14 @@ const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loadi
     return postsArray.filter(post => {
       if (!post || !post.status) return false;
       
-      if (!filters.statuses.includes(post.status)) return false;
+      // ✅ Fixed: Only filter by status if status filters are selected
+      if (filters.statuses.length > 0 && !filters.statuses.includes(post.status)) {
+        return false;
+      }
       
-      if (post.platforms && post.platforms.length > 0 && 
+      // ✅ Fixed: Only filter by platform if platform filters are selected
+      if (filters.platforms.length > 0 && 
+          post.platforms && post.platforms.length > 0 && 
           !post.platforms.some(p => filters.platforms.includes(p))) {
         return false;
       }
@@ -586,10 +592,11 @@ const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loadi
         postDate = new Date(post.createdAt);
       }
 
-      const dateStr = date.toISOString().split('T')[0];
-      const postDateStr = postDate.toISOString().split('T')[0];
+      // ✅ Use the same date comparison logic as MonthView
+      const calendarDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const postLocalDate = new Date(postDate.getFullYear(), postDate.getMonth(), postDate.getDate());
       
-      return dateStr === postDateStr;
+      return calendarDate.getTime() === postLocalDate.getTime();
     });
   };
 
