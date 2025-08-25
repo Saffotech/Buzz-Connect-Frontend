@@ -465,7 +465,7 @@ const Dashboard = () => {
               </div>
             )}
 
-            <div className={`upcoming-posts-scroll ${upcomingPosts.length == 0 ? 'upsflx' : ''}`}>
+            <div className={`upcoming-posts-scroll ${upcomingPosts.length == 0 ? 'upsflx' : ''}`} onClick={() => {navigate('/content')}}>
               {postsLoading && posts.length === 0 ? (
                 <div className="loading-posts">
                   <Loader />

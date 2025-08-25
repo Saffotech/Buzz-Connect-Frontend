@@ -28,7 +28,8 @@ import {
   Clock,
   RefreshCw,
   CheckCircle,
-  XCircle
+  XCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -36,12 +37,11 @@ import {
   useMedia
 } from '../hooks/useApi';
 import CreatePost from '../components/CreatePost';
-import PostDetail from '../components/PostDetail';
+import PostDetailModal from '../components/PostDetailModal'; // ✅ Updated import
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import apiClient from '../utils/api';
 import './Content.css';
 import Loader from '../components/common/Loader';
-
 
 const Content = () => {
   const location = useLocation();
@@ -64,6 +64,10 @@ const Content = () => {
   });
   const [postsSearchQuery, setPostsSearchQuery] = useState('');
 
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+
   // Enhanced Media state
   const [mediaList, setMediaList] = useState([]);
   const [mediaLoading, setMediaLoading] = useState(false);
@@ -77,37 +81,124 @@ const Content = () => {
     page: 1
   });
 
-  // Basic media hook
   const { media: basicMedia, loading: basicLoading, refetch: refetchMedia, uploadMedia } = useMedia();
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showMediaPreview, setShowMediaPreview] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  // ✅ Use dashboard data (same as dashboard component)
-  const {
-    user,
-    posts,
-    loading,
-    error: dashboardError,
-    createPost: apiCreatePost,
-    deletePost: apiDeletePost,
-    refetch: refetchDashboard,
-    data // This contains the dashboard API data including upcomingPosts
-  } = useDashboardData();
+  const [allPosts, setAllPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState(null);
 
-  // ✅ Get all posts from dashboard data and API upcoming posts
-  const allPosts = [
-    ...(Array.isArray(posts) ? posts : []),
-    ...(data?.upcomingPosts || [])
-  ];
+  // Fetch posts for content view
+  const fetchAllPosts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.request('/api/posts', {
+        params: {
+          limit: 100
+        }
+      });
 
-  console.log('xs',allPosts);
+      const postsData = response?.data?.posts || response?.data || [];
+      console.log('Fetched posts:', postsData);
+      
+      setAllPosts(postsData);
+      setDashboardError(null);
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
+      setDashboardError('Failed to load posts');
+      setNotification({ type: 'error', message: 'Failed to load posts' });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
+  // ✅ Create post function
+  const handleCreatePost = async (postData) => {
+    try {
+      const response = await apiClient.request('/api/posts', {
+        method: 'POST',
+        data: postData
+      });
+      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
+      setShowCreatePost(false);
+      
+      await fetchAllPosts();
+      return response;
+    } catch (error) {
+      setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
+      throw error;
+    }
+  };
 
-  // ✅ Remove duplicates based on _id
-  const uniquePosts = allPosts.filter((post, index, self) =>
-    index === self.findIndex(p => p._id === post._id)
-  );
+  // ✅ NEW: Update post function for editing
+  const handleUpdatePost = async (postId, postData) => {
+    try {
+      const response = await apiClient.request(`/api/posts/${postId}`, {
+        method: 'PUT',
+        data: postData
+      });
+      setNotification({ type: 'success', message: 'Post updated successfully' });
+      setShowCreatePost(false);
+      setSelectedPost(null);
+      
+      await fetchAllPosts();
+      return response;
+    } catch (error) {
+      setNotification({ type: 'error', message: error.message || 'Failed to update post' });
+      throw error;
+    }
+  };
+
+  // ✅ NEW: Delete post with confirmation
+  const handleDeletePost = async (postId) => {
+    try {
+      await apiClient.request(`/api/posts/${postId}`, { method: 'DELETE' });
+      setNotification({ type: 'success', message: 'Post deleted successfully' });
+      setShowDeleteConfirm(false);
+      setPostToDelete(null);
+      await fetchAllPosts();
+    } catch (error) {
+      setNotification({ type: 'error', message: error.message || 'Failed to delete post' });
+    }
+  };
+
+  // ✅ NEW: Show delete confirmation
+  const showDeleteConfirmation = (post) => {
+    setPostToDelete(post);
+    setShowDeleteConfirm(true);
+  };
+
+  // ✅ Handle post click
+  const handlePostClick = (post) => {
+    setSelectedPost(post);
+    setShowPostDetail(true);
+  };
+
+  // ✅ NEW: Handle edit post - fetch latest data first
+  const handleEditPost = async (post) => {
+    try {
+      // Fetch the latest post data before editing
+      const response = await apiClient.request(`/api/posts/${post._id || post.id}`);
+      const latestPostData = response.data;
+      
+      setSelectedPost(latestPostData);
+      setShowPostDetail(false);
+      setShowCreatePost(true);
+    } catch (error) {
+      console.error('Failed to fetch post for editing:', error);
+      // Fallback to using the existing post data
+      setSelectedPost(post);
+      setShowPostDetail(false);
+      setShowCreatePost(true);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchAllPosts();
+  }, [fetchAllPosts]);
 
   // Handle URL tab parameter
   useEffect(() => {
@@ -125,59 +216,16 @@ const Content = () => {
     navigate(newUrl, { replace: true });
   };
 
-  const handleCreatePost = async (postData) => {
-    try {
-      const response = await apiCreatePost(postData);
-      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
-      setShowCreatePost(false);
-      return response;
-    } catch (error) {
-      setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
-      throw error;
-    }
-  };
-
-  const handleDeletePost = async (postId) => {
-    try {
-      await apiDeletePost(postId);
-      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_DELETED });
-    } catch (error) {
-      setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
-    }
-  };
-
-  const handleEditPost = (post) => {
-    setSelectedPost(post);
-    setShowPostDetail(false);
-    setShowCreatePost(true);
-  };
-
-  const handlePostClick = (post) => {
-    setSelectedPost(post);
-    setShowPostDetail(true);
-  };
-
   // Media handling
   const currentMedia = basicMedia || [];
   const currentLoading = basicLoading;
 
-  // ✅ Fix this in your main Content component
   const handleFilterChange = (newFilters) => {
-    console.log('Filter change:', newFilters); // This should show the actual values
-    setMediaFilters(prev => {
-      const updated = { ...prev, ...newFilters };
-      console.log('Updated filters:', updated); // Debug the final state
-      return updated;
-    });
+    setMediaFilters(prev => ({ ...prev, ...newFilters }));
   };
 
   const handleSearch = (searchTerm) => {
-    console.log('Search change:', searchTerm);
-    setMediaFilters(prev => {
-      const updated = { ...prev, search: searchTerm };
-      console.log('Updated search filters:', updated);
-      return updated;
-    });
+    setMediaFilters(prev => ({ ...prev, search: searchTerm }));
   };
 
   const handleLoadMore = () => {
@@ -190,8 +238,6 @@ const Content = () => {
       setNotification({ type: 'info', message: 'Uploading media...' });
 
       const response = await uploadMedia(files);
-      console.log('Upload successful:', response);
-
       setNotification({
         type: 'success',
         message: `Successfully uploaded ${files.length} file(s)`
@@ -219,34 +265,45 @@ const Content = () => {
     }
   };
 
-  // ✅ Filter posts based on all filters and search query
-  const filteredPosts = uniquePosts.filter(post => {
+  // Filter posts based on all filters and search query
+  const filteredPosts = allPosts.filter(post => {
     if (!post) return false;
-    console.log('plix', post)
-    const postStatus = post.status || 'draft';
-    const postPlatforms = post.platforms || [];
+    
+    if (postsFilters.status !== 'all' && post.status !== postsFilters.status) {
+      return false;
+    }
+    
+    if (postsFilters.platform !== 'all' && 
+        post.platforms && post.platforms.length > 0 && 
+        !post.platforms.some(p => p === postsFilters.platform)) {
+      return false;
+    }
+
     const postHashtags = post.hashtags || [];
     const postContent = post.content || '';
 
-    const postImages = post.images || [];
-
-    const matchesStatus = postsFilters.status === 'all' || postStatus === postsFilters.status;
-    const matchesPlatform = postsFilters.platform === 'all' ||
-      postPlatforms.includes(postsFilters.platform);
     const matchesHashtag = !postsFilters.hashtag ||
       postHashtags.some(tag =>
         (tag || '').toLowerCase().includes(postsFilters.hashtag.toLowerCase())
       );
+    
     const matchesSearch = !postsSearchQuery ||
       postContent.toLowerCase().includes(postsSearchQuery.toLowerCase()) ||
       postHashtags.some(tag =>
         (tag || '').toLowerCase().includes(postsSearchQuery.toLowerCase())
       );
 
-    // Date range filtering with safety checks
     let matchesDateRange = true;
     if (postsFilters.dateRange.start || postsFilters.dateRange.end) {
-      const postDate = new Date(post.createdAt || post.publishedAt || post.scheduledDate || Date.now());
+      let postDate;
+      if (post.status === 'published' && post.publishedAt) {
+        postDate = new Date(post.publishedAt);
+      } else if (post.scheduledDate) {
+        postDate = new Date(post.scheduledDate);
+      } else {
+        postDate = new Date(post.createdAt);
+      }
+
       if (postsFilters.dateRange.start) {
         matchesDateRange = matchesDateRange && postDate >= new Date(postsFilters.dateRange.start);
       }
@@ -255,36 +312,7 @@ const Content = () => {
       }
     }
 
-    return postImages && matchesStatus && matchesPlatform && matchesHashtag && matchesSearch && matchesDateRange;
-  });
-
-  // Filter and sort media
-  const mediaArray = Array.isArray(mediaList) ? mediaList : [];
-  const filteredMedia = mediaArray.filter(media => {
-    if (!media) return false;
-
-    const matchesType = mediaFilters.type === 'all' ||
-      (mediaFilters.type === 'image' && media.fileType?.startsWith('image')) ||
-      (mediaFilters.type === 'video' && media.fileType?.startsWith('video'));
-    const matchesFolder = mediaFilters.folder === 'all' || media.folder === mediaFilters.folder;
-    const matchesTags = !mediaFilters.tags ||
-      (media.tags && media.tags.some(tag =>
-        tag.toLowerCase().includes(mediaFilters.tags.toLowerCase())
-      ));
-
-    return matchesType && matchesFolder && matchesTags;
-  });
-
-  const sortedMedia = [...filteredMedia].sort((a, b) => {
-    switch (mediaFilters.sort) {
-      case 'oldest':
-        return new Date(a.createdAt) - new Date(b.createdAt);
-      case 'mostUsed':
-        return (b.usage?.timesUsed || 0) - (a.usage?.timesUsed || 0);
-      case 'newest':
-      default:
-        return new Date(b.createdAt) - new Date(a.createdAt);
-    }
+    return matchesHashtag && matchesSearch && matchesDateRange;
   });
 
   // Fetch media when tab changes to media
@@ -308,8 +336,6 @@ const Content = () => {
     return (
       <div className="page-loading">
         <Loader />
-        {/* <Loader className="spinner" size={48} />
-        <p>Loading your content...</p> */}
       </div>
     );
   }
@@ -320,7 +346,7 @@ const Content = () => {
         <AlertCircle size={48} />
         <h3>Unable to load content</h3>
         <p>{dashboardError}</p>
-        <button onClick={refetchDashboard} className="btn-primary">
+        <button onClick={fetchAllPosts} className="btn-primary">
           Try Again
         </button>
       </div>
@@ -352,7 +378,7 @@ const Content = () => {
           onClick={() => handleTabChange('posts')}
         >
           <FileText size={18} />
-          Posts ({uniquePosts.length})
+          Posts ({allPosts.length})
         </button>
         <button
           className={`nav-tab ${activeTab === 'media' ? 'active' : ''}`}
@@ -367,7 +393,7 @@ const Content = () => {
       <div className="content-hub-main">
         {activeTab === 'posts' ? (
           <PostsSubPage
-            posts={filteredPosts}
+            posts={allPosts}
             loading={loading}
             error={dashboardError}
             viewMode={postsViewMode}
@@ -378,47 +404,62 @@ const Content = () => {
             setSearchQuery={setPostsSearchQuery}
             onCreatePost={() => setShowCreatePost(true)}
             onPostClick={handlePostClick}
-            onRefetch={refetchDashboard}
+            onRefetch={fetchAllPosts}
             onEditPost={handleEditPost}
-            onDeletePost={handleDeletePost}
+            onDeletePost={showDeleteConfirmation} // ✅ Use confirmation function
           />
         ) : (
-            <MediaLibrarySubPage
-              media={currentMedia}
-              loading={currentLoading}
-              viewMode={mediaViewMode}
-              setViewMode={setMediaViewMode}
-              filters={mediaFilters}
-              setFilters={setMediaFilters} // ✅ Pass setMediaFilters directly
-              onUpload={() => setShowUploadModal(true)}
-              onMediaClick={(media) => {
-                setSelectedMedia(media);
-                setShowMediaPreview(true);
-              }}
-              onRefetch={refetchMedia}
-              onSearch={handleSearch} // You can remove this if not needed
-              onLoadMore={handleLoadMore}
-            />
+          <MediaLibrarySubPage
+            media={currentMedia}
+            loading={currentLoading}
+            viewMode={mediaViewMode}
+            setViewMode={setMediaViewMode}
+            filters={mediaFilters}
+            setFilters={setMediaFilters}
+            onUpload={() => setShowUploadModal(true)}
+            onMediaClick={(media) => {
+              setSelectedMedia(media);
+              setShowMediaPreview(true);
+            }}
+            onRefetch={refetchMedia}
+            onSearch={handleSearch}
+            onLoadMore={handleLoadMore}
+          />
         )}
       </div>
 
-      {/* Modals */}
+      {/* ✅ Updated CreatePost Modal - handles both create and edit */}
       <CreatePost
         isOpen={showCreatePost}
         onClose={() => {
           setShowCreatePost(false);
           setSelectedPost(null);
         }}
-        onPostCreated={handleCreatePost}
+        onPostCreated={selectedPost ? 
+          (postData) => handleUpdatePost(selectedPost._id || selectedPost.id, postData) : 
+          handleCreatePost
+        }
         initialData={selectedPost}
       />
 
-      <PostDetail
+      {/* Post Detail Modal */}
+      <PostDetailModal
         post={selectedPost}
         isOpen={showPostDetail}
         onClose={() => setShowPostDetail(false)}
         onEdit={handleEditPost}
-        onDelete={handleDeletePost}
+        onDelete={showDeleteConfirmation} // ✅ Use confirmation function
+      />
+
+      {/* ✅ NEW: Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setPostToDelete(null);
+        }}
+        onConfirm={() => handleDeletePost(postToDelete?._id || postToDelete?.id)}
+        postTitle={postToDelete?.content?.substring(0, 50) || 'this post'}
       />
 
       <MediaUploadModal
@@ -437,7 +478,301 @@ const Content = () => {
   );
 };
 
-// ✅ Updated Posts Sub-Page Component with Fixed Filtering
+// ✅ UPDATED: PlatformPostCard Component with Smart Image Detection
+const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
+  const [showActions, setShowActions] = useState(false);
+  const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
+  const [imageAspectRatios, setImageAspectRatios] = useState(new Map()); // ✅ NEW: Track aspect ratios
+
+  if (!post) {
+    return null;
+  }
+
+  const handleEdit = (e) => {
+    e.stopPropagation();
+    onEdit();
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    onDelete();
+  };
+
+  const primary = platform.toLowerCase();
+  const colorMap = {
+    instagram: '#E4405F',
+    twitter: '#1DA1F2',
+    facebook: '#1877F2',
+  };
+  const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
+
+  const getPlatformIcon = (platform) => {
+    switch (platform?.toLowerCase()) {
+      case 'instagram': return Instagram;
+      case 'facebook': return Facebook;
+      case 'twitter': return Twitter;
+      default: return FileText;
+    }
+  };
+
+  const PlatformIcon = getPlatformIcon(platform);
+
+  const getDisplayDate = () => {
+    if (post.status === 'scheduled' && post.scheduledDate) {
+      return new Date(post.scheduledDate);
+    }
+    if (post.publishedAt) {
+      return new Date(post.publishedAt);
+    }
+    if (post.createdAt) {
+      return new Date(post.createdAt);
+    }
+    return new Date();
+  };
+
+  const displayDate = getDisplayDate();
+  const postStatus = post.status || 'draft';
+  const postContent = post.content || '';
+
+  // ✅ NEW: Function to handle image loading errors
+  const handleImageError = (imageIndex) => {
+    setImageLoadErrors(prev => new Set([...prev, imageIndex]));
+  };
+
+  // ✅ UPDATED: Enhanced image load handler with aspect ratio detection
+  const handleImageLoad = (e, imageIndex) => {
+    const img = e.target;
+    const container = img.parentNode;
+    container.classList.add('loaded');
+    
+    // ✅ NEW: Detect aspect ratio and apply appropriate styling
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    let aspectClass = '';
+    
+    if (aspectRatio > 2.5) {
+      // Very wide images (panoramic, banners, etc.)
+      aspectClass = 'wide';
+      img.style.objectFit = 'contain'; // Show full image
+      img.style.objectPosition = 'center';
+    } else if (aspectRatio < 0.6) {
+      // Very tall images (portraits, vertical screenshots)
+      aspectClass = 'tall';
+      img.style.objectFit = 'cover'; // Crop to fit nicely
+      img.style.objectPosition = 'center top';
+    } else {
+      // Normal aspect ratio images
+      img.style.objectFit = 'cover';
+      img.style.objectPosition = 'center';
+    }
+    
+    // Store aspect ratio info
+    setImageAspectRatios(prev => new Map(prev.set(imageIndex, aspectClass)));
+    
+    // Remove from error set if it was there
+    setImageLoadErrors(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(imageIndex);
+      return newSet;
+    });
+  };
+
+  // ✅ NEW: Get valid images and filter out broken ones
+  const getValidImages = () => {
+    if (!post.images || !Array.isArray(post.images)) {
+      return [];
+    }
+
+    return post.images
+      .map((img, index) => {
+        let src = '';
+        if (typeof img === 'string') {
+          src = img;
+        } else if (img && typeof img === 'object') {
+          src = img.url || img.src || img.path || '';
+        }
+        
+        return src ? { src, index } : null;
+      })
+      .filter(Boolean);
+  };
+
+  // ✅ NEW: Get CSS class based on image count
+  const getImageLayoutClass = (count) => {
+    if (count === 1) return 'single-image';
+    if (count === 2) return 'two-images';
+    if (count === 3) return 'three-images';
+    return 'four-plus-images';
+  };
+
+  const validImages = getValidImages();
+  const displayImages = validImages.slice(0, 4); // Show max 4 images
+  const layoutClass = getImageLayoutClass(displayImages.length);
+
+  return (
+    <div
+      className={`platform-post-card platform-preview ${primary}`}
+      style={style}
+      onClick={onClick}
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
+    >
+      {/* Hover Actions */}
+      {showActions && (
+        <div className="post-actions">
+          <button className="action-btn edit" onClick={handleEdit} title="Edit Post">
+            <Edit size={16} />
+          </button>
+          <button className="action-btn delete" onClick={handleDelete} title="Delete Post">
+            <Trash2 size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Platform Header */}
+      <div className="platform-header">
+        <div className="platform-info">
+          <PlatformIcon size={16} />
+          <span className="platform-name">{primary}</span>
+        </div>
+        <div className="schedule-info">
+          {postStatus === 'scheduled' && <Clock size={16} />}
+          <span className="schedule-time">
+            {displayDate.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        </div>
+      </div>
+
+      {/* ✅ UPDATED: Smart Post Images with Adaptive Display */}
+      {displayImages.length > 0 && (
+        <div className={`preview-images ${layoutClass}`}>
+          {displayImages.map(({ src, index }) => {
+            // Skip images that failed to load
+            if (imageLoadErrors.has(index)) {
+              return null;
+            }
+            
+            const aspectClass = imageAspectRatios.get(index) || '';
+            
+            return (
+              <div key={index} className={`preview-image-container ${aspectClass}`}>
+                <img 
+                  src={src} 
+                  alt={`Post image ${index + 1}`}
+                  loading="lazy"
+                  onError={() => handleImageError(index)}
+                  onLoad={(e) => handleImageLoad(e, index)}
+                  data-aspect={aspectClass} // ✅ NEW: CSS can use this attribute
+                />
+              </div>
+            );
+          }).filter(Boolean)}
+          
+          {/* ✅ Image count overlay - only show if more than 4 images */}
+          {validImages.length > 4 && (
+            <div className="image-count">
+              +{validImages.length - 4}
+            </div>
+          )}
+          
+          {/* ✅ Show placeholder if no valid images loaded */}
+          {displayImages.length === 0 && post.images && post.images.length > 0 && (
+            <div className="preview-image-container">
+              <div className="image-error">
+                <FileText size={20} color="#999" />
+                <span style={{fontSize: '12px', color: '#999', marginTop: '4px'}}>
+                  Image unavailable
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Post Content */}
+      <div className="preview-text">
+        <p>{postContent.substring(0, 80)}{postContent.length > 80 ? '…' : ''}</p>
+      </div>
+
+      {/* Hashtags */}
+      <div className="preview-hashtags">
+        {post.hashtags?.slice(0, 3).map((hashtag, i) => (
+          <span key={i} className="hashtag">{hashtag}</span>
+        )) || <span className="hashtag">#{primary}</span>}
+      </div>
+
+      {/* Post Stats */}
+      <div className="post-stats">
+        <span><Heart size={14} /> {post.totalEngagement || 0}</span>
+        <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
+        <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
+      </div>
+
+      {/* Status Badge */}
+      <div className="post-status">
+        <span className={`status-badge ${postStatus}`}>
+          {postStatus === 'published' && <CheckCircle size={12} />}
+          {postStatus === 'failed' && <XCircle size={12} />}
+          {postStatus === 'scheduled' && <Clock size={12} />}
+          {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>
+          <X size={20} />
+        </button>
+        
+        <div className="modal-body">
+          <div className="warning-icon-container">
+            <div className="warning-icon-circle">
+              <AlertTriangle size={24} color="#ff4757" />
+            </div>
+          </div>
+          
+          <h3 className="modal-title">Delete Post</h3>
+          
+          <div className="post-info-box">
+            <div className="post-icon">
+              <FileText size={20} color="#666" />
+            </div>
+            <div className="post-details">
+              <span className="post-name">{postTitle}</span>    
+            </div>
+          </div>
+          
+          <p className="warning-description">
+            This action cannot be undone. You'll need to recreate this post to continue using it for your blog.
+          </p>
+        </div>
+        
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="btn-danger" onClick={onConfirm}>
+            <Trash2 size={16} />
+            Yes, Delete Post
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PostsSubPage = ({
   posts,
   loading,
@@ -464,59 +799,69 @@ const PostsSubPage = ({
     setSearchQuery('');
   };
 
-  // ✅ First apply filters to posts, then expand platforms
-  const filteredPosts = posts.filter(post => {
-    if (!post) return false;
+  const allPosts = posts;
+  
+  const postCounts = {
+    all: allPosts.length,
+    draft: allPosts.filter(p => (p?.status || 'draft') === 'draft').length,
+    scheduled: allPosts.filter(p => (p?.status || 'draft') === 'scheduled').length,
+    published: allPosts.filter(p => (p?.status || 'draft') === 'published').length,
+    failed: allPosts.filter(p => (p?.status || 'draft') === 'failed').length
+  };
 
-    const postStatus = post.status || 'draft';
-    const postPlatforms = Array.isArray(post.platforms) ? post.platforms : ['instagram'];
-    const postHashtags = Array.isArray(post.hashtags) ? post.hashtags : [];
+  const filteredPosts = allPosts.filter(post => {
+    if (!post) return false;
+    
+    if (filters.status !== 'all' && post.status !== filters.status) {
+      return false;
+    }
+    
+    if (filters.platform !== 'all' && 
+        post.platforms && post.platforms.length > 0 && 
+        !post.platforms.some(p => p === filters.platform)) {
+      return false;
+    }
+
+    const postHashtags = post.hashtags || [];
     const postContent = post.content || '';
 
-    // Status filter
-    const matchesStatus = filters.status === 'all' || postStatus === filters.status;
-    
-    // Platform filter
-    const matchesPlatform = filters.platform === 'all' || 
-      postPlatforms.some(p => p?.toLowerCase() === filters.platform?.toLowerCase());
-    
-    // Hashtag filter
     const matchesHashtag = !filters.hashtag ||
       postHashtags.some(tag =>
         (tag || '').toLowerCase().includes(filters.hashtag.toLowerCase())
       );
     
-    // Search filter
     const matchesSearch = !searchQuery ||
       postContent.toLowerCase().includes(searchQuery.toLowerCase()) ||
       postHashtags.some(tag =>
         (tag || '').toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-    // Date range filtering with safety checks
     let matchesDateRange = true;
     if (filters.dateRange.start || filters.dateRange.end) {
-      const postDate = new Date(post.createdAt || post.publishedAt || post.scheduledDate || Date.now());
+      let postDate;
+      if (post.status === 'published' && post.publishedAt) {
+        postDate = new Date(post.publishedAt);
+      } else if (post.scheduledDate) {
+        postDate = new Date(post.scheduledDate);
+      } else {
+        postDate = new Date(post.createdAt);
+      }
+
       if (filters.dateRange.start) {
-        const startDate = new Date(filters.dateRange.start);
-        matchesDateRange = matchesDateRange && postDate >= startDate;
+        matchesDateRange = matchesDateRange && postDate >= new Date(filters.dateRange.start);
       }
       if (filters.dateRange.end) {
-        const endDate = new Date(filters.dateRange.end);
-        endDate.setHours(23, 59, 59, 999); // Include the entire end date
-        matchesDateRange = matchesDateRange && postDate <= endDate;
+        matchesDateRange = matchesDateRange && postDate <= new Date(filters.dateRange.end);
       }
     }
 
-    return matchesStatus && matchesPlatform && matchesHashtag && matchesSearch && matchesDateRange;
+    return matchesHashtag && matchesSearch && matchesDateRange;
   });
 
-  // ✅ Then expand filtered posts into platform cards
   const platformCards = filteredPosts.flatMap(post => {
     const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ? 
       post.platforms : ['instagram'];
 
-    // If platform filter is active, only show that platform
     if (filters.platform !== 'all') {
       return platformsArray
         .filter(platform => platform?.toLowerCase() === filters.platform?.toLowerCase())
@@ -527,22 +872,12 @@ const PostsSubPage = ({
         }));
     }
 
-    // Otherwise show all platforms for the post
     return platformsArray.map(platform => ({
       post,
       platform,
       key: `${post._id || post.id}-${platform}`
     }));
   });
-
-  // ✅ Count posts by status for filter labels (use original posts array)
-  const postCounts = {
-    all: posts.length,
-    draft: posts.filter(p => (p?.status || 'draft') === 'draft').length,
-    scheduled: posts.filter(p => (p?.status || 'draft') === 'scheduled').length,
-    published: posts.filter(p => (p?.status || 'draft') === 'published').length,
-    failed: posts.filter(p => (p?.status || 'draft') === 'failed').length
-  };
 
   if (loading) {
     return (
@@ -582,19 +917,17 @@ const PostsSubPage = ({
           </div>
         </div>
         <div className="filters-bar">
-          {/* ✅ Enhanced Status Dropdown with counts */}
           <select
             value={filters.status}
             onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
           >
-            <option value="all">All Posts ({postCounts.all})</option>
-            <option value="draft">Draft ({postCounts.draft})</option>
-            <option value="scheduled">Scheduled ({postCounts.scheduled})</option>
-            <option value="published">Published ({postCounts.published})</option>
-            <option value="failed">Failed ({postCounts.failed})</option>
+            <option value="all">All Posts</option>
+            <option value="draft">Draft</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="published">Published</option>
+            <option value="failed">Failed</option>
           </select>
 
-          {/* Platform Dropdown */}
           <select
             value={filters.platform}
             onChange={(e) => setFilters(prev => ({ ...prev, platform: e.target.value }))}
@@ -602,21 +935,8 @@ const PostsSubPage = ({
             <option value="all">All Platforms</option>
             <option value="instagram">Instagram</option>
             <option value="facebook">Facebook</option>
-            <option value="twitter">Twitter</option>
           </select>
 
-          {/* ✅ Fixed Hashtag Input
-          <div className="hashtag-filter-input">
-            <Tag size={16} />
-            <input
-              type="text"
-              placeholder="Filter by hashtag..."
-              value={filters.hashtag}
-              onChange={(e) => setFilters(prev => ({ ...prev, hashtag: e.target.value }))}
-            />
-          </div> */}
-
-          {/* Date Range Dropdown Style */}
           <div className="date-range-dropdown">
             <span className="date-label">Date Range:</span>
             <input
@@ -642,7 +962,6 @@ const PostsSubPage = ({
             />
           </div>
 
-          {/* ✅ Clear Filters Button */}
           <button className="clear-filters-btn" onClick={clearFilters}>
             Clear All
           </button>
@@ -692,7 +1011,6 @@ const PostsSubPage = ({
               )}
             </div>
           ) : (
-            // ✅ Render the filtered platform cards
             platformCards.map(({ post, platform, key }) => (
               <PlatformPostCard 
                 key={key}
@@ -700,7 +1018,7 @@ const PostsSubPage = ({
                 platform={platform}
                 onClick={() => onPostClick(post)}
                 onEdit={() => onEditPost(post)}
-                onDelete={() => onDeletePost(post._id || post.id)}
+                onDelete={() => onDeletePost(post)} // ✅ Pass entire post object
               />
             ))
           )}
@@ -710,167 +1028,26 @@ const PostsSubPage = ({
   );
 };
 
-// ✅ New PlatformPostCard Component (similar to dashboard upcoming posts)
-const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
-  const [showActions, setShowActions] = useState(false);
-
-  // ✅ Add safety check for post object
-  if (!post) {
-    return null;
-  }
-
-  const handleEdit = (e) => {
-    e.stopPropagation();
-    onEdit();
-  };
-
-  const handleDelete = (e) => {
-    e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      onDelete();
-    }
-  };
-
-  // ✅ Platform-specific styling (same as dashboard)
-  const primary = platform.toLowerCase();
-  const colorMap = {
-    instagram: '#E4405F',
-    twitter: '#1DA1F2',
-    facebook: '#1877F2',
-  };
-  const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
-
-  // ✅ Get platform icon
-  const getPlatformIcon = (platform) => {
-    switch (platform?.toLowerCase()) {
-      case 'instagram': return Instagram;
-      case 'facebook': return Facebook;
-      case 'twitter': return Twitter;
-      default: return FileText;
-    }
-  };
-
-  const PlatformIcon = getPlatformIcon(platform);
-
-  // ✅ Determine which date to show with safety checks
-  const getDisplayDate = () => {
-    if (post.status === 'scheduled' && post.scheduledDate) {
-      return new Date(post.scheduledDate);
-    }
-    if (post.publishedAt) {
-      return new Date(post.publishedAt);
-    }
-    if (post.createdAt) {
-      return new Date(post.createdAt);
-    }
-    return new Date();
-  };
-
-  const displayDate = getDisplayDate();
-  const postStatus = post.status || 'draft';
-  const postContent = post.content || '';
-
-  return (
-    <div
-      className={`platform-post-card platform-preview ${primary}`}
-      style={style}
-      onClick={onClick}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
-      {/* Hover Actions */}
-      {showActions && (
-        <div className="post-actions">
-          <button className="action-btn edit" onClick={handleEdit}>
-            <Edit size={16} />
-          </button>
-          <button className="action-btn delete" onClick={handleDelete}>
-            <Trash2 size={16} />
-          </button>
-        </div>
-      )}
-
-      {/* Platform Header (same as dashboard) */}
-      <div className="platform-header">
-        <div className="platform-info">
-          <PlatformIcon size={16} />
-          <span className="platform-name">{primary}</span>
-        </div>
-        <div className="schedule-info">
-          {postStatus === 'scheduled' && <Clock size={16} />}
-          <span className="schedule-time">
-            {displayDate.toLocaleDateString('en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        </div>
-      </div>
-
-      {/* Post Images (same as dashboard) */}
-      {post.images && Array.isArray(post.images) && post.images.length > 0 && (
-        <div className="preview-images">
-          {post.images.slice(0, 4).map((img, i) => {
-            const src = typeof img === 'string' ? img : (img?.url || '');
-            if (!src) return null;
-            return <img key={i} src={src} alt={`Post image ${i + 1}`} />;
-          }).filter(Boolean)}
-          {post.images.length > 4 && (
-            <div className="image-count">+{post.images.length - 4}</div>
-          )}
-        </div>
-      )}
-
-      {/* Post Content (same as dashboard) */}
-      <div className="preview-text">
-        <p>{postContent.substring(0, 80)}{postContent.length > 80 ? '…' : ''}</p>
-      </div>
-
-      {/* Hashtags (same as dashboard) */}
-      <div className="preview-hashtags">
-        {post.hashtags?.slice(0, 3).map((hashtag, i) => (
-          <span key={i} className="hashtag">{hashtag}</span>
-        )) || <span className="hashtag">#{primary}</span>}
-      </div>
-
-      {/* Post Stats */}
-      <div className="post-stats">
-        <span><Heart size={14} /> {post.totalEngagement || 0}</span>
-        <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
-        <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
-      </div>
-
-      {/* Status Badge (same as dashboard) */}
-      <div className="post-status">
-        <span className={`status-badge ${postStatus}`}>
-          {postStatus === 'published' && <CheckCircle size={12} />}
-          {postStatus === 'failed' && <XCircle size={12} />}
-          {postStatus === 'scheduled' && <Clock size={12} />}
-          {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
-        </span>
-      </div>
-    </div>
-  );
-};
 
 
-// ✅ Fixed MediaLibrarySubPage Component
+
+
+// ✅ Keep your existing MediaLibrarySubPage and other components unchanged
 const MediaLibrarySubPage = ({
   media,
   loading,
   viewMode,
   setViewMode,
   filters,
-  setFilters, // This should directly update the state
+  setFilters,
   onUpload,
   onMediaClick,
   onRefetch,
   onSearch,
   onLoadMore
 }) => {
+  // ... (keep your existing MediaLibrarySubPage implementation)
+  // I'll keep the existing implementation from your original code
   const clearFilters = () => {
     setFilters({
       type: 'all',
@@ -882,27 +1059,22 @@ const MediaLibrarySubPage = ({
     });
   };
 
-  // ✅ Apply all filters to media
   const filteredMedia = media.filter(mediaItem => {
     if (!mediaItem) return false;
 
-    // Type filter
     const matchesType = filters.type === 'all' ||
       (filters.type === 'image' && mediaItem.fileType?.startsWith('image')) ||
       (filters.type === 'video' && mediaItem.fileType?.startsWith('video'));
     
-    // Folder filter
     const mediaFolder = mediaItem.folder || 'general';
     const matchesFolder = filters.folder === 'all' || mediaFolder === filters.folder;
     
-    // Tags filter
     const matchesTags = !filters.tags ||
       (mediaItem.tags && Array.isArray(mediaItem.tags) && 
        mediaItem.tags.some(tag =>
          tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
        ));
     
-    // Search filter
     const matchesSearch = !filters.search ||
       (mediaItem.filename && mediaItem.filename.toLowerCase().includes(filters.search.toLowerCase())) ||
       (mediaItem.altText && mediaItem.altText.toLowerCase().includes(filters.search.toLowerCase())) ||
@@ -914,7 +1086,6 @@ const MediaLibrarySubPage = ({
     return matchesType && matchesFolder && matchesTags && matchesSearch;
   });
 
-  // ✅ Sort filtered media
   const sortedMedia = [...filteredMedia].sort((a, b) => {
     switch (filters.sort) {
       case 'oldest':
@@ -925,14 +1096,6 @@ const MediaLibrarySubPage = ({
       default:
         return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     }
-  });
-
-  console.log('Media filtering debug:', {
-    totalMedia: media.length,
-    filters,
-    filteredCount: filteredMedia.length,
-    sortedCount: sortedMedia.length,
-    sampleMedia: media[0] // Show first media item structure
   });
 
   if (loading) {
@@ -954,7 +1117,6 @@ const MediaLibrarySubPage = ({
           </button>
         </div>
         <div className="filters-bar">
-          {/* ✅ Fixed Search Input */}
           <div className="search-section">
             <div className="search-box">
               <Search size={16} />
@@ -963,18 +1125,15 @@ const MediaLibrarySubPage = ({
                 placeholder="Search media..."
                 value={filters.search || ''}
                 onChange={(e) => {
-                  console.log('Search input change:', e.target.value);
                   setFilters(prev => ({ ...prev, search: e.target.value }));
                 }}
               />
             </div>
           </div>
 
-          {/* ✅ Fixed Type Dropdown */}
           <select
             value={filters.type}
             onChange={(e) => {
-              console.log('Type filter change:', e.target.value);
               setFilters(prev => ({ ...prev, type: e.target.value }));
             }}
           >
@@ -987,11 +1146,9 @@ const MediaLibrarySubPage = ({
             </option>
           </select>
 
-          {/* ✅ Fixed Folder Dropdown */}
           <select
             value={filters.folder}
             onChange={(e) => {
-              console.log('Folder filter change:', e.target.value);
               setFilters(prev => ({ ...prev, folder: e.target.value }));
             }}
           >
@@ -1002,11 +1159,9 @@ const MediaLibrarySubPage = ({
             <option value="campaigns">Campaigns</option>
           </select>
 
-          {/* ✅ Fixed Sort Dropdown */}
           <select
             value={filters.sort}
             onChange={(e) => {
-              console.log('Sort filter change:', e.target.value);
               setFilters(prev => ({ ...prev, sort: e.target.value }));
             }}
           >
@@ -1015,7 +1170,6 @@ const MediaLibrarySubPage = ({
             <option value="mostUsed">Most Used</option>
           </select>
 
-          {/* Clear Filters Button */}
           <button className="clear-filters-btn" onClick={clearFilters}>
             Clear All
           </button>
@@ -1039,7 +1193,6 @@ const MediaLibrarySubPage = ({
         </div>
       </div>
 
-      {/* Media Grid/List */}
       <div className="media-content">
         <div className={`media-container ${viewMode}`}>
           {sortedMedia.length === 0 ? (
@@ -1074,6 +1227,10 @@ const MediaLibrarySubPage = ({
   );
 };
 
+// ✅ Keep all your existing component implementations for:
+// - MediaCard
+// - MediaUploadModal  
+// - MediaPreviewModal
 
 // Media Card Component
 const MediaCard = ({ media, onClick }) => {
@@ -1160,7 +1317,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
     }
   };
 
-  const handleAreaClick = () => {
+    const handleAreaClick = () => {
     fileInputRef.current?.click();
   };
 
