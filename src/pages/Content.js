@@ -378,14 +378,14 @@ const Content = () => {
           onClick={() => handleTabChange('posts')}
         >
           <FileText size={18} />
-          Posts ({allPosts.length})
+          Posts
         </button>
         <button
           className={`nav-tab ${activeTab === 'media' ? 'active' : ''}`}
           onClick={() => handleTabChange('media')}
         >
           <Image size={18} />
-          Media Library ({currentMedia.length})
+          Media Library
         </button>
       </div>
 
@@ -619,9 +619,9 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
       {/* Hover Actions */}
       {showActions && (
         <div className="post-actions">
-          <button className="action-btn edit" onClick={handleEdit} title="Edit Post">
+          {/* <button className="action-btn edit" onClick={handleEdit} title="Edit Post">
             <Edit size={16} />
-          </button>
+          </button> */}
           <button className="action-btn delete" onClick={handleDelete} title="Delete Post">
             <Trash2 size={16} />
           </button>
@@ -732,14 +732,16 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          <X size={20} />
-        </button>
+        <div className="modal-header-simple">
+          <button className="modal-close" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
         
         <div className="modal-body">
           <div className="warning-icon-container">
             <div className="warning-icon-circle">
-              <AlertTriangle size={24} color="#ff4757" />
+              <AlertTriangle size={24} />
             </div>
           </div>
           
@@ -747,10 +749,11 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
           
           <div className="post-info-box">
             <div className="post-icon">
-              <FileText size={20} color="#666" />
+              <FileText size={20} />
             </div>
             <div className="post-details">
-              <span className="post-name">{postTitle}</span>    
+              <span className="post-name">{postTitle}</span>
+              <span className="post-subtitle">Post</span>
             </div>
           </div>
           
@@ -772,7 +775,6 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
     </div>
   );
 };
-
 const PostsSubPage = ({
   posts,
   loading,
