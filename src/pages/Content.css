@@ -1730,3 +1730,140 @@ padding: 0;
   font-size: 12px;
   font-weight: 500;
 }
+
+/* Delete Confirmation Modal */
+.delete-confirm-modal {
+  width: 420px;
+  max-width: 40%;
+}
+
+.modal-header-simple {
+  position: relative;
+  padding: 1rem 1rem 0 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-header-simple .modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: #9ca3af;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.modal-header-simple .modal-close:hover {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.delete-confirm-modal .modal-body {
+  text-align: center;
+  padding: 1rem 2rem 1.5rem 2rem;
+}
+
+.warning-icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.warning-icon-circle {
+  width: 56px;
+  height: 56px;
+  background: #fee2e2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.warning-icon-circle svg {
+  color: #dc2626;
+}
+
+.delete-confirm-modal .modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1.5rem 0;
+}
+
+.post-info-box {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.post-icon {
+  width: 40px;
+  height: 40px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.post-icon svg {
+  color: #6b7280;
+}
+
+.post-details {
+  flex: 1;
+  text-align: left;
+}
+
+.post-name {
+  display: block;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.875rem;
+  line-height: 1.2;
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.post-subtitle {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.warning-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.delete-confirm-modal .modal-footer {
+  padding: 0 2rem 2rem 2rem;
+  justify-content: center;
+  gap: 0.75rem;
+  border-top: none;
+}
+
+.delete-confirm-modal .btn-secondary,
+.delete-confirm-modal .btn-danger {
+  min-width: 140px;
+  justify-content: center;
+}
+
+/* Animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
