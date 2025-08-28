@@ -21,7 +21,10 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
-  ChevronDown
+  ChevronDown,
+  FolderOpen, // Add this new import
+  Check,
+  Search
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -32,12 +35,14 @@ import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
-const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
+const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData }) => {
   const { uploadMedia } = useMedia();
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
   const [userProfile, setUserProfile] = useState(null);
+    const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+
 
   const [postData, setPostData] = useState({
     content: '',
@@ -72,6 +77,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       fetchUserProfile();
     }
   }, [isOpen]);
+
+    const handleImportFromLibrary = (selectedImages) => {
+    setPostData(prev => ({
+      ...prev,
+      images: [...prev.images, ...selectedImages]
+    }));
+    showToast(`Added ${selectedImages.length} image(s) from media library`, 'success');
+  };
 
   const handleConnectClick = (e) => {
     e.stopPropagation();
@@ -654,21 +667,22 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="create-post-overlay">
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`toast toast-${toast.type}`}>
-          <div className="toast-content">
-            {toast.type === 'success' && <CheckCircle size={16} />}
-            {toast.type === 'error' && <AlertCircle size={16} />}
-            {toast.type === 'info' && <Info size={16} />}
-            <span>{toast.message}</span>
-          </div>
-        </div>
-      )}
 
-      <div className="create-post-modal">
+  return (
+     <div className={`create-post-overlay ${showMediaLibrary ? 'media-library-open' : ''}`}>
+    {/* Toast Notification */}
+    {toast && (
+      <div className={`toast toast-${toast.type}`}>
+        <div className="toast-content">
+          {toast.type === 'success' && <CheckCircle size={16} />}
+          {toast.type === 'error' && <AlertCircle size={16} />}
+          {toast.type === 'info' && <Info size={16} />}
+          <span>{toast.message}</span>
+        </div>
+      </div>
+    )}
+
+    <div className={`create-post-modal ${showMediaLibrary ? 'media-library-open' : ''}`}>
         <div className="modal-header">
           <div className="header-left">
             <h2>Create New Post</h2>
@@ -1020,32 +1034,52 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                     <Image size={16} />
                     Images
                   </label>
-                  <div className="image-upload-area">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="file-input"
-                      id="image-upload"
-                    />
-                    <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
-                      {uploadingFiles ? (
-                        <>
-                          <Loader className="spinner" size={24} />
-                          <span>Uploading images...</span>
-                          <small>Please wait while we upload your files</small>
-                        </>
-                      ) : (
-                        <>
-                          <Upload size={24} />
-                          <span>Click to upload images or drag and drop</span>
-                          <small>PNG, JPG, GIF up to 10MB each</small>
-                        </>
-                      )}
-                    </label>
+                  
+                  {/* Upload Options */}
+                  <div className="image-upload-options">
+                    {/* Upload New Files */}
+                    <div className="upload-option">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="file-input"
+                        id="image-upload"
+                      />
+                      <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
+                        {uploadingFiles ? (
+                          <>
+                            <Loader className="spinner" size={24} />
+                            <span>Uploading images...</span>
+                            <small>Please wait while we upload your files</small>
+                          </>
+                        ) : (
+                          <>
+                            <Upload size={24} />
+                            <span>Upload New Images</span>
+                            <small>PNG, JPG, GIF up to 10MB each</small>
+                          </>
+                        )}
+                      </label>
+                    </div>
+
+                    {/* Import from Media Library */}
+                    <div className="upload-option">
+                      <button
+                        type="button"
+                        className="media-library-btn"
+                        onClick={() => setShowMediaLibrary(true)}
+                        disabled={uploadingFiles}
+                      >
+                        <FolderOpen size={24} />
+                        <span>Import from Media Library</span>
+                        <small>Choose from your existing images</small>
+                      </button>
+                    </div>
                   </div>
 
+                  {/* Display Selected Images */}
                   {postData.images.length > 0 && (
                     <div className="uploaded-images">
                       {postData.images.map((image, index) => (
@@ -1069,6 +1103,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                           >
                             <X size={16} />
                           </button>
+                          {/* Show source indicator */}
+                          <div className="image-source-indicator">
+                            {image.publicId ? (
+                              <FolderOpen size={12} title="From Media Library" />
+                            ) : (
+                              <Upload size={12} title="Newly Uploaded" />
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1253,8 +1295,213 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
           </div>
         )}
       </div>
+        <MediaLibraryModal
+      isOpen={showMediaLibrary}
+      onClose={() => setShowMediaLibrary(false)}
+      onSelectImages={handleImportFromLibrary}
+    />
     </div>
   );
 };
+
+const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
+  const [mediaList, setMediaList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch media when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchMediaLibrary();
+    }
+  }, [isOpen]);
+
+  const fetchMediaLibrary = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.request('/api/media');
+      console.log('Media API Response:', response); // Debug log
+      
+      // ✅ FIX: Access the correct nested structure
+      const media = response?.data?.data?.media || response?.data?.media || [];
+      console.log('Extracted media:', media); // Debug log
+      
+      // Filter only images
+      const images = media.filter(item => 
+        item.fileType?.startsWith('image') && item.url
+      );
+      console.log('Filtered images:', images); // Debug log
+      
+      setMediaList(images);
+    } catch (error) {
+      console.error('Failed to fetch media library:', error);
+      // Show user-friendly error message
+      setMediaList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageToggle = (image) => {
+    setSelectedImages(prev => {
+      // ✅ Use the correct ID field from the API response
+      const imageId = image._id || image.id;
+      const isSelected = prev.some(img => (img._id || img.id) === imageId);
+      
+      if (isSelected) {
+        return prev.filter(img => (img._id || img.id) !== imageId);
+      } else {
+        return [...prev, {
+          url: image.url,
+          altText: image.altText || image.originalName || image.filename, // ✅ Use originalName if available
+          publicId: image.publicId,
+          _id: imageId, // ✅ Use consistent ID
+          filename: image.originalName || image.filename // ✅ Prefer originalName for display
+        }];
+      }
+    });
+  };
+
+  const handleSelectImages = () => {
+    onSelectImages(selectedImages);
+    onClose();
+    setSelectedImages([]);
+  };
+
+  const handleClose = () => {
+    setSelectedImages([]);
+    onClose();
+  };
+
+  const filteredMedia = mediaList.filter(item => {
+    const searchTerm = searchQuery.toLowerCase();
+    return (
+      item.filename?.toLowerCase().includes(searchTerm) ||
+      item.originalName?.toLowerCase().includes(searchTerm) || // ✅ Search originalName too
+      item.altText?.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="media-library-modal-overlay" onClick={handleClose}>
+      <div className="media-library-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Select Images from Media Library</h3>
+          <button className="modal-close" onClick={handleClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="modal-body">
+          {/* Search Bar */}
+          <div className="media-search-bar">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search images..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Selected Images Counter */}
+          {selectedImages.length > 0 && (
+            <div className="selected-counter">
+              {selectedImages.length} image{selectedImages.length > 1 ? 's' : ''} selected
+            </div>
+          )}
+
+          {/* Media Grid */}
+          <div className="media-library-grid">
+            {loading ? (
+              <div className="loading-media">
+                <Loader />
+                <span>Loading media library...</span>
+              </div>
+            ) : filteredMedia.length === 0 ? (
+              <div className="no-media">
+                <Image size={48} />
+                <h4>No images found</h4>
+                <p>
+                  {searchQuery 
+                    ? `No images match "${searchQuery}"`
+                    : "Upload some images to your media library first"
+                  }
+                </p>
+              </div>
+            ) : (
+              filteredMedia.map(image => {
+                const imageId = image._id || image.id;
+                const isSelected = selectedImages.some(img => (img._id || img.id) === imageId);
+                const displayName = image.originalName || image.filename;
+                
+                return (
+                  <div
+                    key={imageId}
+                    className={`media-library-item ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handleImageToggle(image)}
+                  >
+                    <div className="media-thumbnail">
+                      <img
+                        src={image.url}
+                        alt={image.altText || displayName}
+                        loading="lazy"
+                        onError={(e) => {
+                          console.error('Failed to load image:', image.url);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                      {isSelected && (
+                        <div className="selection-overlay">
+                          <Check size={20} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="media-info">
+                      <span className="media-filename" title={displayName}>
+                        {displayName?.length > 25 
+                          ? `${displayName.substring(0, 25)}...` 
+                          : displayName || 'Untitled'
+                        }
+                      </span>
+                      <span className="media-size">
+                        {image.humanSize || `${Math.round(image.size / 1024)}KB`}
+                      </span>
+                      {/* ✅ Show dimensions if available */}
+                      {image.dimensions && (
+                        <span className="media-dimensions">
+                          {image.dimensions.width} × {image.dimensions.height}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={handleClose}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleSelectImages}
+            disabled={selectedImages.length === 0}
+          >
+            Add {selectedImages.length} Image{selectedImages.length !== 1 ? 's' : ''} to Post
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
 
 export default CreatePost;

@@ -619,9 +619,9 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
       {/* Hover Actions */}
       {showActions && (
         <div className="post-actions">
-          {/* <button className="action-btn edit" onClick={handleEdit} title="Edit Post">
+          <button className="action-btn edit" onClick={handleEdit} title="Edit Post">
             <Edit size={16} />
-          </button> */}
+          </button>
           <button className="action-btn delete" onClick={handleDelete} title="Delete Post">
             <Trash2 size={16} />
           </button>
