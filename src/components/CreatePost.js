@@ -1,6 +1,6 @@
 //before changing entire code showing 6 account including personal profile 
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   X,
   Image,
@@ -24,7 +24,10 @@ import {
   ChevronDown,
   FolderOpen, // Add this new import
   Check,
-  Search
+  Search,
+  Video, // ✅ Add Video icon
+  Play,  // ✅ Add Play icon
+  FileText
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -70,6 +73,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Fetch user profile and connected accounts on mount
   useEffect(() => {
@@ -77,6 +82,166 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       fetchUserProfile();
     }
   }, [isOpen]);
+
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
+
+    // ✅ Enhanced file validation
+    const validFiles = [];
+    const invalidFiles = [];
+
+    Array.from(files).forEach(file => {
+      // Check file type
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      
+      if (!isImage && !isVideo) {
+        invalidFiles.push({ file, reason: 'Unsupported file type' });
+        return;
+      }
+
+      // Check file size - 250MB for videos, 50MB for images
+      const maxSize = isVideo ? 250 * 1024 * 1024 : 50 * 1024 * 1024; // 250MB for video, 50MB for images
+      if (file.size > maxSize) {
+        const maxSizeText = isVideo ? '250MB' : '50MB';
+        invalidFiles.push({ 
+          file, 
+          reason: `File too large (max ${maxSizeText})` 
+        });
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    // Show warnings for invalid files
+    if (invalidFiles.length > 0) {
+      const errorMessages = invalidFiles.map(({ file, reason }) => 
+        `${file.name}: ${reason}`
+      ).join('\n');
+      showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
+    }
+
+    if (validFiles.length === 0) return;
+
+    setUploadingFiles(true);
+    setError(null);
+
+    try {
+      // For immediate preview, create local URLs
+      const localPreviews = validFiles.map(file => ({
+        url: URL.createObjectURL(file),
+        altText: file.name,
+        isLocal: true,
+        fileType: file.type.startsWith('video/') ? 'video' : 'image',
+        size: file.size
+      }));
+
+      setPostData(prev => ({
+        ...prev,
+        images: [...prev.images, ...localPreviews] // Note: keeping "images" for backward compatibility, but it now includes videos
+      }));
+
+      const fileTypeText = validFiles.length === 1 
+        ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
+        : 'files';
+      
+      showToast(`Uploading ${validFiles.length} ${fileTypeText}...`, 'info');
+
+      const response = await uploadMedia(validFiles);
+      
+      const uploadedMedia = response.data.map(media => ({
+        url: media.url,
+        altText: media.originalName || 'Post media',
+        publicId: media.publicId,
+        fileType: media.fileType || (media.url.includes('video') ? 'video' : 'image'),
+        size: media.size,
+        dimensions: media.dimensions
+      }));
+
+      // Replace local previews with actual uploaded URLs
+      setPostData(prev => ({
+        ...prev,
+        images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
+      }));
+
+      showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
+
+    } catch (error) {
+      console.error('Failed to upload media:', error);
+      setError(error.message || 'Failed to upload media');
+      showToast('Failed to upload media', 'error');
+
+      // Remove local previews on error
+      setPostData(prev => ({
+        ...prev,
+        images: prev.images.filter(img => !img.isLocal)
+      }));
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
+
+  // ✅ Handle file input change
+  const handleFileInputChange = (e) => {
+    handleFileUpload(e.target.files);
+  };
+
+  // ✅ Drag and drop handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files);
+    }
+  };
+
+  const handleUploadAreaClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // ✅ Updated remove media function
+  const removeMedia = (index) => {
+    const mediaItem = postData.images[index];
+    if (mediaItem.url && mediaItem.url.startsWith('blob:')) {
+      URL.revokeObjectURL(mediaItem.url);
+    }
+    
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+    showToast('Media removed', 'info');
+  };
+
+  // ✅ Helper function to get media type icon
+  const getMediaTypeIcon = (mediaItem) => {
+    if (mediaItem.fileType === 'video' || mediaItem.url?.includes('video')) {
+      return Video;
+    }
+    return Image;
+  };
+
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
     const handleImportFromLibrary = (selectedImages) => {
     setPostData(prev => ({
@@ -1029,90 +1194,148 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 </div>
 
                 {/* Image Upload */}
-                <div className="form-section">
+              <div className="form-section">
                   <label className="section-label">
                     <Image size={16} />
-                    Images
+                    Media (Images & Videos)
                   </label>
                   
-                  {/* Upload Options */}
-                  <div className="image-upload-options">
-                    {/* Upload New Files */}
-                    <div className="upload-option">
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="file-input"
-                        id="image-upload"
-                      />
-                      <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
-                        {uploadingFiles ? (
-                          <>
-                            <Loader className="spinner" size={24} />
-                            <span>Uploading images...</span>
-                            <small>Please wait while we upload your files</small>
-                          </>
-                        ) : (
-                          <>
-                            <Upload size={24} />
-                            <span>Upload New Images</span>
-                            <small>PNG, JPG, GIF up to 10MB each</small>
-                          </>
-                        )}
-                      </label>
-                    </div>
+                  {/* Enhanced Upload Area with Drag & Drop */}
+                  <div className="media-upload-container">
+                    <div className="upload-options-grid">
+                      {/* Upload New Files with Drag & Drop */}
+                      <div className="upload-option">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept="image/*,video/*" // ✅ Accept both images and videos
+                          onChange={handleFileInputChange}
+                          className="file-input"
+                          id="media-upload"
+                        />
+                        <div
+                          className={`upload-area ${dragActive ? 'drag-active' : ''} ${uploadingFiles ? 'uploading' : ''}`}
+                          onDragEnter={handleDrag}
+                          onDragLeave={handleDrag}
+                          onDragOver={handleDrag}
+                          onDrop={handleDrop}
+                          onClick={handleUploadAreaClick}
+                        >
+                          {uploadingFiles ? (
+                            <>
+                              <Loader className="spinner" size={32} />
+                              <span className="upload-title">Uploading media...</span>
+                              <small>Please wait while we upload your files</small>
+                            </>
+                          ) : (
+                            <>
+                              <Upload size={32} />
+                              <span className="upload-title">
+                                {dragActive ? 'Drop files here' : 'Upload Media Files'}
+                              </span>
+                              <small className="upload-subtitle">
+                                Drag & drop or click to select
+                              </small>
+                              <div className="upload-specs">
+                                <span>📷 Images: PNG, JPG, GIF up to 50MB</span>
+                                <span>🎥 Videos: MP4, MOV, AVI up to 250MB</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
 
-                    {/* Import from Media Library */}
-                    <div className="upload-option">
-                      <button
-                        type="button"
-                        className="media-library-btn"
-                        onClick={() => setShowMediaLibrary(true)}
-                        disabled={uploadingFiles}
-                      >
-                        <FolderOpen size={24} />
-                        <span>Import from Media Library</span>
-                        <small>Choose from your existing images</small>
-                      </button>
+                      {/* Import from Media Library */}
+                      <div className="upload-option">
+                        <button
+                          type="button"
+                          className="media-library-btn"
+                          onClick={() => setShowMediaLibrary(true)}
+                          disabled={uploadingFiles}
+                        >
+                          <FolderOpen size={32} />
+                          <span className="upload-title">Import from Media Library</span>
+                          <small className="upload-subtitle">Choose from your existing files</small>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Display Selected Images */}
+                  {/* ✅ Display Selected Media (Images & Videos) */}
                   {postData.images.length > 0 && (
-                    <div className="uploaded-images">
-                      {postData.images.map((image, index) => (
-                        <div key={index} className="image-preview">
-                          <img
-                            src={image.url || image}
-                            alt={image.altText || `Upload ${index + 1}`}
-                            onError={(e) => {
-                              console.error('Image failed to load:', image);
-                              e.target.style.display = 'none';
-                              e.target.parentElement.classList.add('error');
-                            }}
-                            onLoad={() => {
-                              console.log('Image loaded successfully:', image);
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="remove-image"
-                            onClick={() => removeImage(index)}
-                          >
-                            <X size={16} />
-                          </button>
-                          {/* Show source indicator */}
-                          <div className="image-source-indicator">
-                            {image.publicId ? (
-                              <FolderOpen size={12} title="From Media Library" />
-                            ) : (
-                              <Upload size={12} title="Newly Uploaded" />
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="uploaded-media">
+                      <div className="media-grid">
+                        {postData.images.map((mediaItem, index) => {
+                          const MediaIcon = getMediaTypeIcon(mediaItem);
+                          const isVideo = mediaItem.fileType === 'video' || 
+                                         mediaItem.url?.includes('video');
+                          
+                          return (
+                            <div key={index} className="media-preview">
+                              {isVideo ? (
+                                <div className="video-preview">
+                                  <video
+                                    src={mediaItem.url || mediaItem}
+                                    className="media-thumbnail"
+                                    muted
+                                    onError={(e) => {
+                                      console.error('Video failed to load:', mediaItem);
+                                      e.target.style.display = 'none';
+                                      e.target.parentElement.classList.add('error');
+                                    }}
+                                  />
+                                  <div className="video-overlay">
+                                    <Play size={20} />
+                                  </div>
+                                </div>
+                              ) : (
+                                <img
+                                  src={mediaItem.url || mediaItem}
+                                  alt={mediaItem.altText || `Media ${index + 1}`}
+                                  className="media-thumbnail"
+                                  onError={(e) => {
+                                    console.error('Image failed to load:', mediaItem);
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.classList.add('error');
+                                  }}
+                                />
+                              )}
+                              
+                              <button
+                                type="button"
+                                className="remove-media"
+                                onClick={() => removeMedia(index)}
+                                title="Remove media"
+                              >
+                                <X size={16} />
+                              </button>
+                              
+                              {/* Media Info Overlay */}
+                              <div className="media-info-overlay">
+                                <div className="media-type-indicator">
+                                  <MediaIcon size={12} />
+                                  {isVideo ? 'Video' : 'Image'}
+                                </div>
+                                {mediaItem.size && (
+                                  <div className="media-size-indicator">
+                                    {formatFileSize(mediaItem.size)}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Source indicator */}
+                              <div className="media-source-indicator">
+                                {mediaItem.publicId ? (
+                                  <FolderOpen size={10} title="From Media Library" />
+                                ) : (
+                                  <Upload size={10} title="Newly Uploaded" />
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1317,26 +1540,20 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
     }
   }, [isOpen]);
 
-  const fetchMediaLibrary = async () => {
+   const fetchMediaLibrary = async () => {
     setLoading(true);
     try {
       const response = await apiClient.request('/api/media');
-      console.log('Media API Response:', response); // Debug log
-      
-      // ✅ FIX: Access the correct nested structure
       const media = response?.data?.data?.media || response?.data?.media || [];
-      console.log('Extracted media:', media); // Debug log
       
-      // Filter only images
-      const images = media.filter(item => 
-        item.fileType?.startsWith('image') && item.url
+      // ✅ Filter both images and videos
+      const mediaFiles = media.filter(item => 
+        (item.fileType?.startsWith('image') || item.fileType?.startsWith('video')) && item.url
       );
-      console.log('Filtered images:', images); // Debug log
       
-      setMediaList(images);
+      setMediaList(mediaFiles);
     } catch (error) {
       console.error('Failed to fetch media library:', error);
-      // Show user-friendly error message
       setMediaList([]);
     } finally {
       setLoading(false);
