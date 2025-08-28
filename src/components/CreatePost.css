@@ -195,6 +195,23 @@
   font-size: 0.875rem;
 }
 
+.imgfli {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.media-library-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+
 /* AI Hashtag Button */
 .ai-hashtag-btn {
   display: flex;
@@ -274,7 +291,7 @@
 
 .not-connected {
   position: absolute;
-  top: -8px;
+  /* top: -8px; */
   right: -8px;
   background: #ef4444;
   color: white;
@@ -559,6 +576,7 @@
 
 /* Fallback for browsers that don't support :has() */
 .preview-images.single-image {
+  /* width: 20%; */
   grid-template-columns: 1fr;
 }
 
@@ -2097,7 +2115,7 @@
 }
 
 .platform-container + .platform-container {
-  margin-top: 8px;
+  /* margin-top: 8px; */
 }
 
 /* Smooth transitions for all interactive elements */

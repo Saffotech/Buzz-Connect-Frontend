@@ -21,6 +21,7 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
+  GalleryHorizontal,
   ChevronDown
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
@@ -65,6 +66,19 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+
+  // ✅ 1. Define the function here (inside component, before return)
+  const onSaveDraft = () => {
+    const draftData = { ...postData, status: "draft" };
+    console.log("Saving draft:", draftData);
+
+    // example async action
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      alert("Post saved as draft!");
+    }, 1000);
+  };
 
   // Fetch user profile and connected accounts on mount
   useEffect(() => {
@@ -133,14 +147,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
     const selectedPlatforms = postData.platforms;
     const currentLength = postData.content.length;
-    
+
     if (selectedPlatforms.length === 0) {
       return { current: currentLength, max: 2200, remaining: 2200 - currentLength };
     }
 
     // Find the most restrictive limit
     const minLimit = Math.min(...selectedPlatforms.map(platform => limits[platform] || 2200));
-    
+
     return {
       current: currentLength,
       max: minLimit,
@@ -181,7 +195,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
         const validAccounts = selectedAccountsForPlatform.filter(account => account != null && account !== '');
-        
+
         if (validAccounts.length === 0) {
           const platformName = platforms.find(p => p.id === platform)?.name;
           showToast(`Please select at least one account for ${platformName}`, 'error');
@@ -234,7 +248,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
         const validAccounts = selectedAccountsForPlatform.filter(account => account != null && account !== '');
-        
+
         if (validAccounts.length === 0) {
           const platformName = platforms.find(p => p.id === platform)?.name;
           setError(`Please select at least one valid account for ${platformName}`);
@@ -285,11 +299,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
     setPostData(prev => {
       const currentAccounts = prev.selectedAccounts[platformId] || [];
-      
+
       let newAccounts;
       if (isSelected) {
-        newAccounts = currentAccounts.includes(accountId) 
-          ? currentAccounts 
+        newAccounts = currentAccounts.includes(accountId)
+          ? currentAccounts
           : [...currentAccounts, accountId];
       } else {
         newAccounts = currentAccounts.filter(id => id !== accountId);
@@ -341,7 +355,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       showToast('Uploading images...', 'info');
 
       const response = await uploadMedia(files);
-      
+
       const uploadedImages = response.data.map(media => ({
         url: media.url,
         altText: media.originalName || 'Post image',
@@ -380,109 +394,109 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setError(null);
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
-  if (!validateForm()) {
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-    // Clean up selectedAccounts to remove null values and empty arrays
-    const cleanedSelectedAccounts = {};
-    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-      const validAccounts = accounts.filter(account => account != null && account !== '');
-      if (validAccounts.length > 0) {
-        cleanedSelectedAccounts[platform] = validAccounts;
-      }
-    });
-
-    // Prepare post data for API (matching Swagger structure)
-    const apiPostData = {
-      content: postData.content,
-      platforms: postData.platforms,
-      selectedAccounts: cleanedSelectedAccounts,
-      images: postData.images.map(img => ({
-        url: img.url,
-        altText: img.altText || 'Post image',
-        publicId: img.publicId || null
-      })),
-      hashtags: Array.isArray(postData.hashtags)
-        ? postData.hashtags
-        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-      mentions: Array.isArray(postData.mentions)
-        ? postData.mentions
-        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-      metadata: {
-        category: postData.metadata?.category || 'other'
-      }
-    };
-
-    console.log('Submitting post data:', apiPostData);
-
-    let response;
-    
-    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-      // SCHEDULED POST - Create first, then schedule
-      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-      apiPostData.scheduledDate = scheduledDateTime.toISOString();
-      
-      showToast('Scheduling post...', 'info');
-      response = await onPostCreated(apiPostData);
-      
-    } else {
-      // PUBLISH NOW - Create and immediately publish
-      showToast('Creating and publishing post...', 'info');
-      
-      // Step 1: Create the post as draft
-      const createResponse = await onPostCreated(apiPostData);
-      console.log('Post created:', createResponse);
-      
-      if (!createResponse?.data?._id) {
-        throw new Error('Failed to create post - no ID returned');
-      }
-      
-      // Step 2: Immediately publish the created post
-      const postId = createResponse.data._id;
-      console.log('Publishing post with ID:', postId);
-      
-      const publishResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      
-      console.log('Publish response:', publishResponse);
-      response = publishResponse;
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
     }
-    
-    console.log('Final response:', response);
 
-    const successMessage = isScheduled 
-      ? 'Post scheduled successfully!' 
-      : response?.data?.status === 'published' 
-        ? 'Post published successfully!' 
-        : 'Post created successfully!';
+    try {
+      // Clean up selectedAccounts to remove null values and empty arrays
+      const cleanedSelectedAccounts = {};
+      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+        const validAccounts = accounts.filter(account => account != null && account !== '');
+        if (validAccounts.length > 0) {
+          cleanedSelectedAccounts[platform] = validAccounts;
+        }
+      });
 
-    showToast(successMessage, 'success');
+      // Prepare post data for API (matching Swagger structure)
+      const apiPostData = {
+        content: postData.content,
+        platforms: postData.platforms,
+        selectedAccounts: cleanedSelectedAccounts,
+        images: postData.images.map(img => ({
+          url: img.url,
+          altText: img.altText || 'Post image',
+          publicId: img.publicId || null
+        })),
+        hashtags: Array.isArray(postData.hashtags)
+          ? postData.hashtags
+          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+        mentions: Array.isArray(postData.mentions)
+          ? postData.mentions
+          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+        metadata: {
+          category: postData.metadata?.category || 'other'
+        }
+      };
 
-    // Reset form on success
-    resetForm();
-    onClose();
+      console.log('Submitting post data:', apiPostData);
 
-  } catch (error) {
-    console.error('Failed to create/publish post:', error);
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-    setError(errorMessage);
-    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      let response;
+
+      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+        // SCHEDULED POST - Create first, then schedule
+        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+        apiPostData.scheduledDate = scheduledDateTime.toISOString();
+
+        showToast('Scheduling post...', 'info');
+        response = await onPostCreated(apiPostData);
+
+      } else {
+        // PUBLISH NOW - Create and immediately publish
+        showToast('Creating and publishing post...', 'info');
+
+        // Step 1: Create the post as draft
+        const createResponse = await onPostCreated(apiPostData);
+        console.log('Post created:', createResponse);
+
+        if (!createResponse?.data?._id) {
+          throw new Error('Failed to create post - no ID returned');
+        }
+
+        // Step 2: Immediately publish the created post
+        const postId = createResponse.data._id;
+        console.log('Publishing post with ID:', postId);
+
+        const publishResponse = await axios.post(
+          `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        console.log('Publish response:', publishResponse);
+        response = publishResponse;
+      }
+
+      console.log('Final response:', response);
+
+      const successMessage = isScheduled
+        ? 'Post scheduled successfully!'
+        : response?.data?.status === 'published'
+          ? 'Post published successfully!'
+          : 'Post created successfully!';
+
+      showToast(successMessage, 'success');
+
+      // Reset form on success
+      resetForm();
+      onClose();
+
+    } catch (error) {
+      console.error('Failed to create/publish post:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+      setError(errorMessage);
+      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
 
   const resetForm = () => {
@@ -528,7 +542,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
     try {
       const selectedPlatforms = postData.platforms;
-      
+
       // Use the exact structure that works in Swagger
       const response = await apiClient.generateContent({
         prompt: aiPrompt,
@@ -542,7 +556,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
       if (response.success && response.data) {
         const suggestions = [];
-        
+
         // Handle the response structure from your Swagger example
         Object.entries(response.data.content).forEach(([platform, data]) => {
           suggestions.push({
@@ -849,7 +863,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                       const Icon = platform.icon;
                       const isSelected = postData.platforms.includes(platform.id);
                       const selectedAccountsCount = getSelectedAccountsCount(platform.id);
-                      
+
                       return (
                         <div key={platform.id} className="platform-container">
                           <button
@@ -865,8 +879,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                             <Icon size={20} />
                             <span>{platform.name}</span>
                             <span className="connect-status">
-                              {platform.connected ? 
-                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected') 
+                              {platform.connected ?
+                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')
                                 : 'Connect Now'
                               }
                             </span>
@@ -884,14 +898,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                               <div className="accounts-checkbox-list">
                                 {platform.accounts.map((account) => {
                                   const accountId = account.accountId || account.id || account._id || account.pageId;
-                                  
+
                                   if (!accountId) {
                                     console.warn('Account missing ID:', account);
                                     return null;
                                   }
-                                  
+
                                   const isChecked = isAccountSelected(platform.id, accountId);
-                                  
+
                                   return (
                                     <label key={`${platform.id}-${accountId}`} className="account-checkbox-item">
                                       <input
@@ -911,7 +925,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                                   );
                                 })}
                               </div>
-                              
+
                               {platform.accounts.length > 1 && (
                                 <div className="account-selection-controls">
                                   <button
@@ -1016,10 +1030,19 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
                 {/* Image Upload */}
                 <div className="form-section">
-                  <label className="section-label">
-                    <Image size={16} />
-                    Images
-                  </label>
+                  <div className='imgfli'>
+                    <label className="section-label">
+                      <Image size={16} />
+                      Images
+                    </label>
+
+                    {/* New label for Media Library */}
+                    <label className="media-library-label">
+                      <GalleryHorizontal size={16} />
+                      Import from Media Library
+                    </label>
+                  </div>
+
                   <div className="image-upload-area">
                     <input
                       type="file"
@@ -1168,6 +1191,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                     const platform = platforms.find(p => p.id === platformId);
                     const Icon = platform.icon;
 
+
                     return (
                       <div key={platformId} className={`platform-preview ${platformId}`} style={{ '--platform-color': platform.color }}>
                         <div className="platform-header">
@@ -1216,28 +1240,41 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={!postData.content.trim() || postData.platforms.length === 0 || charCount.remaining < 0 || isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  {/* <Loader className="spinner" size={16} /> */}
-                  {isScheduled ? 'Scheduling...' : 'Publishing...'}
-                </>
-              ) : isScheduled ? (
-                <>
-                  <Calendar size={16} />
-                  Schedule Post
-                </>
-              ) : (
-                <>
-                  <Send size={16} />
-                  Publish Now
-                </>
-              )}
-            </button>
+
+            <div className="new">
+              {/* Save as Draft Button */}
+              <button type="button" className="btn-secondary-draft" onClick={onSaveDraft} disabled={isSubmitting}
+              >Save as Draft
+              </button>
+
+              {/* Publish / Schedule Button */}
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={
+                  !postData.content.trim() ||
+                  postData.platforms.length === 0 ||
+                  charCount.remaining < 0 ||
+                  isSubmitting
+                }
+              >
+                {isSubmitting ? (
+                  <>
+                    {isScheduled ? 'Scheduling...' : 'Publishing...'}
+                  </>
+                ) : isScheduled ? (
+                  <>
+                    <Calendar size={16} />
+                    Schedule Post
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    Publish Now
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
 

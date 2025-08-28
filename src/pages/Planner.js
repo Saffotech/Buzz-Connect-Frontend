@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Calendar,
   Plus,
@@ -29,6 +29,9 @@ import PostDetailModal from "../components/PostDetailModal";
 
 
 const Planner = () => {
+  const filterRef = useRef(null); // 👈 reference for dropdown
+  const filterBtnRef = useRef(null);
+  const filterDropdownRef = useRef(null);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [notification, setNotification] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -110,6 +113,38 @@ const Planner = () => {
       throw error;
     }
   };
+
+   useEffect(() => {
+    if (!showFilters) return;
+
+    const onPointerDown = (e) => {
+      const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+      const btnEl = filterBtnRef.current;
+      const dropEl = filterDropdownRef.current;
+
+      const clickedInsideBtn =
+        btnEl && (btnEl.contains(e.target) || path.includes(btnEl));
+      const clickedInsideDrop =
+        dropEl && (dropEl.contains(e.target) || path.includes(dropEl));
+
+      if (!clickedInsideBtn && !clickedInsideDrop) {
+        setShowFilters(false);
+      }
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setShowFilters(false);
+    };
+
+    // Capture phase helps avoid races with React onClick
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showFilters]);
 
   // Navigation functions
   const navigateDate = (direction) => {
@@ -245,8 +280,9 @@ const Planner = () => {
         </div>
 
         <div className="header-right">
-          <div className="filters-section">
+          <div className="filters-section" ref={filterRef}>
             <button
+            ref={filterBtnRef}
               className={`filter-btn ${showFilters ? 'active' : ''}`}
               onClick={() => setShowFilters(!showFilters)}
             >
@@ -255,7 +291,9 @@ const Planner = () => {
             </button>
 
             {showFilters && (
-              <div className="filters-dropdown">
+              <div className="filters-dropdown"
+               ref={filterDropdownRef}
+              >
                 {/* <div className="filter-group">
                   <label>Platforms</label>
                   <div className="filter-options">

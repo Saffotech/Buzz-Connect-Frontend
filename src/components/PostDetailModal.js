@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import "./PostDetailModal.css";
-import { X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, Bookmark, Send, Eye, Instagram, Facebook, Twitter } from "lucide-react";
+import { X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, Bookmark, Send, Eye, Instagram, Facebook, Twitter, ChevronRightCircle, ChevronLeftCircle } from "lucide-react";
 
 const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
   // Add keyboard event listener for ESC key and body scroll management
@@ -57,28 +57,28 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
   const getPlatformStyle = () => {
     switch (platform) {
       case "instagram":
-        return { 
+        return {
           gradient: "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
           primary: "#E1306C",
           text: "#262626",
           hashtag: "#00376b"
         };
       case "facebook":
-        return { 
+        return {
           gradient: "linear-gradient(135deg, #1877f2, #42a5f5)",
           primary: "#1877f2",
           text: "#1c1e21",
           hashtag: "#385898"
         };
       case "twitter":
-        return { 
+        return {
           gradient: "linear-gradient(135deg, #1da1f2, #14171a)",
           primary: "#1da1f2",
           text: "#0f1419",
           hashtag: "#1d9bf0"
         };
       default:
-        return { 
+        return {
           gradient: "linear-gradient(135deg, #667eea, #764ba2)",
           primary: "#667eea",
           text: "#2d3748",
@@ -92,11 +92,11 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "No date available";
-    
+
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Invalid date";
-      
+
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -110,11 +110,11 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
   // Format time for display
   const formatTime = (dateString) => {
     if (!dateString) return "";
-    
+
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "";
-      
+
       return date.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit'
@@ -149,8 +149,8 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
   return (
     <div className="post-detail-overlay" onClick={handleOverlayClick}>
       <div className="post-detail-container" onClick={handleModalClick}>
-        <button 
-          className="post-detail-close-btn" 
+        <button
+          className="post-detail-close-btn"
           onClick={handleClose}
           type="button"
           aria-label="Close modal"
@@ -175,7 +175,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
             </div>
           </div>
 
-            {/* Add action buttons for edit and delete if provided
+          {/* Add action buttons for edit and delete if provided
             {(onEdit || onDelete) && (
               <div className="post-detail-header-actions">
                 {onEdit && (
@@ -198,6 +198,10 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
           {/* Post Image */}
           {post.images?.length > 0 && (
             <div className="post-detail-image-container">
+              <div className="arrowsf">
+                <ChevronLeftCircle />
+                <ChevronRightCircle />
+              </div>
               <img
                 className="post-detail-image"
                 src={getImageSource(post.images[0])}
@@ -217,17 +221,17 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
           {/* Post Content */}
           <div className="post-detail-content">
             <p className="post-detail-text">{post.content || 'No content available'}</p>
-            
+
             {/* Hashtags section */}
             {(post.tags && post.tags.length > 0) || (post.hashtags && post.hashtags.length > 0) ? (
               <div className="post-detail-tags">
                 {(post.tags || post.hashtags || []).map((tag, i) => (
-                  <span 
-                    key={i} 
-                    className="post-detail-tag" 
+                  <span
+                    key={i}
+                    className="post-detail-tag"
                     style={{ color: platformStyle.hashtag }}
                   >
-                    #{tag}
+                    {tag.startsWith('#') ? tag : `#${tag}`}
                   </span>
                 ))}
               </div>
@@ -238,8 +242,8 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
         {/* Engagement Actions */}
         <div className="post-detail-engagement">
           <div className="post-detail-action-buttons">
-            <button 
-              className="post-detail-action-btn" 
+            <button
+              className="post-detail-action-btn"
               style={{ color: platformStyle.primary }}
               type="button"
             >
@@ -283,7 +287,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
               </>
             )}
           </div>
-          
+
           {/* Status on the right */}
           {post.status && (
             <div className="post-detail-status-section">

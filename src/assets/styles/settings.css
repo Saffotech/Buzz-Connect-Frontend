@@ -111,6 +111,51 @@
   margin: 0;
 }
 
+/* here new code */
+.content-card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  /* box-shadow: 0 2px 6px rgba(0,0,0,0.1); */
+}
+
+.form-row {
+  /* display: flex; */
+  gap: 20px;        /* space between Name & Email */
+}
+
+.form-group {
+  flex: 1;          /* both inputs take equal width */
+  display: flex;
+  flex-direction: column;
+}
+
+.readonly-input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f9f9f9;
+}
+
+/* 👇 Responsive: stack vertically on small screens */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 8px; /* 👈 smaller gap for mobile */
+  }
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0; /* remove extra spacing if any */
+}
+
+.form-group label {
+  margin-bottom: 4px; /* tighten label-input spacing */
+}
+
 /* Settings Card Component */
 .settings-card {
   background: white;
@@ -203,6 +248,28 @@
   background: #f9fafb;
   border-color: #9ca3af;
 }
+
+.new{
+  display: flex;
+  gap: 1.5rem;
+}
+
+.btn-secondary-draft{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  /* background: #9ca3af; */
+  color: #374151;
+  border:  2px solid #6b7280;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+
 
 .btn-danger-outline {
   display: inline-flex;
@@ -914,6 +981,7 @@
 .accounts-container {
   display: flex;
   flex-direction: column;
+  padding-bottom: 2rem;
 }
 
 .account-group {
