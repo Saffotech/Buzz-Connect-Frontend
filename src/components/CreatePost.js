@@ -937,7 +937,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
               <span>Loading profile...</span>
             </div>
           )}
-<>
+
 
           {activeTab === 'compose' && (
             <div className={`compose-tab ${showAISuggestions ? 'with-ai' : ''}`}>
@@ -1492,7 +1492,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                   </div>
                 </div>
               </div>
-            </div>
+           
           )}
 
           {activeTab === 'preview' && (
@@ -1548,7 +1548,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
               </div>
             </div>
           )}
-            </>
+            
 
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose}>
