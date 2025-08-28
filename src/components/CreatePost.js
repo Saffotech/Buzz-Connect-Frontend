@@ -1,6 +1,4 @@
-//before changing entire code showing 6 account including personal profile 
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   X,
   Image,
@@ -21,8 +19,14 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
+  ChevronDown,
+  FolderOpen, // Add this new import
+  Check,
+  Search,
+  Video,
+  Play,
+  FileText,
   GalleryHorizontal,
-  ChevronDown
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -33,12 +37,14 @@ import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
-const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
+const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData }) => {
   const { uploadMedia } = useMedia();
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
   const [userProfile, setUserProfile] = useState(null);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+
 
   const [postData, setPostData] = useState({
     content: '',
@@ -66,6 +72,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
 
   // ✅ 1. Define the function here (inside component, before return)
   const onSaveDraft = () => {
@@ -86,6 +94,199 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       fetchUserProfile();
     }
   }, [isOpen]);
+
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
+
+    // Enhanced file validation
+    const validFiles = [];
+    const invalidFiles = [];
+
+    Array.from(files).forEach(file => {
+      // Check file type
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+
+      if (!isImage && !isVideo) {
+        invalidFiles.push({ file, reason: 'Unsupported file type' });
+        return;
+      }
+
+      // Check file size - 250MB for videos, 50MB for images
+      const maxSize = isVideo ? 250 * 1024 * 1024 : 50 * 1024 * 1024;
+      if (file.size > maxSize) {
+        const maxSizeText = isVideo ? '250MB' : '50MB';
+        invalidFiles.push({
+          file,
+          reason: `File too large (max ${maxSizeText})`
+        });
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    // Show warnings for invalid files
+    if (invalidFiles.length > 0) {
+      const errorMessages = invalidFiles.map(({ file, reason }) =>
+        `${file.name}: ${reason}`
+      ).join('\n');
+      showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
+    }
+
+    if (validFiles.length === 0) return;
+
+    setUploadingFiles(true);
+    setError(null);
+
+    try {
+    // Store original filenames for mapping
+    const originalFilenames = validFiles.map(file => file.name);
+
+    // Create local previews with original names
+    const localPreviews = validFiles.map((file, index) => ({
+      url: URL.createObjectURL(file),
+      altText: file.name,
+      originalName: file.name,
+      displayName: file.name, // ✅ Store original name for display
+      isLocal: true,
+      fileType: file.type.startsWith('video/') ? 'video' : 'image',
+      size: file.size,
+      index // ✅ Store index to map back to original file
+    }));
+
+    setPostData(prev => ({
+      ...prev,
+      images: [...prev.images, ...localPreviews]
+    }));
+
+    const fileTypeText = validFiles.length === 1
+      ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
+      : 'files';
+
+    showToast(`Uploading ${validFiles.length} ${fileTypeText}...`, 'info');
+
+    const response = await uploadMedia(validFiles);
+    console.log('Upload response:', response); // ✅ Debug log
+
+    // ✅ FIXED: Properly map uploaded media with original filenames
+    const uploadedMedia = response.data.map((media, index) => {
+      const originalFile = validFiles[index];
+      
+      console.log(`Mapping file ${index}:`, {
+        originalFileName: originalFile?.name,
+        apiOriginalName: media.originalName,
+        apiFilename: media.filename
+      });
+
+      return {
+        url: media.url,
+        altText: media.originalName || originalFile?.name || 'Post media',
+        originalName: media.originalName || originalFile?.name, // ✅ Use API originalName first, then fallback
+        displayName: media.originalName || originalFile?.name || media.filename, // ✅ What to show in UI
+        filename: media.filename, // ✅ Cloudinary processed filename
+        publicId: media.publicId,
+        fileType: media.fileType || (media.url.includes('video') ? 'video' : 'image'),
+        size: media.size || originalFile?.size,
+        dimensions: media.dimensions,
+        cloudinaryFilename: media.filename // ✅ Store separately for reference
+      };
+    });
+
+    console.log('Final uploaded media:', uploadedMedia); // ✅ Debug log
+
+    // Replace local previews with actual uploaded URLs
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
+    }));
+
+    showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
+
+  } catch (error) {
+    console.error('Failed to upload media:', error);
+    setError(error.message || 'Failed to upload media');
+    showToast('Failed to upload media', 'error');
+
+    // Remove local previews on error
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter(img => !img.isLocal)
+    }));
+  } finally {
+    setUploadingFiles(false);
+  }
+};
+
+
+  // ✅ Handle file input change
+  const handleFileInputChange = (e) => {
+    handleFileUpload(e.target.files);
+  };
+
+  // ✅ Drag and drop handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files);
+    }
+  };
+
+  const handleUploadAreaClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // ✅ Updated remove media function
+  const removeMedia = (index) => {
+    const mediaItem = postData.images[index];
+    if (mediaItem.url && mediaItem.url.startsWith('blob:')) {
+      URL.revokeObjectURL(mediaItem.url);
+    }
+
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+    showToast('Media removed', 'info');
+  };
+
+  // ✅ Helper function to get media type icon
+  const getMediaTypeIcon = (mediaItem) => {
+    if (mediaItem.fileType === 'video' || mediaItem.url?.includes('video')) {
+      return Video;
+    }
+    return Image;
+  };
+
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleImportFromLibrary = (selectedImages) => {
+    setPostData(prev => ({
+      ...prev,
+      images: [...prev.images, ...selectedImages]
+    }));
+    showToast(`Added ${selectedImages.length} image(s) from media library`, 'success');
+  };
 
   const handleConnectClick = (e) => {
     e.stopPropagation();
@@ -398,6 +599,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
     setIsSubmitting(true);
     setError(null);
 
+
     if (!validateForm()) {
       setIsSubmitting(false);
       return;
@@ -458,6 +660,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
           throw new Error('Failed to create post - no ID returned');
         }
 
+     
         // Step 2: Immediately publish the created post
         const postId = createResponse.data._id;
         console.log('Publishing post with ID:', postId);
@@ -668,8 +871,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
   if (!isOpen) return null;
 
+
   return (
-    <div className="create-post-overlay">
+    <div className={`create-post-overlay ${showMediaLibrary ? 'media-library-open' : ''}`}>
       {/* Toast Notification */}
       {toast && (
         <div className={`toast toast-${toast.type}`}>
@@ -682,7 +886,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
         </div>
       )}
 
-      <div className="create-post-modal">
+      <div className={`create-post-modal ${showMediaLibrary ? 'media-library-open' : ''}`}>
         <div className="modal-header">
           <div className="header-left">
             <h2>Create New Post</h2>
@@ -1030,11 +1234,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
                 {/* Image Upload */}
                 <div className="form-section">
-                  <div className='imgfli'>
-                    <label className="section-label">
-                      <Image size={16} />
-                      Images
-                    </label>
+
+                  <label className="section-label">
+                    <Image size={16} />
+                    Media (Images & Videos)
+                  </label>
+
+                  
 
                     {/* New label for Media Library */}
                     <label className="media-library-label">
@@ -1069,33 +1275,139 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                     </label>
                   </div>
 
-                  {postData.images.length > 0 && (
-                    <div className="uploaded-images">
-                      {postData.images.map((image, index) => (
-                        <div key={index} className="image-preview">
-                          <img
-                            src={image.url || image}
-                            alt={image.altText || `Upload ${index + 1}`}
-                            onError={(e) => {
-                              console.error('Image failed to load:', image);
-                              e.target.style.display = 'none';
-                              e.target.parentElement.classList.add('error');
-                            }}
-                            onLoad={() => {
-                              console.log('Image loaded successfully:', image);
-                            }}
-                          />
-                          <button
-                            type="button"
-                            className="remove-image"
-                            onClick={() => removeImage(index)}
-                          >
-                            <X size={16} />
-                          </button>
+
+                  {/* Enhanced Upload Area with Drag & Drop */}
+                  <div className="media-upload-container">
+                    <div className="upload-options-grid">
+                      {/* Upload New Files with Drag & Drop */}
+                      <div className="upload-option">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept="image/*,video/*" // ✅ Accept both images and videos
+                          onChange={handleFileInputChange}
+                          className="file-input"
+                          id="media-upload"
+                        />
+                        <div
+                          className={`upload-area ${dragActive ? 'drag-active' : ''} ${uploadingFiles ? 'uploading' : ''}`}
+                          onDragEnter={handleDrag}
+                          onDragLeave={handleDrag}
+                          onDragOver={handleDrag}
+                          onDrop={handleDrop}
+                          onClick={handleUploadAreaClick}
+                        >
+                          {uploadingFiles ? (
+                            <>
+                              <Loader className="spinner" size={32} />
+                              <span className="upload-title">Uploading media...</span>
+                              <small>Please wait while we upload your files</small>
+                            </>
+                          ) : (
+                            <>
+                              <Upload size={32} />
+                              <span className="upload-title">
+                                {dragActive ? 'Drop files here' : 'Upload Media Files'}
+                              </span>
+                              <small className="upload-subtitle">
+                                Drag & drop or click to select
+                              </small>
+                              <div className="upload-specs">
+                                <span>📷 Images: PNG, JPG, GIF up to 50MB</span>
+                                <span>🎥 Videos: MP4, MOV, AVI up to 250MB</span>
+                              </div>
+                            </>
+                          )}
                         </div>
-                      ))}
+                      </div>
+
+                      {/* Import from Media Library */}
+                      <div className="upload-option">
+                        <button
+                          type="button"
+                          className="media-library-btn"
+                          onClick={() => setShowMediaLibrary(true)}
+                          disabled={uploadingFiles}
+                        >
+                          <FolderOpen size={32} />
+                          <span className="upload-title">Import from Media Library</span>
+                          <small className="upload-subtitle">Choose from your existing files</small>
+                        </button>
+                      </div>
                     </div>
-                  )}
+                  </div>
+
+                  {/* ✅ Display Selected Media (Images & Videos) */}
+                 {postData.images.length > 0 && (
+  <div className="uploaded-media">
+    <div className="media-grid">
+      {postData.images.map((mediaItem, index) => {
+        const MediaIcon = getMediaTypeIcon(mediaItem);
+        const isVideo = mediaItem.fileType === 'video' ||
+          mediaItem.url?.includes('video');
+
+        // ✅ Enhanced display name logic with priority order
+        const displayName = 
+          mediaItem.displayName || 
+          mediaItem.originalName || 
+          mediaItem.altText || 
+          `Media ${index + 1}`;
+
+        console.log(`Display logic for item ${index}:`, {
+          displayName: mediaItem.displayName,
+          originalName: mediaItem.originalName,
+          altText: mediaItem.altText,
+          filename: mediaItem.filename,
+          finalDisplayName: displayName
+        });
+
+        return (
+          <div key={index} className="media-preview">
+            {/* ... existing media display code ... */}
+            
+            {/* ✅ Enhanced Media Info with Better Display */}
+            <div className="media-info-overlay">
+              <div className="media-filename-display" title={displayName}>
+                {displayName.length > 15
+                  ? `${displayName.substring(0, 15)}...`
+                  : displayName
+                }
+              </div>
+              <div className="media-type-indicator">
+                <MediaIcon size={12} />
+                {isVideo ? 'Video' : 'Image'}
+              </div>
+              {mediaItem.size && (
+                <div className="media-size-indicator">
+                  {formatFileSize(mediaItem.size)}
+                </div>
+              )}
+            </div>
+
+            {/* Debug info - remove in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="debug-info" style={{
+                position: 'absolute',
+                bottom: '-30px',
+                left: 0,
+                right: 0,
+                background: 'rgba(0,0,0,0.8)',
+                color: 'white',
+                fontSize: '10px',
+                padding: '2px'
+              }}>
+                Original: {mediaItem.originalName || 'N/A'}
+                <br />
+                Display: {mediaItem.displayName || 'N/A'}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
                 </div>
 
                 {/* Scheduling - Updated with Radio Buttons and Tooltips */}
@@ -1290,8 +1602,208 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
           </div>
         )}
       </div>
+      <MediaLibraryModal
+        isOpen={showMediaLibrary}
+        onClose={() => setShowMediaLibrary(false)}
+        onSelectImages={handleImportFromLibrary}
+      />
     </div>
   );
 };
+
+const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
+  const [mediaList, setMediaList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch media when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchMediaLibrary();
+    }
+  }, [isOpen]);
+
+  const fetchMediaLibrary = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.request('/api/media');
+      const media = response?.data?.data?.media || response?.data?.media || [];
+
+      // ✅ Filter both images and videos
+      const mediaFiles = media.filter(item =>
+        (item.fileType?.startsWith('image') || item.fileType?.startsWith('video')) && item.url
+      );
+
+      setMediaList(mediaFiles);
+    } catch (error) {
+      console.error('Failed to fetch media library:', error);
+      setMediaList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageToggle = (image) => {
+    setSelectedImages(prev => {
+      // ✅ Use the correct ID field from the API response
+      const imageId = image._id || image.id;
+      const isSelected = prev.some(img => (img._id || img.id) === imageId);
+
+      if (isSelected) {
+        return prev.filter(img => (img._id || img.id) !== imageId);
+      } else {
+        return [...prev, {
+          url: image.url,
+          altText: image.altText || image.originalName || image.filename, // ✅ Use originalName if available
+          publicId: image.publicId,
+          _id: imageId, // ✅ Use consistent ID
+          filename: image.originalName || image.filename // ✅ Prefer originalName for display
+        }];
+      }
+    });
+  };
+
+  const handleSelectImages = () => {
+    onSelectImages(selectedImages);
+    onClose();
+    setSelectedImages([]);
+  };
+
+  const handleClose = () => {
+    setSelectedImages([]);
+    onClose();
+  };
+
+  const filteredMedia = mediaList.filter(item => {
+    const searchTerm = searchQuery.toLowerCase();
+    return (
+      item.filename?.toLowerCase().includes(searchTerm) ||
+      item.originalName?.toLowerCase().includes(searchTerm) || // ✅ Search originalName too
+      item.altText?.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="media-library-modal-overlay" onClick={handleClose}>
+      <div className="media-library-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Select Images from Media Library</h3>
+          <button className="modal-close" onClick={handleClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="modal-body">
+          {/* Search Bar */}
+          <div className="media-search-bar">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search images..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Selected Images Counter */}
+          {selectedImages.length > 0 && (
+            <div className="selected-counter">
+              {selectedImages.length} image{selectedImages.length > 1 ? 's' : ''} selected
+            </div>
+          )}
+
+          {/* Media Grid */}
+          <div className="media-library-grid">
+            {loading ? (
+              <div className="loading-media">
+                <Loader />
+                <span>Loading media library...</span>
+              </div>
+            ) : filteredMedia.length === 0 ? (
+              <div className="no-media">
+                <Image size={48} />
+                <h4>No images found</h4>
+                <p>
+                  {searchQuery
+                    ? `No images match "${searchQuery}"`
+                    : "Upload some images to your media library first"
+                  }
+                </p>
+              </div>
+            ) : (
+              filteredMedia.map(image => {
+                const imageId = image._id || image.id;
+                const isSelected = selectedImages.some(img => (img._id || img.id) === imageId);
+
+                // ✅ Prioritize originalName over processed filename
+                const displayName = image.originalName || image.filename;
+
+                return (
+                  <div
+                    key={imageId}
+                    className={`media-library-item ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handleImageToggle(image)}
+                  >
+                    <div className="media-thumbnail">
+                      <img
+                        src={image.url}
+                        alt={image.altText || displayName}
+                        loading="lazy"
+                        onError={(e) => {
+                          console.error('Failed to load image:', image.url);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                      {isSelected && (
+                        <div className="selection-overlay">
+                          <Check size={20} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="media-info">
+                      <span className="media-filename" title={displayName}>
+                        {displayName?.length > 25
+                          ? `${displayName.substring(0, 25)}...`
+                          : displayName || 'Untitled'
+                        }
+                      </span>
+                      <span className="media-size">
+                        {image.humanSize || `${Math.round(image.size / 1024)}KB`}
+                      </span>
+                      {image.dimensions && (
+                        <span className="media-dimensions">
+                          {image.dimensions.width} × {image.dimensions.height}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={handleClose}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleSelectImages}
+            disabled={selectedImages.length === 0}
+          >
+            Add {selectedImages.length} Image{selectedImages.length !== 1 ? 's' : ''} to Post
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
 
 export default CreatePost;
