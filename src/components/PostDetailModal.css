@@ -154,6 +154,7 @@
 
 /* Post Detail Image Container - Left Side */
 .post-detail-image-container {
+  position: relative;
   width: 50% !important;
   min-height: 400px !important;
   overflow: hidden !important;
@@ -164,6 +165,22 @@
   justify-content: center !important;
   padding: 16px !important;
 }
+
+.arrowsf {
+  color: gray;
+  width: 100%;
+  position: absolute;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100000;
+}
+.arrowsf > * {
+  cursor: pointer;
+} 
 
 .post-detail-image {
   width: 100% !important;
