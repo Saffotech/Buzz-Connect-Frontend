@@ -1,5 +1,3 @@
-//before changing entire code showing 6 account including personal profile 
-
 import { useState, useEffect, useRef } from 'react';
 import {
   X,
@@ -25,8 +23,8 @@ import {
   FolderOpen, // Add this new import
   Check,
   Search,
-  Video, // ✅ Add Video icon
-  Play,  // ✅ Add Play icon
+  Video,
+  Play,
   FileText
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
@@ -44,7 +42,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const navigate = useNavigate();
 
   const [userProfile, setUserProfile] = useState(null);
-    const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
 
 
   const [postData, setPostData] = useState({
@@ -86,7 +84,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const handleFileUpload = async (files) => {
     if (!files || files.length === 0) return;
 
-    // ✅ Enhanced file validation
+    // Enhanced file validation
     const validFiles = [];
     const invalidFiles = [];
 
@@ -94,19 +92,19 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       // Check file type
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
-      
+
       if (!isImage && !isVideo) {
         invalidFiles.push({ file, reason: 'Unsupported file type' });
         return;
       }
 
       // Check file size - 250MB for videos, 50MB for images
-      const maxSize = isVideo ? 250 * 1024 * 1024 : 50 * 1024 * 1024; // 250MB for video, 50MB for images
+      const maxSize = isVideo ? 250 * 1024 * 1024 : 50 * 1024 * 1024;
       if (file.size > maxSize) {
         const maxSizeText = isVideo ? '250MB' : '50MB';
-        invalidFiles.push({ 
-          file, 
-          reason: `File too large (max ${maxSizeText})` 
+        invalidFiles.push({
+          file,
+          reason: `File too large (max ${maxSizeText})`
         });
         return;
       }
@@ -116,7 +114,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     // Show warnings for invalid files
     if (invalidFiles.length > 0) {
-      const errorMessages = invalidFiles.map(({ file, reason }) => 
+      const errorMessages = invalidFiles.map(({ file, reason }) =>
         `${file.name}: ${reason}`
       ).join('\n');
       showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
@@ -128,59 +126,84 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     setError(null);
 
     try {
-      // For immediate preview, create local URLs
-      const localPreviews = validFiles.map(file => ({
-        url: URL.createObjectURL(file),
-        altText: file.name,
-        isLocal: true,
-        fileType: file.type.startsWith('video/') ? 'video' : 'image',
-        size: file.size
-      }));
+    // Store original filenames for mapping
+    const originalFilenames = validFiles.map(file => file.name);
 
-      setPostData(prev => ({
-        ...prev,
-        images: [...prev.images, ...localPreviews] // Note: keeping "images" for backward compatibility, but it now includes videos
-      }));
+    // Create local previews with original names
+    const localPreviews = validFiles.map((file, index) => ({
+      url: URL.createObjectURL(file),
+      altText: file.name,
+      originalName: file.name,
+      displayName: file.name, // ✅ Store original name for display
+      isLocal: true,
+      fileType: file.type.startsWith('video/') ? 'video' : 'image',
+      size: file.size,
+      index // ✅ Store index to map back to original file
+    }));
 
-      const fileTypeText = validFiles.length === 1 
-        ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
-        : 'files';
+    setPostData(prev => ({
+      ...prev,
+      images: [...prev.images, ...localPreviews]
+    }));
+
+    const fileTypeText = validFiles.length === 1
+      ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
+      : 'files';
+
+    showToast(`Uploading ${validFiles.length} ${fileTypeText}...`, 'info');
+
+    const response = await uploadMedia(validFiles);
+    console.log('Upload response:', response); // ✅ Debug log
+
+    // ✅ FIXED: Properly map uploaded media with original filenames
+    const uploadedMedia = response.data.map((media, index) => {
+      const originalFile = validFiles[index];
       
-      showToast(`Uploading ${validFiles.length} ${fileTypeText}...`, 'info');
+      console.log(`Mapping file ${index}:`, {
+        originalFileName: originalFile?.name,
+        apiOriginalName: media.originalName,
+        apiFilename: media.filename
+      });
 
-      const response = await uploadMedia(validFiles);
-      
-      const uploadedMedia = response.data.map(media => ({
+      return {
         url: media.url,
-        altText: media.originalName || 'Post media',
+        altText: media.originalName || originalFile?.name || 'Post media',
+        originalName: media.originalName || originalFile?.name, // ✅ Use API originalName first, then fallback
+        displayName: media.originalName || originalFile?.name || media.filename, // ✅ What to show in UI
+        filename: media.filename, // ✅ Cloudinary processed filename
         publicId: media.publicId,
         fileType: media.fileType || (media.url.includes('video') ? 'video' : 'image'),
-        size: media.size,
-        dimensions: media.dimensions
-      }));
+        size: media.size || originalFile?.size,
+        dimensions: media.dimensions,
+        cloudinaryFilename: media.filename // ✅ Store separately for reference
+      };
+    });
 
-      // Replace local previews with actual uploaded URLs
-      setPostData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
-      }));
+    console.log('Final uploaded media:', uploadedMedia); // ✅ Debug log
 
-      showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
+    // Replace local previews with actual uploaded URLs
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
+    }));
 
-    } catch (error) {
-      console.error('Failed to upload media:', error);
-      setError(error.message || 'Failed to upload media');
-      showToast('Failed to upload media', 'error');
+    showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
 
-      // Remove local previews on error
-      setPostData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => !img.isLocal)
-      }));
-    } finally {
-      setUploadingFiles(false);
-    }
-  };
+  } catch (error) {
+    console.error('Failed to upload media:', error);
+    setError(error.message || 'Failed to upload media');
+    showToast('Failed to upload media', 'error');
+
+    // Remove local previews on error
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter(img => !img.isLocal)
+    }));
+  } finally {
+    setUploadingFiles(false);
+  }
+};
+
 
   // ✅ Handle file input change
   const handleFileInputChange = (e) => {
@@ -218,7 +241,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     if (mediaItem.url && mediaItem.url.startsWith('blob:')) {
       URL.revokeObjectURL(mediaItem.url);
     }
-    
+
     setPostData(prev => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
@@ -243,7 +266,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-    const handleImportFromLibrary = (selectedImages) => {
+  const handleImportFromLibrary = (selectedImages) => {
     setPostData(prev => ({
       ...prev,
       images: [...prev.images, ...selectedImages]
@@ -311,14 +334,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     const selectedPlatforms = postData.platforms;
     const currentLength = postData.content.length;
-    
+
     if (selectedPlatforms.length === 0) {
       return { current: currentLength, max: 2200, remaining: 2200 - currentLength };
     }
 
     // Find the most restrictive limit
     const minLimit = Math.min(...selectedPlatforms.map(platform => limits[platform] || 2200));
-    
+
     return {
       current: currentLength,
       max: minLimit,
@@ -359,7 +382,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
         const validAccounts = selectedAccountsForPlatform.filter(account => account != null && account !== '');
-        
+
         if (validAccounts.length === 0) {
           const platformName = platforms.find(p => p.id === platform)?.name;
           showToast(`Please select at least one account for ${platformName}`, 'error');
@@ -412,7 +435,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
         const validAccounts = selectedAccountsForPlatform.filter(account => account != null && account !== '');
-        
+
         if (validAccounts.length === 0) {
           const platformName = platforms.find(p => p.id === platform)?.name;
           setError(`Please select at least one valid account for ${platformName}`);
@@ -463,11 +486,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     setPostData(prev => {
       const currentAccounts = prev.selectedAccounts[platformId] || [];
-      
+
       let newAccounts;
       if (isSelected) {
-        newAccounts = currentAccounts.includes(accountId) 
-          ? currentAccounts 
+        newAccounts = currentAccounts.includes(accountId)
+          ? currentAccounts
           : [...currentAccounts, accountId];
       } else {
         newAccounts = currentAccounts.filter(id => id !== accountId);
@@ -519,7 +542,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       showToast('Uploading images...', 'info');
 
       const response = await uploadMedia(files);
-      
+
       const uploadedImages = response.data.map(media => ({
         url: media.url,
         altText: media.originalName || 'Post image',
@@ -558,109 +581,109 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setError(null);
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
-  if (!validateForm()) {
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-    // Clean up selectedAccounts to remove null values and empty arrays
-    const cleanedSelectedAccounts = {};
-    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-      const validAccounts = accounts.filter(account => account != null && account !== '');
-      if (validAccounts.length > 0) {
-        cleanedSelectedAccounts[platform] = validAccounts;
-      }
-    });
-
-    // Prepare post data for API (matching Swagger structure)
-    const apiPostData = {
-      content: postData.content,
-      platforms: postData.platforms,
-      selectedAccounts: cleanedSelectedAccounts,
-      images: postData.images.map(img => ({
-        url: img.url,
-        altText: img.altText || 'Post image',
-        publicId: img.publicId || null
-      })),
-      hashtags: Array.isArray(postData.hashtags)
-        ? postData.hashtags
-        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-      mentions: Array.isArray(postData.mentions)
-        ? postData.mentions
-        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-      metadata: {
-        category: postData.metadata?.category || 'other'
-      }
-    };
-
-    console.log('Submitting post data:', apiPostData);
-
-    let response;
-    
-    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-      // SCHEDULED POST - Create first, then schedule
-      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-      apiPostData.scheduledDate = scheduledDateTime.toISOString();
-      
-      showToast('Scheduling post...', 'info');
-      response = await onPostCreated(apiPostData);
-      
-    } else {
-      // PUBLISH NOW - Create and immediately publish
-      showToast('Creating and publishing post...', 'info');
-      
-      // Step 1: Create the post as draft
-      const createResponse = await onPostCreated(apiPostData);
-      console.log('Post created:', createResponse);
-      
-      if (!createResponse?.data?._id) {
-        throw new Error('Failed to create post - no ID returned');
-      }
-      
-      // Step 2: Immediately publish the created post
-      const postId = createResponse.data._id;
-      console.log('Publishing post with ID:', postId);
-      
-      const publishResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      
-      console.log('Publish response:', publishResponse);
-      response = publishResponse;
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
     }
-    
-    console.log('Final response:', response);
 
-    const successMessage = isScheduled 
-      ? 'Post scheduled successfully!' 
-      : response?.data?.status === 'published' 
-        ? 'Post published successfully!' 
-        : 'Post created successfully!';
+    try {
+      // Clean up selectedAccounts to remove null values and empty arrays
+      const cleanedSelectedAccounts = {};
+      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+        const validAccounts = accounts.filter(account => account != null && account !== '');
+        if (validAccounts.length > 0) {
+          cleanedSelectedAccounts[platform] = validAccounts;
+        }
+      });
 
-    showToast(successMessage, 'success');
+      // Prepare post data for API (matching Swagger structure)
+      const apiPostData = {
+        content: postData.content,
+        platforms: postData.platforms,
+        selectedAccounts: cleanedSelectedAccounts,
+        images: postData.images.map(img => ({
+          url: img.url,
+          altText: img.altText || 'Post image',
+          publicId: img.publicId || null
+        })),
+        hashtags: Array.isArray(postData.hashtags)
+          ? postData.hashtags
+          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+        mentions: Array.isArray(postData.mentions)
+          ? postData.mentions
+          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+        metadata: {
+          category: postData.metadata?.category || 'other'
+        }
+      };
 
-    // Reset form on success
-    resetForm();
-    onClose();
+      console.log('Submitting post data:', apiPostData);
 
-  } catch (error) {
-    console.error('Failed to create/publish post:', error);
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-    setError(errorMessage);
-    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      let response;
+
+      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+        // SCHEDULED POST - Create first, then schedule
+        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+        apiPostData.scheduledDate = scheduledDateTime.toISOString();
+
+        showToast('Scheduling post...', 'info');
+        response = await onPostCreated(apiPostData);
+
+      } else {
+        // PUBLISH NOW - Create and immediately publish
+        showToast('Creating and publishing post...', 'info');
+
+        // Step 1: Create the post as draft
+        const createResponse = await onPostCreated(apiPostData);
+        console.log('Post created:', createResponse);
+
+        if (!createResponse?.data?._id) {
+          throw new Error('Failed to create post - no ID returned');
+        }
+
+        // Step 2: Immediately publish the created post
+        const postId = createResponse.data._id;
+        console.log('Publishing post with ID:', postId);
+
+        const publishResponse = await axios.post(
+          `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        console.log('Publish response:', publishResponse);
+        response = publishResponse;
+      }
+
+      console.log('Final response:', response);
+
+      const successMessage = isScheduled
+        ? 'Post scheduled successfully!'
+        : response?.data?.status === 'published'
+          ? 'Post published successfully!'
+          : 'Post created successfully!';
+
+      showToast(successMessage, 'success');
+
+      // Reset form on success
+      resetForm();
+      onClose();
+
+    } catch (error) {
+      console.error('Failed to create/publish post:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+      setError(errorMessage);
+      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
 
   const resetForm = () => {
@@ -706,7 +729,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     try {
       const selectedPlatforms = postData.platforms;
-      
+
       // Use the exact structure that works in Swagger
       const response = await apiClient.generateContent({
         prompt: aiPrompt,
@@ -720,7 +743,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
       if (response.success && response.data) {
         const suggestions = [];
-        
+
         // Handle the response structure from your Swagger example
         Object.entries(response.data.content).forEach(([platform, data]) => {
           suggestions.push({
@@ -834,20 +857,20 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
 
   return (
-     <div className={`create-post-overlay ${showMediaLibrary ? 'media-library-open' : ''}`}>
-    {/* Toast Notification */}
-    {toast && (
-      <div className={`toast toast-${toast.type}`}>
-        <div className="toast-content">
-          {toast.type === 'success' && <CheckCircle size={16} />}
-          {toast.type === 'error' && <AlertCircle size={16} />}
-          {toast.type === 'info' && <Info size={16} />}
-          <span>{toast.message}</span>
+    <div className={`create-post-overlay ${showMediaLibrary ? 'media-library-open' : ''}`}>
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`toast toast-${toast.type}`}>
+          <div className="toast-content">
+            {toast.type === 'success' && <CheckCircle size={16} />}
+            {toast.type === 'error' && <AlertCircle size={16} />}
+            {toast.type === 'info' && <Info size={16} />}
+            <span>{toast.message}</span>
+          </div>
         </div>
-      </div>
-    )}
+      )}
 
-    <div className={`create-post-modal ${showMediaLibrary ? 'media-library-open' : ''}`}>
+      <div className={`create-post-modal ${showMediaLibrary ? 'media-library-open' : ''}`}>
         <div className="modal-header">
           <div className="header-left">
             <h2>Create New Post</h2>
@@ -1028,7 +1051,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                       const Icon = platform.icon;
                       const isSelected = postData.platforms.includes(platform.id);
                       const selectedAccountsCount = getSelectedAccountsCount(platform.id);
-                      
+
                       return (
                         <div key={platform.id} className="platform-container">
                           <button
@@ -1044,8 +1067,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                             <Icon size={20} />
                             <span>{platform.name}</span>
                             <span className="connect-status">
-                              {platform.connected ? 
-                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected') 
+                              {platform.connected ?
+                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')
                                 : 'Connect Now'
                               }
                             </span>
@@ -1063,14 +1086,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                               <div className="accounts-checkbox-list">
                                 {platform.accounts.map((account) => {
                                   const accountId = account.accountId || account.id || account._id || account.pageId;
-                                  
+
                                   if (!accountId) {
                                     console.warn('Account missing ID:', account);
                                     return null;
                                   }
-                                  
+
                                   const isChecked = isAccountSelected(platform.id, accountId);
-                                  
+
                                   return (
                                     <label key={`${platform.id}-${accountId}`} className="account-checkbox-item">
                                       <input
@@ -1090,7 +1113,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                   );
                                 })}
                               </div>
-                              
+
                               {platform.accounts.length > 1 && (
                                 <div className="account-selection-controls">
                                   <button
@@ -1194,12 +1217,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 </div>
 
                 {/* Image Upload */}
-              <div className="form-section">
+                <div className="form-section">
                   <label className="section-label">
                     <Image size={16} />
                     Media (Images & Videos)
                   </label>
-                  
+
                   {/* Enhanced Upload Area with Drag & Drop */}
                   <div className="media-upload-container">
                     <div className="upload-options-grid">
@@ -1263,81 +1286,75 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                   </div>
 
                   {/* ✅ Display Selected Media (Images & Videos) */}
-                  {postData.images.length > 0 && (
-                    <div className="uploaded-media">
-                      <div className="media-grid">
-                        {postData.images.map((mediaItem, index) => {
-                          const MediaIcon = getMediaTypeIcon(mediaItem);
-                          const isVideo = mediaItem.fileType === 'video' || 
-                                         mediaItem.url?.includes('video');
-                          
-                          return (
-                            <div key={index} className="media-preview">
-                              {isVideo ? (
-                                <div className="video-preview">
-                                  <video
-                                    src={mediaItem.url || mediaItem}
-                                    className="media-thumbnail"
-                                    muted
-                                    onError={(e) => {
-                                      console.error('Video failed to load:', mediaItem);
-                                      e.target.style.display = 'none';
-                                      e.target.parentElement.classList.add('error');
-                                    }}
-                                  />
-                                  <div className="video-overlay">
-                                    <Play size={20} />
-                                  </div>
-                                </div>
-                              ) : (
-                                <img
-                                  src={mediaItem.url || mediaItem}
-                                  alt={mediaItem.altText || `Media ${index + 1}`}
-                                  className="media-thumbnail"
-                                  onError={(e) => {
-                                    console.error('Image failed to load:', mediaItem);
-                                    e.target.style.display = 'none';
-                                    e.target.parentElement.classList.add('error');
-                                  }}
-                                />
-                              )}
-                              
-                              <button
-                                type="button"
-                                className="remove-media"
-                                onClick={() => removeMedia(index)}
-                                title="Remove media"
-                              >
-                                <X size={16} />
-                              </button>
-                              
-                              {/* Media Info Overlay */}
-                              <div className="media-info-overlay">
-                                <div className="media-type-indicator">
-                                  <MediaIcon size={12} />
-                                  {isVideo ? 'Video' : 'Image'}
-                                </div>
-                                {mediaItem.size && (
-                                  <div className="media-size-indicator">
-                                    {formatFileSize(mediaItem.size)}
-                                  </div>
-                                )}
-                              </div>
+                 {postData.images.length > 0 && (
+  <div className="uploaded-media">
+    <div className="media-grid">
+      {postData.images.map((mediaItem, index) => {
+        const MediaIcon = getMediaTypeIcon(mediaItem);
+        const isVideo = mediaItem.fileType === 'video' ||
+          mediaItem.url?.includes('video');
 
-                              {/* Source indicator */}
-                              <div className="media-source-indicator">
-                                {mediaItem.publicId ? (
-                                  <FolderOpen size={10} title="From Media Library" />
-                                ) : (
-                                  <Upload size={10} title="Newly Uploaded" />
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+        // ✅ Enhanced display name logic with priority order
+        const displayName = 
+          mediaItem.displayName || 
+          mediaItem.originalName || 
+          mediaItem.altText || 
+          `Media ${index + 1}`;
+
+        console.log(`Display logic for item ${index}:`, {
+          displayName: mediaItem.displayName,
+          originalName: mediaItem.originalName,
+          altText: mediaItem.altText,
+          filename: mediaItem.filename,
+          finalDisplayName: displayName
+        });
+
+        return (
+          <div key={index} className="media-preview">
+            {/* ... existing media display code ... */}
+            
+            {/* ✅ Enhanced Media Info with Better Display */}
+            <div className="media-info-overlay">
+              <div className="media-filename-display" title={displayName}>
+                {displayName.length > 15
+                  ? `${displayName.substring(0, 15)}...`
+                  : displayName
+                }
+              </div>
+              <div className="media-type-indicator">
+                <MediaIcon size={12} />
+                {isVideo ? 'Video' : 'Image'}
+              </div>
+              {mediaItem.size && (
+                <div className="media-size-indicator">
+                  {formatFileSize(mediaItem.size)}
+                </div>
+              )}
+            </div>
+
+            {/* Debug info - remove in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="debug-info" style={{
+                position: 'absolute',
+                bottom: '-30px',
+                left: 0,
+                right: 0,
+                background: 'rgba(0,0,0,0.8)',
+                color: 'white',
+                fontSize: '10px',
+                padding: '2px'
+              }}>
+                Original: {mediaItem.originalName || 'N/A'}
+                <br />
+                Display: {mediaItem.displayName || 'N/A'}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
                 </div>
 
                 {/* Scheduling - Updated with Radio Buttons and Tooltips */}
@@ -1518,11 +1535,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           </div>
         )}
       </div>
-        <MediaLibraryModal
-      isOpen={showMediaLibrary}
-      onClose={() => setShowMediaLibrary(false)}
-      onSelectImages={handleImportFromLibrary}
-    />
+      <MediaLibraryModal
+        isOpen={showMediaLibrary}
+        onClose={() => setShowMediaLibrary(false)}
+        onSelectImages={handleImportFromLibrary}
+      />
     </div>
   );
 };
@@ -1540,17 +1557,17 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
     }
   }, [isOpen]);
 
-   const fetchMediaLibrary = async () => {
+  const fetchMediaLibrary = async () => {
     setLoading(true);
     try {
       const response = await apiClient.request('/api/media');
       const media = response?.data?.data?.media || response?.data?.media || [];
-      
+
       // ✅ Filter both images and videos
-      const mediaFiles = media.filter(item => 
+      const mediaFiles = media.filter(item =>
         (item.fileType?.startsWith('image') || item.fileType?.startsWith('video')) && item.url
       );
-      
+
       setMediaList(mediaFiles);
     } catch (error) {
       console.error('Failed to fetch media library:', error);
@@ -1565,7 +1582,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
       // ✅ Use the correct ID field from the API response
       const imageId = image._id || image.id;
       const isSelected = prev.some(img => (img._id || img.id) === imageId);
-      
+
       if (isSelected) {
         return prev.filter(img => (img._id || img.id) !== imageId);
       } else {
@@ -1643,7 +1660,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
                 <Image size={48} />
                 <h4>No images found</h4>
                 <p>
-                  {searchQuery 
+                  {searchQuery
                     ? `No images match "${searchQuery}"`
                     : "Upload some images to your media library first"
                   }
@@ -1653,8 +1670,10 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
               filteredMedia.map(image => {
                 const imageId = image._id || image.id;
                 const isSelected = selectedImages.some(img => (img._id || img.id) === imageId);
+
+                // ✅ Prioritize originalName over processed filename
                 const displayName = image.originalName || image.filename;
-                
+
                 return (
                   <div
                     key={imageId}
@@ -1679,15 +1698,14 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
                     </div>
                     <div className="media-info">
                       <span className="media-filename" title={displayName}>
-                        {displayName?.length > 25 
-                          ? `${displayName.substring(0, 25)}...` 
+                        {displayName?.length > 25
+                          ? `${displayName.substring(0, 25)}...`
                           : displayName || 'Untitled'
                         }
                       </span>
                       <span className="media-size">
                         {image.humanSize || `${Math.round(image.size / 1024)}KB`}
                       </span>
-                      {/* ✅ Show dimensions if available */}
                       {image.dimensions && (
                         <span className="media-dimensions">
                           {image.dimensions.width} × {image.dimensions.height}

@@ -1036,7 +1036,7 @@ const PostsSubPage = ({
 
 // ✅ Keep your existing MediaLibrarySubPage and other components unchanged
 const MediaLibrarySubPage = ({
-  media,
+   media,
   loading,
   viewMode,
   setViewMode,
@@ -1050,7 +1050,7 @@ const MediaLibrarySubPage = ({
 }) => {
   // ... (keep your existing MediaLibrarySubPage implementation)
   // I'll keep the existing implementation from your original code
-  const clearFilters = () => {
+const clearFilters = () => {
     setFilters({
       type: 'all',
       folder: 'all',
@@ -1077,8 +1077,10 @@ const MediaLibrarySubPage = ({
          tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
        ));
     
+    // ✅ FIXED: Include originalName in search
     const matchesSearch = !filters.search ||
       (mediaItem.filename && mediaItem.filename.toLowerCase().includes(filters.search.toLowerCase())) ||
+      (mediaItem.originalName && mediaItem.originalName.toLowerCase().includes(filters.search.toLowerCase())) || // ✅ Added this line
       (mediaItem.altText && mediaItem.altText.toLowerCase().includes(filters.search.toLowerCase())) ||
       (mediaItem.tags && Array.isArray(mediaItem.tags) && 
        mediaItem.tags.some(tag => 
@@ -1239,6 +1241,9 @@ const MediaCard = ({ media, onClick }) => {
   const isVideo = media.fileType?.startsWith('video');
   const humanSize = media.humanSize || `${Math.round(media.size / 1024)}KB`;
 
+  // ✅ FIXED: Prioritize originalName over processed filename
+  const displayName = media.originalName || media.filename || 'Untitled';
+
   return (
     <div className="media-card" onClick={onClick}>
       <div className="media-thumbnail">
@@ -1250,7 +1255,7 @@ const MediaCard = ({ media, onClick }) => {
             </div>
           </div>
         ) : (
-          <img src={media.url} alt={media.altText || media.filename} />
+          <img src={media.url} alt={media.altText || displayName} />
         )}
         <div className="media-type-indicator">
           {isVideo ? <Play size={12} /> : <Image size={12} />}
@@ -1258,7 +1263,13 @@ const MediaCard = ({ media, onClick }) => {
       </div>
 
       <div className="media-info">
-        <div className="media-filename">{media.filename}</div>
+        {/* ✅ FIXED: Show original filename instead of processed filename */}
+        <div className="media-filename" title={displayName}>
+          {displayName.length > 20 
+            ? `${displayName.substring(0, 20)}...` 
+            : displayName
+          }
+        </div>
         <div className="media-details">
           <span className="media-size">{humanSize}</span>
           {media.usage?.timesUsed > 0 && (
@@ -1396,6 +1407,9 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
   const isVideo = media.fileType?.startsWith('video');
   const humanSize = media.humanSize || `${Math.round(media.size / 1024)}KB`;
 
+  // ✅ FIXED: Prioritize originalName for display
+  const displayName = media.originalName || media.filename || 'Untitled';
+
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this media? This action cannot be undone.')) {
       onDelete(media._id || media.id);
@@ -1424,7 +1438,8 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
       // Create a temporary anchor element and trigger download
       const link = document.createElement('a');
       link.href = url;
-      link.download = media.filename || `media-${media._id || media.id}`;
+      // ✅ FIXED: Use original name for download
+      link.download = media.originalName || media.filename || `media-${media._id || media.id}`;
 
       // Append to body, click, and remove
       document.body.appendChild(link);
@@ -1455,7 +1470,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
             {isVideo ? (
               <video src={media.url} controls className="preview-video" />
             ) : (
-              <img src={media.url} alt={media.altText || media.filename} className="preview-image" />
+              <img src={media.url} alt={media.altText || displayName} className="preview-image" />
             )}
           </div>
 
@@ -1463,10 +1478,18 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
             <div className="metadata-section">
               <h4>File Information</h4>
               <div className="metadata-grid">
+                {/* ✅ FIXED: Show original filename in metadata */}
                 <div className="metadata-item">
                   <label>Filename:</label>
-                  <span>{media.filename}</span>
+                  <span title={displayName}>{displayName}</span>
                 </div>
+                {/* ✅ OPTIONAL: Show Cloudinary filename separately */}
+                {media.originalName && media.filename !== media.originalName && (
+                  <div className="metadata-item">
+                    <label>Storage Name:</label>
+                    <span className="storage-name">{media.filename}</span>
+                  </div>
+                )}
                 <div className="metadata-item">
                   <label>Size:</label>
                   <span>{humanSize}</span>
@@ -1510,7 +1533,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
               </div>
             )}
 
-            {media.usage && (
+            {/* {media.usage && (
               <div className="metadata-section">
                 <h4>Usage Statistics</h4>
                 <p>Used in {media.usage.timesUsed || 0} posts</p>
@@ -1518,7 +1541,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
                   <p>Last used: {new Date(media.usage.lastUsed).toLocaleDateString()}</p>
                 )}
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
