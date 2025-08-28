@@ -102,7 +102,7 @@ const Content = () => {
 
       const postsData = response?.data?.posts || response?.data || [];
       console.log('Fetched posts:', postsData);
-      
+
       setAllPosts(postsData);
       setDashboardError(null);
     } catch (error) {
@@ -123,7 +123,7 @@ const Content = () => {
       });
       setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
       setShowCreatePost(false);
-      
+
       await fetchAllPosts();
       return response;
     } catch (error) {
@@ -142,7 +142,7 @@ const Content = () => {
       setNotification({ type: 'success', message: 'Post updated successfully' });
       setShowCreatePost(false);
       setSelectedPost(null);
-      
+
       await fetchAllPosts();
       return response;
     } catch (error) {
@@ -182,7 +182,7 @@ const Content = () => {
       // Fetch the latest post data before editing
       const response = await apiClient.request(`/api/posts/${post._id || post.id}`);
       const latestPostData = response.data;
-      
+
       setSelectedPost(latestPostData);
       setShowPostDetail(false);
       setShowCreatePost(true);
@@ -268,14 +268,14 @@ const Content = () => {
   // Filter posts based on all filters and search query
   const filteredPosts = allPosts.filter(post => {
     if (!post) return false;
-    
+
     if (postsFilters.status !== 'all' && post.status !== postsFilters.status) {
       return false;
     }
-    
-    if (postsFilters.platform !== 'all' && 
-        post.platforms && post.platforms.length > 0 && 
-        !post.platforms.some(p => p === postsFilters.platform)) {
+
+    if (postsFilters.platform !== 'all' &&
+      post.platforms && post.platforms.length > 0 &&
+      !post.platforms.some(p => p === postsFilters.platform)) {
       return false;
     }
 
@@ -286,7 +286,7 @@ const Content = () => {
       postHashtags.some(tag =>
         (tag || '').toLowerCase().includes(postsFilters.hashtag.toLowerCase())
       );
-    
+
     const matchesSearch = !postsSearchQuery ||
       postContent.toLowerCase().includes(postsSearchQuery.toLowerCase()) ||
       postHashtags.some(tag =>
@@ -435,8 +435,8 @@ const Content = () => {
           setShowCreatePost(false);
           setSelectedPost(null);
         }}
-        onPostCreated={selectedPost ? 
-          (postData) => handleUpdatePost(selectedPost._id || selectedPost.id, postData) : 
+        onPostCreated={selectedPost ?
+          (postData) => handleUpdatePost(selectedPost._id || selectedPost.id, postData) :
           handleCreatePost
         }
         initialData={selectedPost}
@@ -544,11 +544,11 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
     const img = e.target;
     const container = img.parentNode;
     container.classList.add('loaded');
-    
+
     // ✅ NEW: Detect aspect ratio and apply appropriate styling
     const aspectRatio = img.naturalWidth / img.naturalHeight;
     let aspectClass = '';
-    
+
     if (aspectRatio > 2.5) {
       // Very wide images (panoramic, banners, etc.)
       aspectClass = 'wide';
@@ -564,10 +564,10 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
       img.style.objectFit = 'cover';
       img.style.objectPosition = 'center';
     }
-    
+
     // Store aspect ratio info
     setImageAspectRatios(prev => new Map(prev.set(imageIndex, aspectClass)));
-    
+
     // Remove from error set if it was there
     setImageLoadErrors(prev => {
       const newSet = new Set(prev);
@@ -590,7 +590,7 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
         } else if (img && typeof img === 'object') {
           src = img.url || img.src || img.path || '';
         }
-        
+
         return src ? { src, index } : null;
       })
       .filter(Boolean);
@@ -656,13 +656,13 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
             if (imageLoadErrors.has(index)) {
               return null;
             }
-            
+
             const aspectClass = imageAspectRatios.get(index) || '';
-            
+
             return (
               <div key={index} className={`preview-image-container ${aspectClass}`}>
-                <img 
-                  src={src} 
+                <img
+                  src={src}
                   alt={`Post image ${index + 1}`}
                   loading="lazy"
                   onError={() => handleImageError(index)}
@@ -672,20 +672,20 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
               </div>
             );
           }).filter(Boolean)}
-          
+
           {/* ✅ Image count overlay - only show if more than 4 images */}
           {validImages.length > 4 && (
             <div className="image-count">
               +{validImages.length - 4}
             </div>
           )}
-          
+
           {/* ✅ Show placeholder if no valid images loaded */}
           {displayImages.length === 0 && post.images && post.images.length > 0 && (
             <div className="preview-image-container">
               <div className="image-error">
                 <FileText size={20} color="#999" />
-                <span style={{fontSize: '12px', color: '#999', marginTop: '4px'}}>
+                <span style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
                   Image unavailable
                 </span>
               </div>
@@ -694,33 +694,36 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
         </div>
       )}
 
-      {/* Post Content */}
-      <div className="preview-text">
-        <p>{postContent.substring(0, 80)}{postContent.length > 80 ? '…' : ''}</p>
-      </div>
+      <div className=''>
 
-      {/* Hashtags */}
-      <div className="preview-hashtags">
-        {post.hashtags?.slice(0, 3).map((hashtag, i) => (
-          <span key={i} className="hashtag">{hashtag}</span>
-        )) || <span className="hashtag">#{primary}</span>}
-      </div>
+        {/* Post Content */}
+        <div className="preview-text">
+          <p>{postContent.substring(0, 80)}{postContent.length > 80 ? '…' : ''}</p>
+        </div>
 
-      {/* Post Stats */}
-      <div className="post-stats">
-        <span><Heart size={14} /> {post.totalEngagement || 0}</span>
-        <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
-        <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
-      </div>
+        {/* Hashtags */}
+        <div className="preview-hashtags">
+          {post.hashtags?.slice(0, 3).map((hashtag, i) => (
+            <span key={i} className="hashtag">{hashtag}</span>
+          )) || <span className="hashtag">#{primary}</span>}
+        </div>
 
-      {/* Status Badge */}
-      <div className="post-status">
-        <span className={`status-badge ${postStatus}`}>
-          {postStatus === 'published' && <CheckCircle size={12} />}
-          {postStatus === 'failed' && <XCircle size={12} />}
-          {postStatus === 'scheduled' && <Clock size={12} />}
-          {postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
-        </span>
+        {/* Post Stats */}
+        <div className="post-stats">
+          <span><Heart size={14} /> {post.totalEngagement || 0}</span>
+          <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
+          <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
+        </div>
+
+        {/* Status Badge */}
+        <div className="post-status">
+          <span className={`status-badge ${postStatus}`}>
+            {postStatus === 'published' && <CheckCircle size={12} />}
+            {postStatus === 'failed' && <XCircle size={12} />}
+            {postStatus === 'scheduled' && <Clock size={12} />}
+            &nbsp; &nbsp;{postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -728,7 +731,7 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
   if (!isOpen) return null;
-  
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
@@ -737,16 +740,16 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
             <X size={20} />
           </button>
         </div>
-        
+
         <div className="modal-body">
           <div className="warning-icon-container">
             <div className="warning-icon-circle">
               <AlertTriangle size={24} />
             </div>
           </div>
-          
+
           <h3 className="modal-title">Delete Post</h3>
-          
+
           <div className="post-info-box">
             <div className="post-icon">
               <FileText size={20} />
@@ -756,12 +759,12 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
               <span className="post-subtitle">Post</span>
             </div>
           </div>
-          
+
           <p className="warning-description">
             This action cannot be undone. You'll need to recreate this post to continue using it for your blog.
           </p>
         </div>
-        
+
         <div className="modal-footer">
           <button className="btn-secondary" onClick={onClose}>
             Cancel
@@ -802,7 +805,7 @@ const PostsSubPage = ({
   };
 
   const allPosts = posts;
-  
+
   const postCounts = {
     all: allPosts.length,
     draft: allPosts.filter(p => (p?.status || 'draft') === 'draft').length,
@@ -813,14 +816,14 @@ const PostsSubPage = ({
 
   const filteredPosts = allPosts.filter(post => {
     if (!post) return false;
-    
+
     if (filters.status !== 'all' && post.status !== filters.status) {
       return false;
     }
-    
-    if (filters.platform !== 'all' && 
-        post.platforms && post.platforms.length > 0 && 
-        !post.platforms.some(p => p === filters.platform)) {
+
+    if (filters.platform !== 'all' &&
+      post.platforms && post.platforms.length > 0 &&
+      !post.platforms.some(p => p === filters.platform)) {
       return false;
     }
 
@@ -831,7 +834,7 @@ const PostsSubPage = ({
       postHashtags.some(tag =>
         (tag || '').toLowerCase().includes(filters.hashtag.toLowerCase())
       );
-    
+
     const matchesSearch = !searchQuery ||
       postContent.toLowerCase().includes(searchQuery.toLowerCase()) ||
       postHashtags.some(tag =>
@@ -861,7 +864,7 @@ const PostsSubPage = ({
   });
 
   const platformCards = filteredPosts.flatMap(post => {
-    const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ? 
+    const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ?
       post.platforms : ['instagram'];
 
     if (filters.platform !== 'all') {
@@ -1014,9 +1017,9 @@ const PostsSubPage = ({
             </div>
           ) : (
             platformCards.map(({ post, platform, key }) => (
-              <PlatformPostCard 
+              <PlatformPostCard
                 key={key}
-                post={post} 
+                post={post}
                 platform={platform}
                 onClick={() => onPostClick(post)}
                 onEdit={() => onEditPost(post)}
@@ -1067,25 +1070,27 @@ const clearFilters = () => {
     const matchesType = filters.type === 'all' ||
       (filters.type === 'image' && mediaItem.fileType?.startsWith('image')) ||
       (filters.type === 'video' && mediaItem.fileType?.startsWith('video'));
-    
+
     const mediaFolder = mediaItem.folder || 'general';
     const matchesFolder = filters.folder === 'all' || mediaFolder === filters.folder;
-    
+
     const matchesTags = !filters.tags ||
+
       (mediaItem.tags && Array.isArray(mediaItem.tags) && 
        mediaItem.tags.some(tag =>
          tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
        ));
     
     // ✅ FIXED: Include originalName in search
+
     const matchesSearch = !filters.search ||
       (mediaItem.filename && mediaItem.filename.toLowerCase().includes(filters.search.toLowerCase())) ||
       (mediaItem.originalName && mediaItem.originalName.toLowerCase().includes(filters.search.toLowerCase())) || // ✅ Added this line
       (mediaItem.altText && mediaItem.altText.toLowerCase().includes(filters.search.toLowerCase())) ||
-      (mediaItem.tags && Array.isArray(mediaItem.tags) && 
-       mediaItem.tags.some(tag => 
-         tag && tag.toLowerCase().includes(filters.search.toLowerCase())
-       ));
+      (mediaItem.tags && Array.isArray(mediaItem.tags) &&
+        mediaItem.tags.some(tag =>
+          tag && tag.toLowerCase().includes(filters.search.toLowerCase())
+        ));
 
     return matchesType && matchesFolder && matchesTags && matchesSearch;
   });
@@ -1330,7 +1335,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
     }
   };
 
-    const handleAreaClick = () => {
+  const handleAreaClick = () => {
     fileInputRef.current?.click();
   };
 

@@ -25,7 +25,8 @@ import {
   Search,
   Video,
   Play,
-  FileText
+  FileText,
+  GalleryHorizontal,
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -73,6 +74,19 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
+
+  // ✅ 1. Define the function here (inside component, before return)
+  const onSaveDraft = () => {
+    const draftData = { ...postData, status: "draft" };
+    console.log("Saving draft:", draftData);
+
+    // example async action
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      alert("Post saved as draft!");
+    }, 1000);
+  };
 
   // Fetch user profile and connected accounts on mount
   useEffect(() => {
@@ -585,6 +599,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     setIsSubmitting(true);
     setError(null);
 
+
     if (!validateForm()) {
       setIsSubmitting(false);
       return;
@@ -645,6 +660,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           throw new Error('Failed to create post - no ID returned');
         }
 
+     
         // Step 2: Immediately publish the created post
         const postId = createResponse.data._id;
         console.log('Publishing post with ID:', postId);
@@ -1218,10 +1234,47 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
                 {/* Image Upload */}
                 <div className="form-section">
+
                   <label className="section-label">
                     <Image size={16} />
                     Media (Images & Videos)
                   </label>
+
+                  
+
+                    {/* New label for Media Library */}
+                    <label className="media-library-label">
+                      <GalleryHorizontal size={16} />
+                      Import from Media Library
+                    </label>
+                  </div>
+
+                  <div className="image-upload-area">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="file-input"
+                      id="image-upload"
+                    />
+                    <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
+                      {uploadingFiles ? (
+                        <>
+                          <Loader className="spinner" size={24} />
+                          <span>Uploading images...</span>
+                          <small>Please wait while we upload your files</small>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={24} />
+                          <span>Click to upload images or drag and drop</span>
+                          <small>PNG, JPG, GIF up to 10MB each</small>
+                        </>
+                      )}
+                    </label>
+                  </div>
+
 
                   {/* Enhanced Upload Area with Drag & Drop */}
                   <div className="media-upload-container">
@@ -1450,6 +1503,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                     const platform = platforms.find(p => p.id === platformId);
                     const Icon = platform.icon;
 
+
                     return (
                       <div key={platformId} className={`platform-preview ${platformId}`} style={{ '--platform-color': platform.color }}>
                         <div className="platform-header">
@@ -1498,28 +1552,41 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={!postData.content.trim() || postData.platforms.length === 0 || charCount.remaining < 0 || isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  {/* <Loader className="spinner" size={16} /> */}
-                  {isScheduled ? 'Scheduling...' : 'Publishing...'}
-                </>
-              ) : isScheduled ? (
-                <>
-                  <Calendar size={16} />
-                  Schedule Post
-                </>
-              ) : (
-                <>
-                  <Send size={16} />
-                  Publish Now
-                </>
-              )}
-            </button>
+
+            <div className="new">
+              {/* Save as Draft Button */}
+              <button type="button" className="btn-secondary-draft" onClick={onSaveDraft} disabled={isSubmitting}
+              >Save as Draft
+              </button>
+
+              {/* Publish / Schedule Button */}
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={
+                  !postData.content.trim() ||
+                  postData.platforms.length === 0 ||
+                  charCount.remaining < 0 ||
+                  isSubmitting
+                }
+              >
+                {isSubmitting ? (
+                  <>
+                    {isScheduled ? 'Scheduling...' : 'Publishing...'}
+                  </>
+                ) : isScheduled ? (
+                  <>
+                    <Calendar size={16} />
+                    Schedule Post
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    Publish Now
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
 

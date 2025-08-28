@@ -159,24 +159,29 @@ const ProfileSettings = ({ onNotify }) => {
     <div className="settings-subpage">
       <div className="settings-content">
         <SettingsCard title="Profile Information">
-          <div className="form-group">
-            <label>Name</label>
-            <input
-              type="text"
-              value={name}
-              readOnly
-              className="readonly-input"
-            />
+          <div className="content-card">
+          <div className="form-row">
+            <div className="form-group">
+              <label>Name</label>
+              <input
+                type="text"
+                value={name}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={email}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
           </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              readOnly
-              className="readonly-input"
-            />
-          </div>
+        </div>
+
         </SettingsCard>
 
         <SettingsCard
