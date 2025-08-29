@@ -1,6 +1,4 @@
-//before changing entire code showing 6 account including personal profile 
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   X,
   Image,
@@ -21,7 +19,14 @@ import {
   AlertCircle,
   CheckCircle,
   Info,
-  ChevronDown
+  ChevronDown,
+  FolderOpen, // Add this new import
+  Check,
+  Search,
+  Video,
+  Play,
+  FileText,
+  GalleryHorizontal,
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -32,12 +37,14 @@ import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
-const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
+const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData }) => {
   const { uploadMedia } = useMedia();
   const { user, token } = useAuth();
   const navigate = useNavigate();
 
   const [userProfile, setUserProfile] = useState(null);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+
 
   const [postData, setPostData] = useState({
     content: '',
@@ -65,6 +72,21 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // ✅ 1. Define the function here (inside component, before return)
+  const onSaveDraft = () => {
+    const draftData = { ...postData, status: "draft" };
+    console.log("Saving draft:", draftData);
+
+    // example async action
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      alert("Post saved as draft!");
+    }, 1000);
+  };
 
   // Fetch user profile and connected accounts on mount
   useEffect(() => {
@@ -72,6 +94,199 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       fetchUserProfile();
     }
   }, [isOpen]);
+
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
+
+    // Enhanced file validation
+    const validFiles = [];
+    const invalidFiles = [];
+
+    Array.from(files).forEach(file => {
+      // Check file type
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+
+      if (!isImage && !isVideo) {
+        invalidFiles.push({ file, reason: 'Unsupported file type' });
+        return;
+      }
+
+      // Check file size - 250MB for videos, 50MB for images
+      const maxSize = isVideo ? 250 * 1024 * 1024 : 50 * 1024 * 1024;
+      if (file.size > maxSize) {
+        const maxSizeText = isVideo ? '250MB' : '50MB';
+        invalidFiles.push({
+          file,
+          reason: `File too large (max ${maxSizeText})`
+        });
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    // Show warnings for invalid files
+    if (invalidFiles.length > 0) {
+      const errorMessages = invalidFiles.map(({ file, reason }) =>
+        `${file.name}: ${reason}`
+      ).join('\n');
+      showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
+    }
+
+    if (validFiles.length === 0) return;
+
+    setUploadingFiles(true);
+    setError(null);
+
+    try {
+      // Store original filenames for mapping
+      const originalFilenames = validFiles.map(file => file.name);
+
+      // Create local previews with original names
+      const localPreviews = validFiles.map((file, index) => ({
+        url: URL.createObjectURL(file),
+        altText: file.name,
+        originalName: file.name,
+        displayName: file.name, // ✅ Store original name for display
+        isLocal: true,
+        fileType: file.type.startsWith('video/') ? 'video' : 'image',
+        size: file.size,
+        index // ✅ Store index to map back to original file
+      }));
+
+      setPostData(prev => ({
+        ...prev,
+        images: [...prev.images, ...localPreviews]
+      }));
+
+      const fileTypeText = validFiles.length === 1
+        ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
+        : 'files';
+
+      showToast(`Uploading ${validFiles.length} ${fileTypeText}...`, 'info');
+
+      const response = await uploadMedia(validFiles);
+      console.log('Upload response:', response); // ✅ Debug log
+
+      // ✅ FIXED: Properly map uploaded media with original filenames
+      const uploadedMedia = response.data.map((media, index) => {
+        const originalFile = validFiles[index];
+
+        console.log(`Mapping file ${index}:`, {
+          originalFileName: originalFile?.name,
+          apiOriginalName: media.originalName,
+          apiFilename: media.filename
+        });
+
+        return {
+          url: media.url,
+          altText: media.originalName || originalFile?.name || 'Post media',
+          originalName: media.originalName || originalFile?.name, // ✅ Use API originalName first, then fallback
+          displayName: media.originalName || originalFile?.name || media.filename, // ✅ What to show in UI
+          filename: media.filename, // ✅ Cloudinary processed filename
+          publicId: media.publicId,
+          fileType: media.fileType || (media.url.includes('video') ? 'video' : 'image'),
+          size: media.size || originalFile?.size,
+          dimensions: media.dimensions,
+          cloudinaryFilename: media.filename // ✅ Store separately for reference
+        };
+      });
+
+      console.log('Final uploaded media:', uploadedMedia); // ✅ Debug log
+
+      // Replace local previews with actual uploaded URLs
+      setPostData(prev => ({
+        ...prev,
+        images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
+      }));
+
+      showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
+
+    } catch (error) {
+      console.error('Failed to upload media:', error);
+      setError(error.message || 'Failed to upload media');
+      showToast('Failed to upload media', 'error');
+
+      // Remove local previews on error
+      setPostData(prev => ({
+        ...prev,
+        images: prev.images.filter(img => !img.isLocal)
+      }));
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
+
+
+  // ✅ Handle file input change
+  const handleFileInputChange = (e) => {
+    handleFileUpload(e.target.files);
+  };
+
+  // ✅ Drag and drop handlers
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files);
+    }
+  };
+
+  const handleUploadAreaClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // ✅ Updated remove media function
+  const removeMedia = (index) => {
+    const mediaItem = postData.images[index];
+    if (mediaItem.url && mediaItem.url.startsWith('blob:')) {
+      URL.revokeObjectURL(mediaItem.url);
+    }
+
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+    showToast('Media removed', 'info');
+  };
+
+  // ✅ Helper function to get media type icon
+  const getMediaTypeIcon = (mediaItem) => {
+    if (mediaItem.fileType === 'video' || mediaItem.url?.includes('video')) {
+      return Video;
+    }
+    return Image;
+  };
+
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleImportFromLibrary = (selectedImages) => {
+    setPostData(prev => ({
+      ...prev,
+      images: [...prev.images, ...selectedImages]
+    }));
+    showToast(`Added ${selectedImages.length} image(s) from media library`, 'success');
+  };
 
   const handleConnectClick = (e) => {
     e.stopPropagation();
@@ -133,14 +348,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
     const selectedPlatforms = postData.platforms;
     const currentLength = postData.content.length;
-    
+
     if (selectedPlatforms.length === 0) {
       return { current: currentLength, max: 2200, remaining: 2200 - currentLength };
     }
 
     // Find the most restrictive limit
     const minLimit = Math.min(...selectedPlatforms.map(platform => limits[platform] || 2200));
-    
+
     return {
       current: currentLength,
       max: minLimit,
@@ -181,7 +396,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
         const validAccounts = selectedAccountsForPlatform.filter(account => account != null && account !== '');
-        
+
         if (validAccounts.length === 0) {
           const platformName = platforms.find(p => p.id === platform)?.name;
           showToast(`Please select at least one account for ${platformName}`, 'error');
@@ -234,7 +449,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
         const validAccounts = selectedAccountsForPlatform.filter(account => account != null && account !== '');
-        
+
         if (validAccounts.length === 0) {
           const platformName = platforms.find(p => p.id === platform)?.name;
           setError(`Please select at least one valid account for ${platformName}`);
@@ -285,11 +500,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
     setPostData(prev => {
       const currentAccounts = prev.selectedAccounts[platformId] || [];
-      
+
       let newAccounts;
       if (isSelected) {
-        newAccounts = currentAccounts.includes(accountId) 
-          ? currentAccounts 
+        newAccounts = currentAccounts.includes(accountId)
+          ? currentAccounts
           : [...currentAccounts, accountId];
       } else {
         newAccounts = currentAccounts.filter(id => id !== accountId);
@@ -341,7 +556,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
       showToast('Uploading images...', 'info');
 
       const response = await uploadMedia(files);
-      
+
       const uploadedImages = response.data.map(media => ({
         url: media.url,
         altText: media.originalName || 'Post image',
@@ -380,109 +595,111 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setError(null);
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
-  if (!validateForm()) {
-    setIsSubmitting(false);
-    return;
-  }
 
-  try {
-    // Clean up selectedAccounts to remove null values and empty arrays
-    const cleanedSelectedAccounts = {};
-    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-      const validAccounts = accounts.filter(account => account != null && account !== '');
-      if (validAccounts.length > 0) {
-        cleanedSelectedAccounts[platform] = validAccounts;
-      }
-    });
-
-    // Prepare post data for API (matching Swagger structure)
-    const apiPostData = {
-      content: postData.content,
-      platforms: postData.platforms,
-      selectedAccounts: cleanedSelectedAccounts,
-      images: postData.images.map(img => ({
-        url: img.url,
-        altText: img.altText || 'Post image',
-        publicId: img.publicId || null
-      })),
-      hashtags: Array.isArray(postData.hashtags)
-        ? postData.hashtags
-        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-      mentions: Array.isArray(postData.mentions)
-        ? postData.mentions
-        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-      metadata: {
-        category: postData.metadata?.category || 'other'
-      }
-    };
-
-    console.log('Submitting post data:', apiPostData);
-
-    let response;
-    
-    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-      // SCHEDULED POST - Create first, then schedule
-      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-      apiPostData.scheduledDate = scheduledDateTime.toISOString();
-      
-      showToast('Scheduling post...', 'info');
-      response = await onPostCreated(apiPostData);
-      
-    } else {
-      // PUBLISH NOW - Create and immediately publish
-      showToast('Creating and publishing post...', 'info');
-      
-      // Step 1: Create the post as draft
-      const createResponse = await onPostCreated(apiPostData);
-      console.log('Post created:', createResponse);
-      
-      if (!createResponse?.data?._id) {
-        throw new Error('Failed to create post - no ID returned');
-      }
-      
-      // Step 2: Immediately publish the created post
-      const postId = createResponse.data._id;
-      console.log('Publishing post with ID:', postId);
-      
-      const publishResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      
-      console.log('Publish response:', publishResponse);
-      response = publishResponse;
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
     }
-    
-    console.log('Final response:', response);
 
-    const successMessage = isScheduled 
-      ? 'Post scheduled successfully!' 
-      : response?.data?.status === 'published' 
-        ? 'Post published successfully!' 
-        : 'Post created successfully!';
+    try {
+      // Clean up selectedAccounts to remove null values and empty arrays
+      const cleanedSelectedAccounts = {};
+      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+        const validAccounts = accounts.filter(account => account != null && account !== '');
+        if (validAccounts.length > 0) {
+          cleanedSelectedAccounts[platform] = validAccounts;
+        }
+      });
 
-    showToast(successMessage, 'success');
+      // Prepare post data for API (matching Swagger structure)
+      const apiPostData = {
+        content: postData.content,
+        platforms: postData.platforms,
+        selectedAccounts: cleanedSelectedAccounts,
+        images: postData.images.map(img => ({
+          url: img.url,
+          altText: img.altText || 'Post image',
+          publicId: img.publicId || null
+        })),
+        hashtags: Array.isArray(postData.hashtags)
+          ? postData.hashtags
+          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+        mentions: Array.isArray(postData.mentions)
+          ? postData.mentions
+          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+        metadata: {
+          category: postData.metadata?.category || 'other'
+        }
+      };
 
-    // Reset form on success
-    resetForm();
-    onClose();
+      console.log('Submitting post data:', apiPostData);
 
-  } catch (error) {
-    console.error('Failed to create/publish post:', error);
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-    setError(errorMessage);
-    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      let response;
+
+      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+        // SCHEDULED POST - Create first, then schedule
+        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+        apiPostData.scheduledDate = scheduledDateTime.toISOString();
+
+        showToast('Scheduling post...', 'info');
+        response = await onPostCreated(apiPostData);
+
+      } else {
+        // PUBLISH NOW - Create and immediately publish
+        showToast('Creating and publishing post...', 'info');
+
+        // Step 1: Create the post as draft
+        const createResponse = await onPostCreated(apiPostData);
+        console.log('Post created:', createResponse);
+
+        if (!createResponse?.data?._id) {
+          throw new Error('Failed to create post - no ID returned');
+        }
+
+
+        // Step 2: Immediately publish the created post
+        const postId = createResponse.data._id;
+        console.log('Publishing post with ID:', postId);
+
+        const publishResponse = await axios.post(
+          `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        console.log('Publish response:', publishResponse);
+        response = publishResponse;
+      }
+
+      console.log('Final response:', response);
+
+      const successMessage = isScheduled
+        ? 'Post scheduled successfully!'
+        : response?.data?.status === 'published'
+          ? 'Post published successfully!'
+          : 'Post created successfully!';
+
+      showToast(successMessage, 'success');
+
+      // Reset form on success
+      resetForm();
+      onClose();
+
+    } catch (error) {
+      console.error('Failed to create/publish post:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+      setError(errorMessage);
+      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
 
   const resetForm = () => {
@@ -528,7 +745,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
     try {
       const selectedPlatforms = postData.platforms;
-      
+
       // Use the exact structure that works in Swagger
       const response = await apiClient.generateContent({
         prompt: aiPrompt,
@@ -542,7 +759,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
       if (response.success && response.data) {
         const suggestions = [];
-        
+
         // Handle the response structure from your Swagger example
         Object.entries(response.data.content).forEach(([platform, data]) => {
           suggestions.push({
@@ -654,8 +871,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
   if (!isOpen) return null;
 
+
   return (
-    <div className="create-post-overlay">
+    <div className={`create-post-overlay ${showMediaLibrary ? 'media-library-open' : ''}`}>
       {/* Toast Notification */}
       {toast && (
         <div className={`toast toast-${toast.type}`}>
@@ -668,7 +886,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
         </div>
       )}
 
-      <div className="create-post-modal">
+      <div className={`create-post-modal ${showMediaLibrary ? 'media-library-open' : ''}`}>
         <div className="modal-header">
           <div className="header-left">
             <h2>Create New Post</h2>
@@ -719,6 +937,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
               <span>Loading profile...</span>
             </div>
           )}
+
 
           {activeTab === 'compose' && (
             <div className={`compose-tab ${showAISuggestions ? 'with-ai' : ''}`}>
@@ -849,7 +1068,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                       const Icon = platform.icon;
                       const isSelected = postData.platforms.includes(platform.id);
                       const selectedAccountsCount = getSelectedAccountsCount(platform.id);
-                      
+
                       return (
                         <div key={platform.id} className="platform-container">
                           <button
@@ -865,8 +1084,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                             <Icon size={20} />
                             <span>{platform.name}</span>
                             <span className="connect-status">
-                              {platform.connected ? 
-                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected') 
+                              {platform.connected ?
+                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')
                                 : 'Connect Now'
                               }
                             </span>
@@ -884,14 +1103,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                               <div className="accounts-checkbox-list">
                                 {platform.accounts.map((account) => {
                                   const accountId = account.accountId || account.id || account._id || account.pageId;
-                                  
+
                                   if (!accountId) {
                                     console.warn('Account missing ID:', account);
                                     return null;
                                   }
-                                  
+
                                   const isChecked = isAccountSelected(platform.id, accountId);
-                                  
+
                                   return (
                                     <label key={`${platform.id}-${accountId}`} className="account-checkbox-item">
                                       <input
@@ -911,7 +1130,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                                   );
                                 })}
                               </div>
-                              
+
                               {platform.accounts.length > 1 && (
                                 <div className="account-selection-controls">
                                   <button
@@ -1016,147 +1235,264 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
 
                 {/* Image Upload */}
                 <div className="form-section">
+
                   <label className="section-label">
                     <Image size={16} />
-                    Images
+                    Media (Images & Videos)
                   </label>
-                  <div className="image-upload-area">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="file-input"
-                      id="image-upload"
-                    />
-                    <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
-                      {uploadingFiles ? (
-                        <>
-                          <Loader className="spinner" size={24} />
-                          <span>Uploading images...</span>
-                          <small>Please wait while we upload your files</small>
-                        </>
-                      ) : (
-                        <>
-                          <Upload size={24} />
-                          <span>Click to upload images or drag and drop</span>
-                          <small>PNG, JPG, GIF up to 10MB each</small>
-                        </>
-                      )}
+
+
+
+                  {/* New label for Media Library */}
+                  <label className="media-library-label">
+                    <GalleryHorizontal size={16} />
+                    Import from Media Library
+                  </label>
+                </div>
+
+                {/* <div className="image-upload-area">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="file-input"
+                    id="image-upload"
+                  />
+                  <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
+                    {uploadingFiles ? (
+                      <>
+                        <Loader className="spinner" size={24} />
+                        <span>Uploading images...</span>
+                        <small>Please wait while we upload your files</small>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={24} />
+                        <span>Click to upload images or drag and drop</span>
+                        <small>PNG, JPG, GIF up to 10MB each</small>
+                      </>
+                    )}
+                  </label>
+                </div> */}
+
+
+                {/* Enhanced Upload Area with Drag & Drop */}
+                <div className="media-upload-container">
+                  <div className="upload-options-grid">
+                    {/* Upload New Files with Drag & Drop */}
+                    <div className="upload-option">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,video/*" // ✅ Accept both images and videos
+                        onChange={handleFileInputChange}
+                        className="file-input"
+                        id="media-upload"
+                      />
+                      <div
+                        className={`upload-area ${dragActive ? 'drag-active' : ''} ${uploadingFiles ? 'uploading' : ''}`}
+                        onDragEnter={handleDrag}
+                        onDragLeave={handleDrag}
+                        onDragOver={handleDrag}
+                        onDrop={handleDrop}
+                        onClick={handleUploadAreaClick}
+                      >
+                        {uploadingFiles ? (
+                          <>
+                            <Loader className="spinner" size={32} />
+                            <span className="upload-title">Uploading media...</span>
+                            <small>Please wait while we upload your files</small>
+                          </>
+                        ) : (
+                          <>
+                            <Upload size={32} />
+                            <span className="upload-title">
+                              {dragActive ? 'Drop files here' : 'Upload Media Files'}
+                            </span>
+                            <small className="upload-subtitle">
+                              Drag & drop or click to select
+                            </small>
+                            <div className="upload-specs">
+                              <span>📷 Images: PNG, JPG, GIF up to 50MB</span>
+                              <span>🎥 Videos: MP4, MOV, AVI up to 250MB</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Import from Media Library */}
+                    <div className="upload-option">
+                      <button
+                        type="button"
+                        className="media-library-btn"
+                        onClick={() => setShowMediaLibrary(true)}
+                        disabled={uploadingFiles}
+                      >
+                        <FolderOpen size={32} />
+                        <span className="upload-title">Import from Media Library</span>
+                        <small className="upload-subtitle">Choose from your existing files</small>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ✅ Display Selected Media (Images & Videos) */}
+                {postData.images.length > 0 && (
+                  <div className="uploaded-media">
+                    <div className="media-grid">
+                      {postData.images.map((mediaItem, index) => {
+                        const MediaIcon = getMediaTypeIcon(mediaItem);
+                        const isVideo = mediaItem.fileType === 'video' ||
+                          mediaItem.url?.includes('video');
+
+                        // ✅ Enhanced display name logic with priority order
+                        const displayName =
+                          mediaItem.displayName ||
+                          mediaItem.originalName ||
+                          mediaItem.altText ||
+                          `Media ${index + 1}`;
+
+                        console.log(`Display logic for item ${index}:`, {
+                          displayName: mediaItem.displayName,
+                          originalName: mediaItem.originalName,
+                          altText: mediaItem.altText,
+                          filename: mediaItem.filename,
+                          finalDisplayName: displayName
+                        });
+
+                        return (
+                          <div key={index} className="media-preview">
+                            {/* ... existing media display code ... */}
+
+                            {/* ✅ Enhanced Media Info with Better Display */}
+                            <div className="media-info-overlay">
+                              <div className="media-filename-display" title={displayName}>
+                                {displayName.length > 15
+                                  ? `${displayName.substring(0, 15)}...`
+                                  : displayName
+                                }
+                              </div>
+                              <div className="media-type-indicator">
+                                <MediaIcon size={12} />
+                                {isVideo ? 'Video' : 'Image'}
+                              </div>
+                              {mediaItem.size && (
+                                <div className="media-size-indicator">
+                                  {formatFileSize(mediaItem.size)}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Debug info - remove in production */}
+                            {process.env.NODE_ENV === 'development' && (
+                              <div className="debug-info" style={{
+                                position: 'absolute',
+                                bottom: '-30px',
+                                left: 0,
+                                right: 0,
+                                background: 'rgba(0,0,0,0.8)',
+                                color: 'white',
+                                fontSize: '10px',
+                                padding: '2px'
+                              }}>
+                                Original: {mediaItem.originalName || 'N/A'}
+                                <br />
+                                Display: {mediaItem.displayName || 'N/A'}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Scheduling - Updated with Radio Buttons and Tooltips */}
+              <div className="form-section">
+                <label className="section-label">
+                  <Clock size={16} />
+                  Scheduler
+                </label>
+
+                <div className="scheduler-options">
+                  <div className="radio-group">
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name="scheduler"
+                        value="now"
+                        checked={!isScheduled}
+                        onChange={() => setIsScheduled(false)}
+                      />
+                      <span className="radio-custom"></span>
+                      <div className="radio-content">
+
+                        <small
+                          className="radio-description"
+                          data-tooltip="Post will be published immediately"
+                        ><span className="radio-label">Schedule Now</span>
+                        </small>
+                      </div>
+                    </label>
+
+                    <label className="radio-option">
+                      <input
+                        type="radio"
+                        name="scheduler"
+                        value="later"
+                        checked={isScheduled}
+                        onChange={() => setIsScheduled(true)}
+                      />
+                      <span className="radio-custom"></span>
+                      <small
+                        className="radio-description"
+                        data-tooltip="Choose a specific date and time for publishing"
+                      >
+                        <div className="radio-content">
+                          <span className="radio-label">Schedule For Later</span>
+                        </div>
+                      </small>
+
                     </label>
                   </div>
 
-                  {postData.images.length > 0 && (
-                    <div className="uploaded-images">
-                      {postData.images.map((image, index) => (
-                        <div key={index} className="image-preview">
-                          <img
-                            src={image.url || image}
-                            alt={image.altText || `Upload ${index + 1}`}
-                            onError={(e) => {
-                              console.error('Image failed to load:', image);
-                              e.target.style.display = 'none';
-                              e.target.parentElement.classList.add('error');
-                            }}
-                            onLoad={() => {
-                              console.log('Image loaded successfully:', image);
-                            }}
+                  {/* Date and Time inputs */}
+                  {isScheduled && (
+                    <div className="schedule-inputs">
+                      <div className="input-group">
+                        <div className="date-input-wrapper">
+                          <input
+                            type="date"
+                            value={postData.scheduledDate}
+                            onChange={(e) => setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                            className="form-input"
+                            min={new Date().toISOString().split('T')[0]}
+                            required
                           />
-                          <button
-                            type="button"
-                            className="remove-image"
-                            onClick={() => removeImage(index)}
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Scheduling - Updated with Radio Buttons and Tooltips */}
-                <div className="form-section">
-                  <label className="section-label">
-                    <Clock size={16} />
-                    Scheduler
-                  </label>
-
-                  <div className="scheduler-options">
-                    <div className="radio-group">
-                      <label className="radio-option">
-                        <input
-                          type="radio"
-                          name="scheduler"
-                          value="now"
-                          checked={!isScheduled}
-                          onChange={() => setIsScheduled(false)}
-                        />
-                        <span className="radio-custom"></span>
-                        <div className="radio-content">
-
-                          <small
-                            className="radio-description"
-                            data-tooltip="Post will be published immediately"
-                          ><span className="radio-label">Schedule Now</span>
-                          </small>
-                        </div>
-                      </label>
-
-                      <label className="radio-option">
-                        <input
-                          type="radio"
-                          name="scheduler"
-                          value="later"
-                          checked={isScheduled}
-                          onChange={() => setIsScheduled(true)}
-                        />
-                        <span className="radio-custom"></span>
-                        <small
-                          className="radio-description"
-                          data-tooltip="Choose a specific date and time for publishing"
-                        >
-                          <div className="radio-content">
-                            <span className="radio-label">Schedule For Later</span>
-                          </div>
-                        </small>
-
-                      </label>
-                    </div>
-
-                    {/* Date and Time inputs */}
-                    {isScheduled && (
-                      <div className="schedule-inputs">
-                        <div className="input-group">
-                          <div className="date-input-wrapper">
-                            <input
-                              type="date"
-                              value={postData.scheduledDate}
-                              onChange={(e) => setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                              className="form-input"
-                              min={new Date().toISOString().split('T')[0]}
-                              required
-                            />
-                          </div>
-                        </div>
-                        <div className="input-group">
-                          <div className="time-input-wrapper">
-                            <input
-                              type="time"
-                              value={postData.scheduledTime}
-                              onChange={(e) => setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))}
-                              className="form-input"
-                              required
-                            />
-                          </div>
                         </div>
                       </div>
-                    )}
+                      <div className="input-group">
+                        <div className="time-input-wrapper">
+                          <input
+                            type="time"
+                            value={postData.scheduledTime}
+                            onChange={(e) => setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                            className="form-input"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-                  </div>
                 </div>
               </div>
             </div>
+
           )}
 
           {activeTab === 'preview' && (
@@ -1167,6 +1503,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
                   {postData.platforms.map(platformId => {
                     const platform = platforms.find(p => p.id === platformId);
                     const Icon = platform.icon;
+
 
                     return (
                       <div key={platformId} className={`platform-preview ${platformId}`} style={{ '--platform-color': platform.color }}>
@@ -1212,32 +1549,46 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
             </div>
           )}
 
+
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={!postData.content.trim() || postData.platforms.length === 0 || charCount.remaining < 0 || isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  {/* <Loader className="spinner" size={16} /> */}
-                  {isScheduled ? 'Scheduling...' : 'Publishing...'}
-                </>
-              ) : isScheduled ? (
-                <>
-                  <Calendar size={16} />
-                  Schedule Post
-                </>
-              ) : (
-                <>
-                  <Send size={16} />
-                  Publish Now
-                </>
-              )}
-            </button>
+
+            <div className="new">
+              {/* Save as Draft Button */}
+              <button type="button" className="btn-secondary-draft" onClick={onSaveDraft} disabled={isSubmitting}
+              >Save as Draft
+              </button>
+
+              {/* Publish / Schedule Button */}
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={
+                  !postData.content.trim() ||
+                  postData.platforms.length === 0 ||
+                  charCount.remaining < 0 ||
+                  isSubmitting
+                }
+              >
+                {isSubmitting ? (
+                  <>
+                    {isScheduled ? 'Scheduling...' : 'Publishing...'}
+                  </>
+                ) : isScheduled ? (
+                  <>
+                    <Calendar size={16} />
+                    Schedule Post
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    Publish Now
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
 
@@ -1253,8 +1604,208 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts }) => {
           </div>
         )}
       </div>
+      <MediaLibraryModal
+        isOpen={showMediaLibrary}
+        onClose={() => setShowMediaLibrary(false)}
+        onSelectImages={handleImportFromLibrary}
+      />
     </div>
   );
 };
+
+const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
+  const [mediaList, setMediaList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch media when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchMediaLibrary();
+    }
+  }, [isOpen]);
+
+  const fetchMediaLibrary = async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.request('/api/media');
+      const media = response?.data?.data?.media || response?.data?.media || [];
+
+      // ✅ Filter both images and videos
+      const mediaFiles = media.filter(item =>
+        (item.fileType?.startsWith('image') || item.fileType?.startsWith('video')) && item.url
+      );
+
+      setMediaList(mediaFiles);
+    } catch (error) {
+      console.error('Failed to fetch media library:', error);
+      setMediaList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageToggle = (image) => {
+    setSelectedImages(prev => {
+      // ✅ Use the correct ID field from the API response
+      const imageId = image._id || image.id;
+      const isSelected = prev.some(img => (img._id || img.id) === imageId);
+
+      if (isSelected) {
+        return prev.filter(img => (img._id || img.id) !== imageId);
+      } else {
+        return [...prev, {
+          url: image.url,
+          altText: image.altText || image.originalName || image.filename, // ✅ Use originalName if available
+          publicId: image.publicId,
+          _id: imageId, // ✅ Use consistent ID
+          filename: image.originalName || image.filename // ✅ Prefer originalName for display
+        }];
+      }
+    });
+  };
+
+  const handleSelectImages = () => {
+    onSelectImages(selectedImages);
+    onClose();
+    setSelectedImages([]);
+  };
+
+  const handleClose = () => {
+    setSelectedImages([]);
+    onClose();
+  };
+
+  const filteredMedia = mediaList.filter(item => {
+    const searchTerm = searchQuery.toLowerCase();
+    return (
+      item.filename?.toLowerCase().includes(searchTerm) ||
+      item.originalName?.toLowerCase().includes(searchTerm) || // ✅ Search originalName too
+      item.altText?.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="media-library-modal-overlay" onClick={handleClose}>
+      <div className="media-library-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Select Images from Media Library</h3>
+          <button className="modal-close" onClick={handleClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="modal-body">
+          {/* Search Bar */}
+          <div className="media-search-bar">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search images..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Selected Images Counter */}
+          {selectedImages.length > 0 && (
+            <div className="selected-counter">
+              {selectedImages.length} image{selectedImages.length > 1 ? 's' : ''} selected
+            </div>
+          )}
+
+          {/* Media Grid */}
+          <div className="media-library-grid">
+            {loading ? (
+              <div className="loading-media">
+                <Loader />
+                <span>Loading media library...</span>
+              </div>
+            ) : filteredMedia.length === 0 ? (
+              <div className="no-media">
+                <Image size={48} />
+                <h4>No images found</h4>
+                <p>
+                  {searchQuery
+                    ? `No images match "${searchQuery}"`
+                    : "Upload some images to your media library first"
+                  }
+                </p>
+              </div>
+            ) : (
+              filteredMedia.map(image => {
+                const imageId = image._id || image.id;
+                const isSelected = selectedImages.some(img => (img._id || img.id) === imageId);
+
+                // ✅ Prioritize originalName over processed filename
+                const displayName = image.originalName || image.filename;
+
+                return (
+                  <div
+                    key={imageId}
+                    className={`media-library-item ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handleImageToggle(image)}
+                  >
+                    <div className="media-thumbnail">
+                      <img
+                        src={image.url}
+                        alt={image.altText || displayName}
+                        loading="lazy"
+                        onError={(e) => {
+                          console.error('Failed to load image:', image.url);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                      {isSelected && (
+                        <div className="selection-overlay">
+                          <Check size={20} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="media-info">
+                      <span className="media-filename" title={displayName}>
+                        {displayName?.length > 25
+                          ? `${displayName.substring(0, 25)}...`
+                          : displayName || 'Untitled'
+                        }
+                      </span>
+                      <span className="media-size">
+                        {image.humanSize || `${Math.round(image.size / 1024)}KB`}
+                      </span>
+                      {image.dimensions && (
+                        <span className="media-dimensions">
+                          {image.dimensions.width} × {image.dimensions.height}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={handleClose}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            onClick={handleSelectImages}
+            disabled={selectedImages.length === 0}
+          >
+            Add {selectedImages.length} Image{selectedImages.length !== 1 ? 's' : ''} to Post
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
 
 export default CreatePost;

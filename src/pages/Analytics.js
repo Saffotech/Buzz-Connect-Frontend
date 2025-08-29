@@ -425,7 +425,8 @@ const Analytics = () => {
       </div>
 
       {/* Global Filter Bar */}
-        <div className="analytics-filters">
+      <div className="fltr">
+             <div className="analytics-filters">
           <div className="filter-group">
             <label>
               <Calendar size={16} />
@@ -487,6 +488,8 @@ const Analytics = () => {
             </div>
           </div>
         </div>
+
+   
 
 
       {/* Error State */}
@@ -784,6 +787,8 @@ const Analytics = () => {
         </div>
       )}
     </div>
+     </div>
+
   );
 };
 

@@ -387,7 +387,7 @@ const Dashboard = () => {
               </div>
 
               {/* Row 2 */}
-              <div className="stat-card clickable">
+              <div className="stat-card clickable"  onClick={() => navigate("/planner")} style={{ cursor: "pointer" }}>
                 <div className="stat-icon published">
                   <TrendingUp size={24} />
                 </div>
@@ -671,7 +671,8 @@ const Dashboard = () => {
           {/* Connected Accounts */}
           <div className="connected-accounts-sidebar">
             <h3>Connected Accounts</h3>
-            <div className="accounts-list">
+            <div className="accounts-list"  onClick={() => navigate('/settings?tab=accounts')} style={{ cursor: "pointer" }}
+>
               {(() => {
                 let accounts = user?.connectedAccounts ? [...user.connectedAccounts] : [];
 
@@ -725,7 +726,7 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Activity */}
-          <div className="recent-activity-sidebar">
+          <div className="recent-activity-sidebar"   onClick={() => navigate("/content")} style={{ cursor: "pointer" }}>
             <h3>Recent Activity</h3>
             <div className="activity-feed">
               {posts.slice(0, 5).map(post => (
