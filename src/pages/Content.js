@@ -367,7 +367,9 @@ const Content = () => {
       <div className="page-header">
         <div className="header-content header-content-left">
           <h1>Content Hub</h1>
-          <p>Your central repository for all creative assets, posts, and media</p>
+          <p>
+            A complete library of images, videos, and post media powering your content.
+            </p>
         </div>
       </div>
 
@@ -619,9 +621,9 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
       {/* Hover Actions */}
       {showActions && (
         <div className="post-actions">
-          {/* <button className="action-btn edit" onClick={handleEdit} title="Edit Post">
+          <button className="action-btn edit" onClick={handleEdit} title="Edit Post">
             <Edit size={16} />
-          </button> */}
+          </button>
           <button className="action-btn delete" onClick={handleDelete} title="Delete Post">
             <Trash2 size={16} />
           </button>
@@ -1041,7 +1043,7 @@ const PostsSubPage = ({
 
 // ✅ Keep your existing MediaLibrarySubPage and other components unchanged
 const MediaLibrarySubPage = ({
-  media,
+   media,
   loading,
   viewMode,
   setViewMode,
@@ -1055,7 +1057,7 @@ const MediaLibrarySubPage = ({
 }) => {
   // ... (keep your existing MediaLibrarySubPage implementation)
   // I'll keep the existing implementation from your original code
-  const clearFilters = () => {
+const clearFilters = () => {
     setFilters({
       type: 'all',
       folder: 'all',
@@ -1077,13 +1079,17 @@ const MediaLibrarySubPage = ({
     const matchesFolder = filters.folder === 'all' || mediaFolder === filters.folder;
 
     const matchesTags = !filters.tags ||
-      (mediaItem.tags && Array.isArray(mediaItem.tags) &&
-        mediaItem.tags.some(tag =>
-          tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
-        ));
+
+      (mediaItem.tags && Array.isArray(mediaItem.tags) && 
+       mediaItem.tags.some(tag =>
+         tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
+       ));
+    
+    // ✅ FIXED: Include originalName in search
 
     const matchesSearch = !filters.search ||
       (mediaItem.filename && mediaItem.filename.toLowerCase().includes(filters.search.toLowerCase())) ||
+      (mediaItem.originalName && mediaItem.originalName.toLowerCase().includes(filters.search.toLowerCase())) || // ✅ Added this line
       (mediaItem.altText && mediaItem.altText.toLowerCase().includes(filters.search.toLowerCase())) ||
       (mediaItem.tags && Array.isArray(mediaItem.tags) &&
         mediaItem.tags.some(tag =>
@@ -1246,6 +1252,9 @@ const MediaCard = ({ media, onClick }) => {
   const isVideo = media.fileType?.startsWith('video');
   const humanSize = media.humanSize || `${Math.round(media.size / 1024)}KB`;
 
+  // ✅ FIXED: Prioritize originalName over processed filename
+  const displayName = media.originalName || media.filename || 'Untitled';
+
   return (
     <div className="media-card" onClick={onClick}>
       <div className="media-thumbnail">
@@ -1257,7 +1266,7 @@ const MediaCard = ({ media, onClick }) => {
             </div>
           </div>
         ) : (
-          <img src={media.url} alt={media.altText || media.filename} />
+          <img src={media.url} alt={media.altText || displayName} />
         )}
         <div className="media-type-indicator">
           {isVideo ? <Play size={12} /> : <Image size={12} />}
@@ -1265,7 +1274,13 @@ const MediaCard = ({ media, onClick }) => {
       </div>
 
       <div className="media-info">
-        <div className="media-filename">{media.filename}</div>
+        {/* ✅ FIXED: Show original filename instead of processed filename */}
+        <div className="media-filename" title={displayName}>
+          {displayName.length > 20 
+            ? `${displayName.substring(0, 20)}...` 
+            : displayName
+          }
+        </div>
         <div className="media-details">
           <span className="media-size">{humanSize}</span>
           {media.usage?.timesUsed > 0 && (
@@ -1291,7 +1306,20 @@ const MediaCard = ({ media, onClick }) => {
 const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false); // ✅ NEW: Upload loading state
+  const [uploadProgress, setUploadProgress] = useState({}); // ✅ NEW: Progress tracking per file
+  const [uploadedCount, setUploadedCount] = useState(0); // ✅ NEW: Count of uploaded files
   const fileInputRef = useRef(null);
+
+  // Reset states when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedFiles([]);
+      setIsUploading(false);
+      setUploadProgress({});
+      setUploadedCount(0);
+    }
+  }, [isOpen]);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -1309,88 +1337,297 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
     setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setSelectedFiles(Array.from(e.dataTransfer.files));
+      const files = Array.from(e.dataTransfer.files);
+      setSelectedFiles(files);
+      validateFiles(files);
     }
   };
 
   const handleFileSelect = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFiles(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      setSelectedFiles(files);
+      validateFiles(files);
     }
   };
 
-  const handleUpload = () => {
-    if (selectedFiles.length > 0) {
-      onUpload(selectedFiles);
-      setSelectedFiles([]);
+  // ✅ NEW: File validation function
+  const validateFiles = (files) => {
+    const validFiles = [];
+    const invalidFiles = [];
+
+    files.forEach(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      
+      if (!isImage && !isVideo) {
+        invalidFiles.push({ file, reason: 'Unsupported file type' });
+        return;
+      }
+
+      // Check file size - 250MB for videos, 50MB for images
+      const maxSize = isVideo ? 250 * 1024 * 1024 : 50 * 1024 * 1024;
+      if (file.size > maxSize) {
+        const maxSizeText = isVideo ? '250MB' : '50MB';
+        invalidFiles.push({ 
+          file, 
+          reason: `File too large (max ${maxSizeText})` 
+        });
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (invalidFiles.length > 0) {
+      console.warn('Invalid files:', invalidFiles);
+      // You could show a toast or alert here
+    }
+
+    setSelectedFiles(validFiles);
+  };
+
+  // ✅ NEW: Enhanced upload function with progress tracking
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0) return;
+
+    setIsUploading(true);
+    setUploadedCount(0);
+    
+    // Initialize progress for each file
+    const initialProgress = {};
+    selectedFiles.forEach((file, index) => {
+      initialProgress[index] = { progress: 0, status: 'pending', name: file.name };
+    });
+    setUploadProgress(initialProgress);
+
+    try {
+      // Simulate upload progress for each file
+      for (let i = 0; i < selectedFiles.length; i++) {
+        setUploadProgress(prev => ({
+          ...prev,
+          [i]: { ...prev[i], status: 'uploading' }
+        }));
+
+        // Simulate progress updates
+        for (let progress = 0; progress <= 100; progress += 20) {
+          await new Promise(resolve => setTimeout(resolve, 100)); // Simulate delay
+          setUploadProgress(prev => ({
+            ...prev,
+            [i]: { ...prev[i], progress }
+          }));
+        }
+
+        setUploadProgress(prev => ({
+          ...prev,
+          [i]: { ...prev[i], status: 'completed', progress: 100 }
+        }));
+        
+        setUploadedCount(prev => prev + 1);
+      }
+
+      // Call the actual upload function
+      await onUpload(selectedFiles);
+      
+      // Close modal after successful upload
+      setTimeout(() => {
+        onClose();
+        setSelectedFiles([]);
+        setIsUploading(false);
+        setUploadProgress({});
+        setUploadedCount(0);
+      }, 1000);
+
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setIsUploading(false);
+      
+      // Mark all as failed
+      setUploadProgress(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(key => {
+          updated[key] = { ...updated[key], status: 'failed' };
+        });
+        return updated;
+      });
     }
   };
 
   const handleAreaClick = () => {
-    fileInputRef.current?.click();
+    if (!isUploading) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleClose = () => {
+    if (!isUploading) {
+      onClose();
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileTypeIcon = (file) => {
+    if (file.type.startsWith('video/')) {
+      return <Play size={16} className="file-type-icon video" />;
+    }
+    return <Image size={16} className="file-type-icon image" />;
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content upload-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Upload Media</h3>
-          <button className="modal-close" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <h3>
+            {isUploading ? 'Uploading Media...' : 'Upload Media'}
+          </h3>
+          {!isUploading && (
+            <button className="modal-close" onClick={handleClose}>
+              <X size={20} />
+            </button>
+          )}
         </div>
 
         <div className="modal-body">
-          <div
-            className={`upload-area ${dragActive ? 'drag-active' : ''}`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={handleAreaClick}
-          >
-            <Upload size={48} />
-            <h4>Drag and drop files here</h4>
-            <p>or click to select files</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,video/*"
-              onChange={handleFileSelect}
-              className="file-input"
-            />
-          </div>
-
-          {selectedFiles.length > 0 && (
-            <div className="selected-files">
-              <h4>Selected Files ({selectedFiles.length})</h4>
-              <div className="file-list">
-                {selectedFiles.map((file, index) => (
-                  <div key={index} className="file-item">
-                    <span>{file.name}</span>
-                    <span className="file-size">{Math.round(file.size / 1024)}KB</span>
-                  </div>
-                ))}
+          {!isUploading ? (
+            // ✅ File Selection UI
+            <>
+              <div
+                className={`upload-area ${dragActive ? 'drag-active' : ''}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={handleAreaClick}
+              >
+                <Upload size={48} />
+                <h4>Drag and drop files here</h4>
+                <p>or click to select files</p>
+                <div className="upload-specs">
+                  <small>📷 Images: PNG, JPG, GIF up to 50MB</small>
+                  <small>🎥 Videos: MP4, MOV, AVI up to 250MB</small>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,video/*"
+                  onChange={handleFileSelect}
+                  className="file-input"
+                />
               </div>
+
+              {selectedFiles.length > 0 && (
+                <div className="selected-files">
+                  <h4>Selected Files ({selectedFiles.length})</h4>
+                  <div className="file-list">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="file-item">
+                        <div className="file-info">
+                          {getFileTypeIcon(file)}
+                          <span className="file-name">{file.name}</span>
+                        </div>
+                        <span className="file-size">{formatFileSize(file.size)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            // ✅ Upload Progress UI
+            <div className="upload-progress-container">
+              <div className="upload-header">
+                <div className="upload-stats">
+                  <h4>Uploading {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''}...</h4>
+                  <p>{uploadedCount} of {selectedFiles.length} completed</p>
+                </div>
+                <div className="overall-progress">
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill"
+                      style={{ width: `${(uploadedCount / selectedFiles.length) * 100}%` }}
+                    />
+                  </div>
+                  <span className="progress-text">
+                    {Math.round((uploadedCount / selectedFiles.length) * 100)}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="file-progress-list">
+                {selectedFiles.map((file, index) => {
+                  const fileProgress = uploadProgress[index] || { progress: 0, status: 'pending' };
+                  return (
+                    <div key={index} className={`file-progress-item ${fileProgress.status}`}>
+                      <div className="file-progress-info">
+                        {getFileTypeIcon(file)}
+                        <div className="file-details">
+                          <span className="file-name">{file.name}</span>
+                          <span className="file-size">{formatFileSize(file.size)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="file-progress-status">
+                        <div className="file-progress-bar">
+                          <div 
+                            className="file-progress-fill"
+                            style={{ width: `${fileProgress.progress}%` }}
+                          />
+                        </div>
+                        <div className="status-indicator">
+                          {fileProgress.status === 'pending' && (
+                            <Clock size={16} className="status-icon pending" />
+                          )}
+                          {fileProgress.status === 'uploading' && (
+                            <RefreshCw size={16} className="status-icon uploading spinning" />
+                          )}
+                          {fileProgress.status === 'completed' && (
+                            <CheckCircle size={16} className="status-icon completed" />
+                          )}
+                          {fileProgress.status === 'failed' && (
+                            <XCircle size={16} className="status-icon failed" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {uploadedCount === selectedFiles.length && (
+                <div className="upload-complete">
+                  <CheckCircle size={32} className="success-icon" />
+                  <h4>Upload Complete!</h4>
+                  <p>All files have been uploaded successfully.</p>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        <div className="modal-footer">
-          <button className="btn-secondary" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            className="btn-primary"
-            onClick={handleUpload}
-            disabled={selectedFiles.length === 0}
-          >
-            Upload {selectedFiles.length > 0 ? `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}` : ''}
-          </button>
-        </div>
+        {!isUploading && (
+          <div className="modal-footer">
+            <button className="btn-secondary" onClick={handleClose}>
+              Cancel
+            </button>
+            <button
+              className="btn-primary"
+              onClick={handleUpload}
+              disabled={selectedFiles.length === 0}
+            >
+              Upload {selectedFiles.length > 0 ? `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}` : ''}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1402,6 +1639,9 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
 
   const isVideo = media.fileType?.startsWith('video');
   const humanSize = media.humanSize || `${Math.round(media.size / 1024)}KB`;
+
+  // ✅ FIXED: Prioritize originalName for display
+  const displayName = media.originalName || media.filename || 'Untitled';
 
   const handleDelete = () => {
     if (window.confirm('Are you sure you want to delete this media? This action cannot be undone.')) {
@@ -1431,7 +1671,8 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
       // Create a temporary anchor element and trigger download
       const link = document.createElement('a');
       link.href = url;
-      link.download = media.filename || `media-${media._id || media.id}`;
+      // ✅ FIXED: Use original name for download
+      link.download = media.originalName || media.filename || `media-${media._id || media.id}`;
 
       // Append to body, click, and remove
       document.body.appendChild(link);
@@ -1462,7 +1703,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
             {isVideo ? (
               <video src={media.url} controls className="preview-video" />
             ) : (
-              <img src={media.url} alt={media.altText || media.filename} className="preview-image" />
+              <img src={media.url} alt={media.altText || displayName} className="preview-image" />
             )}
           </div>
 
@@ -1470,10 +1711,18 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
             <div className="metadata-section">
               <h4>File Information</h4>
               <div className="metadata-grid">
+                {/* ✅ FIXED: Show original filename in metadata */}
                 <div className="metadata-item">
                   <label>Filename:</label>
-                  <span>{media.filename}</span>
+                  <span title={displayName}>{displayName}</span>
                 </div>
+                {/* ✅ OPTIONAL: Show Cloudinary filename separately */}
+                {media.originalName && media.filename !== media.originalName && (
+                  <div className="metadata-item">
+                    <label>Storage Name:</label>
+                    <span className="storage-name">{media.filename}</span>
+                  </div>
+                )}
                 <div className="metadata-item">
                   <label>Size:</label>
                   <span>{humanSize}</span>
@@ -1517,7 +1766,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
               </div>
             )}
 
-            {media.usage && (
+            {/* {media.usage && (
               <div className="metadata-section">
                 <h4>Usage Statistics</h4>
                 <p>Used in {media.usage.timesUsed || 0} posts</p>
@@ -1525,7 +1774,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
                   <p>Last used: {new Date(media.usage.lastUsed).toLocaleDateString()}</p>
                 )}
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
