@@ -1,9 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./PostDetailModal.css";
 import { X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, Bookmark, Send, Eye, Instagram, Facebook, Twitter, ChevronRightCircle, ChevronLeftCircle } from "lucide-react";
 
 const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
+  const [imgIndex, setImgIndex] = useState(0);
+
   // Add keyboard event listener for ESC key and body scroll management
+  useEffect(() => {
+    if (isOpen) {
+      setImgIndex(0);
+    }
+  }, [isOpen, post]);
   useEffect(() => {
     const handleEscapeKey = (event) => {
       if (event.key === 'Escape' && isOpen) {
@@ -198,23 +205,38 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete }) => {
           {/* Post Image */}
           {post.images?.length > 0 && (
             <div className="post-detail-image-container">
-              <div className="arrowsf">
-                <ChevronLeftCircle />
-                <ChevronRightCircle />
+              {post.images?.length > 1 && <div className="arrowsf">
+                <ChevronLeftCircle onClick={
+                  () => {
+
+                    if (imgIndex > 0) {
+                      setImgIndex(prev => --prev)
+                    }
+                  }
+                } />
+                <ChevronRightCircle onClick={
+                  () => {
+                    if (imgIndex < post.images?.length - 1) {
+                      setImgIndex(prev => ++prev)
+                    }
+                  }
+                } />
               </div>
+              }
+
               <img
                 className="post-detail-image"
-                src={getImageSource(post.images[0])}
+                src={getImageSource(post.images[imgIndex])}
                 alt="Post media"
                 onError={(e) => {
                   e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
                 }}
               />
-              {post.images.length > 1 && (
+              {/* {post.images.length > 1 && (
                 <div className="post-detail-image-count">
                   +{post.images.length - 1} more
                 </div>
-              )}
+              )} */}
             </div>
           )}
 

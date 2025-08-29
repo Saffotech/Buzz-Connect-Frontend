@@ -621,6 +621,12 @@
   grid-template-columns: 1fr;
 }
 
+.postdesc{
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
 .preview-images.two-images {
   grid-template-columns: 1fr 1fr;
 }
@@ -1552,9 +1558,11 @@
   gap: 0.375rem;
 }
 
-.input-label.date-label::before {
+.date-label {
   white-space: nowrap; /* Keep "Date Range :" on one line */
-  font-weight: 500;
+  /* font-weight: 600; */
+  color: #2d3748;
+  font-size: 14px;
 }
 
 .input-label.time-label::before {
