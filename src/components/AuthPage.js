@@ -11,14 +11,6 @@ const AuthPage = () => {
   return (
     <div className="auth-split-container">
       <div className="auth-graphics">
-        {/* <div className="dashboard-mockup">
-          <div className="dashboard-card">
-            <span className="icon"></span>
-            <h2>$40,832.32</h2>
-            <p>New income • Amazon</p>
-          </div>
-          Add more brand cards here
-        </div> */}
       </div>
 
       {/* Right Side: Auth Form */}
@@ -26,22 +18,23 @@ const AuthPage = () => {
         <div className="auth-card">
           <img src={require("../assets/img/Logo.png")} alt="BuzzConnect Logo" className="logo" />
           {/* Toggle Tabs for Sign In / Sign Up */}
-          {formMode != 'forgot' ? 
-          <div className="auth-tabs">
-            <button
-              className={`auth-tab${isLogin ? ' active' : ''}`}
-              onClick={() => setIsLogin(true)}
-            >
-              Sign In
-            </button>
-            <button
-              className={`auth-tab${!isLogin ? ' active' : ''}`}
-              onClick={() => setIsLogin(false)}
-            >
-              Sign Up
-            </button>
-          </div>
-          : ''}
+          {formMode === 'auth' && (
+  <div className="auth-tabs">
+    <button
+      className={`auth-tab${isLogin ? ' active' : ''}`}
+      onClick={() => setIsLogin(true)}
+    >
+      Sign In
+    </button>
+    <button
+      className={`auth-tab${!isLogin ? ' active' : ''}`}
+      onClick={() => setIsLogin(false)}
+    >
+      Sign Up
+    </button>
+  </div>
+)}
+
 
 
           {/* Form */}
