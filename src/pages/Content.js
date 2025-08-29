@@ -650,6 +650,7 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
 
       {/* ✅ UPDATED: Smart Post Images with Adaptive Display */}
       {displayImages.length > 0 && (
+
         <div className={`preview-images ${layoutClass}`}>
           {displayImages.map(({ src, index }) => {
             // Skip images that failed to load
@@ -692,9 +693,10 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
             </div>
           )}
         </div>
+
       )}
 
-      <div className=''>
+      <div className='postdesc'>
 
         {/* Post Content */}
         <div className="preview-text">
@@ -943,7 +945,7 @@ const PostsSubPage = ({
           </select>
 
           <div className="date-range-dropdown">
-            <span className="date-label">Date Range:</span>
+            <span className="date-label">Date Range :</span>
             <input
               type="date"
               value={filters.dateRange.start}
@@ -1116,41 +1118,36 @@ const MediaLibrarySubPage = ({
     <div className="media-subpage">
       <div className="media-control-bar">
         <div className="control-left">
-          <button className="btn-primary" onClick={onUpload}>
-            <Upload size={18} />
-            Upload New Media
-          </button>
-        </div>
-        <div className="filters-bar">
-          <div className="search-section">
-            <div className="search-box">
-              <Search size={16} />
-              <input
-                type="text"
-                placeholder="Search media..."
-                value={filters.search || ''}
-                onChange={(e) => {
-                  setFilters(prev => ({ ...prev, search: e.target.value }));
-                }}
-              />
+          <div className="filters-bar">
+            <div className="search-section">
+              <div className="search-box">
+                <Search size={16} />
+                <input
+                  type="text"
+                  placeholder="Search media..."
+                  value={filters.search || ''}
+                  onChange={(e) => {
+                    setFilters(prev => ({ ...prev, search: e.target.value }));
+                  }}
+                />
+              </div>
             </div>
-          </div>
 
-          <select
-            value={filters.type}
-            onChange={(e) => {
-              setFilters(prev => ({ ...prev, type: e.target.value }));
-            }}
-          >
-            <option value="all">All Types ({media.length})</option>
-            <option value="image">
-              Images ({media.filter(m => m.fileType?.startsWith('image')).length})
-            </option>
-            <option value="video">
-              Videos ({media.filter(m => m.fileType?.startsWith('video')).length})
-            </option>
-          </select>
-
+            <select
+              value={filters.type}
+              onChange={(e) => {
+                setFilters(prev => ({ ...prev, type: e.target.value }));
+              }}
+            >
+              <option value="all">All Types ({media.length})</option>
+              <option value="image">
+                Images ({media.filter(m => m.fileType?.startsWith('image')).length})
+              </option>
+              <option value="video">
+                Videos ({media.filter(m => m.fileType?.startsWith('video')).length})
+              </option>
+            </select>
+            {/* 
           <select
             value={filters.folder}
             onChange={(e) => {
@@ -1162,23 +1159,25 @@ const MediaLibrarySubPage = ({
             <option value="posts">Posts</option>
             <option value="profile">Profile</option>
             <option value="campaigns">Campaigns</option>
-          </select>
+          </select> */}
 
-          <select
-            value={filters.sort}
-            onChange={(e) => {
-              setFilters(prev => ({ ...prev, sort: e.target.value }));
-            }}
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="mostUsed">Most Used</option>
-          </select>
+            <select
+              value={filters.sort}
+              onChange={(e) => {
+                setFilters(prev => ({ ...prev, sort: e.target.value }));
+              }}
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="mostUsed">Most Used</option>
+            </select>
 
-          <button className="clear-filters-btn" onClick={clearFilters}>
-            Clear All
-          </button>
+            <button className="clear-filters-btn" onClick={clearFilters}>
+              Clear All
+            </button>
+          </div>
         </div>
+
 
         <div className="control-right">
           <div className="view-controls">
@@ -1195,7 +1194,12 @@ const MediaLibrarySubPage = ({
               <List size={16} />
             </button>
           </div>
+          <button className="btn-primary" onClick={onUpload}>
+            <Upload size={18} />
+            Upload New Media
+          </button>
         </div>
+
       </div>
 
       <div className="media-content">
