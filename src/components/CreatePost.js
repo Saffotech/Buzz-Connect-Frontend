@@ -1058,7 +1058,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 </div>
               )}
 
-              {/* Form Column */}
+              {/* Main Form Column - ALWAYS visible */}
               <div className="form-column">
                 {/* Platform Selection */}
                 <div className="form-section">
@@ -1174,7 +1174,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                   </div>
                 </div>
 
-
                 {/* Content */}
                 <div className="form-section">
                   <label className="section-label">
@@ -1233,266 +1232,249 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                   </div>
                 </div>
 
-                {/* Image Upload */}
+                {/* Enhanced Upload Area with Drag & Drop */}
+                {/* Media Upload Section */}
                 <div className="form-section">
-
                   <label className="section-label">
                     <Image size={16} />
                     Media (Images & Videos)
                   </label>
+                  
+                  {/* Upload Options Grid */}
+                  <div className="media-upload-container">
+                    <div className="upload-options-grid">
+                      {/* Upload New Files with Drag & Drop */}
+                      <div className="upload-option">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept="image/*,video/*"
+                          onChange={handleFileInputChange}
+                          className="file-input"
+                          id="media-upload"
+                        />
+                        <div
+                          className={`upload-area ${dragActive ? 'drag-active' : ''} ${uploadingFiles ? 'uploading' : ''}`}
+                          onDragEnter={handleDrag}
+                          onDragLeave={handleDrag}
+                          onDragOver={handleDrag}
+                          onDrop={handleDrop}
+                          onClick={handleUploadAreaClick}
+                        >
+                          {uploadingFiles ? (
+                            <>
+                              <Loader className="spinner" size={32} />
+                              <span className="upload-title">Uploading media...</span>
+                              <small>Please wait while we upload your files</small>
+                            </>
+                          ) : (
+                            <>
+                              <Upload size={32} />
+                              <span className="upload-title">
+                                {dragActive ? 'Drop files here' : 'Upload Media Files'}
+                              </span>
+                              <small className="upload-subtitle">
+                                Drag & drop or click to select
+                              </small>
+                              <div className="upload-specs">
+                                <span>📷 Images: PNG, JPG, GIF up to 50MB</span>
+                                <span>🎥 Videos: MP4, MOV, AVI up to 250MB</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
 
-
-
-                  {/* New label for Media Library */}
-                  <label className="media-library-label">
-                    <GalleryHorizontal size={16} />
-                    Import from Media Library
-                  </label>
-                </div>
-
-                {/* <div className="image-upload-area">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="file-input"
-                    id="image-upload"
-                  />
-                  <label htmlFor="image-upload" className={`upload-label ${uploadingFiles ? 'uploading' : ''}`}>
-                    {uploadingFiles ? (
-                      <>
-                        <Loader className="spinner" size={24} />
-                        <span>Uploading images...</span>
-                        <small>Please wait while we upload your files</small>
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={24} />
-                        <span>Click to upload images or drag and drop</span>
-                        <small>PNG, JPG, GIF up to 10MB each</small>
-                      </>
-                    )}
-                  </label>
-                </div> */}
-
-
-                {/* Enhanced Upload Area with Drag & Drop */}
-                <div className="media-upload-container">
-                  <div className="upload-options-grid">
-                    {/* Upload New Files with Drag & Drop */}
-                    <div className="upload-option">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        accept="image/*,video/*" // ✅ Accept both images and videos
-                        onChange={handleFileInputChange}
-                        className="file-input"
-                        id="media-upload"
-                      />
-                      <div
-                        className={`upload-area ${dragActive ? 'drag-active' : ''} ${uploadingFiles ? 'uploading' : ''}`}
-                        onDragEnter={handleDrag}
-                        onDragLeave={handleDrag}
-                        onDragOver={handleDrag}
-                        onDrop={handleDrop}
-                        onClick={handleUploadAreaClick}
-                      >
-                        {uploadingFiles ? (
-                          <>
-                            <Loader className="spinner" size={32} />
-                            <span className="upload-title">Uploading media...</span>
-                            <small>Please wait while we upload your files</small>
-                          </>
-                        ) : (
-                          <>
-                            <Upload size={32} />
-                            <span className="upload-title">
-                              {dragActive ? 'Drop files here' : 'Upload Media Files'}
-                            </span>
-                            <small className="upload-subtitle">
-                              Drag & drop or click to select
-                            </small>
-                            <div className="upload-specs">
-                              <span>📷 Images: PNG, JPG, GIF up to 50MB</span>
-                              <span>🎥 Videos: MP4, MOV, AVI up to 250MB</span>
-                            </div>
-                          </>
-                        )}
+                      {/* Import from Media Library */}
+                      <div className="upload-option">
+                        <button
+                          type="button"
+                          className="media-library-btn"
+                          onClick={() => setShowMediaLibrary(true)}
+                          disabled={uploadingFiles}
+                        >
+                          <FolderOpen size={32} />
+                          <span className="upload-title">Import from Media Library</span>
+                          <small className="upload-subtitle">Choose from your existing files</small>
+                        </button>
                       </div>
                     </div>
-
-                    {/* Import from Media Library */}
-                    <div className="upload-option">
-                      <button
-                        type="button"
-                        className="media-library-btn"
-                        onClick={() => setShowMediaLibrary(true)}
-                        disabled={uploadingFiles}
-                      >
-                        <FolderOpen size={32} />
-                        <span className="upload-title">Import from Media Library</span>
-                        <small className="upload-subtitle">Choose from your existing files</small>
-                      </button>
-                    </div>
                   </div>
-                </div>
 
-                {/* ✅ Display Selected Media (Images & Videos) */}
-                {postData.images.length > 0 && (
-                  <div className="uploaded-media">
-                    <div className="media-grid">
-                      {postData.images.map((mediaItem, index) => {
-                        const MediaIcon = getMediaTypeIcon(mediaItem);
-                        const isVideo = mediaItem.fileType === 'video' ||
-                          mediaItem.url?.includes('video');
+                  {/* ✅ ENHANCED MEDIA PREVIEWS - Always show when images exist */}
+                  {postData.images && postData.images.length > 0 && (
+                    <div className="uploaded-media-section">
+                      <div className="media-section-header">
+                        <h4>Selected Media ({postData.images.length})</h4>
+                        <button
+                          type="button"
+                          className="clear-all-media"
+                          onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
+                          title="Remove all media"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                      
+                      <div className="media-preview-grid">
+                        {postData.images.map((mediaItem, index) => {
+                          const MediaIcon = getMediaTypeIcon(mediaItem);
+                          const isVideo = mediaItem.fileType === 'video' || mediaItem.url?.includes('video');
+                          const displayName = mediaItem.displayName || mediaItem.originalName || mediaItem.altText || `Media ${index + 1}`;
 
-                        // ✅ Enhanced display name logic with priority order
-                        const displayName =
-                          mediaItem.displayName ||
-                          mediaItem.originalName ||
-                          mediaItem.altText ||
-                          `Media ${index + 1}`;
+                          return (
+                            <div key={index} className="media-preview-item">
+                              <div className="media-preview-container">
+                                {/* Image/Video Preview */}
+                                {isVideo ? (
+                                  <div className="video-preview">
+                                    <video
+                                      src={mediaItem.url}
+                                      className="media-preview-content"
+                                      muted
+                                      playsInline
+                                    />
+                                    <div className="video-overlay">
+                                      <Play size={24} className="play-icon" />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={mediaItem.url}
+                                    alt={mediaItem.altText || displayName}
+                                    className="media-preview-content"
+                                    onError={(e) => {
+                                      console.error('Failed to load image preview:', mediaItem.url);
+                                      e.target.style.display = 'none';
+                                    }}
+                                  />
+                                )}
 
-                        console.log(`Display logic for item ${index}:`, {
-                          displayName: mediaItem.displayName,
-                          originalName: mediaItem.originalName,
-                          altText: mediaItem.altText,
-                          filename: mediaItem.filename,
-                          finalDisplayName: displayName
-                        });
+                                {/* Remove Button */}
+                                <button
+                                  type="button"
+                                  className="remove-media-btn"
+                                  onClick={() => removeMedia(index)}
+                                  title={`Remove ${displayName}`}
+                                >
+                                  <X size={16} />
+                                </button>
 
-                        return (
-                          <div key={index} className="media-preview">
-                            {/* ... existing media display code ... */}
-
-                            {/* ✅ Enhanced Media Info with Better Display */}
-                            <div className="media-info-overlay">
-                              <div className="media-filename-display" title={displayName}>
-                                {displayName.length > 15
-                                  ? `${displayName.substring(0, 15)}...`
-                                  : displayName
-                                }
+                                {/* Loading Overlay for uploading files */}
+                                {mediaItem.isLocal && uploadingFiles && (
+                                  <div className="upload-overlay">
+                                    <Loader size={20} />
+                                  </div>
+                                )}
                               </div>
-                              <div className="media-type-indicator">
-                                <MediaIcon size={12} />
-                                {isVideo ? 'Video' : 'Image'}
-                              </div>
-                              {mediaItem.size && (
-                                <div className="media-size-indicator">
-                                  {formatFileSize(mediaItem.size)}
+
+                              {/* Media Info */}
+                              <div className="media-preview-info">
+                                <div className="media-name" title={displayName}>
+                                  <MediaIcon size={14} />
+                                  <span>
+                                    {displayName.length > 15 
+                                      ? `${displayName.substring(0, 15)}...` 
+                                      : displayName
+                                    }
+                                  </span>
                                 </div>
-                              )}
-                            </div>
-
-                            {/* Debug info - remove in production */}
-                            {process.env.NODE_ENV === 'development' && (
-                              <div className="debug-info" style={{
-                                position: 'absolute',
-                                bottom: '-30px',
-                                left: 0,
-                                right: 0,
-                                background: 'rgba(0,0,0,0.8)',
-                                color: 'white',
-                                fontSize: '10px',
-                                padding: '2px'
-                              }}>
-                                Original: {mediaItem.originalName || 'N/A'}
-                                <br />
-                                Display: {mediaItem.displayName || 'N/A'}
+                                {mediaItem.size && (
+                                  <div className="media-size">
+                                    {formatFileSize(mediaItem.size)}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Scheduling - Updated with Radio Buttons and Tooltips */}
-              <div className="form-section">
-                <label className="section-label">
-                  <Clock size={16} />
-                  Scheduler
-                </label>
-
-                <div className="scheduler-options">
-                  <div className="radio-group">
-                    <label className="radio-option">
-                      <input
-                        type="radio"
-                        name="scheduler"
-                        value="now"
-                        checked={!isScheduled}
-                        onChange={() => setIsScheduled(false)}
-                      />
-                      <span className="radio-custom"></span>
-                      <div className="radio-content">
-
-                        <small
-                          className="radio-description"
-                          data-tooltip="Post will be published immediately"
-                        ><span className="radio-label">Schedule Now</span>
-                        </small>
-                      </div>
-                    </label>
-
-                    <label className="radio-option">
-                      <input
-                        type="radio"
-                        name="scheduler"
-                        value="later"
-                        checked={isScheduled}
-                        onChange={() => setIsScheduled(true)}
-                      />
-                      <span className="radio-custom"></span>
-                      <small
-                        className="radio-description"
-                        data-tooltip="Choose a specific date and time for publishing"
-                      >
-                        <div className="radio-content">
-                          <span className="radio-label">Schedule For Later</span>
-                        </div>
-                      </small>
-
-                    </label>
-                  </div>
-
-                  {/* Date and Time inputs */}
-                  {isScheduled && (
-                    <div className="schedule-inputs">
-                      <div className="input-group">
-                        <div className="date-input-wrapper">
-                          <input
-                            type="date"
-                            value={postData.scheduledDate}
-                            onChange={(e) => setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                            className="form-input"
-                            min={new Date().toISOString().split('T')[0]}
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div className="input-group">
-                        <div className="time-input-wrapper">
-                          <input
-                            type="time"
-                            value={postData.scheduledTime}
-                            onChange={(e) => setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))}
-                            className="form-input"
-                            required
-                          />
-                        </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
-
                 </div>
+
+                {/* ✅ SCHEDULER SECTION - MOVED HERE INSIDE FORM COLUMN */}
+                <div className="form-section">
+                  <label className="section-label">
+                    <Clock size={16} />
+                    Scheduler
+                  </label>
+
+                  <div className="scheduler-options">
+                    <div className="radio-group">
+                      <label className="radio-option">
+                        <input
+                          type="radio"
+                          name="scheduler"
+                          value="now"
+                          checked={!isScheduled}
+                          onChange={() => setIsScheduled(false)}
+                        />
+                        <span className="radio-custom"></span>
+                        <div className="radio-content">
+                          <small
+                            className="radio-description"
+                            data-tooltip="Post will be published immediately"
+                          >
+                            <span className="radio-label">Schedule Now</span>
+                          </small>
+                        </div>
+                      </label>
+
+                      <label className="radio-option">
+                        <input
+                          type="radio"
+                          name="scheduler"
+                          value="later"
+                          checked={isScheduled}
+                          onChange={() => setIsScheduled(true)}
+                        />
+                        <span className="radio-custom"></span>
+                        <small
+                          className="radio-description"
+                          data-tooltip="Choose a specific date and time for publishing"
+                        >
+                          <div className="radio-content">
+                            <span className="radio-label">Schedule For Later</span>
+                          </div>
+                        </small>
+                      </label>
+                    </div>
+
+                    {/* Date and Time inputs */}
+                    {isScheduled && (
+                      <div className="schedule-inputs">
+                        <div className="input-group">
+                          <div className="date-input-wrapper">
+                            <input
+                              type="date"
+                              value={postData.scheduledDate}
+                              onChange={(e) => setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                              className="form-input"
+                              min={new Date().toISOString().split('T')[0]}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="input-group">
+                          <div className="time-input-wrapper">
+                            <input
+                              type="time"
+                              value={postData.scheduledTime}
+                              onChange={(e) => setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                              className="form-input"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* ✅ END SCHEDULER SECTION */}
               </div>
             </div>
-
           )}
 
           {activeTab === 'preview' && (
