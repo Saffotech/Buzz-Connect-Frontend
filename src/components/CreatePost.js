@@ -20,13 +20,18 @@ import {
   CheckCircle,
   Info,
   ChevronDown,
-  FolderOpen, // Add this new import
+  FolderOpen,
   Check,
   Search,
   Video,
   Play,
   FileText,
   GalleryHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  Grid3X3,
+  Maximize2,
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -44,12 +49,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   const [userProfile, setUserProfile] = useState(null);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
-
+  const [showImageCarousel, setShowImageCarousel] = useState(false);
+  const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
 
   const [postData, setPostData] = useState({
     content: '',
     platforms: [],
-    selectedAccounts: {}, // { platformId: [accountId1, accountId2, ...] }
+    selectedAccounts: {},
     scheduledDate: '',
     scheduledTime: '',
     images: [],
@@ -74,6 +80,33 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Carousel handlers
+  const openCarousel = (index = 0) => {
+    setCurrentCarouselIndex(index);
+    setShowImageCarousel(true);
+  };
+
+  const closeCarousel = () => {
+    setShowImageCarousel(false);
+    setCurrentCarouselIndex(0);
+  };
+
+  const goToNextImage = () => {
+    setCurrentCarouselIndex((prev) => 
+      prev === postData.images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const goToPrevImage = () => {
+    setCurrentCarouselIndex((prev) => 
+      prev === 0 ? postData.images.length - 1 : prev - 1
+    );
+  };
+
+  const goToImage = (index) => {
+    setCurrentCarouselIndex(index);
+  };
 
   // ✅ 1. Define the function here (inside component, before return)
   const onSaveDraft = () => {
@@ -150,11 +183,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         url: URL.createObjectURL(file),
         altText: file.name,
         originalName: file.name,
-        displayName: file.name, // ✅ Store original name for display
+        displayName: file.name,
         isLocal: true,
         fileType: file.type.startsWith('video/') ? 'video' : 'image',
         size: file.size,
-        index // ✅ Store index to map back to original file
+        index
       }));
 
       setPostData(prev => ({
@@ -169,9 +202,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       showToast(`Uploading ${validFiles.length} ${fileTypeText}...`, 'info');
 
       const response = await uploadMedia(validFiles);
-      console.log('Upload response:', response); // ✅ Debug log
+      console.log('Upload response:', response);
 
-      // ✅ FIXED: Properly map uploaded media with original filenames
       const uploadedMedia = response.data.map((media, index) => {
         const originalFile = validFiles[index];
 
@@ -184,18 +216,18 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         return {
           url: media.url,
           altText: media.originalName || originalFile?.name || 'Post media',
-          originalName: media.originalName || originalFile?.name, // ✅ Use API originalName first, then fallback
-          displayName: media.originalName || originalFile?.name || media.filename, // ✅ What to show in UI
-          filename: media.filename, // ✅ Cloudinary processed filename
+          originalName: media.originalName || originalFile?.name,
+          displayName: media.originalName || originalFile?.name || media.filename,
+          filename: media.filename,
           publicId: media.publicId,
           fileType: media.fileType || (media.url.includes('video') ? 'video' : 'image'),
           size: media.size || originalFile?.size,
           dimensions: media.dimensions,
-          cloudinaryFilename: media.filename // ✅ Store separately for reference
+          cloudinaryFilename: media.filename
         };
       });
 
-      console.log('Final uploaded media:', uploadedMedia); // ✅ Debug log
+      console.log('Final uploaded media:', uploadedMedia);
 
       // Replace local previews with actual uploaded URLs
       setPostData(prev => ({
@@ -219,7 +251,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       setUploadingFiles(false);
     }
   };
-
 
   // ✅ Handle file input change
   const handleFileInputChange = (e) => {
@@ -273,7 +304,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     return Image;
   };
 
-
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -317,7 +347,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     const allPlatforms = [
       { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
       { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
-      // { id: 'twitter', name: 'Twitter', icon: Twitter, color: '#1DA1F2' },
     ];
 
     return allPlatforms.map(platform => ({
@@ -601,7 +630,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     setIsSubmitting(true);
     setError(null);
 
-
     if (!validateForm()) {
       setIsSubmitting(false);
       return;
@@ -662,7 +690,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           throw new Error('Failed to create post - no ID returned');
         }
 
-
         // Step 2: Immediately publish the created post
         const postId = createResponse.data._id;
         console.log('Publishing post with ID:', postId);
@@ -703,7 +730,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   };
 
-
   const resetForm = () => {
     setPostData({
       content: '',
@@ -727,8 +753,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     setToast(null);
   };
 
-  // AI Content Generation (keeping existing functionality)
-  // Update the generateAIContent function with platform validation:
+  // AI Content Generation
   const generateAIContent = async () => {
     // Check if platforms are selected
     if (postData.platforms.length === 0) {
@@ -748,13 +773,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     try {
       const selectedPlatforms = postData.platforms;
 
-      // Use the exact structure that works in Swagger
       const response = await apiClient.generateContent({
         prompt: aiPrompt,
-        tone: 'casual', // or allow user selection
+        tone: 'casual',
         platforms: selectedPlatforms,
         includeHashtags: true,
-        maxLength: 280 // adjust based on platforms
+        maxLength: 280
       });
 
       console.log('AI Response:', response);
@@ -762,12 +786,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       if (response.success && response.data) {
         const suggestions = [];
 
-        // Handle the response structure from your Swagger example
         Object.entries(response.data.content).forEach(([platform, data]) => {
           suggestions.push({
             id: `${platform}-${Date.now()}`,
             content: data.content,
-            hashtags: '', // Extract hashtags from content if needed
+            hashtags: '',
             tone: response.data.options.tone,
             platforms: [platform],
             characterCount: data.characterCount,
@@ -791,7 +814,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   };
 
-  // Update the generateHashtags function with platform validation:
   const generateHashtags = async () => {
     // Check if platforms are selected
     if (postData.platforms.length === 0) {
@@ -809,9 +831,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     showToast('Generating hashtags...', 'info');
 
     try {
-      const selectedPlatform = postData.platforms[0]; // Use the first selected platform
+      const selectedPlatform = postData.platforms[0];
 
-      // Use the exact structure that works in Swagger
       const response = await apiClient.suggestHashtags({
         content: postData.content,
         platform: selectedPlatform,
@@ -838,7 +859,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       setIsGenerating(false);
     }
   };
-
 
   const applyAISuggestion = (suggestion) => {
     setPostData(prev => ({
@@ -871,8 +891,25 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     };
   }, []);
 
-  if (!isOpen) return null;
+  // Keyboard navigation for carousel
+  useEffect(() => {
+    if (!showImageCarousel) return;
 
+    const handleKeyPress = (e) => {
+      if (e.key === 'ArrowLeft') {
+        goToPrevImage();
+      } else if (e.key === 'ArrowRight') {
+        goToNextImage();
+      } else if (e.key === 'Escape') {
+        closeCarousel();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [showImageCarousel, postData.images.length]);
+
+  if (!isOpen) return null;
 
   return (
     <div className={`create-post-overlay ${showMediaLibrary ? 'media-library-open' : ''}`}>
@@ -887,6 +924,156 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           </div>
         </div>
       )} */}
+
+      {/* Image Carousel Modal */}
+      {showImageCarousel && postData.images.length > 0 && (
+        <div className="carousel-overlay" onClick={closeCarousel}>
+          <div className="carousel-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="carousel-header">
+              <div className="carousel-counter">
+                {currentCarouselIndex + 1} of {postData.images.length}
+              </div>
+              <div className="carousel-actions">
+                <button
+                  className="carousel-btn"
+                  onClick={() => openCarousel(currentCarouselIndex)}
+                  title="View details"
+                >
+                  <Maximize2 size={20} />
+                </button>
+                <button
+                  className="carousel-btn"
+                  onClick={closeCarousel}
+                  title="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="carousel-content">
+              {postData.images.length > 1 && (
+                <button
+                  className="carousel-nav carousel-nav-prev"
+                  onClick={goToPrevImage}
+                  title="Previous image"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+              )}
+
+              <div className="carousel-main">
+                {postData.images.map((mediaItem, index) => {
+                  const isVideo = mediaItem.fileType === 'video' || mediaItem.url?.includes('video');
+                  const displayName = mediaItem.displayName || mediaItem.originalName || mediaItem.altText || `Media ${index + 1}`;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`carousel-slide ${index === currentCarouselIndex ? 'active' : ''}`}
+                    >
+                      {isVideo ? (
+                        <video
+                          src={mediaItem.url}
+                          controls
+                          className="carousel-media"
+                          onError={(e) => {
+                            console.error('Failed to load video:', mediaItem.url);
+                          }}
+                        />
+                      ) : (
+                        <img
+                          src={mediaItem.url}
+                          alt={mediaItem.altText || displayName}
+                          className="carousel-media"
+                          onError={(e) => {
+                            console.error('Failed to load image:', mediaItem.url);
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {postData.images.length > 1 && (
+                <button
+                  className="carousel-nav carousel-nav-next"
+                  onClick={goToNextImage}
+                  title="Next image"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              )}
+            </div>
+
+            {postData.images.length > 1 && (
+              <div className="carousel-thumbnails">
+                {postData.images.map((mediaItem, index) => {
+                  const isVideo = mediaItem.fileType === 'video' || mediaItem.url?.includes('video');
+                  const displayName = mediaItem.displayName || mediaItem.originalName || mediaItem.altText || `Media ${index + 1}`;
+
+                  return (
+                    <button
+                      key={index}
+                      className={`carousel-thumbnail ${index === currentCarouselIndex ? 'active' : ''}`}
+                      onClick={() => goToImage(index)}
+                      title={displayName}
+                    >
+                      {isVideo ? (
+                        <div className="thumbnail-video">
+                          <video src={mediaItem.url} muted />
+                          <div className="video-indicator">
+                            <Play size={12} />
+                          </div>
+                        </div>
+                      ) : (
+                        <img
+                          src={mediaItem.url}
+                          alt={mediaItem.altText || displayName}
+                          onError={(e) => {
+                            console.error('Failed to load thumbnail:', mediaItem.url);
+                          }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="carousel-info">
+              <div className="media-details">
+                <h4>{postData.images[currentCarouselIndex]?.displayName || postData.images[currentCarouselIndex]?.originalName || `Media ${currentCarouselIndex + 1}`}</h4>
+                {postData.images[currentCarouselIndex]?.size && (
+                  <p className="file-size">{formatFileSize(postData.images[currentCarouselIndex].size)}</p>
+                )}
+                {postData.images[currentCarouselIndex]?.dimensions && (
+                  <p className="dimensions">
+                    {postData.images[currentCarouselIndex].dimensions.width} × {postData.images[currentCarouselIndex].dimensions.height}
+                  </p>
+                )}
+              </div>
+              <div className="carousel-remove-action">
+                <button
+                  className="remove-from-carousel-btn"
+                  onClick={() => {
+                    removeMedia(currentCarouselIndex);
+                    if (postData.images.length <= 1) {
+                      closeCarousel();
+                    } else if (currentCarouselIndex >= postData.images.length - 1) {
+                      setCurrentCarouselIndex(postData.images.length - 2);
+                    }
+                  }}
+                  title="Remove this media"
+                >
+                  Remove Media
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={`create-post-modal ${showMediaLibrary ? 'media-library-open' : ''}`}>
         <div className="modal-header">
@@ -937,10 +1124,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           {/* {loadingProfile && (
             <div className="loading-profile">
               <Loader />
-              <span>Loading profile...</span>
+                            <span>Loading profile...</span>
             </div>
           )} */}
-
 
           {activeTab === 'compose' && (
             <div className={`compose-tab ${showAISuggestions ? 'with-ai' : ''}`}>
@@ -1235,9 +1421,28 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                   </div>
                 </div>
 
-                {/* Enhanced Upload Area with Drag & Drop */}
-                {/* Media Upload Section */}
+                {/* Enhanced Media Upload Section with Carousel Support */}
                 <div className="form-section">
+
+                  <label className="section-label">
+                    <Image size={16} />
+                    Media (Images & Videos)
+                    {postData.images.length > 0 && (
+                      <div className="media-actions">
+                        <button
+                          type="button"
+                          className="view-carousel-btn"
+                          onClick={() => openCarousel(0)}
+                          title="View in carousel"
+                        >
+                          <GalleryHorizontal size={14} />
+                          View All
+                        </button>
+                      </div>
+                    )}
+                  </label>
+                  
+
 
                   <div className="headz">
                     <label className="section-label">
@@ -1250,6 +1455,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                       Import from Media Library
                     </label>
                   </div>
+
 
 
                   {/* Upload Options Grid */}
@@ -1317,19 +1523,32 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                     </div>
                   </div>
 
-                  {/* ✅ ENHANCED MEDIA PREVIEWS - Always show when images exist */}
+                  {/* Enhanced Media Previews with Carousel Integration */}
                   {postData.images && postData.images.length > 0 && (
                     <div className="uploaded-media-section">
                       <div className="media-section-header">
                         <h4>Selected Media ({postData.images.length})</h4>
-                        <button
-                          type="button"
-                          className="clear-all-media"
-                          onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
-                          title="Remove all media"
-                        >
-                          Clear All
-                        </button>
+                        <div className="media-header-actions">
+                          {postData.images.length > 1 && (
+                            <button
+                              type="button"
+                              className="view-carousel-header-btn"
+                              onClick={() => openCarousel(0)}
+                              title="View in carousel"
+                            >
+                              <GalleryHorizontal size={16} />
+                              View Carousel
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="clear-all-media"
+                            onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
+                            title="Remove all media"
+                          >
+                            Clear All
+                          </button>
+                        </div>
                       </div>
 
                       <div className="media-preview-grid">
@@ -1341,40 +1560,71 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           return (
                             <div key={index} className="media-preview-item">
                               <div className="media-preview-container">
-                                {/* Image/Video Preview */}
-                                {isVideo ? (
-                                  <div className="video-preview">
-                                    <video
-                                      src={mediaItem.url}
-                                      className="media-preview-content"
-                                      muted
-                                      playsInline
-                                    />
-                                    <div className="video-overlay">
-                                      <Play size={24} className="play-icon" />
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <img
-                                    src={mediaItem.url}
-                                    alt={mediaItem.altText || displayName}
-                                    className="media-preview-content"
-                                    onError={(e) => {
-                                      console.error('Failed to load image preview:', mediaItem.url);
-                                      e.target.style.display = 'none';
-                                    }}
-                                  />
-                                )}
-
-                                {/* Remove Button */}
-                                <button
-                                  type="button"
-                                  className="remove-media-btn"
-                                  onClick={() => removeMedia(index)}
-                                  title={`Remove ${displayName}`}
+                                {/* Clickable Image/Video Preview */}
+                                <div 
+                                  className="media-preview-wrapper"
+                                  onClick={() => openCarousel(index)}
+                                  title="Click to view in carousel"
                                 >
-                                  <X size={16} />
-                                </button>
+                                  {isVideo ? (
+                                    <div className="video-preview">
+                                      <video
+                                        src={mediaItem.url}
+                                        className="media-preview-content"
+                                        muted
+                                        playsInline
+                                      />
+                                      <div className="video-overlay">
+                                        <Play size={24} className="play-icon" />
+                                      </div>
+                                      <div className="preview-overlay">
+                                        <Eye size={20} />
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="image-preview">
+                                      <img
+                                        src={mediaItem.url}
+                                        alt={mediaItem.altText || displayName}
+                                        className="media-preview-content"
+                                        onError={(e) => {
+                                          console.error('Failed to load image preview:', mediaItem.url);
+                                          e.target.style.display = 'none';
+                                        }}
+                                      />
+                                      <div className="preview-overlay">
+                                        <Eye size={20} />
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Media Controls */}
+                                <div className="media-controls">
+                                  <button
+                                    type="button"
+                                    className="media-control-btn view-btn"
+                                    onClick={() => openCarousel(index)}
+                                    title="View in carousel"
+                                  >
+                                    <Eye size={14} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="media-control-btn remove-btn"
+                                    onClick={() => removeMedia(index)}
+                                    title={`Remove ${displayName}`}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+
+                                {/* Position Indicator for Multiple Images */}
+                                {postData.images.length > 1 && (
+                                  <div className="position-indicator">
+                                    {index + 1}
+                                  </div>
+                                )}
 
                                 {/* Loading Overlay for uploading files */}
                                 {mediaItem.isLocal && uploadingFiles && (
@@ -1400,16 +1650,34 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                     {formatFileSize(mediaItem.size)}
                                   </div>
                                 )}
+                                {mediaItem.dimensions && (
+                                  <div className="media-dimensions">
+                                    {mediaItem.dimensions.width}×{mediaItem.dimensions.height}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
                         })}
                       </div>
+
+                      {/* Carousel Quick Navigation */}
+                      {postData.images.length > 3 && (
+                        <div className="carousel-quick-nav">
+                          <button
+                            className="quick-nav-btn"
+                            onClick={() => openCarousel(0)}
+                          >
+                            <GalleryHorizontal size={16} />
+                            View All {postData.images.length} Media Files
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
 
-                {/* ✅ SCHEDULER SECTION - MOVED HERE INSIDE FORM COLUMN */}
+                {/* Scheduler Section */}
                 <div className="form-section">
                   <label className="section-label">
                     <Clock size={16} />
@@ -1487,7 +1755,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                     )}
                   </div>
                 </div>
-                {/* ✅ END SCHEDULER SECTION */}
               </div>
             </div>
           )}
@@ -1501,7 +1768,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                     const platform = platforms.find(p => p.id === platformId);
                     const Icon = platform.icon;
 
-
                     return (
                       <div key={platformId} className={`platform-preview ${platformId}`} style={{ '--platform-color': platform.color }}>
                         <div className="platform-header">
@@ -1509,21 +1775,75 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           <span>{platform.name}</span>
                         </div>
                         <div className="preview-post">
+                          {/* Enhanced Preview with Carousel Support */}
                           {postData.images.length > 0 && (
                             <div className="preview-images">
-                              <img
-                                src={postData.images[0].url || postData.images[0]}
-                                alt={postData.images[0].altText || "Post preview"}
-                                onError={(e) => {
-                                  console.error('Preview image failed to load');
-                                  e.target.style.display = 'none';
-                                }}
-                              />
+                              {postData.images.length === 1 ? (
+                                <div 
+                                  className="single-image-preview"
+                                  onClick={() => openCarousel(0)}
+                                  title="Click to view full size"
+                                >
+                                  {postData.images[0].fileType === 'video' || postData.images[0].url?.includes('video') ? (
+                                    <video
+                                      src={postData.images[0].url}
+                                      className="preview-media"
+                                      muted
+                                      playsInline
+                                    />
+                                  ) : (
+                                    <img
+                                      src={postData.images[0].url}
+                                      alt={postData.images[0].altText || "Post preview"}
+                                      className="preview-media"
+                                      onError={(e) => {
+                                        console.error('Preview image failed to load');
+                                        e.target.style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              ) : (
+                                <div 
+                                  className="multiple-images-preview"
+                                  onClick={() => openCarousel(0)}
+                                  title="Click to view carousel"
+                                >
+                                  <div className="preview-grid">
+                                    {postData.images.slice(0, 4).map((image, index) => (
+                                      <div key={index} className={`preview-grid-item item-${index}`}>
+                                        {image.fileType === 'video' || image.url?.includes('video') ? (
+                                          <video
+                                            src={image.url}
+                                            className="grid-media"
+                                            muted
+                                            playsInline
+                                          />
+                                        ) : (
+                                          <img
+                                            src={image.url}
+                                            alt={image.altText || `Preview ${index + 1}`}
+                                            className="grid-media"
+                                          />
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                  {postData.images.length > 4 && (
+                                    <div className="more-images-overlay">
+                                      <span>+{postData.images.length - 4} more</span>
+                                    </div>
+                                  )}
+                                  <div className="carousel-preview-indicator">
+                                    <GalleryHorizontal size={16} />
+                                    <span>{postData.images.length} images</span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                           <div className="preview-text">
                             <p>{postData.content}</p>
-                            {/* Fixed hashtags rendering */}
                             {postData.hashtags && (
                               <div className="preview-hashtags">
                                 {(typeof postData.hashtags === 'string' ?
@@ -1546,16 +1866,20 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
             </div>
           )}
 
-
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
             </button>
 
-            <div className="new">
+            <div className="footer-actions">
               {/* Save as Draft Button */}
-              <button type="button" className="btn-secondary-draft" onClick={onSaveDraft} disabled={isSubmitting}
-              >Save as Draft
+              <button 
+                type="button" 
+                className="btn-secondary-draft" 
+                onClick={onSaveDraft} 
+                disabled={isSubmitting}
+              >
+                Save as Draft
               </button>
 
               {/* Publish / Schedule Button */}
@@ -1601,6 +1925,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           </div>
         )}
       </div>
+
       <MediaLibraryModal
         isOpen={showMediaLibrary}
         onClose={() => setShowMediaLibrary(false)}
@@ -1610,11 +1935,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   );
 };
 
+// Enhanced Media Library Modal with Carousel Support
 const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
   const [mediaList, setMediaList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showLibraryCarousel, setShowLibraryCarousel] = useState(false);
+  const [libraryCarouselIndex, setLibraryCarouselIndex] = useState(0);
 
   // Fetch media when modal opens
   useEffect(() => {
@@ -1629,7 +1957,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
       const response = await apiClient.request('/api/media');
       const media = response?.data?.data?.media || response?.data?.media || [];
 
-      // ✅ Filter both images and videos
+      // Filter both images and videos
       const mediaFiles = media.filter(item =>
         (item.fileType?.startsWith('image') || item.fileType?.startsWith('video')) && item.url
       );
@@ -1645,7 +1973,6 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
 
   const handleImageToggle = (image) => {
     setSelectedImages(prev => {
-      // ✅ Use the correct ID field from the API response
       const imageId = image._id || image.id;
       const isSelected = prev.some(img => (img._id || img.id) === imageId);
 
@@ -1654,10 +1981,13 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
       } else {
         return [...prev, {
           url: image.url,
-          altText: image.altText || image.originalName || image.filename, // ✅ Use originalName if available
+          altText: image.altText || image.originalName || image.filename,
           publicId: image.publicId,
-          _id: imageId, // ✅ Use consistent ID
-          filename: image.originalName || image.filename // ✅ Prefer originalName for display
+          _id: imageId,
+          filename: image.originalName || image.filename,
+          fileType: image.fileType,
+          size: image.size,
+          dimensions: image.dimensions
         }];
       }
     });
@@ -1671,14 +2001,24 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
 
   const handleClose = () => {
     setSelectedImages([]);
+    setShowLibraryCarousel(false);
     onClose();
+  };
+
+  const openLibraryCarousel = (index) => {
+    setLibraryCarouselIndex(index);
+    setShowLibraryCarousel(true);
+  };
+
+  const closeLibraryCarousel = () => {
+    setShowLibraryCarousel(false);
   };
 
   const filteredMedia = mediaList.filter(item => {
     const searchTerm = searchQuery.toLowerCase();
     return (
       item.filename?.toLowerCase().includes(searchTerm) ||
-      item.originalName?.toLowerCase().includes(searchTerm) || // ✅ Search originalName too
+      item.originalName?.toLowerCase().includes(searchTerm) ||
       item.altText?.toLowerCase().includes(searchTerm)
     );
   });
@@ -1687,9 +2027,95 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
 
   return (
     <div className="media-library-modal-overlay" onClick={handleClose}>
+      {/* Library Carousel */}
+      {showLibraryCarousel && (
+        <div className="library-carousel-overlay" onClick={(e) => e.stopPropagation()}>
+          <div className="library-carousel-modal">
+            <div className="carousel-header">
+              <div className="carousel-counter">
+                {libraryCarouselIndex + 1} of {filteredMedia.length}
+              </div>
+              <button
+                className="carousel-close-btn"
+                onClick={closeLibraryCarousel}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="carousel-content">
+              {filteredMedia.length > 1 && (
+                <button
+                  className="carousel-nav carousel-nav-prev"
+                  onClick={() => setLibraryCarouselIndex(prev => 
+                    prev === 0 ? filteredMedia.length - 1 : prev - 1
+                  )}
+                >
+                  <ChevronLeft size={24} />
+                </button>
+              )}
+
+              <div className="carousel-main">
+                {filteredMedia.map((mediaItem, index) => {
+                  const isVideo = mediaItem.fileType?.startsWith('video');
+                  const displayName = mediaItem.originalName || mediaItem.filename;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`carousel-slide ${index === libraryCarouselIndex ? 'active' : ''}`}
+                    >
+                      {isVideo ? (
+                        <video
+                          src={mediaItem.url}
+                          controls
+                          className="carousel-media"
+                        />
+                      ) : (
+                        <img
+                          src={mediaItem.url}
+                          alt={mediaItem.altText || displayName}
+                          className="carousel-media"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {filteredMedia.length > 1 && (
+                <button
+                  className="carousel-nav carousel-nav-next"
+                  onClick={() => setLibraryCarouselIndex(prev => 
+                    prev === filteredMedia.length - 1 ? 0 : prev + 1
+                  )}
+                >
+                  <ChevronRight size={24} />
+                </button>
+              )}
+            </div>
+
+            <div className="carousel-actions">
+              <button
+                className="carousel-action-btn select-btn"
+                onClick={() => {
+                  handleImageToggle(filteredMedia[libraryCarouselIndex]);
+                  closeLibraryCarousel();
+                }}
+              >
+                {selectedImages.some(img => (img._id || img.id) === (filteredMedia[libraryCarouselIndex]._id || filteredMedia[libraryCarouselIndex].id))
+                  ? 'Remove from Selection'
+                  : 'Add to Selection'
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="media-library-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Select Images from Media Library</h3>
+          <h3>Select Media from Library</h3>
           <button className="modal-close" onClick={handleClose}>
             <X size={20} />
           </button>
@@ -1701,7 +2127,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
             <Search size={16} />
             <input
               type="text"
-              placeholder="Search images..."
+              placeholder="Search media..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -1710,7 +2136,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
           {/* Selected Images Counter */}
           {selectedImages.length > 0 && (
             <div className="selected-counter">
-              {selectedImages.length} image{selectedImages.length > 1 ? 's' : ''} selected
+              {selectedImages.length} item{selectedImages.length > 1 ? 's' : ''} selected
             </div>
           )}
 
@@ -1724,44 +2150,53 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
             ) : filteredMedia.length === 0 ? (
               <div className="no-media">
                 <Image size={48} />
-                <h4>No images found</h4>
+                <h4>No media found</h4>
                 <p>
                   {searchQuery
-                    ? `No images match "${searchQuery}"`
-                    : "Upload some images to your media library first"
+                    ? `No media matches "${searchQuery}"`
+                    : "Upload some media to your library first"
                   }
                 </p>
               </div>
             ) : (
-              filteredMedia.map(image => {
-                const imageId = image._id || image.id;
-                const isSelected = selectedImages.some(img => (img._id || img.id) === imageId);
-
-                // ✅ Prioritize originalName over processed filename
-                const displayName = image.originalName || image.filename;
+              filteredMedia.map((media, index) => {
+                const mediaId = media._id || media.id;
+                const isSelected = selectedImages.some(img => (img._id || img.id) === mediaId);
+                const displayName = media.originalName || media.filename;
+                const isVideo = media.fileType?.startsWith('video');
 
                 return (
                   <div
-                    key={imageId}
+                    key={mediaId}
                     className={`media-library-item ${isSelected ? 'selected' : ''}`}
-                    onClick={() => handleImageToggle(image)}
                   >
-                    <div className="media-thumbnail">
-                      <img
-                        src={image.url}
-                        alt={image.altText || displayName}
-                        loading="lazy"
-                        onError={(e) => {
-                          console.error('Failed to load image:', image.url);
-                          e.target.style.display = 'none';
-                        }}
-                      />
+                    <div className="media-thumbnail" onClick={() => openLibraryCarousel(index)}>
+                      {isVideo ? (
+                        <div className="video-thumbnail">
+                          <video src={media.url} muted />
+                          <div className="video-indicator">
+                            <Play size={16} />
+                          </div>
+                        </div>
+                      ) : (
+                        <img
+                          src={media.url}
+                          alt={media.altText || displayName}
+                          loading="lazy"
+                        />
+                      )}
+                      
+                      <div className="thumbnail-overlay">
+                        <Eye size={20} />
+                      </div>
+                      
                       {isSelected && (
                         <div className="selection-overlay">
                           <Check size={20} />
                         </div>
                       )}
                     </div>
+
                     <div className="media-info">
                       <span className="media-filename" title={displayName}>
                         {displayName?.length > 25
@@ -1769,14 +2204,32 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
                           : displayName || 'Untitled'
                         }
                       </span>
-                      <span className="media-size">
-                        {image.humanSize || `${Math.round(image.size / 1024)}KB`}
-                      </span>
-                      {image.dimensions && (
-                        <span className="media-dimensions">
-                          {image.dimensions.width} × {image.dimensions.height}
+                      <div className="media-metadata">
+                        <span className="media-size">
+                          {media.humanSize || `${Math.round(media.size / 1024)}KB`}
                         </span>
-                      )}
+                        {media.dimensions && (
+                          <span className="media-dimensions">
+                            {media.dimensions.width} × {media.dimensions.height}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                                        <div className="media-actions">
+                      <button
+                        className="media-action-btn view-btn"
+                        onClick={() => openLibraryCarousel(index)}
+                        title="View in carousel"
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        className={`media-action-btn select-btn ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleImageToggle(media)}
+                        title={isSelected ? 'Remove from selection' : 'Add to selection'}
+                      >
+                        {isSelected ? <X size={14} /> : <Check size={14} />}
+                      </button>
                     </div>
                   </div>
                 );
@@ -1794,15 +2247,12 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
             onClick={handleSelectImages}
             disabled={selectedImages.length === 0}
           >
-            Add {selectedImages.length} Image{selectedImages.length !== 1 ? 's' : ''} to Post
+            Add {selectedImages.length} Item{selectedImages.length !== 1 ? 's' : ''} to Post
           </button>
         </div>
       </div>
     </div>
   );
 };
-
-
-
 
 export default CreatePost;
