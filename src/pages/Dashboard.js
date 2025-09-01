@@ -39,13 +39,14 @@ const Dashboard = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [slicePosts, setSlicePosts] = useState(0);
+  const [slicePosts, setSlicePosts] = useState(1);
   const [posts, setPosts] = useState([]);
   const [upcomingPosts, setUpcomingPosts] = useState([]);
   const [userStats, setUserStats] = useState(null);
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [spinning, setSpinning] = useState(false);
   // useEffect(() => {
   //   if (upcomingPosts.length === 1) {
   //     setSlicePosts(1);
@@ -61,14 +62,16 @@ const Dashboard = () => {
       return count + 1; // default to 1 (instagram fallback)
     }, 0);
   };
-  useEffect(() => {
-    const totalCards = getTotalPlatformCount(upcomingPosts);
-    setSlicePosts(totalCards);
 
-    if (slicePosts > 1) {
-      setSlicePosts(1)
-    }
-  }, [upcomingPosts]);
+  // useEffect(() => {
+  //   const totalCards = getTotalPlatformCount(upcomingPosts);
+  //   setSlicePosts(totalCards);
+
+  //   if (slicePosts > 1) {
+  //     setSlicePosts(1)
+  //   }
+  // }, [upcomingPosts]);
+  
   const navigate = useNavigate();
 
   const handleMediaUpload = async (files) => {
@@ -247,7 +250,11 @@ const Dashboard = () => {
   };
 
   const handleRefreshPosts = () => {
-    fetchPosts(true);
+    // fetchPosts(true);
+    setSpinning(true);
+    setTimeout(() => {
+      setSpinning(false);
+    }, 3000); // stop after 3 seconds
   };
 
   // Calculate posts this month from fetched data
@@ -387,7 +394,7 @@ const Dashboard = () => {
               </div>
 
               {/* Row 2 */}
-              <div className="stat-card clickable"  onClick={() => navigate("/planner")} style={{ cursor: "pointer" }}>
+              <div className="stat-card clickable" onClick={() => navigate("/planner")} style={{ cursor: "pointer" }}>
                 <div className="stat-icon published">
                   <TrendingUp size={24} />
                 </div>
@@ -449,7 +456,7 @@ const Dashboard = () => {
                 onClick={handleRefreshPosts}
                 disabled={postsLoading}
               >
-                <RefreshCw size={16} className={postsLoading ? 'spinning' : ''} />
+                <RefreshCw size={16} className={spinning ? "spinning" : ""} />
                 <span style={{ marginLeft: "6px" }}>Refresh Now</span>
 
               </button>
@@ -465,7 +472,7 @@ const Dashboard = () => {
               </div>
             )}
 
-            <div className={`upcoming-posts-scroll ${upcomingPosts.length == 0 ? 'upsflx' : ''}`} onClick={() => {navigate('/content')}}>
+            <div className={`upcoming-posts-scroll ${upcomingPosts.length == 0 ? 'upsflx' : ''}`} onClick={() => { navigate('/content') }}>
               {postsLoading && posts.length === 0 ? (
                 <div className="loading-posts">
                   <Loader />
@@ -500,7 +507,7 @@ const Dashboard = () => {
                         style={style}
                       >
                         <div className="platform-header">
-                          <Clock size={16} />
+                          <Clock size={35} />
                           <span className="schedule-time">
                             {new Date(post.scheduledDate).toLocaleDateString('en-US', {
                               weekday: 'short',
@@ -651,7 +658,7 @@ const Dashboard = () => {
                 // () => document.getElementById('media-upload').click()
                 () => navigate('/ai-assistant')
               }>
-                <Sparkles size ={18} />
+                <Sparkles size={18} />
                 AI Assistant
               </button>
               <input
@@ -671,8 +678,8 @@ const Dashboard = () => {
           {/* Connected Accounts */}
           <div className="connected-accounts-sidebar">
             <h3>Connected Accounts</h3>
-            <div className="accounts-list"  onClick={() => navigate('/settings?tab=accounts')} style={{ cursor: "pointer" }}
->
+            <div className="accounts-list" onClick={() => navigate('/settings?tab=accounts')} style={{ cursor: "pointer" }}
+            >
               {(() => {
                 let accounts = user?.connectedAccounts ? [...user.connectedAccounts] : [];
 
@@ -726,7 +733,7 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Activity */}
-          <div className="recent-activity-sidebar"   onClick={() => navigate("/content")} style={{ cursor: "pointer" }}>
+          <div className="recent-activity-sidebar" onClick={() => navigate("/content")} style={{ cursor: "pointer" }}>
             <h3>Recent Activity</h3>
             <div className="activity-feed">
               {posts.slice(0, 5).map(post => (

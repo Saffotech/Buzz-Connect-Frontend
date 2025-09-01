@@ -80,13 +80,15 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     const draftData = { ...postData, status: "draft" };
     console.log("Saving draft:", draftData);
 
-    // example async action
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert("Post saved as draft!");
-    }, 1000);
+    setToast({
+      type: 'success',
+      message: 'Draft saved successfully!',
+    });
+
+    // Auto-hide toast after 3 seconds
+    setTimeout(() => setToast(null), 3000);
   };
+
 
   // Fetch user profile and connected accounts on mount
   useEffect(() => {
@@ -875,7 +877,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   return (
     <div className={`create-post-overlay ${showMediaLibrary ? 'media-library-open' : ''}`}>
       {/* Toast Notification */}
-      {toast && (
+      {/* {toast && (
         <div className={`toast toast-${toast.type}`}>
           <div className="toast-content">
             {toast.type === 'success' && <CheckCircle size={16} />}
@@ -884,7 +886,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
             <span>{toast.message}</span>
           </div>
         </div>
-      )}
+      )} */}
 
       <div className={`create-post-modal ${showMediaLibrary ? 'media-library-open' : ''}`}>
         <div className="modal-header">
@@ -931,12 +933,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           )}
 
           {/* Loading Profile */}
-          {loadingProfile && (
+
+          {/* {loadingProfile && (
             <div className="loading-profile">
               <Loader />
               <span>Loading profile...</span>
             </div>
-          )}
+          )} */}
 
 
           {activeTab === 'compose' && (
@@ -1235,14 +1238,24 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 {/* Enhanced Upload Area with Drag & Drop */}
                 {/* Media Upload Section */}
                 <div className="form-section">
-                  <label className="section-label">
-                    <Image size={16} />
-                    Media (Images & Videos)
-                  </label>
-                  
+
+                  <div className="headz">
+                    <label className="section-label">
+                      <Image size={16} />
+                      Media (Images & Videos)
+                    </label>
+
+                    <label className="section-label px" onClick={() => setShowMediaLibrary(true)}>
+                      <FolderOpen size={16} />
+                      Import from Media Library
+                    </label>
+                  </div>
+
+
                   {/* Upload Options Grid */}
                   <div className="media-upload-container">
                     <div className="upload-options-grid">
+
                       {/* Upload New Files with Drag & Drop */}
                       <div className="upload-option">
                         <input
@@ -1287,7 +1300,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                       </div>
 
                       {/* Import from Media Library */}
-                      <div className="upload-option">
+
+                      {/* <div className="upload-option">
                         <button
                           type="button"
                           className="media-library-btn"
@@ -1298,7 +1312,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           <span className="upload-title">Import from Media Library</span>
                           <small className="upload-subtitle">Choose from your existing files</small>
                         </button>
-                      </div>
+                      </div> */}
+
                     </div>
                   </div>
 
@@ -1316,7 +1331,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           Clear All
                         </button>
                       </div>
-                      
+
                       <div className="media-preview-grid">
                         {postData.images.map((mediaItem, index) => {
                           const MediaIcon = getMediaTypeIcon(mediaItem);
@@ -1374,8 +1389,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                 <div className="media-name" title={displayName}>
                                   <MediaIcon size={14} />
                                   <span>
-                                    {displayName.length > 15 
-                                      ? `${displayName.substring(0, 15)}...` 
+                                    {displayName.length > 15
+                                      ? `${displayName.substring(0, 15)}...`
                                       : displayName
                                     }
                                   </span>

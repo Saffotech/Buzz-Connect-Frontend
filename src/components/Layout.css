@@ -60,7 +60,7 @@ layout.css
   transform: scaleX(0);
   transform-origin: right;
   transition: transform 0.001s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000000;
+  z-index: 600;
 }
 
 .app-sidebar.open {

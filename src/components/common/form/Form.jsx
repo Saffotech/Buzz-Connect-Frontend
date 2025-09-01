@@ -653,90 +653,63 @@ const Form = ({ isLogin, setIsLogin, formMode, setFormMode }) => {
     </form>
   );
 
-  const renderResetPasswordForm = () => (
-    <form className="auth-form" onSubmit={handleResetPassword}>
-      <div className="form-header">
-        <h3>Reset Password</h3>
-        <p>Create a new password for {formData.email}</p>
-      </div>
+ const renderResetPasswordForm = () => (
+  <form className="auth-form" onSubmit={handleResetPassword}>
+    <div className="form-header">
+      <h3>Reset Password</h3>
+      <p>Create a new password</p>
+    </div>
 
-      {/* Display email for confirmation */}
-      <div className="form-group">
-        <label>Email (Read-only)</label>
+    <div className="form-group">
+      <label>New Password</label>
+      <div className="password-input has-toggle">
         <Input
-          type="email"
-          name="email"
-          value={formData.email}
-          readOnly
-          style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }}
+          type={showNewPassword ? 'text' : 'password'}
+          name="newPassword"
+          placeholder="Enter new password"
+          value={formData.newPassword}
+          onChange={handleInputChange}
+          required
         />
-      </div>
-
-      <div className="form-group">
-        <label>New Password</label>
-        <div className="password-input has-toggle">
-          <Input
-            type={showNewPassword ? 'text' : 'password'}
-            name="newPassword"
-            placeholder="Enter new password"
-            value={formData.newPassword}
-            onChange={handleInputChange}
-              title="Copy Paste is not permitted"
-
-            required
-          />
-          <button
-            type="button"
-            className="password-toggle"
-            onClick={() => setShowNewPassword(!showNewPassword)}
-          >
-            {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </button>
-        </div>
-      </div>
-
-      <div className="form-group">
-        <label>Confirm New Password</label>
-        <div className="password-input has-toggle">
-          <Input
-            type={showConfirmNewPassword ? 'text' : 'password'}
-            name="confirmNewPassword"
-            placeholder="Confirm new password"
-            value={formData.confirmNewPassword}
-            onChange={handleInputChange}
-            title="Copy Paste is not permitted"
-            required
-          />
-          <button
-            type="button"
-            className="password-toggle"
-            onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-          >
-            {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </button>
-        </div>
-      </div>
-
-      <Button
-        type="submit"
-        className="primary-btn auth-submit"
-        disabled={apiLoading}
-      >
-        {apiLoading && <div className="spinner" />}
-        Reset Password
-      </Button>
-
-      <div className="auth-footer">
         <button
           type="button"
-          className="auth-switch"
-          onClick={handleBackToLogin}
+          className="password-toggle"
+          onClick={() => setShowNewPassword(!showNewPassword)}
         >
-          Back to Login
+          {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
         </button>
       </div>
-    </form>
-  );
+    </div>
+
+    <div className="form-group">
+      <label>Confirm New Password</label>
+      <div className="password-input has-toggle">
+        <Input
+          type={showConfirmNewPassword ? 'text' : 'password'}
+          name="confirmNewPassword"
+          placeholder="Confirm new password"
+          value={formData.confirmNewPassword}
+          onChange={handleInputChange}
+          required
+        />
+        <button
+          type="button"
+          className="password-toggle"
+          onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+        >
+          {showConfirmNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+        </button>
+      </div>
+    </div>
+
+    <Button type="submit" className="primary-btn auth-submit" disabled={apiLoading}>
+      {apiLoading && <div className="spinner" />}
+      Reset Password
+    </Button>
+  </form>
+);
+
+
 
   return (
     <>
