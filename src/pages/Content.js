@@ -632,10 +632,6 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
 
       {/* Platform Header */}
       <div className="platform-header">
-        <div className="platform-info">
-          <PlatformIcon size={16} />
-          <span className="platform-name">{primary}</span>
-        </div>
         <div className="schedule-info">
           {postStatus === 'scheduled' && <Clock size={16} />}
           <span className="schedule-time">
@@ -647,6 +643,10 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
               minute: '2-digit',
             })}
           </span>
+        </div>
+          <div className="platform-info">
+          <PlatformIcon size={20} />
+          <span className="platform-name">{primary}</span>
         </div>
       </div>
 
