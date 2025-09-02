@@ -46,15 +46,15 @@
 .media-library-modal {
   background: white;
   border-radius: 12px;
-  width: 90vw;
-  max-width: 800px;
+  /* width: 90vw;
+  max-width: 800px; */
   /* max-height: 80vh; */
   overflow: hidden;
   position: relative;
   z-index: 2001;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
-
+ 
 /* Ensure the main create post modal stays in background when media library is open */
 .create-post-overlay.media-library-open {
   z-index: 999; /* Lower than media library */
@@ -750,7 +750,7 @@
 /* Modal Footer */
 .modal-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.75rem;
   padding: 1.5rem;
   border-top: 1px solid #e2e8f0;
@@ -1536,8 +1536,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  margin-top: 0.75rem;
-  padding: 1rem;
+  margin-top: 0.75rem ;
+  padding: 1rem 0;
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -1690,24 +1690,25 @@
 }
 
 /* Special styling for empty state */
-.form-input[type="date"]:not(:focus):invalid::before {
+.form-input[type="date"]::before {
   content: 'Select date';
   color: #9ca3af;
   font-weight: 400;
 }
 
-.form-input[type="time"]:not(:focus):invalid::before {
+.form-input[type="time"]::before {
   content: 'Select time';
   color: #9ca3af;
   font-weight: 400;
 }
 
+
 /* Enhanced focus ring */
-.form-input[type="date"]:focus-visible,
+/* .form-input[type="date"]:focus-visible,
 .form-input[type="time"]:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
-}
+} */
 
 /* Animation */
 @keyframes fadeIn {
@@ -2194,7 +2195,8 @@
 /* Media Library Modal Styles */
 .media-library-modal {
   width: 90vw;
-  max-width: 800px;
+  max-width: 1200px;
+  /* max-width: 800px; */
   /* max-height: 80vh; */
 }
 
