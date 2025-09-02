@@ -75,6 +75,71 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
 
+  // ✅ Helper functions for content formatting
+  const formatContentForDisplay = (content) => {
+    // Convert **text** to <strong>text</strong> for display in preview
+    return content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  };  
+
+  // ✅ Add these helper functions at the top of your component
+  const convertToUnicodeBold = (text) => {
+    const boldMap = {
+      'a': '𝐚', 'b': '𝐛', 'c': '𝐜', 'd': '𝐝', 'e': '𝐞', 'f': '𝐟', 'g': '𝐠', 'h': '𝐡', 'i': '𝐢', 'j': '𝐣', 'k': '𝐤', 'l': '𝐥', 'm': '𝐦',
+      'n': '𝐧', 'o': '𝐨', 'p': '𝐩', 'q': '𝐪', 'r': '𝐫', 's': '𝐬', 't': '𝐭', 'u': '𝐮', 'v': '𝐯', 'w': '𝐰', 'x': '𝐱', 'y': '𝐲', 'z': '𝐳',
+      'A': '𝐀', 'B': '𝐁', 'C': '𝐂', 'D': '𝐃', 'E': '𝐄', 'F': '𝐅', 'G': '𝐆', 'H': '𝐇', 'I': '𝐈', 'J': '𝐉', 'K': '𝐊', 'L': '𝐋', 'M': '𝐌',
+      'N': '𝐍', 'O': '𝐎', 'P': '𝐏', 'Q': '𝐐', 'R': '𝐑', 'S': '𝐒', 'T': '𝐓', 'U': '𝐔', 'V': '𝐕', 'W': '𝐖', 'X': '𝐗', 'Y': '𝐘', 'Z': '𝐙',
+      '0': '𝟎', '1': '𝟏', '2': '𝟐', '3': '𝟑', '4': '𝟒', '5': '𝟓', '6': '𝟔', '7': '𝟕', '8': '𝟖', '9': '𝟗',
+      ' ': ' ' // Keep spaces as they are
+    };
+    
+    return text.split('').map(char => boldMap[char] || char).join('');
+  };
+
+  // ✅ Updated function to convert to Unicode bold characters
+  const stripMarkdownForSocialMedia = (content) => {
+    // Convert **text** to Unicode bold characters
+    return content.replace(/\*\*(.*?)\*\*/g, (match, text) => {
+      return convertToUnicodeBold(text);
+    });
+  };
+
+  // ✅ ADDED: Helper function to extract hashtags from content
+  const extractHashtagsFromContent = (text) => {
+    if (!text) return { content: '', hashtags: [] };
+    
+    // Split text into lines to better handle formatting
+    const lines = text.split('\n');
+    const contentLines = [];
+    const hashtags = [];
+    
+    lines.forEach(line => {
+      const trimmedLine = line.trim();
+      
+      // Check if this line contains hashtags
+      const lineHashtags = trimmedLine.match(/#\w+/g) || [];
+      
+      if (lineHashtags.length > 0) {
+        hashtags.push(...lineHashtags);
+        
+        // Remove hashtags from the line
+        const cleanLine = trimmedLine.replace(/#\w+/g, '').replace(/\s+/g, ' ').trim();
+        
+        // Only add the line if there's content left after removing hashtags
+        if (cleanLine) {
+          contentLines.push(cleanLine);
+        }
+      } else if (trimmedLine) {
+        // Line with no hashtags, add as is
+        contentLines.push(trimmedLine);
+      }
+    });
+    
+    return {
+      content: contentLines.join('\n').trim(),
+      hashtags: [...new Set(hashtags)] // Remove duplicates
+    };
+  };
+
   // ✅ 1. Define the function here (inside component, before return)
   const onSaveDraft = () => {
     const draftData = { ...postData, status: "draft" };
@@ -596,6 +661,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     showToast('Image removed', 'info');
   };
 
+  // ✅ FIXED: Updated handleSubmit with markdown stripping
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -617,9 +683,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         }
       });
 
+      // ✅ FIXED: Strip markdown formatting for social media posting
+      const cleanedContent = stripMarkdownForSocialMedia(postData.content);
+
       // Prepare post data for API (matching Swagger structure)
       const apiPostData = {
-        content: postData.content,
+        content: cleanedContent, // ✅ Use cleaned content without **
         platforms: postData.platforms,
         selectedAccounts: cleanedSelectedAccounts,
         images: postData.images.map(img => ({
@@ -762,12 +831,15 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       if (response.success && response.data) {
         const suggestions = [];
 
-        // Handle the response structure from your Swagger example
+        // ✅ UPDATED: Handle the response structure and extract hashtags
         Object.entries(response.data.content).forEach(([platform, data]) => {
+          // Extract hashtags from the AI-generated content
+          const { content, hashtags } = extractHashtagsFromContent(data.content);
+          
           suggestions.push({
             id: `${platform}-${Date.now()}`,
-            content: data.content,
-            hashtags: '', // Extract hashtags from content if needed
+            content: content, // Content without hashtags
+            hashtags: hashtags.join(' '), // Hashtags as string
             tone: response.data.options.tone,
             platforms: [platform],
             characterCount: data.characterCount,
@@ -839,12 +911,16 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   };
 
-
+  // ✅ UPDATED: Apply AI suggestion with hashtag extraction
   const applyAISuggestion = (suggestion) => {
+    console.log('Applying AI suggestion:', suggestion);
+    console.log('Original content:', suggestion.content);
+    console.log('Suggestion hashtags:', suggestion.hashtags);
+    
     setPostData(prev => ({
       ...prev,
-      content: suggestion.content,
-      hashtags: suggestion.hashtags,
+      content: suggestion.content, // Content should already be without hashtags
+      hashtags: suggestion.hashtags || '', // Hashtags in separate field
       platforms: suggestion.platforms
     }));
     showToast('AI suggestion applied successfully', 'success');
@@ -1030,9 +1106,15 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                 })}
                               </div>
                             </div>
-                            <p className="suggestion-content">{suggestion.content}</p>
+                            {/* ✅ FIXED: Display AI suggestion with formatted content */}
+                            <div 
+                              className="suggestion-content"
+                              dangerouslySetInnerHTML={{ 
+                                __html: formatContentForDisplay(suggestion.content) 
+                              }}
+                            />
                             <div className="suggestion-hashtags">
-                              <Hash size={12} />
+                              {/* <Hash size={12} /> */}
                               <span>{suggestion.hashtags}</span>
                             </div>
                             <div className="suggestion-actions">
@@ -1509,18 +1591,48 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           <span>{platform.name}</span>
                         </div>
                         <div className="preview-post">
-                          {postData.images.length > 0 && (
-                            <div className="preview-images">
-                              <img
-                                src={postData.images[0].url || postData.images[0]}
-                                alt={postData.images[0].altText || "Post preview"}
-                                onError={(e) => {
-                                  console.error('Preview image failed to load');
-                                  e.target.style.display = 'none';
-                                }}
-                              />
-                            </div>
-                          )}
+{postData.images.length > 0 && (
+  <div className={`preview-images ${
+    postData.images.length === 1 ? 'single-image' :
+    postData.images.length === 2 ? 'two-images' :
+    postData.images.length === 3 ? 'three-images' :
+    postData.images.length === 4 ? 'four-images' : ''
+  }`}>
+    {postData.images.map((mediaItem, index) => {
+      const isVideo = mediaItem.fileType === 'video' || 
+                     mediaItem.url?.includes('video') || 
+                     mediaItem.url?.includes('.mp4') || 
+                     mediaItem.url?.includes('.mov') || 
+                     mediaItem.url?.includes('.avi');
+      
+      return isVideo ? (
+        <video
+          key={index}
+          src={mediaItem.url}
+          className="preview-video"
+          controls
+          muted
+          playsInline
+          onError={(e) => {
+            console.error('Preview video failed to load');
+            e.target.style.display = 'none';
+          }}
+        />
+      ) : (
+        <img
+          key={index}
+          src={mediaItem.url}
+          alt={mediaItem.altText || "Post preview"}
+          onError={(e) => {
+            console.error('Preview image failed to load');
+            e.target.style.display = 'none';
+          }}
+        />
+      );
+    })}
+  </div>
+)}
+
                           <div className="preview-text">
                             <p>{postData.content}</p>
                             {/* Fixed hashtags rendering */}
@@ -1545,8 +1657,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
               </div>
             </div>
           )}
-
-
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
