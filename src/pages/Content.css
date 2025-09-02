@@ -1633,7 +1633,7 @@ padding: 0;
   color: var(--platform-color);
   font-weight: 600;
   font-size: 0.875rem;
-  padding-left: 3rem;
+  /* padding-left: 3rem; */
 }
 
 .schedule-info {
@@ -1708,7 +1708,7 @@ padding: 0;
 .preview-image-container {
   align-content: center;
   flex: 1;
-  aspect-ratio: 1;
+  /* aspect-ratio: 1; */
   overflow: hidden;
   border-radius: 4px;
 }
