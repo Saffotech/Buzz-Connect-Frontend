@@ -130,127 +130,128 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   }, [isOpen]);
 
-  const handleFileUpload = async (files) => {
-    if (!files || files.length === 0) return;
+ const handleFileUpload = async (files) => {
+  if (!files || files.length === 0) return;
 
-    // Enhanced file validation
-    const validFiles = [];
-    const invalidFiles = [];
+  // Enhanced file validation for Instagram
+  const validFiles = [];
+  const invalidFiles = [];
 
-    Array.from(files).forEach(file => {
-      // Check file type
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
+  Array.from(files).forEach(file => {
+    // Check file type
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
 
-      if (!isImage && !isVideo) {
-        invalidFiles.push({ file, reason: 'Unsupported file type' });
-        return;
-      }
+    if (!isImage && !isVideo) {
+      invalidFiles.push({ file, reason: 'Unsupported file type' });
+      return;
+    }
 
-      // Check file size - 250MB for videos, 50MB for images
-      const maxSize = isVideo ? 250 * 1024 * 1024 : 50 * 1024 * 1024;
-      if (file.size > maxSize) {
-        const maxSizeText = isVideo ? '250MB' : '50MB';
+    // ✅ Instagram-specific validations
+    if (isVideo) {
+      // Check video size for Instagram (100MB limit)
+      if (file.size > 100 * 1024 * 1024) {
         invalidFiles.push({
           file,
-          reason: `File too large (max ${maxSizeText})`
+          reason: 'Video too large for Instagram (max 100MB)'
         });
         return;
       }
+      
+      console.log('Video file accepted:', file.name, 'Size:', file.size);
+    } else {
+      // Image size limit
+      if (file.size > 50 * 1024 * 1024) {
+        invalidFiles.push({
+          file,
+          reason: 'Image too large (max 50MB)'
+        });
+        return;
+      }
+    }
 
-      validFiles.push(file);
+    validFiles.push(file);
+  });
+
+  // Show warnings for invalid files
+  if (invalidFiles.length > 0) {
+    const errorMessages = invalidFiles.map(({ file, reason }) =>
+      `${file.name}: ${reason}`
+    ).join('\n');
+    showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
+  }
+
+  if (validFiles.length === 0) return;
+
+  setUploadingFiles(true);
+  setError(null);
+
+  try {
+    console.log('✅ Uploading files:', validFiles.map(f => ({ name: f.name, type: f.type, size: f.size })));
+
+    const response = await uploadMedia(validFiles);
+    console.log('✅ Upload response:', response);
+
+    if (!response.data || !Array.isArray(response.data)) {
+      throw new Error('Invalid upload response format');
+    }
+
+    const uploadedMedia = response.data.map((media, index) => {
+      const originalFile = validFiles[index];
+      
+      // ✅ CRITICAL: Ensure all required fields are present
+      const processedMedia = {
+        url: media.url || media.secure_url,
+        altText: media.originalName || originalFile?.name || 'Post media',
+        // ✅ FIX: Ensure originalName is always present
+        originalName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
+        displayName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
+        filename: media.filename || originalFile?.name,
+        publicId: media.publicId,
+        fileType: media.fileType || (originalFile?.type.startsWith('video/') ? 'video' : 'image'),
+        size: media.size || originalFile?.size,
+        dimensions: media.dimensions,
+        // Video-specific fields
+        duration: media.duration || null,
+        fps: media.fps || null,
+        hasAudio: media.hasAudio || null,
+        // Enhanced fields
+        thumbnails: media.thumbnails || null,
+        videoQualities: media.videoQualities || null,
+        platformOptimized: media.platformOptimized || null,
+        // ✅ Add metadata for better compatibility
+        format: originalFile?.type || 'video/mp4',
+        createdAt: new Date().toISOString()
+      };
+
+      console.log('✅ Processed media:', processedMedia);
+      return processedMedia;
     });
 
-    // Show warnings for invalid files
-    if (invalidFiles.length > 0) {
-      const errorMessages = invalidFiles.map(({ file, reason }) =>
-        `${file.name}: ${reason}`
-      ).join('\n');
-      showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
-    }
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
+    }));
 
-    if (validFiles.length === 0) return;
+    const fileTypeText = validFiles.length === 1
+      ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
+      : 'files';
 
-    setUploadingFiles(true);
-    setError(null);
+    showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
 
-    try {
-      // Store original filenames for mapping
-      const originalFilenames = validFiles.map(file => file.name);
+  } catch (error) {
+    console.error('❌ Upload failed:', error);
+    setError(error.message || 'Failed to upload media');
+    showToast('Failed to upload media', 'error');
 
-      // Create local previews with original names
-      const localPreviews = validFiles.map((file, index) => ({
-        url: URL.createObjectURL(file),
-        altText: file.name,
-        originalName: file.name,
-        displayName: file.name,
-        isLocal: true,
-        fileType: file.type.startsWith('video/') ? 'video' : 'image',
-        size: file.size,
-        index
-      }));
-
-      setPostData(prev => ({
-        ...prev,
-        images: [...prev.images, ...localPreviews]
-      }));
-
-      const fileTypeText = validFiles.length === 1
-        ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
-        : 'files';
-
-      showToast(`Uploading ${validFiles.length} ${fileTypeText}...`, 'info');
-
-      const response = await uploadMedia(validFiles);
-      console.log('Upload response:', response);
-
-      const uploadedMedia = response.data.map((media, index) => {
-        const originalFile = validFiles[index];
-
-        console.log(`Mapping file ${index}:`, {
-          originalFileName: originalFile?.name,
-          apiOriginalName: media.originalName,
-          apiFilename: media.filename
-        });
-
-        return {
-          url: media.url,
-          altText: media.originalName || originalFile?.name || 'Post media',
-          originalName: media.originalName || originalFile?.name,
-          displayName: media.originalName || originalFile?.name || media.filename,
-          filename: media.filename,
-          publicId: media.publicId,
-          fileType: media.fileType || (media.url.includes('video') ? 'video' : 'image'),
-          size: media.size || originalFile?.size,
-          dimensions: media.dimensions,
-          cloudinaryFilename: media.filename
-        };
-      });
-
-      console.log('Final uploaded media:', uploadedMedia);
-
-      // Replace local previews with actual uploaded URLs
-      setPostData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
-      }));
-
-      showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
-
-    } catch (error) {
-      console.error('Failed to upload media:', error);
-      setError(error.message || 'Failed to upload media');
-      showToast('Failed to upload media', 'error');
-
-      // Remove local previews on error
-      setPostData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => !img.isLocal)
-      }));
-    } finally {
-      setUploadingFiles(false);
-    }
-  };
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter(img => !img.isLocal)
+    }));
+  } finally {
+    setUploadingFiles(false);
+  }
+};
 
   // ✅ Handle file input change
   const handleFileInputChange = (e) => {
@@ -305,12 +306,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
   const handleImportFromLibrary = (selectedImages) => {
     setPostData(prev => ({
@@ -626,109 +627,136 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+  e.preventDefault();
+  setIsSubmitting(true);
+  setError(null);
 
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
+  if (!validateForm()) {
+    setIsSubmitting(false);
+    return;
+  }
 
-    try {
-      // Clean up selectedAccounts to remove null values and empty arrays
-      const cleanedSelectedAccounts = {};
-      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-        const validAccounts = accounts.filter(account => account != null && account !== '');
-        if (validAccounts.length > 0) {
-          cleanedSelectedAccounts[platform] = validAccounts;
-        }
+  try {
+    // ✅ Enhanced debugging
+    console.log('=== POST SUBMISSION DEBUG ===');
+    console.log('Post data:', JSON.stringify(postData, null, 2));
+    console.log('Images count:', postData.images?.length);
+    console.log('Platforms:', postData.platforms);
+    console.log('Selected accounts:', postData.selectedAccounts);
+    
+    postData.images?.forEach((item, index) => {
+      console.log(`Media ${index}:`, {
+        url: item.url ? '✅ HAS URL' : '❌ NO URL',
+        fileType: item.fileType,
+        originalName: item.originalName,
+        size: item.size
       });
+    });
 
-      // Prepare post data for API (matching Swagger structure)
-      const apiPostData = {
-        content: postData.content,
-        platforms: postData.platforms,
-        selectedAccounts: cleanedSelectedAccounts,
-        images: postData.images.map(img => ({
-          url: img.url,
-          altText: img.altText || 'Post image',
-          publicId: img.publicId || null
-        })),
-        hashtags: Array.isArray(postData.hashtags)
-          ? postData.hashtags
-          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-        mentions: Array.isArray(postData.mentions)
-          ? postData.mentions
-          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-        metadata: {
-          category: postData.metadata?.category || 'other'
-        }
-      };
+    // Clean up selectedAccounts to remove null values and empty arrays
+    const cleanedSelectedAccounts = {};
+    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+      const validAccounts = accounts.filter(account => account != null && account !== '');
+      if (validAccounts.length > 0) {
+        cleanedSelectedAccounts[platform] = validAccounts;
+      }
+    });
 
-      console.log('Submitting post data:', apiPostData);
+    // ✅ Enhanced post data preparation with better media handling
+    const apiPostData = {
+      content: postData.content,
+      platforms: postData.platforms,
+      selectedAccounts: cleanedSelectedAccounts,
+      images: postData.images.map((img, index) => ({
+        url: img.url,
+        altText: img.altText || img.originalName || 'Post media',
+        originalName: img.originalName || img.filename || `Media ${index + 1}`,
+        displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+        filename: img.filename,
+        publicId: img.publicId || null,
+        fileType: img.fileType || 'image',
+        size: img.size,
+        dimensions: img.dimensions,
+        duration: img.duration,
+        // ✅ Add order for carousel
+        order: index,
+        // ✅ Enhanced metadata
+        format: img.format,
+        humanSize: img.size ? formatFileSize(img.size) : null
+      })),
+      hashtags: Array.isArray(postData.hashtags)
+        ? postData.hashtags
+        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+      mentions: Array.isArray(postData.mentions)
+        ? postData.mentions
+        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+      metadata: {
+        category: postData.metadata?.category || 'other',
+        source: 'web'
+      }
+    };
 
-      let response;
+    // ✅ Handle scheduling vs immediate publishing
+    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+      // SCHEDULED POST
+      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+      apiPostData.scheduledDate = scheduledDateTime.toISOString();
 
-      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-        // SCHEDULED POST - Create first, then schedule
-        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-        apiPostData.scheduledDate = scheduledDateTime.toISOString();
+      console.log('📅 Creating scheduled post for:', scheduledDateTime.toISOString());
+      showToast('Scheduling post...', 'info');
+      
+      const response = await onPostCreated(apiPostData);
+      console.log('✅ Scheduled post created:', response);
+      
+      showToast('Post scheduled successfully!', 'success');
 
-        showToast('Scheduling post...', 'info');
-        response = await onPostCreated(apiPostData);
+    } else {
+      // PUBLISH NOW
+      console.log('🚀 Creating and publishing post immediately...');
+      showToast('Creating and publishing post...', 'info');
 
-      } else {
-        // PUBLISH NOW - Create and immediately publish
-        showToast('Creating and publishing post...', 'info');
+      // Step 1: Create the post as draft
+      const createResponse = await onPostCreated(apiPostData);
+      console.log('✅ Post created:', createResponse);
 
-        // Step 1: Create the post as draft
-        const createResponse = await onPostCreated(apiPostData);
-        console.log('Post created:', createResponse);
-
-        if (!createResponse?.data?._id) {
-          throw new Error('Failed to create post - no ID returned');
-        }
-
-        // Step 2: Immediately publish the created post
-        const postId = createResponse.data._id;
-        console.log('Publishing post with ID:', postId);
-
-        const publishResponse = await axios.post(
-          `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
-
-        console.log('Publish response:', publishResponse);
-        response = publishResponse;
+      if (!createResponse?.data?._id) {
+        throw new Error('Failed to create post - no ID returned');
       }
 
-      console.log('Final response:', response);
+      // Step 2: Immediately publish the created post
+      const postId = createResponse.data._id;
+      console.log('📤 Publishing post with ID:', postId);
 
-      const successMessage = isScheduled
-        ? 'Post scheduled successfully!'
-        : response?.data?.status === 'published'
-          ? 'Post published successfully!'
-          : 'Post created successfully!';
+      const publishResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
 
-      showToast(successMessage, 'success');
-
-      // Reset form on success
-      resetForm();
-      onClose();
-
-    } catch (error) {
-      console.error('Failed to create/publish post:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-      setError(errorMessage);
-      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
-    } finally {
-      setIsSubmitting(false);
+      console.log('✅ Publish response:', publishResponse);
+      
+      if (publishResponse.data.success) {
+        showToast('Post published successfully!', 'success');
+      } else {
+        throw new Error(publishResponse.data.message || 'Publishing failed');
+      }
     }
-  };
+
+    // Reset form on success
+    resetForm();
+    onClose();
+
+  } catch (error) {
+    console.error('❌ Failed to create/publish post:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+    setError(errorMessage);
+    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const resetForm = () => {
     setPostData({
@@ -1424,7 +1452,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 {/* Enhanced Media Upload Section with Carousel Support */}
                 <div className="form-section">
 
-                  <label className="section-label">
+                  {/* <label className="section-label">
                     <Image size={16} />
                     Media (Images & Videos)
                     {postData.images.length > 0 && (
@@ -1440,7 +1468,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                         </button>
                       </div>
                     )}
-                  </label>
+                  </label> */}
                   
 
 
