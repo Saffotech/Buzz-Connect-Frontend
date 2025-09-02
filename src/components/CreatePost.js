@@ -144,6 +144,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       content: contentLines.join('\n').trim(),
       hashtags: [...new Set(hashtags)] // Remove duplicates
     };
+  };
+    
   // Carousel handlers
   const openCarousel = (index = 0) => {
     setCurrentCarouselIndex(index);
