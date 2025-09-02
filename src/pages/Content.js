@@ -1020,14 +1020,22 @@ const PostsSubPage = ({
               )}
             </div>
           ) : (
+            // In your PostsSubPage component, update the PlatformPostCard mapping:
             platformCards.map(({ post, platform, key }) => (
               <PlatformPostCard
                 key={key}
                 post={post}
                 platform={platform}
-                onClick={() => onPostClick(post)}
+                onClick={() => {
+                  // Create a post object with the clicked platform context
+                  const postWithPlatformContext = {
+                    ...post,
+                    selectedPlatform: platform // Add the clicked platform
+                  };
+                  onPostClick(postWithPlatformContext);
+                }}
                 onEdit={() => onEditPost(post)}
-                onDelete={() => onDeletePost(post)} // ✅ Pass entire post object
+                onDelete={() => onDeletePost(post)}
               />
             ))
           )}

@@ -1633,7 +1633,7 @@ padding: 0;
   color: var(--platform-color);
   font-weight: 600;
   font-size: 0.875rem;
-  padding-left: 3rem;
+  /* padding-left: 3rem; */
 }
 
 .schedule-info {
