@@ -220,6 +220,368 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
   );
 };
 
+// Terms & Condition Modal Component
+const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease-out'
+      }}
+    >
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          height: '90vh',
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          maxWidth: '600px',
+          width: '90%',
+          position: 'relative',
+          overflow: 'hidden',
+          animation: 'slideUp 0.3s ease-out'
+        }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            color: '#6B7280',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = '#F3F4F6';
+            e.target.style.color = '#374151';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = 'transparent';
+            e.target.style.color = '#6B7280';
+          }}
+        >
+          <X size={30} />
+        </button>
+
+        {/* Header with Icon */}
+        <div style={{ textAlign: 'left' }}>
+
+
+          <h3
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#111827',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            Terms and Conditions
+          </h3>
+
+          <div
+            style={{
+              padding: '32px 40px 24px 40px',
+              textAlign: 'left',
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              fontFamily: 'Inter, Arial, sans-serif',
+              lineHeight: '1.7',
+              fontSize: '16px',
+              color: '#374151',
+            }}
+          >
+            <h3
+              style={{
+                margin: '0 0 20px 0',
+                fontSize: '28px',
+                fontWeight: '700',
+                color: '#111827',
+                letterSpacing: '-0.02em',
+                textAlign: 'center',
+              }}
+            >
+              Privacy Policy
+            </h3>
+
+            <p>
+              <strong>Effective Date:</strong> July 14, 2025
+            </p>
+
+            <p>
+              <strong>MGA Buzz Connect</strong> ("we", "our", or "us") is committed to
+              protecting your privacy. This Privacy Policy explains how we collect, use,
+              disclose, and safeguard your information when you use our platform to
+              manage and schedule content across social media platforms.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              1. Information We Collect
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                <strong>Account Information:</strong> Your name, email address, and
+                contact details.
+              </li>
+              <li>
+                <strong>Social Media Data:</strong> With your permission, we collect data
+                from your connected social media accounts (e.g., Instagram, Facebook)
+                such as profile information, posts, analytics, and scheduling data.
+              </li>
+              <li>
+                <strong>Usage Data:</strong> Information about how you interact with our
+                platform, including pages visited and actions taken.
+              </li>
+              <li>
+                <strong>Device Data:</strong> IP address, browser type, and operating
+                system.
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              2. How We Use Your Information
+            </h4>
+            <p>We use your data to:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Provide and maintain our service</li>
+              <li>Allow you to schedule and manage social media posts</li>
+              <li>Send notifications and updates</li>
+              <li>Analyze usage to improve our platform</li>
+              <li>Comply with legal obligations</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              3. Sharing Your Information
+            </h4>
+            <p>
+              We do <strong>not</strong> sell or rent your personal data. We only share
+              your information with:
+            </p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                Social media platforms (e.g., Instagram Graph API) to publish and
+                retrieve your content
+              </li>
+              <li>
+                Service providers who help operate our platform (e.g., cloud hosting,
+                analytics)
+              </li>
+              <li>Legal authorities when required by law</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              4. Data Security
+            </h4>
+            <p>
+              We use industry-standard security practices, including encryption and
+              access control, to protect your data. However, no method is 100% secure,
+              and we cannot guarantee absolute security.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              5. Your Rights
+            </h4>
+            <p>You may:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Access and update your personal information</li>
+              <li>Disconnect your social media accounts at any time</li>
+              <li>
+                Request deletion of your data by contacting us at{' '}
+                <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              6. Cookies
+            </h4>
+            <p>
+              We use cookies and similar technologies to improve your experience. You can
+              disable cookies through your browser settings.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              7. Third-Party Links
+            </h4>
+            <p>
+              Our platform may contain links to third-party websites. We are not
+              responsible for their privacy practices.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              8. Changes to This Policy
+            </h4>
+            <p>
+              We may update this Privacy Policy periodically. Changes will be posted on
+              this page with an updated effective date.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              9. Contact Us
+            </h4>
+            <p>
+              If you have questions about this policy, please contact us at:{' '}
+              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+            </p>
+          </div>
+
+        </div>
+
+        {/* Footer Buttons */}
+        <div
+          style={{
+            padding: '1rem',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            justifyContent: 'flex-end'
+          }}
+        >
+          {/* <button
+            onClick={onClose}
+            style={{
+              padding: '12px 24px',
+              border: '1px solid #D1D5DB',
+              backgroundColor: 'white',
+              color: '#374151',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '500',
+              transition: 'all 0.2s ease',
+              minWidth: '180px'
+            }}
+          >
+            Accept
+          </button> */}
+
+
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              color: 'white',
+              background: '#3b82f6',
+              // background: 'linear-gradient(to right, hsla(276, 76%, 47%, 1), hsla(311, 91%, 54%, 1), hsla(221, 83%, 60%, 1))',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              minWidth: '180px'
+            }}
+          >
+            Accept & Continue
+          </button>
+        </div>
+      </div>
+    </div >
+  );
+};
+
 const AccountsSettings = ({ onNotify }) => {
   const { user, token, isLoading } = useAuth();
   const [connectedAccounts, setConnectedAccounts] = useState([]);
@@ -230,6 +592,20 @@ const AccountsSettings = ({ onNotify }) => {
     accountUsername: '',
     platform: ''
   });
+
+  const [termsConditionModal, setTermsConditionModal] = useState({
+    isOpen: false,
+  });
+
+  // ✅ Add this here
+  const handleCloseTerms = () => {
+    setTermsConditionModal({
+      isOpen: false,
+      accountId: null,
+      accountUsername: '',
+      platform: ''
+    });
+  };
 
   const platformIcons = {
     instagram: Instagram,
@@ -284,201 +660,201 @@ const AccountsSettings = ({ onNotify }) => {
     fetchAccounts();
   }, [authToken, isLoading]);
 
-// Updated grouping logic based on shared access tokens
-const groupAccountsByOwner = (accounts) => {
-  const groups = [];
-  const processedAccounts = new Set();
+  // Updated grouping logic based on shared access tokens
+  const groupAccountsByOwner = (accounts) => {
+    const groups = [];
+    const processedAccounts = new Set();
 
-  // Debug: Log all accounts to understand the data structure
-  console.log('All accounts:', accounts.map(acc => ({
-    id: acc._id,
-    username: acc.username,
-    platform: acc.platform,
-    accessToken: acc.accessToken ? acc.accessToken.substring(0, 20) + '...' : 'none' // Only show first 20 chars for privacy
-  })));
+    // Debug: Log all accounts to understand the data structure
+    console.log('All accounts:', accounts.map(acc => ({
+      id: acc._id,
+      username: acc.username,
+      platform: acc.platform,
+      accessToken: acc.accessToken ? acc.accessToken.substring(0, 20) + '...' : 'none' // Only show first 20 chars for privacy
+    })));
 
-  // Helper function to find all accounts that should be grouped together
-  const findRelatedAccounts = (startAccount, allAccounts) => {
-    const related = new Set([startAccount._id]);
-    const toProcess = [startAccount];
-    
-    while (toProcess.length > 0) {
-      const current = toProcess.shift();
-      
-      allAccounts.forEach(account => {
-        if (related.has(account._id)) return;
-        
-        if (shouldBeGrouped(current, account)) {
-          related.add(account._id);
-          toProcess.push(account);
-        }
-      });
-    }
-    
-    return allAccounts.filter(acc => related.has(acc._id));
-  };
+    // Helper function to find all accounts that should be grouped together
+    const findRelatedAccounts = (startAccount, allAccounts) => {
+      const related = new Set([startAccount._id]);
+      const toProcess = [startAccount];
 
-  // Updated grouping logic - prioritize access token matching
-  const shouldBeGrouped = (account1, account2) => {
-    // Same account
-    if (account1._id === account2._id) return false;
+      while (toProcess.length > 0) {
+        const current = toProcess.shift();
 
-    // Don't group same platform accounts
-    if (account1.platform === account2.platform) return false;
+        allAccounts.forEach(account => {
+          if (related.has(account._id)) return;
 
-    // Method 1: Same access token (HIGHEST PRIORITY for Meta accounts)
-    if (account1.accessToken && account2.accessToken && 
-        account1.accessToken === account2.accessToken) {
-      console.log(`Access token match found: ${account1.username} <-> ${account2.username}`);
-      return true;
-    }
-
-    // Method 2: Check for direct Meta connections
-    if (areDirectlyConnected(account1, account2)) {
-      console.log(`Direct connection found: ${account1.username} <-> ${account2.username}`);
-      return true;
-    }
-
-    // Method 3: Name similarity (for business pages under same user)
-    if (haveRelatedNames(account1, account2)) {
-      console.log(`Name similarity found: ${account1.username} <-> ${account2.username}`);
-      return true;
-    }
-
-    return false;
-  };
-
-  // Check for direct connections (existing logic)
-  const areDirectlyConnected = (acc1, acc2) => {
-    // Check ID patterns
-    const baseId1 = acc1._id.replace('-fb', '');
-    const baseId2 = acc2._id.replace('-fb', '');
-    if (baseId1 === baseId2) return true;
-
-    // Check explicit connection fields
-    if (acc1.connectedTo === acc2._id || acc2.connectedTo === acc1._id) return true;
-    
-    // Check Facebook user ID
-    if (acc1.fbUserId && acc2.fbUserId && acc1.fbUserId === acc2.fbUserId) return true;
-    
-    return false;
-  };
-
-  // Enhanced name matching for business relationships
-  const haveRelatedNames = (acc1, acc2) => {
-    const name1 = (acc1.accountName || acc1.username || '').toLowerCase();
-    const name2 = (acc2.accountName || acc2.username || '').toLowerCase();
-    
-    if (!name1 || !name2) return false;
-
-    // Only apply name matching for Meta platforms
-    const metaPlatforms = ['instagram', 'facebook'];
-    if (!metaPlatforms.includes(acc1.platform) || !metaPlatforms.includes(acc2.platform)) {
-      return false;
-    }
-
-    // Check for personal name to business page relationships
-    const personalNamePattern = /^[a-z]+ [a-z]+$/;
-    const businessKeywords = ['developer', 'dev', 'design', 'designer', 'studio', 'agency', 'company'];
-
-    // Case: Personal name (e.g., "neal kumar") + Business page (e.g., "frontend developer")
-    if (personalNamePattern.test(name1)) {
-      const [firstName, lastName] = name1.split(' ');
-      const hasBusinessKeyword = businessKeywords.some(keyword => name2.includes(keyword));
-      
-      if (hasBusinessKeyword && (name2.includes(firstName) || name2.includes(lastName))) {
-        return true;
+          if (shouldBeGrouped(current, account)) {
+            related.add(account._id);
+            toProcess.push(account);
+          }
+        });
       }
-    }
 
-    if (personalNamePattern.test(name2)) {
-      const [firstName, lastName] = name2.split(' ');
-      const hasBusinessKeyword = businessKeywords.some(keyword => name1.includes(keyword));
-      
-      if (hasBusinessKeyword && (name1.includes(firstName) || name1.includes(lastName))) {
-        return true;
-      }
-    }
-
-    // Check for similar base names (removing business keywords)
-    const cleanName = (name) => {
-      return name
-        .replace(/\b(developer|dev|design|designer|studio|agency|page|official|business)\b/g, '')
-        .replace(/[._\s-]+/g, '')
-        .trim();
+      return allAccounts.filter(acc => related.has(acc._id));
     };
 
-    const clean1 = cleanName(name1);
-    const clean2 = cleanName(name2);
+    // Updated grouping logic - prioritize access token matching
+    const shouldBeGrouped = (account1, account2) => {
+      // Same account
+      if (account1._id === account2._id) return false;
 
-    if (clean1.length >= 3 && clean2.length >= 3) {
-      if (clean1.includes(clean2) || clean2.includes(clean1)) {
+      // Don't group same platform accounts
+      if (account1.platform === account2.platform) return false;
+
+      // Method 1: Same access token (HIGHEST PRIORITY for Meta accounts)
+      if (account1.accessToken && account2.accessToken &&
+        account1.accessToken === account2.accessToken) {
+        console.log(`Access token match found: ${account1.username} <-> ${account2.username}`);
         return true;
       }
-    }
 
-    return false;
-  };
-
-  // Build groups
-  accounts.forEach(account => {
-    if (processedAccounts.has(account._id)) return;
-
-    const relatedAccounts = findRelatedAccounts(account, accounts);
-    
-    // Mark all related accounts as processed
-    relatedAccounts.forEach(acc => processedAccounts.add(acc._id));
-
-    // Sort accounts by platform priority (Instagram first, then Facebook)
-    const sortedAccounts = relatedAccounts.sort((a, b) => {
-      const platformOrder = { instagram: 1, facebook: 2, twitter: 3, linkedin: 4, youtube: 5 };
-      return (platformOrder[a.platform] || 999) - (platformOrder[b.platform] || 999);
-    });
-
-    // Choose the best group name - prefer personal names over business pages
-    const groupName = sortedAccounts.reduce((best, current) => {
-      const currentName = current.accountName || current.username;
-      const bestName = best;
-
-      // Skip generic names
-      if (currentName.includes('linked via') || currentName.includes('(')) {
-        return bestName;
+      // Method 2: Check for direct Meta connections
+      if (areDirectlyConnected(account1, account2)) {
+        console.log(`Direct connection found: ${account1.username} <-> ${account2.username}`);
+        return true;
       }
 
-      // Prefer personal names (First Last format) over business pages
-      const personalNamePattern = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
-      const isCurrentPersonal = personalNamePattern.test(currentName);
-      const isBestPersonal = personalNamePattern.test(bestName);
+      // Method 3: Name similarity (for business pages under same user)
+      if (haveRelatedNames(account1, account2)) {
+        console.log(`Name similarity found: ${account1.username} <-> ${account2.username}`);
+        return true;
+      }
 
-      if (isCurrentPersonal && !isBestPersonal) return currentName;
-      if (isBestPersonal && !isCurrentPersonal) return bestName;
+      return false;
+    };
 
-      // If both are personal or both are business, prefer the first one (Instagram account usually comes first)
-      return bestName;
-    }, sortedAccounts[0].accountName || sortedAccounts[0].username);
+    // Check for direct connections (existing logic)
+    const areDirectlyConnected = (acc1, acc2) => {
+      // Check ID patterns
+      const baseId1 = acc1._id.replace('-fb', '');
+      const baseId2 = acc2._id.replace('-fb', '');
+      if (baseId1 === baseId2) return true;
 
-    groups.push({
-      id: `group-${account._id}`,
-      name: groupName,
-      accounts: sortedAccounts
+      // Check explicit connection fields
+      if (acc1.connectedTo === acc2._id || acc2.connectedTo === acc1._id) return true;
+
+      // Check Facebook user ID
+      if (acc1.fbUserId && acc2.fbUserId && acc1.fbUserId === acc2.fbUserId) return true;
+
+      return false;
+    };
+
+    // Enhanced name matching for business relationships
+    const haveRelatedNames = (acc1, acc2) => {
+      const name1 = (acc1.accountName || acc1.username || '').toLowerCase();
+      const name2 = (acc2.accountName || acc2.username || '').toLowerCase();
+
+      if (!name1 || !name2) return false;
+
+      // Only apply name matching for Meta platforms
+      const metaPlatforms = ['instagram', 'facebook'];
+      if (!metaPlatforms.includes(acc1.platform) || !metaPlatforms.includes(acc2.platform)) {
+        return false;
+      }
+
+      // Check for personal name to business page relationships
+      const personalNamePattern = /^[a-z]+ [a-z]+$/;
+      const businessKeywords = ['developer', 'dev', 'design', 'designer', 'studio', 'agency', 'company'];
+
+      // Case: Personal name (e.g., "neal kumar") + Business page (e.g., "frontend developer")
+      if (personalNamePattern.test(name1)) {
+        const [firstName, lastName] = name1.split(' ');
+        const hasBusinessKeyword = businessKeywords.some(keyword => name2.includes(keyword));
+
+        if (hasBusinessKeyword && (name2.includes(firstName) || name2.includes(lastName))) {
+          return true;
+        }
+      }
+
+      if (personalNamePattern.test(name2)) {
+        const [firstName, lastName] = name2.split(' ');
+        const hasBusinessKeyword = businessKeywords.some(keyword => name1.includes(keyword));
+
+        if (hasBusinessKeyword && (name1.includes(firstName) || name1.includes(lastName))) {
+          return true;
+        }
+      }
+
+      // Check for similar base names (removing business keywords)
+      const cleanName = (name) => {
+        return name
+          .replace(/\b(developer|dev|design|designer|studio|agency|page|official|business)\b/g, '')
+          .replace(/[._\s-]+/g, '')
+          .trim();
+      };
+
+      const clean1 = cleanName(name1);
+      const clean2 = cleanName(name2);
+
+      if (clean1.length >= 3 && clean2.length >= 3) {
+        if (clean1.includes(clean2) || clean2.includes(clean1)) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    // Build groups
+    accounts.forEach(account => {
+      if (processedAccounts.has(account._id)) return;
+
+      const relatedAccounts = findRelatedAccounts(account, accounts);
+
+      // Mark all related accounts as processed
+      relatedAccounts.forEach(acc => processedAccounts.add(acc._id));
+
+      // Sort accounts by platform priority (Instagram first, then Facebook)
+      const sortedAccounts = relatedAccounts.sort((a, b) => {
+        const platformOrder = { instagram: 1, facebook: 2, twitter: 3, linkedin: 4, youtube: 5 };
+        return (platformOrder[a.platform] || 999) - (platformOrder[b.platform] || 999);
+      });
+
+      // Choose the best group name - prefer personal names over business pages
+      const groupName = sortedAccounts.reduce((best, current) => {
+        const currentName = current.accountName || current.username;
+        const bestName = best;
+
+        // Skip generic names
+        if (currentName.includes('linked via') || currentName.includes('(')) {
+          return bestName;
+        }
+
+        // Prefer personal names (First Last format) over business pages
+        const personalNamePattern = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
+        const isCurrentPersonal = personalNamePattern.test(currentName);
+        const isBestPersonal = personalNamePattern.test(bestName);
+
+        if (isCurrentPersonal && !isBestPersonal) return currentName;
+        if (isBestPersonal && !isCurrentPersonal) return bestName;
+
+        // If both are personal or both are business, prefer the first one (Instagram account usually comes first)
+        return bestName;
+      }, sortedAccounts[0].accountName || sortedAccounts[0].username);
+
+      groups.push({
+        id: `group-${account._id}`,
+        name: groupName,
+        accounts: sortedAccounts
+      });
     });
-  });
 
-  console.log('Final groups:', groups.map(g => ({
-    name: g.name,
-    accounts: g.accounts.map(a => `${a.username} (${a.platform})`)
-  })));
+    console.log('Final groups:', groups.map(g => ({
+      name: g.name,
+      accounts: g.accounts.map(a => `${a.username} (${a.platform})`)
+    })));
 
-  return groups;
-};
+    return groups;
+  };
 
 
   // ADD THE FALLBACK FUNCTION RIGHT HERE - AFTER groupAccountsByOwner
   const addFallbackGrouping = (groups, accounts) => {
     // Find any ungrouped Meta accounts
     const groupedAccountIds = new Set(groups.flatMap(g => g.accounts.map(a => a._id)));
-    const ungroupedMetaAccounts = accounts.filter(acc => 
-      !groupedAccountIds.has(acc._id) && 
+    const ungroupedMetaAccounts = accounts.filter(acc =>
+      !groupedAccountIds.has(acc._id) &&
       (acc.platform === 'instagram' || acc.platform === 'facebook')
     );
 
@@ -492,7 +868,7 @@ const groupAccountsByOwner = (accounts) => {
           return (order[a.platform] || 999) - (order[b.platform] || 999);
         })
       };
-      
+
       groups.push(fallbackGroup);
     }
 
@@ -507,32 +883,10 @@ const groupAccountsByOwner = (accounts) => {
   };
 
   const handleConnectMeta = async () => {
-    const storedToken = authToken;
-    if (!storedToken) {
-      toast.error('User not logged in');
-      return;
-    }
 
-    try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` }
-      });
+    setTermsConditionModal({ isOpen: true });
 
-      if (res.data.success && res.data.data) {
-        const freshUser = res.data.data;
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-        window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
-      } else {
-        toast.error('Failed to get user data');
-      }
-    } catch (err) {
-      console.error('Error fetching user data:', err);
-      if (err.response?.status === 401) {
-        toast.error('Session expired, please login again');
-      } else {
-        toast.error('Failed to get user data');
-      }
-    }
+
   };
 
   const handleDisconnectClick = (account) => {
@@ -694,6 +1048,42 @@ const groupAccountsByOwner = (accounts) => {
         accountUsername={confirmationModal.accountUsername}
         platform={confirmationModal.platform}
       />
+
+
+      {/* Confirmation Modal Terms & Conditions */}
+      <TermsConditionModal
+        isOpen={termsConditionModal.isOpen}
+        onClose={handleCloseTerms}
+        onConfirm={async () => {
+          const storedToken = authToken;
+          if (!storedToken) {
+            toast.error('User not logged in');
+            return;
+          }
+
+          try {
+            const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+              headers: { Authorization: `Bearer ${storedToken}` }
+            });
+
+            if (res.data.success && res.data.data) {
+              const freshUser = res.data.data;
+              const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+              window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+            } else {
+              toast.error('Failed to get user data');
+            }
+          } catch (err) {
+            console.error('Error fetching user data:', err);
+            if (err.response?.status === 401) {
+              toast.error('Session expired, please login again');
+            } else {
+              toast.error('Failed to get user data');
+            }
+          }
+        }}  // or a different action for "Continue"
+      />
+
     </div>
   );
 };

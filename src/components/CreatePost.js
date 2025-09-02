@@ -1460,21 +1460,45 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                     {/* Date and Time inputs */}
                     {isScheduled && (
                       <div className="schedule-inputs">
-                        <div className="input-group">
+                        <div className="input-group"
+                          onClick={() => {
+                            const input = document.getElementById("dt");
+                            if (input) {
+                              if (input.showPicker) {
+                                input.showPicker(); // modern browsers
+                              } else {
+                                input.click(); // fallback
+                              }
+                            }
+                          }
+                          }>
                           <div className="date-input-wrapper">
                             <input
+                              id='dt'
                               type="date"
                               value={postData.scheduledDate}
                               onChange={(e) => setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                              className="form-input"
+                              className="form-input dt"
                               min={new Date().toISOString().split('T')[0]}
                               required
                             />
                           </div>
                         </div>
                         <div className="input-group">
-                          <div className="time-input-wrapper">
+                          <div className="time-input-wrapper"
+                            onClick={() => {
+                              const input = document.getElementById("tm");
+                              if (input) {
+                                if (input.showPicker) {
+                                  input.showPicker(); // modern browsers
+                                } else {
+                                  input.click(); // fallback
+                                }
+                              }
+                            }}
+                          >
                             <input
+                              id='tm'
                               type="time"
                               value={postData.scheduledTime}
                               onChange={(e) => setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))}
