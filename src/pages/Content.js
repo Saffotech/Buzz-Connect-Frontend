@@ -481,10 +481,11 @@ const Content = () => {
 };
 
 // ✅ UPDATED: PlatformPostCard Component with Smart Image Detection
+// ✅ UPDATED: PlatformPostCard Component with Video Support (Same as Dashboard)
 const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
   const [showActions, setShowActions] = useState(false);
   const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
-  const [imageAspectRatios, setImageAspectRatios] = useState(new Map()); // ✅ NEW: Track aspect ratios
+  const [imageAspectRatios, setImageAspectRatios] = useState(new Map());
 
   if (!post) {
     return null;
@@ -536,41 +537,113 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
   const postStatus = post.status || 'draft';
   const postContent = post.content || '';
 
-  // ✅ NEW: Function to handle image loading errors
+  // ✅ NEW: Helper function to detect if URL is a video (same as Dashboard)
+  const isVideoUrl = (url) => {
+    if (!url) return false;
+    const videoExtensions = /\.(mp4|webm|ogg|mov|avi|m4v|3gp|mkv)(\?.*)?$/i;
+    return videoExtensions.test(url);
+  };
+
+  // ✅ NEW: Get all media items (same logic as Dashboard)
+  const getAllMedia = () => {
+    const allMedia = [];
+    
+    // Check post.images array
+    if (post.images && Array.isArray(post.images)) {
+      post.images.forEach(item => {
+        const url = typeof item === 'string' ? item : item.url || item.src;
+        if (url) {
+          allMedia.push({
+            type: isVideoUrl(url) ? 'video' : 'image',
+            url: url,
+            alt: 'Post media'
+          });
+        }
+      });
+    }
+
+    // Check post.videos array
+    if (post.videos && Array.isArray(post.videos)) {
+      post.videos.forEach(item => {
+        const url = typeof item === 'string' ? item : item.url || item.src;
+        if (url) {
+          allMedia.push({
+            type: 'video',
+            url: url,
+            alt: 'Post video'
+          });
+        }
+      });
+    }
+
+    // Check post.media array
+    if (post.media && Array.isArray(post.media)) {
+      post.media.forEach(item => {
+        const url = typeof item === 'string' ? item : item.url || item.src;
+        if (url) {
+          allMedia.push({
+            type: item.type || (isVideoUrl(url) ? 'video' : 'image'),
+            url: url,
+            alt: 'Post media'
+          });
+        }
+      });
+    }
+
+    // Check if there's a single video or image field
+    if (post.video) {
+      const url = typeof post.video === 'string' ? post.video : post.video.url || post.video.src;
+      if (url) {
+        allMedia.push({
+          type: 'video',
+          url: url,
+          alt: 'Post video'
+        });
+      }
+    }
+
+    if (post.image && !post.images) {
+      const url = typeof post.image === 'string' ? post.image : post.image.url || post.image.src;
+      if (url) {
+        allMedia.push({
+          type: isVideoUrl(url) ? 'video' : 'image',
+          url: url,
+          alt: 'Post image'
+        });
+      }
+    }
+
+    return allMedia;
+  };
+
+  // ✅ Function to handle image loading errors
   const handleImageError = (imageIndex) => {
     setImageLoadErrors(prev => new Set([...prev, imageIndex]));
   };
 
-  // ✅ UPDATED: Enhanced image load handler with aspect ratio detection
+  // ✅ Enhanced image load handler with aspect ratio detection
   const handleImageLoad = (e, imageIndex) => {
     const img = e.target;
     const container = img.parentNode;
     container.classList.add('loaded');
 
-    // ✅ NEW: Detect aspect ratio and apply appropriate styling
     const aspectRatio = img.naturalWidth / img.naturalHeight;
     let aspectClass = '';
 
     if (aspectRatio > 2.5) {
-      // Very wide images (panoramic, banners, etc.)
       aspectClass = 'wide';
-      img.style.objectFit = 'contain'; // Show full image
+      img.style.objectFit = 'contain';
       img.style.objectPosition = 'center';
     } else if (aspectRatio < 0.6) {
-      // Very tall images (portraits, vertical screenshots)
       aspectClass = 'tall';
-      img.style.objectFit = 'cover'; // Crop to fit nicely
+      img.style.objectFit = 'cover';
       img.style.objectPosition = 'center top';
     } else {
-      // Normal aspect ratio images
       img.style.objectFit = 'cover';
       img.style.objectPosition = 'center';
     }
 
-    // Store aspect ratio info
     setImageAspectRatios(prev => new Map(prev.set(imageIndex, aspectClass)));
-
-    // Remove from error set if it was there
     setImageLoadErrors(prev => {
       const newSet = new Set(prev);
       newSet.delete(imageIndex);
@@ -578,37 +651,17 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
     });
   };
 
-  // ✅ NEW: Get valid images and filter out broken ones
-  const getValidImages = () => {
-    if (!post.images || !Array.isArray(post.images)) {
-      return [];
-    }
-
-    return post.images
-      .map((img, index) => {
-        let src = '';
-        if (typeof img === 'string') {
-          src = img;
-        } else if (img && typeof img === 'object') {
-          src = img.url || img.src || img.path || '';
-        }
-
-        return src ? { src, index } : null;
-      })
-      .filter(Boolean);
+  // ✅ Get CSS class based on media count
+  const getMediaLayoutClass = (count) => {
+    if (count === 1) return 'single-media';
+    if (count === 2) return 'two-media';
+    if (count === 3) return 'three-media';
+    return 'four-plus-media';
   };
 
-  // ✅ NEW: Get CSS class based on image count
-  const getImageLayoutClass = (count) => {
-    if (count === 1) return 'single-image';
-    if (count === 2) return 'two-images';
-    if (count === 3) return 'three-images';
-    return 'four-plus-images';
-  };
-
-  const validImages = getValidImages();
-  const displayImages = validImages.slice(0, 4); // Show max 4 images
-  const layoutClass = getImageLayoutClass(displayImages.length);
+  const mediaItems = getAllMedia();
+  const displayMedia = mediaItems.slice(0, 1); // Show max 4 media items
+  const layoutClass = getMediaLayoutClass(displayMedia.length);
 
   return (
     <div
@@ -632,74 +685,91 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
 
       {/* Platform Header */}
       <div className="platform-header">
-        <div className="schedule-info">
-          {postStatus === 'scheduled' && <Clock size={16} />}
-          <span className="schedule-time">
-            {displayDate.toLocaleDateString('en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        </div>
-          <div className="platform-info">
-          <PlatformIcon size={20} />
-          <span className="platform-name">{primary}</span>
-        </div>
+        <Clock size={35} />
+        <span className="schedule-time">
+          {new Date(post.scheduledDate).toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </span>
+        <span className="platform-name">{primary}</span>
       </div>
 
-      {/* ✅ UPDATED: Smart Post Images with Adaptive Display */}
-      {displayImages.length > 0 && (
-
+      {/* ✅ UPDATED: Media Section with Video Support (Same as Dashboard) */}
+      {displayMedia.length > 0 && (
         <div className={`preview-images ${layoutClass}`}>
-          {displayImages.map(({ src, index }) => {
-            // Skip images that failed to load
-            if (imageLoadErrors.has(index)) {
+          {displayMedia.map((media, index) => {
+            // Skip media that failed to load (for images only)
+            if (media.type === 'image' && imageLoadErrors.has(index)) {
               return null;
             }
 
             const aspectClass = imageAspectRatios.get(index) || '';
 
             return (
-              <div key={index} className={`preview-image-container ${aspectClass}`}>
-                <img
-                  src={src}
-                  alt={`Post image ${index + 1}`}
-                  loading="lazy"
-                  onError={() => handleImageError(index)}
-                  onLoad={(e) => handleImageLoad(e, index)}
-                  data-aspect={aspectClass} // ✅ NEW: CSS can use this attribute
-                />
+              <div key={index} className={`media-item ${aspectClass}`}>
+                {media.type === 'video' ? (
+                  <>
+                    <video 
+                      src={media.url} 
+                      muted 
+                      loop
+                      playsInline
+                      onMouseEnter={(e) => {
+                        e.target.currentTime = 0;
+                        e.target.play().catch(console.error);
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.pause();
+                        e.target.currentTime = 0;
+                      }}
+                      onError={() => console.error('Video failed to load:', media.url)}
+                    />
+                    <div className="video-indicator">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </>
+                ) : (
+                  <img
+                    src={media.url}
+                    alt={media.alt}
+                    loading="lazy"
+                    onError={() => handleImageError(index)}
+                    onLoad={(e) => handleImageLoad(e, index)}
+                    data-aspect={aspectClass}
+                  />
+                )}
               </div>
             );
           }).filter(Boolean)}
 
-          {/* ✅ Image count overlay - only show if more than 4 images */}
-          {validImages.length > 4 && (
+          {/* Media count overlay - only show if more than 4 media items */}
+          {mediaItems.length > 4 && (
             <div className="image-count">
-              +{validImages.length - 4}
+              +{mediaItems.length - 4}
             </div>
           )}
 
-          {/* ✅ Show placeholder if no valid images loaded */}
-          {displayImages.length === 0 && post.images && post.images.length > 0 && (
+          {/* Show placeholder if no valid media loaded */}
+          {displayMedia.length === 0 && (post.images?.length > 0 || post.videos?.length > 0 || post.media?.length > 0) && (
             <div className="preview-image-container">
               <div className="image-error">
                 <FileText size={20} color="#999" />
                 <span style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                  Image unavailable
+                  Media unavailable
                 </span>
               </div>
             </div>
           )}
         </div>
-
       )}
 
       <div className='postdesc'>
-
         {/* Post Content */}
         <div className="preview-text">
           <p>{postContent.substring(0, 80)}{postContent.length > 80 ? '…' : ''}</p>
