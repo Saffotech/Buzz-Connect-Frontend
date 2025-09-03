@@ -480,10 +480,95 @@ const Dashboard = () => {
                 </div>
               ) : upcomingPosts.length > 0 ? (
                 upcomingPosts.slice(0, slicePosts).flatMap(post => {
-                  console.log('plo', post)
+                  console.log('=== POST DEBUG ===');
+                  console.log('Post:', post);
+                  console.log('Images:', post.images);
+                  console.log('Videos:', post.videos);
+                  console.log('Media:', post.media);
+                  console.log('==================');
+
                   // Defensive platforms array
                   const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ?
                     post.platforms : ['instagram'];
+
+                  // Helper function to detect if URL is a video
+                  const isVideoUrl = (url) => {
+                    if (!url) return false;
+                    const videoExtensions = /\.(mp4|webm|ogg|mov|avi|m4v|3gp|mkv)(\?.*)?$/i;
+                    return videoExtensions.test(url);
+                  };
+
+                  // Helper function to get all media items
+                  const getAllMedia = () => {
+                    const allMedia = [];
+                    
+                    // Check post.images array
+                    if (post.images && Array.isArray(post.images)) {
+                      post.images.forEach(item => {
+                        const url = typeof item === 'string' ? item : item.url || item.src;
+                        if (url) {
+                          allMedia.push({
+                            type: isVideoUrl(url) ? 'video' : 'image',
+                            url: url,
+                            alt: 'Post media'
+                          });
+                        }
+                      });
+                    }
+
+                    // Check post.videos array
+                    if (post.videos && Array.isArray(post.videos)) {
+                      post.videos.forEach(item => {
+                        const url = typeof item === 'string' ? item : item.url || item.src;
+                        if (url) {
+                          allMedia.push({
+                            type: 'video',
+                            url: url,
+                            alt: 'Post video'
+                          });
+                        }
+                      });
+                    }
+
+                    // Check post.media array
+                    if (post.media && Array.isArray(post.media)) {
+                      post.media.forEach(item => {
+                        const url = typeof item === 'string' ? item : item.url || item.src;
+                        if (url) {
+                          allMedia.push({
+                            type: item.type || (isVideoUrl(url) ? 'video' : 'image'),
+                            url: url,
+                            alt: 'Post media'
+                          });
+                        }
+                      });
+                    }
+
+                    // Check if there's a single video or image field
+                    if (post.video) {
+                      const url = typeof post.video === 'string' ? post.video : post.video.url || post.video.src;
+                      if (url) {
+                        allMedia.push({
+                          type: 'video',
+                          url: url,
+                          alt: 'Post video'
+                        });
+                      }
+                    }
+
+                    if (post.image && !post.images) {
+                      const url = typeof post.image === 'string' ? post.image : post.image.url || post.image.src;
+                      if (url) {
+                        allMedia.push({
+                          type: isVideoUrl(url) ? 'video' : 'image',
+                          url: url,
+                          alt: 'Post image'
+                        });
+                      }
+                    }
+
+                    return allMedia;
+                  };
 
                   // For each platform, create a separate card
                   return platformsArray.map(platform => {
@@ -495,10 +580,11 @@ const Dashboard = () => {
                     };
                     const style = {
                       '--platform-color': colorMap[primary] || colorMap['instagram'],
-                      border: '1px solid ' + colorMap[primary] || colorMap['instagram'],
-                      borderBottom: '6px solid ' + colorMap[primary] || colorMap['instagram']
-                    }
+                      border: '1px solid ' + (colorMap[primary] || colorMap['instagram']),
+                      borderBottom: '6px solid ' + (colorMap[primary] || colorMap['instagram'])
+                    };
 
+                    const mediaItems = getAllMedia();
 
                     return (
                       <div
@@ -520,12 +606,52 @@ const Dashboard = () => {
                           <span className="platform-name">{primary}</span>
                         </div>
 
-                        {post.images?.length > 0 && (
-                          <div className="preview-images">
-                            {post.images.slice(0, 4).map((img, i) => {
-                              const src = typeof img === 'string' ? img : img.url;
-                              return <img key={i} src={src} alt="" />;
-                            })}
+                        {/* Media Section */}
+                        {mediaItems.length > 0 && (
+                          <div className="preview-media">
+                            {mediaItems.slice(0, 1).map((media, i) => (
+                              <div key={i} className="media-item">
+                                {media.type === 'video' ? (
+                                  <>
+                                    <video 
+                                      src={media.url} 
+                                      muted 
+                                      loop
+                                      playsInline
+                                      onMouseEnter={(e) => {
+                                        e.target.currentTime = 0;
+                                        e.target.play().catch(console.error);
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.target.pause();
+                                        e.target.currentTime = 0;
+                                      }}
+                                    />
+                                    <div className="video-indicator">
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                                        <path d="M8 5v14l11-7z"/>
+                                      </svg>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <img 
+                                    src={media.url} 
+                                    alt={media.alt}
+                                    style={{ 
+                                      width: '100%', 
+                                      height: '100%', 
+                                      objectFit: 'cover',
+                                      borderRadius: '4px'
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            ))}
+                            {mediaItems.length > 4 && (
+                              <div className="media-count-overlay">
+                                +{mediaItems.length - 4}
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -547,8 +673,7 @@ const Dashboard = () => {
                       </div>
                     );
                   });
-                },
-                )
+                })
               ) : (
                 <div className="empty-upcoming">
                   <Calendar size={32} />
@@ -556,8 +681,6 @@ const Dashboard = () => {
                   <p className="empty-subtitle">Create posts with future dates to see them here</p>
                 </div>
               )}
-
-
             </div>
             {upcomingPosts.length > 0 &&
               <div className='ctBtn'>
