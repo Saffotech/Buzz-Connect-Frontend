@@ -9,7 +9,7 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  z-index: 10000000 !important;
+  z-index: 10000 !important;
   padding: 20px !important;
   backdrop-filter: blur(8px) !important;
   animation: postDetailFadeIn 0.3s ease-out !important;
@@ -176,7 +176,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 100000;
+  z-index: 10000;
 }
 .arrowsf > * {
   cursor: pointer;
@@ -466,3 +466,97 @@
     padding: 8px !important;
   }
 }
+
+/* Username and Dropdown Header */
+.post-detail-user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.post-detail-username {
+  flex: 1;
+}
+
+.username-text {
+  font-weight: 600;
+  font-size: 14px;
+  color: #262626;
+}
+
+/* Dropdown Container */
+.post-detail-dropdown-container {
+  position: relative;
+}
+
+.post-detail-dropdown-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.post-detail-dropdown-btn:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* Dropdown Menu */
+.post-detail-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 120px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.post-detail-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 7px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.2s ease;
+}
+
+.post-detail-dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.post-detail-dropdown-item.delete-item {
+  color: #dc3545;
+}
+
+.post-detail-dropdown-item.delete-item:hover {
+  background-color: #fff5f5;
+}
+
+.post-detail-dropdown-item span {
+  font-size: 14px;
+}
+
+/* Close dropdown when clicking outside */
+/* .post-detail-overlay {
+  Add this if not already present
+  z-index: 9999;
+} */

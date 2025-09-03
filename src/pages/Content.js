@@ -857,13 +857,17 @@ const PostsSubPage = ({
       }
 
       if (filters.dateRange.start) {
-        matchesDateRange = matchesDateRange && postDate >= new Date(filters.dateRange.start);
+        const startDate = new Date(filters.dateRange.start);
+        startDate.setHours(0, 0, 0, 0); // Start of the day
+        matchesDateRange = matchesDateRange && postDate >= startDate;
       }
+      
       if (filters.dateRange.end) {
-        matchesDateRange = matchesDateRange && postDate <= new Date(filters.dateRange.end);
+        const endDate = new Date(filters.dateRange.end);
+        endDate.setHours(23, 59, 59, 999); // ✅ End of the day - INCLUSIVE
+        matchesDateRange = matchesDateRange && postDate <= endDate;
       }
     }
-
     return matchesHashtag && matchesSearch && matchesDateRange;
   });
 
