@@ -692,7 +692,6 @@ const Dashboard = () => {
                     connected: true,
                   });
                 }
-
                 return accounts.length > 0 ? (
                   accounts.map((account, index) => (
                     <div key={index} className={`account-item ${account.platform}`}>
