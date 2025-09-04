@@ -872,7 +872,7 @@
 /* Base layout */
 .responsive-tabs {
   display: flex;
-  gap: 0.5rem;
+  gap: 1.5rem;
   flex-wrap: wrap; /* Allows wrapping on small screens */
 }
 
@@ -880,10 +880,10 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding:  1rem;
   border: none;
   background: #f5f5f5;
-  border-radius: 8px;
+  border-radius: 20px;
   cursor: pointer;
   flex: 1; /* Let tabs take equal space */
   min-width: 120px;

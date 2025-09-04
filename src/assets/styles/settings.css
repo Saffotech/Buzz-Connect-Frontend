@@ -1249,6 +1249,7 @@
   /* Stack buttons vertically on mobile */
   .modal-content div:last-child {
     flex-direction: column !important;
+    gap: 0.75rem;
   }
 }
 
