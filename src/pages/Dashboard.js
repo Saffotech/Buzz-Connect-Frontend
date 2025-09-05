@@ -699,7 +699,7 @@ const Dashboard = () => {
           </div>
 
           {/* Top Performing Post */}
-          {(() => {
+          {/* {(() => {
             // Find top performing post from fetched posts
             const publishedPosts = posts.filter(post => post.status === 'published');
             const topPost = publishedPosts.reduce((top, post) => {
@@ -760,7 +760,7 @@ const Dashboard = () => {
                 </div>
               </div>
             );
-          })()}
+          })()} */}
         </div>
 
         {/* Right Column: Actions & Status */}
