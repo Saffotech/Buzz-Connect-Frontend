@@ -293,7 +293,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
         <div style={{ textAlign: 'left' }}>
 
 
-          <h3
+          <h1
             style={{
               margin: '0 0 12px 0',
               fontSize: '24px',
@@ -303,7 +303,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
             }}
           >
             Terms and Conditions
-          </h3>
+          </h1>
 
           <div
             style={{

@@ -1967,3 +1967,25 @@ padding: 0;
   white-space: nowrap;
 }
 }
+
+.delete-extra-option {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #374151; /* dark gray */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delete-extra-option input[type="checkbox"] {
+  accent-color: #ef4444; /* red checkbox (modern browsers) */
+  width: 16px;
+  height: 16px;
+}
+
+#ctinst {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    align-items: center;
+}

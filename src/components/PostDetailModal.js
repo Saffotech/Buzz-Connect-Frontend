@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import "./PostDetailModal.css";
 import { X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, Bookmark, Send, Eye, Instagram, Facebook, Twitter, ChevronRightCircle, ChevronLeftCircle, Edit, Trash2, RefreshCw } from "lucide-react";
 import axios from "axios";
@@ -9,6 +9,28 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   const [accountDetails, setAccountDetails] = useState(null);
   const [loadingAccount, setLoadingAccount] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+
+
+    // ✅ Ref for dropdown container
+  const dropdownRef = useRef(null);
+
+  // ✅ Outside click handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
 
   // ✅ Add these helper functions at the top of your component
   const isVideoFile = (mediaItem) => {

@@ -694,7 +694,7 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
         </div>
       )}
 
-      {/* Platform Header */}
+      {/* Platform Header Section */}
       <div className="platform-header">
         <div className="schedule-info">
           {postStatus === 'scheduled' && <Clock size={16} />}
