@@ -21,6 +21,37 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   const [syncingAnalytics, setSyncingAnalytics] = useState(false);
   const [activeTab, setActiveTab] = useState('preview');
 
+  // ✅ Add these helper functions at the top of your component
+  const isVideoFile = (mediaItem) => {
+    if (!mediaItem) return false;
+    
+    // Check fileType first
+    if (mediaItem.fileType === 'video' || mediaItem.fileType?.startsWith('video/')) {
+      return true;
+    }
+    
+    // Check URL patterns
+    if (mediaItem.url) {
+      const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.flv'];
+      const hasVideoExtension = videoExtensions.some(ext => 
+        mediaItem.url.toLowerCase().includes(ext)
+      );
+      
+      if (hasVideoExtension || mediaItem.url.includes('/video/')) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
+  const getMediaType = (media) => {
+    if (isVideoFile(media)) {
+      return 'video';
+    }
+    return 'image';
+  };
+
   // ✅ Fixed: Declare platform first, handling null/undefined cases
   const platform = post?.selectedPlatform?.toLowerCase() || post?.platforms?.[0]?.toLowerCase() || "post";
 
@@ -247,12 +278,13 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     }, 3000);
   };
 
-  // Handle post again action
+
   const handlePostAgain = async () => {
     setShowDropdown(false);
     setIsPosting(true);
 
     try {
+
       const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
 
       if (!token) {
@@ -274,25 +306,30 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         });
       }
 
+
       const processedImages = (post.images || []).map(img => ({
         url: img.url,
         altText: img.altText || 'Post image',
         publicId: img.publicId || null
       }));
 
+
       const processedHashtags = Array.isArray(post.hashtags) 
         ? post.hashtags 
         : [];
 
+
       const processedMentions = Array.isArray(post.mentions) 
         ? post.mentions 
         : [];
+
 
       const postData = {
         content: post.content || '',
         platforms: post.platforms || [],
         selectedAccounts: cleanedSelectedAccounts,
         images: processedImages,
+
         hashtags: processedHashtags,
         mentions: processedMentions,
         metadata: {
@@ -303,6 +340,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
 
       showToast('Creating new post...', 'info');
+
 
       const createResponse = await axios.post(
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
@@ -385,6 +423,9 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       handleCopyLink();
     }
   };
+
+
+     
 
   // Effects
   useEffect(() => {
@@ -688,6 +729,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                   <button onClick={handleCopyLink}>
                     <Copy size={16} />
                     Copy Link
+
                   </button>
                   <button onClick={handleShare}>
                     <Share size={16} />
