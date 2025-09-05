@@ -681,7 +681,6 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
         </div>
       )}
 
-
       {/* Post Header with Multiple Platforms */}
       <div className="post-header">
         <div className="post-schedule">
@@ -870,7 +869,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDele
             {/* <button className="btn-" onClick={onDeleteEverywhere}>
               <Trash2 size={16} />
               Delete from Everywhere
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
