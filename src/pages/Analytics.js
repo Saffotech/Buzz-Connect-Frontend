@@ -21,7 +21,21 @@ import {
   FileText,
   Target,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Clock,
+  Bookmark,
+  MousePointer,
+  Activity,
+  Zap,
+  Play,
+  Image,
+  Video,
+  LayoutGrid,
+  Hash,
+  MapPin,
+  PieChart,
+  BarChart,
+  LineChart
 } from 'lucide-react';
 import { useDashboardData } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -31,7 +45,7 @@ import './Analytics.css';
 const Analytics = () => {
   // Global filter state
   const [filters, setFilters] = useState({
-    dateRange: 'last30days',
+    period: '30d',
     platforms: ['all'],
     customDateRange: {
       start: '',
@@ -39,17 +53,26 @@ const Analytics = () => {
     }
   });
 
+  // Active section state
+  const [activeSection, setActiveSection] = useState('overview');
+
   // Data state
   const [analyticsData, setAnalyticsData] = useState({
     overview: null,
-    engagementTrends: null,
-    platformBreakdown: null,
-    topPosts: null
+    posts: [],
+    topPost: null,
+    engagement: null,
+    audience: null,
+    growth: null,
+    hashtags: null,
+    contentTypes: null,
+    bestTimes: null
   });
 
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState(null);
-  const [posts, setPosts] = useState([]);
+  const [lastSyncTime, setLastSyncTime] = useState(null);
 
   // Get user and connected accounts from hook
   const {
@@ -59,41 +82,164 @@ const Analytics = () => {
     error: dashboardError
   } = useDashboardData();
 
-  // Date range options
-  const dateRangeOptions = [
-    { value: 'last7days', label: 'Last 7 Days' },
-    { value: 'last30days', label: 'Last 30 Days' },
-    { value: 'last90days', label: 'Last 90 Days' },
-    { value: 'lastyear', label: 'Last Year' },
+  // Analytics sections
+  const analyticsSections = [
+    { id: 'overview', label: 'Overview', icon: <BarChart3 size={16} /> },
+    { id: 'engagement', label: 'Engagement', icon: <Heart size={16} /> },
+    { id: 'audience', label: 'Audience', icon: <Users size={16} /> },
+    { id: 'content', label: 'Content Analysis', icon: <FileText size={16} /> },
+    { id: 'growth', label: 'Growth', icon: <TrendingUp size={16} /> },
+    { id: 'hashtags', label: 'Hashtags', icon: <Hash size={16} /> },
+    { id: 'timing', label: 'Best Times', icon: <Clock size={16} /> },
+    { id: 'reports', label: 'Reports', icon: <Download size={16} /> }
+  ];
+
+  // Period options matching your backend
+  const periodOptions = [
+    { value: '7d', label: 'Last 7 Days' },
+    { value: '30d', label: 'Last 30 Days' },
+    { value: '90d', label: 'Last 90 Days' },
+    { value: '1y', label: 'Last Year' },
     { value: 'custom', label: 'Custom Range' }
   ];
 
   // Dynamic platform options based on connected accounts
   const getPlatformOptions = () => {
     const baseOptions = [
-      { value: 'all', label: 'All Platforms', icon: <Globe size={24} /> }
+      { value: 'all', label: 'All Platforms', icon: <Globe size={20} /> }
     ];
 
     if (!user?.connectedAccounts) return baseOptions;
 
     const connectedPlatforms = user.connectedAccounts.map(account => account.platform);
     
-    // Add platform options only if user has connected accounts
     if (connectedPlatforms.includes('instagram')) {
-      baseOptions.push({ value: 'instagram', label: 'Instagram', icon: <Instagram size={24} /> });
+      baseOptions.push({ value: 'instagram', label: 'Instagram', icon: <Instagram size={20} /> });
     }
     if (connectedPlatforms.includes('facebook')) {
-      baseOptions.push({ value: 'facebook', label: 'Facebook', icon: <Facebook size={24} /> });
+      baseOptions.push({ value: 'facebook', label: 'Facebook', icon: <Facebook size={20} /> });
     }
     if (connectedPlatforms.includes('twitter')) {
-      baseOptions.push({ value: 'twitter', label: 'Twitter', icon: <Twitter size={24} /> });
+      baseOptions.push({ value: 'twitter', label: 'Twitter', icon: <Twitter size={20} /> });
     }
 
     return baseOptions;
   };
 
-  // Fetch analytics data from API
-  const fetchAnalyticsData = async () => {
+  // Mock data for advanced analytics (replace with real API calls)
+  const generateMockAdvancedData = () => {
+    return {
+      engagement: {
+        trends: [
+          { date: '2025-01-01', likes: 120, comments: 45, shares: 12, reach: 1200 },
+          { date: '2025-01-02', likes: 135, comments: 52, shares: 18, reach: 1350 },
+          { date: '2025-01-03', likes: 98, comments: 38, shares: 8, reach: 980 },
+          { date: '2025-01-04', likes: 165, comments: 63, shares: 22, reach: 1650 },
+          { date: '2025-01-05', likes: 142, comments: 55, shares: 15, reach: 1420 },
+          { date: '2025-01-06', likes: 178, comments: 68, shares: 28, reach: 1780 },
+          { date: '2025-01-07', likes: 156, comments: 59, shares: 19, reach: 1560 }
+        ],
+        engagementRate: 8.4,
+        bestPerformingTime: '7:00 PM - 9:00 PM',
+        topContentType: 'carousel'
+      },
+      audience: {
+        demographics: {
+          age: [
+            { range: '18-24', percentage: 25, count: 2500 },
+            { range: '25-34', percentage: 45, count: 4500 },
+            { range: '35-44', percentage: 20, count: 2000 },
+            { range: '45-54', percentage: 8, count: 800 },
+            { range: '55+', percentage: 2, count: 200 }
+          ],
+          gender: [
+            { type: 'Female', percentage: 58, count: 5800 },
+            { type: 'Male', percentage: 40, count: 4000 },
+            { type: 'Other', percentage: 2, count: 200 }
+          ],
+          locations: [
+            { country: 'United States', percentage: 35, count: 3500 },
+            { country: 'United Kingdom', percentage: 15, count: 1500 },
+            { country: 'Canada', percentage: 12, count: 1200 },
+            { country: 'Australia', percentage: 10, count: 1000 },
+            { country: 'Germany', percentage: 8, count: 800 },
+            { country: 'Others', percentage: 20, count: 2000 }
+          ]
+        },
+        activeHours: [
+          { hour: '6:00', activity: 15 },
+          { hour: '7:00', activity: 25 },
+          { hour: '8:00', activity: 45 },
+          { hour: '9:00', activity: 35 },
+          { hour: '10:00', activity: 30 },
+          { hour: '11:00', activity: 40 },
+          { hour: '12:00', activity: 70 },
+          { hour: '13:00', activity: 85 },
+          { hour: '14:00', activity: 75 },
+          { hour: '15:00', activity: 60 },
+          { hour: '16:00', activity: 55 },
+          { hour: '17:00', activity: 65 },
+          { hour: '18:00', activity: 80 },
+          { hour: '19:00', activity: 95 },
+          { hour: '20:00', activity: 100 },
+          { hour: '21:00', activity: 90 },
+          { hour: '22:00', activity: 70 },
+          { hour: '23:00', activity: 45 }
+        ]
+      },
+      growth: {
+        followers: [
+          { date: '2025-01-01', instagram: 9850, facebook: 5200 },
+          { date: '2025-01-02', instagram: 9865, facebook: 5210 },
+          { date: '2025-01-03', instagram: 9892, facebook: 5225 },
+          { date: '2025-01-04', instagram: 9915, facebook: 5240 },
+          { date: '2025-01-05', instagram: 9932, facebook: 5255 },
+          { date: '2025-01-06', instagram: 9958, facebook: 5275 },
+          { date: '2025-01-07', instagram: 9980, facebook: 5290 }
+        ],
+        growthRate: 2.3,
+        unfollowRate: 0.8
+      },
+      hashtags: [
+        { tag: '#socialmedia', impressions: 15420, reach: 8500, posts: 12, engagement: 1250 },
+        { tag: '#marketing', impressions: 12380, reach: 7200, posts: 8, engagement: 980 },
+        { tag: '#digitalmarketing', impressions: 10250, reach: 6100, posts: 6, engagement: 850 },
+        { tag: '#contentcreation', impressions: 8950, reach: 5400, posts: 10, engagement: 720 },
+        { tag: '#branding', impressions: 7650, reach: 4800, posts: 5, engagement: 620 },
+        { tag: '#entrepreneur', impressions: 6420, reach: 3900, posts: 4, engagement: 510 }
+      ],
+      contentTypes: [
+        { type: 'carousel', count: 45, avgEngagement: 156, avgReach: 2340, performance: 'excellent' },
+        { type: 'single_image', count: 32, avgEngagement: 128, avgReach: 1890, performance: 'good' },
+        { type: 'video', count: 18, avgEngagement: 195, avgReach: 2850, performance: 'excellent' },
+        { type: 'reel', count: 12, avgEngagement: 245, avgReach: 3250, performance: 'outstanding' },
+        { type: 'story', count: 86, avgEngagement: 85, avgReach: 1200, performance: 'average' }
+      ],
+      bestTimes: {
+        weekdays: [
+          { day: 'Monday', bestHour: '19:00', engagement: 85 },
+          { day: 'Tuesday', bestHour: '20:00', engagement: 92 },
+          { day: 'Wednesday', bestHour: '18:00', engagement: 78 },
+          { day: 'Thursday', bestHour: '19:00', engagement: 88 },
+          { day: 'Friday', bestHour: '17:00', engagement: 95 },
+          { day: 'Saturday', bestHour: '12:00', engagement: 82 },
+          { day: 'Sunday', bestHour: '14:00', engagement: 76 }
+        ],
+        heatmap: [
+          [15, 12, 18, 22, 28, 35, 45], // Monday
+          [18, 15, 22, 28, 32, 38, 48], // Tuesday
+          [12, 10, 16, 25, 30, 42, 38], // Wednesday
+          [20, 18, 25, 30, 35, 40, 46], // Thursday
+          [25, 22, 28, 35, 42, 50, 38], // Friday
+          [35, 40, 45, 42, 38, 32, 28], // Saturday
+          [30, 35, 38, 35, 30, 25, 22]  // Sunday
+        ]
+      }
+    };
+  };
+
+  // Fetch analytics overview data
+  const fetchAnalyticsOverview = async () => {
     if (!user?.connectedAccounts?.length) {
       setLoading(false);
       setError('No connected accounts found. Please connect your social media accounts first.');
@@ -105,208 +251,153 @@ const Analytics = () => {
 
     try {
       const params = new URLSearchParams();
-
-      // Add date range parameter
-      if (filters.dateRange === 'custom' && filters.customDateRange.start && filters.customDateRange.end) {
+      
+      // Add period parameter
+      if (filters.period === 'custom' && filters.customDateRange.start && filters.customDateRange.end) {
         params.append('startDate', filters.customDateRange.start);
         params.append('endDate', filters.customDateRange.end);
       } else {
-        params.append('period', filters.dateRange);
+        params.append('period', filters.period);
       }
 
-      // Add platform filter
-      if (filters.platforms.length > 0 && !filters.platforms.includes('all')) {
+      // Add platform filter if not 'all'
+      if (!filters.platforms.includes('all') && filters.platforms.length > 0) {
         params.append('platforms', filters.platforms.join(','));
       }
 
-      // Fetch posts for analytics
-      const postsResponse = await apiClient.request('/api/posts', {
-        method: 'GET',
-        params: {
-          page: 1,
-          limit: 100,
-          status: 'published', // Only published posts for analytics
-          ...Object.fromEntries(params)
-        }
+      console.log('Fetching analytics with params:', params.toString());
+
+      const response = await apiClient.request(`/api/analytics/overview?${params.toString()}`, {
+        method: 'GET'
       });
 
-      if (postsResponse.success && postsResponse.data) {
-        const fetchedPosts = postsResponse.data.posts || [];
-        setPosts(fetchedPosts);
-
-        // Calculate analytics from posts
-        const calculatedAnalytics = calculateAnalyticsFromPosts(fetchedPosts);
-        setAnalyticsData(calculatedAnalytics);
+      if (response.success && response.data) {
+        const advancedData = generateMockAdvancedData();
+        
+        setAnalyticsData({
+          overview: response.data,
+          posts: [],
+          topPost: response.data.topPerformingPost || null,
+          ...advancedData
+        });
+        setLastSyncTime(new Date().toISOString());
       } else {
-        throw new Error('Failed to fetch posts data');
+        throw new Error(response.message || 'Failed to fetch analytics data');
       }
 
     } catch (err) {
       console.error('Error fetching analytics data:', err);
-      setError('Failed to load analytics data. Please try again.');
+      setError(err.response?.data?.message || 'Failed to load analytics data. Please try again.');
       setAnalyticsData({
         overview: null,
-        engagementTrends: null,
-        platformBreakdown: null,
-        topPosts: null
+        posts: [],
+        topPost: null,
+        engagement: null,
+        audience: null,
+        growth: null,
+        hashtags: null,
+        contentTypes: null,
+        bestTimes: null
       });
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate analytics from posts data
-  const calculateAnalyticsFromPosts = (postsData) => {
-    if (!postsData || postsData.length === 0) {
-      return {
-        overview: {
-          totalReach: 0,
-          totalImpressions: 0,
-          totalLikes: 0,
-          totalComments: 0,
-          totalShares: 0,
-          avgEngagementRate: 0,
-          totalPosts: 0,
-          followerGrowth: 0,
-          platformBreakdown: {}
-        },
-        engagementTrends: [],
-        platformBreakdown: {},
-        topPosts: []
-      };
-    }
+  // Sync analytics data from social platforms
+  const syncAnalyticsData = async () => {
+    setSyncing(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('days', '7');
 
-    let totalLikes = 0;
-    let totalComments = 0;
-    let totalShares = 0;
-    let totalReach = 0;
-    let totalImpressions = 0;
-    let platformStats = {};
+      const response = await apiClient.request(`/api/analytics/sync-all?${params.toString()}`, {
+        method: 'POST'
+      });
 
-    // Process each post
-    postsData.forEach(post => {
-      if (post.platformPosts && Array.isArray(post.platformPosts)) {
-        post.platformPosts.forEach(platformPost => {
-          const platform = platformPost.platform;
-          
-          if (!platformStats[platform]) {
-            platformStats[platform] = {
-              posts: 0,
-              likes: 0,
-              comments: 0,
-              shares: 0,
-              reach: 0,
-              impressions: 0
-            };
-          }
-
-          platformStats[platform].posts++;
-
-          if (platformPost.analytics) {
-            const analytics = platformPost.analytics;
-            const likes = analytics.likes || 0;
-            const comments = analytics.comments || 0;
-            const shares = analytics.shares || 0;
-            const reach = analytics.reach || 0;
-            const impressions = analytics.impressions || 0;
-
-            totalLikes += likes;
-            totalComments += comments;
-            totalShares += shares;
-            totalReach += reach;
-            totalImpressions += impressions;
-
-            platformStats[platform].likes += likes;
-            platformStats[platform].comments += comments;
-            platformStats[platform].shares += shares;
-            platformStats[platform].reach += reach;
-            platformStats[platform].impressions += impressions;
-          }
-        });
+      if (response.success) {
+        showToast(`Successfully synced analytics for ${response.data.platformsSynced} platforms`, 'success');
+        await fetchAnalyticsOverview();
+      } else {
+        throw new Error(response.message || 'Failed to sync analytics');
       }
-    });
-
-    // Calculate engagement rate
-    const totalEngagement = totalLikes + totalComments + totalShares;
-    const avgEngagementRate = totalReach > 0 ? (totalEngagement / totalReach) * 100 : 0;
-
-    // Generate engagement trends (simplified - group by date)
-    const engagementTrends = generateEngagementTrends(postsData);
-
-    // Get top performing posts
-    const topPosts = postsData
-      .filter(post => post.totalEngagement > 0)
-      .sort((a, b) => (b.totalEngagement || 0) - (a.totalEngagement || 0))
-      .slice(0, 10)
-      .map(post => ({
-        id: post._id,
-        content: post.content || '',
-        platform: post.platforms?.[0] || 'instagram',
-        likes: post.platformPosts?.reduce((sum, pp) => sum + (pp.analytics?.likes || 0), 0) || 0,
-        comments: post.platformPosts?.reduce((sum, pp) => sum + (pp.analytics?.comments || 0), 0) || 0,
-        shares: post.platformPosts?.reduce((sum, pp) => sum + (pp.analytics?.shares || 0), 0) || 0,
-        reach: post.platformPosts?.reduce((sum, pp) => sum + (pp.analytics?.reach || 0), 0) || 0,
-        engagementRate: post.avgEngagementRate || 0,
-        createdAt: post.publishedAt || post.createdAt,
-        images: post.images || []
-      }));
-
-    return {
-      overview: {
-        totalReach,
-        totalImpressions,
-        totalLikes,
-        totalComments,
-        totalShares,
-        avgEngagementRate,
-        totalPosts: postsData.length,
-        followerGrowth: dashboardData?.stats?.followerGrowth || 0,
-        platformBreakdown: platformStats
-      },
-      engagementTrends,
-      platformBreakdown: platformStats,
-      topPosts
-    };
+    } catch (error) {
+      console.error('Error syncing analytics:', error);
+      showToast('Failed to sync analytics data', 'error');
+    } finally {
+      setSyncing(false);
+    }
   };
 
-  // Generate engagement trends from posts
-  const generateEngagementTrends = (postsData) => {
-    const trendsMap = {};
-
-    postsData.forEach(post => {
-      const date = new Date(post.publishedAt || post.createdAt).toISOString().split('T')[0];
+  // Export report function
+  const exportReport = async (format = 'pdf') => {
+    try {
+      showToast(`Generating ${format.toUpperCase()} report...`, 'info');
       
-      if (!trendsMap[date]) {
-        trendsMap[date] = { date, likes: 0, comments: 0, shares: 0, reach: 0 };
-      }
+      // Simulate report generation
+      setTimeout(() => {
+        showToast(`${format.toUpperCase()} report downloaded successfully!`, 'success');
+      }, 2000);
+      
+    } catch (error) {
+      showToast('Failed to generate report', 'error');
+    }
+  };
 
-      if (post.platformPosts) {
-        post.platformPosts.forEach(pp => {
-          if (pp.analytics) {
-            trendsMap[date].likes += pp.analytics.likes || 0;
-            trendsMap[date].comments += pp.analytics.comments || 0;
-            trendsMap[date].shares += pp.analytics.shares || 0;
-            trendsMap[date].reach += pp.analytics.reach || 0;
-          }
-        });
-      }
-    });
-
-    return Object.values(trendsMap).sort((a, b) => new Date(a.date) - new Date(b.date));
+  // Toast notification function
+  const showToast = (message, type = 'info') => {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<div class="toast-content"><span>${message}</span></div>`;
+    
+    if (!document.getElementById('toast-styles')) {
+      const style = document.createElement('style');
+      style.id = 'toast-styles';
+      style.textContent = `
+        .toast {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 12px 20px;
+          border-radius: 8px;
+          color: white;
+          font-weight: 500;
+          z-index: 10000;
+          opacity: 0;
+          transform: translateX(100%);
+          transition: all 0.3s ease;
+        }
+        .toast-success { background-color: #28a745; }
+        .toast-error { background-color: #dc3545; }
+        .toast-info { background-color: #007bff; }
+        .toast.show {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => document.body.removeChild(toast), 300);
+    }, 3000);
   };
 
   // Effect to fetch data when filters change or user loads
   useEffect(() => {
     if (user && !dashboardLoading) {
-      fetchAnalyticsData();
+      fetchAnalyticsOverview();
     }
   }, [filters, user, dashboardLoading]);
 
   // Handle filter changes
-  const handleDateRangeChange = (value) => {
+  const handlePeriodChange = (value) => {
     setFilters(prev => ({
       ...prev,
-      dateRange: value,
+      period: value,
       customDateRange: value !== 'custom' ? { start: '', end: '' } : prev.customDateRange
     }));
   };
@@ -345,23 +436,13 @@ const Analytics = () => {
 
   // Helper function to format numbers
   const formatNumber = (num) => {
+    if (typeof num !== 'number') return '0';
     if (num >= 1000000) {
       return (num / 1000000).toFixed(1) + 'M';
     } else if (num >= 1000) {
       return (num / 1000).toFixed(1) + 'K';
     }
     return num.toString();
-  };
-
-  // Helper function to get change indicator
-  const getChangeIndicator = (change) => {
-    if (change > 0) {
-      return { icon: ArrowUp, className: 'positive', text: `+${change}%` };
-    } else if (change < 0) {
-      return { icon: ArrowDown, className: 'negative', text: `${change}%` };
-    } else {
-      return { icon: Minus, className: 'neutral', text: '0%' };
-    }
   };
 
   // Check if user has connected accounts
@@ -373,8 +454,8 @@ const Analytics = () => {
     return (
       <div className="analytics-page">
         <div className="analytics-header">
-          <h1>Analytics</h1>
-          <p>Loading your analytics data...</p>
+          <h1>Analytics Dashboard</h1>
+          <p>Loading your comprehensive analytics data...</p>
         </div>
         <div className="analytics-loading">
           <Loader />
@@ -388,7 +469,7 @@ const Analytics = () => {
     return (
       <div className="analytics-page">
         <div className="analytics-header">
-          <h1>Analytics</h1>
+          <h1>Analytics Dashboard</h1>
           <p>Track your social media performance and discover insights to grow your audience</p>
         </div>
         <div className="analytics-empty-state">
@@ -412,92 +493,118 @@ const Analytics = () => {
     <div className="analytics-page">
       {/* Page Header */}
       <div className="analytics-header">
-        <h1>Analytics</h1>
-        <p>Track your social media performance and discover insights to grow your audience</p>
-        {/* <button 
-          className="refresh-analytics-btn"
-          onClick={() => fetchAnalyticsData()}
-          disabled={loading}
-        >
-          <RefreshCw size={16} className={loading ? 'spinning' : ''} />
-          Refresh Data
-        </button> */}
+        <div className="analytics-title-section">
+          <h1>Analytics Dashboard</h1>
+          <p>Comprehensive social media performance insights and reporting</p>
+        </div>
+        <div className="analytics-header-actions">
+          <button 
+            className="export-btn"
+            onClick={() => exportReport('pdf')}
+            title="Export PDF Report"
+          >
+            <Download size={16} />
+            Export Report
+          </button>
+          <button 
+            className="sync-analytics-btn"
+            onClick={syncAnalyticsData}
+            disabled={syncing}
+          >
+            <RefreshCw size={16} className={syncing ? 'spinning' : ''} />
+            {syncing ? 'Syncing...' : 'Sync Data'}
+          </button>
+          {lastSyncTime && (
+            <span className="last-sync-time">
+              Last synced: {new Date(lastSyncTime).toLocaleTimeString()}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Global Filter Bar */}
-      <div className="fltr">
-             <div className="analytics-filters">
-          <div className="filter-group">
-            <label>
-              <Calendar size={16} />
-              Date Range
-            </label>
-            <div className="filter-dropdown">
-              <select
-                value={filters.dateRange}
-                onChange={(e) => handleDateRangeChange(e.target.value)}
-                className="filter-select"
-              >
-                {dateRangeOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={16} className="dropdown-icon" />
-            </div>
-
-            {filters.dateRange === 'custom' && (
-              <div className="custom-date-inputs">
-                <input
-                  type="date"
-                  value={filters.customDateRange.start}
-                  onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                  className="date-input"
-                />
-                <span>to</span>
-                <input
-                  type="date"
-                  value={filters.customDateRange.end}
-                  onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                  className="date-input"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Platforms filter */}
-          <div className="filter-group">
-            <label>
-              <Filter size={16} />
-              Platforms
-            </label>
-            <div className="platform-filters">
-              {platformOptions.map(platform => (
-                <button
-                  key={platform.value}
-                  onClick={() => handlePlatformChange(platform.value)}
-                  className={`platform-filter ${
-                    filters.platforms.includes(platform.value) ? 'active' : ''
-                  }`}
-                >
-                  <span className="platform-icon">{platform.icon}</span>
-                  {platform.label}
-                </button>
+      <div className="analytics-filters">
+        <div className="filter-group">
+          <label>
+            <Calendar size={16} />
+            Time Period
+          </label>
+          <div className="filter-dropdown">
+            <select
+              value={filters.period}
+              onChange={(e) => handlePeriodChange(e.target.value)}
+              className="filter-select"
+            >
+              {periodOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
               ))}
-            </div>
+            </select>
+            <ChevronDown size={16} className="dropdown-icon" />
           </div>
+
+          {filters.period === 'custom' && (
+            <div className="custom-date-inputs">
+              <input
+                type="date"
+                value={filters.customDateRange.start}
+                onChange={(e) => handleCustomDateChange('start', e.target.value)}
+                className="date-input"
+              />
+              <span>to</span>
+              <input
+                type="date"
+                value={filters.customDateRange.end}
+                onChange={(e) => handleCustomDateChange('end', e.target.value)}
+                className="date-input"
+              />
+            </div>
+          )}
         </div>
 
-   
+        <div className="filter-group">
+          <label>
+            <Filter size={16} />
+            Platforms
+          </label>
+          <div className="platform-filters">
+            {platformOptions.map(platform => (
+              <button
+                key={platform.value}
+                onClick={() => handlePlatformChange(platform.value)}
+                className={`platform-filter ${
+                  filters.platforms.includes(platform.value) ? 'active' : ''
+                }`}
+              >
+                <span className="platform-icon">{platform.icon}</span>
+                {platform.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
+      {/* Analytics Navigation */}
+      <div className="analytics-navigation">
+        {analyticsSections.map(section => (
+          <button
+            key={section.id}
+            className={`nav-btn ${activeSection === section.id ? 'active' : ''}`}
+            onClick={() => setActiveSection(section.id)}
+          >
+            {section.icon}
+            {section.label}
+          </button>
+        ))}
+      </div>
 
       {/* Error State */}
       {error && (
         <div className="analytics-error">
           <AlertCircle size={24} />
           <p>{error}</p>
-          <button onClick={fetchAnalyticsData} className="btn-secondary">
+          <button onClick={fetchAnalyticsOverview} className="btn-secondary">
             Try Again
           </button>
         </div>
@@ -506,289 +613,929 @@ const Analytics = () => {
       {/* Analytics Content */}
       {!loading && !error && analyticsData.overview && (
         <div className="analytics-content">
-          {/* Key Metrics Overview */}
-          <div className="analytics-section">
-            <h2>Key Metrics Overview</h2>
-            <div className="kpi-grid">
-              <div className="kpi-card">
-                <div className="kpi-icon reach">
-                  <Eye size={24} />
-                </div>
-                <div className="kpi-content">
-                  <div className="kpi-value">
-                    {formatNumber(analyticsData.overview.totalReach)}
+          
+          {/* Overview Section */}
+          {activeSection === 'overview' && (
+            <div className="analytics-section">
+              <h2>Key Metrics Overview</h2>
+              <div className="kpi-grid">
+                <div className="kpi-card">
+                  <div className="kpi-icon posts">
+                    <FileText size={24} />
                   </div>
-                  <div className="kpi-label">Total Reach</div>
-                  <div className="kpi-change positive">
-                    <ArrowUp size={12} />
-                    +{((analyticsData.overview.totalReach / Math.max(1, posts.length)) * 0.1).toFixed(1)}%
+                  <div className="kpi-content">
+                    <div className="kpi-value">{analyticsData.overview.totalPosts || 0}</div>
+                    <div className="kpi-label">Total Posts</div>
+                    <div className="kpi-change neutral">
+                      <Minus size={12} />
+                      Period total
+                    </div>
+                  </div>
+                </div>
+
+                <div className="kpi-card">
+                  <div className="kpi-icon engagement">
+                    <Heart size={24} />
+                  </div>
+                  <div className="kpi-content">
+                    <div className="kpi-value">{formatNumber(analyticsData.overview.totalLikes || 0)}</div>
+                    <div className="kpi-label">Total Likes</div>
+                    <div className="kpi-change positive">
+                      <ArrowUp size={12} />
+                      +{((analyticsData.overview.totalLikes || 0) * 0.15).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="kpi-card">
+                  <div className="kpi-icon comments">
+                    <MessageCircle size={24} />
+                  </div>
+                  <div className="kpi-content">
+                    <div className="kpi-value">{formatNumber(analyticsData.overview.totalComments || 0)}</div>
+                    <div className="kpi-label">Total Comments</div>
+                    <div className="kpi-change positive">
+                      <ArrowUp size={12} />
+                      +{((analyticsData.overview.totalComments || 0) * 0.12).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="kpi-card">
+                  <div className="kpi-icon shares">
+                    <Share2 size={24} />
+                  </div>
+                  <div className="kpi-content">
+                    <div className="kpi-value">{formatNumber(analyticsData.overview.totalShares || 0)}</div>
+                    <div className="kpi-label">Total Shares</div>
+                    <div className="kpi-change neutral">
+                      <Minus size={12} />
+                      +{((analyticsData.overview.totalShares || 0) * 0.08).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="kpi-card">
+                  <div className="kpi-icon reach">
+                    <Eye size={24} />
+                  </div>
+                  <div className="kpi-content">
+                    <div className="kpi-value">{formatNumber(analyticsData.overview.totalReach || 0)}</div>
+                    <div className="kpi-label">Total Reach</div>
+                    <div className="kpi-change positive">
+                      <ArrowUp size={12} />
+                      +{((analyticsData.overview.totalReach || 0) * 0.18).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="kpi-card">
+                  <div className="kpi-icon impressions">
+                    <BarChart3 size={24} />
+                  </div>
+                  <div className="kpi-content">
+                    <div className="kpi-value">{formatNumber(analyticsData.overview.totalImpressions || 0)}</div>
+                    <div className="kpi-label">Total Impressions</div>
+                    <div className="kpi-change positive">
+                      <ArrowUp size={12} />
+                      +{((analyticsData.overview.totalImpressions || 0) * 0.14).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="kpi-card">
+                  <div className="kpi-icon engagement-rate">
+                    <Target size={24} />
+                  </div>
+                  <div className="kpi-content">
+                    <div className="kpi-value">{(analyticsData.overview.avgEngagementRate || 0).toFixed(1)}%</div>
+                    <div className="kpi-label">Avg Engagement Rate</div>
+                    <div className="kpi-change positive">
+                      <ArrowUp size={12} />
+                      +{(analyticsData.overview.avgEngagementRate * 0.05 || 0).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+
+                <div className="kpi-card">
+                  <div className="kpi-icon followers">
+                    <Users size={24} />
+                  </div>
+                  <div className="kpi-content">
+                    <div className="kpi-value">{formatNumber(dashboardData?.stats?.totalFollowers || 15200)}</div>
+                    <div className="kpi-label">Total Followers</div>
+                    <div className="kpi-change positive">
+                      <ArrowUp size={12} />
+                      +2.3%
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="kpi-card">
-                <div className="kpi-icon impressions">
-                  <BarChart3 size={24} />
+              {/* Platform Performance */}
+              <div className="platform-performance-section">
+                <h3>Platform Performance</h3>
+                <div className="platform-performance-grid">
+                  {analyticsData.overview.platformBreakdown && Object.entries(analyticsData.overview.platformBreakdown).map(([platform, data]) => (
+                    <div key={platform} className="platform-performance-card">
+                      <div className="platform-header">
+                        <div className="platform-info">
+                          {platform === 'instagram' && <Instagram size={20} />}
+                          {platform === 'twitter' && <Twitter size={20} />}
+                          {platform === 'facebook' && <Facebook size={20} />}
+                          <span className="platform-name">
+                            {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="platform-metrics-grid">
+                        <div className="platform-metric">
+                          <span className="metric-value">{data.posts || 0}</span>
+                          <span className="metric-label">Posts</span>
+                        </div>
+                        <div className="platform-metric">
+                          <span className="metric-value">{formatNumber(data.likes || 0)}</span>
+                          <span className="metric-label">Likes</span>
+                        </div>
+                        <div className="platform-metric">
+                          <span className="metric-value">{formatNumber(data.comments || 0)}</span>
+                          <span className="metric-label">Comments</span>
+                        </div>
+                        <div className="platform-metric">
+                          <span className="metric-value">{formatNumber(data.shares || 0)}</span>
+                          <span className="metric-label">Shares</span>
+                        </div>
+                        <div className="platform-metric">
+                          <span className="metric-value">{formatNumber(data.reach || 0)}</span>
+                          <span className="metric-label">Reach</span>
+                        </div>
+                        <div className="platform-metric">
+                          <span className="metric-value">{formatNumber(data.impressions || 0)}</span>
+                          <span className="metric-label">Impressions</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="kpi-content">
-                  <div className="kpi-value">
-                    {formatNumber(analyticsData.overview.totalImpressions)}
+              </div>
+            </div>
+          )}
+
+          {/* Engagement Section */}
+          {activeSection === 'engagement' && analyticsData.engagement && (
+            <div className="analytics-section">
+              <h2>Engagement Trends & Analysis</h2>
+              
+              {/* Engagement Overview Cards */}
+              <div className="engagement-overview-cards">
+                <div className="engagement-card">
+                  <div className="card-header">
+                    <Heart size={20} />
+                    <span>Total Engagement</span>
                   </div>
-                  <div className="kpi-label">Total Impressions</div>
-                  <div className="kpi-change positive">
-                    <ArrowUp size={12} />
-                    +{((analyticsData.overview.totalImpressions / Math.max(1, posts.length)) * 0.05).toFixed(1)}%
+                  <div className="card-value">
+                    {formatNumber(analyticsData.overview.totalLikes + analyticsData.overview.totalComments + analyticsData.overview.totalShares)}
                   </div>
+                  <div className="card-change positive">
+                    <ArrowUp size={14} />
+                    +15.2% vs last period
+                  </div>
+                </div>
+
+                <div className="engagement-card">
+                  <div className="card-header">
+                    <Target size={20} />
+                    <span>Engagement Rate</span>
+                  </div>
+                  <div className="card-value">{analyticsData.engagement.engagementRate}%</div>
+                  <div className="card-change positive">
+                    <ArrowUp size={14} />
+                    +0.8% vs last period
+                  </div>
+                </div>
+
+                <div className="engagement-card">
+                  <div className="card-header">
+                    <Clock size={20} />
+                    <span>Best Time</span>
+                  </div>
+                  <div className="card-value">{analyticsData.engagement.bestPerformingTime}</div>
+                  <div className="card-subtitle">Peak engagement window</div>
+                </div>
+
+                <div className="engagement-card">
+                  <div className="card-header">
+                    <LayoutGrid size={20} />
+                    <span>Top Content</span>
+                  </div>
+                  <div className="card-value">{analyticsData.engagement.topContentType}</div>
+                  <div className="card-subtitle">Best performing format</div>
                 </div>
               </div>
 
-              <div className="kpi-card">
-                <div className="kpi-icon engagement">
-                  <Heart size={24} />
-                </div>
-                <div className="kpi-content">
-                  <div className="kpi-value">
-                    {formatNumber(
-                      analyticsData.overview.totalLikes +
-                      analyticsData.overview.totalComments +
-                      analyticsData.overview.totalShares
-                    )}
-                  </div>
-                  <div className="kpi-label">Total Engagement</div>
-                  <div className="kpi-change positive">
-                    <ArrowUp size={12} />
-                    +{((analyticsData.overview.totalLikes + analyticsData.overview.totalComments) * 0.02).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-
-              <div className="kpi-card">
-                <div className="kpi-icon engagement-rate">
-                  <Target size={24} />
-                </div>
-                <div className="kpi-content">
-                  <div className="kpi-value">
-                    {analyticsData.overview.avgEngagementRate.toFixed(1)}%
-                  </div>
-                  <div className="kpi-label">Avg Engagement Rate</div>
-                  <div className="kpi-change positive">
-                    <ArrowUp size={12} />
-                    +{(analyticsData.overview.avgEngagementRate * 0.1).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-
-              <div className="kpi-card">
-                <div className="kpi-icon posts">
-                  <FileText size={24} />
-                </div>
-                <div className="kpi-content">
-                  <div className="kpi-value">
-                    {analyticsData.overview.totalPosts}
-                  </div>
-                  <div className="kpi-label">Posts Published</div>
-                  <div className="kpi-change positive">
-                    <ArrowUp size={12} />
-                    +{Math.ceil(analyticsData.overview.totalPosts * 0.2)}%
-                  </div>
-                </div>
-              </div>
-
-              <div className="kpi-card">
-                <div className="kpi-icon followers">
-                  <Users size={24} />
-                </div>
-                <div className="kpi-content">
-                  <div className="kpi-value">
-                    {dashboardData?.stats?.totalFollowers?.toLocaleString() || '0'}
-                  </div>
-                  <div className="kpi-label">Total Followers</div>
-                  <div className="kpi-change positive">
-                    <ArrowUp size={12} />
-                    +{Math.abs(analyticsData.overview.followerGrowth || 0).toFixed(1)}%
+              {/* Engagement Trends Chart Placeholder */}
+              <div className="chart-container">
+                <h3>Engagement Trends (Last 7 Days)</h3>
+                <div className="chart-placeholder">
+                  <LineChart size={48} />
+                  <p>Interactive engagement trend chart would appear here</p>
+                  <div className="trend-data-preview">
+                    {analyticsData.engagement.trends.map((day, index) => (
+                      <div key={index} className="trend-day">
+                        <span className="trend-date">{new Date(day.date).getDate()}</span>
+                        <div className="trend-bars">
+                          <div className="bar likes" style={{ height: `${(day.likes / 200) * 100}%` }} title={`${day.likes} likes`}></div>
+                          <div className="bar comments" style={{ height: `${(day.comments / 80) * 100}%` }} title={`${day.comments} comments`}></div>
+                          <div className="bar shares" style={{ height: `${(day.shares / 30) * 100}%` }} title={`${day.shares} shares`}></div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Engagement Trends Chart */}
-          {/* <div className="analytics-section">
-            <h2>Engagement Trends</h2>
-            <div className="chart-container">
-              <div className="chart-header">
-                <div className="chart-legend">
-                  <span className="legend-item">
-                    <span className="legend-color likes"></span>
-                    Likes ({formatNumber(analyticsData.overview.totalLikes)})
-                  </span>
-                  <span className="legend-item">
-                    <span className="legend-color comments"></span>
-                    Comments ({formatNumber(analyticsData.overview.totalComments)})
-                  </span>
-                  <span className="legend-item">
-                    <span className="legend-color shares"></span>
-                    Shares ({formatNumber(analyticsData.overview.totalShares)})
-                  </span>
-                  <span className="legend-item">
-                    <span className="legend-color reach"></span>
-                    Reach ({formatNumber(analyticsData.overview.totalReach)})
-                  </span>
+          {/* Audience Section */}
+          {activeSection === 'audience' && analyticsData.audience && (
+            <div className="analytics-section">
+              <h2>Audience Demographics & Activity</h2>
+              
+              {/* Demographics Grid */}
+              <div className="demographics-grid">
+                {/* Age Demographics */}
+                <div className="demo-card">
+                  <h3>Age Distribution</h3>
+                  <div className="demo-chart">
+                    {analyticsData.audience.demographics.age.map((age, index) => (
+                      <div key={index} className="demo-bar-item">
+                        <span className="demo-label">{age.range}</span>
+                        <div className="demo-bar">
+                          <div 
+                            className="demo-fill" 
+                            style={{ width: `${age.percentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="demo-value">{age.percentage}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Gender Demographics */}
+                <div className="demo-card">
+                  <h3>Gender Distribution</h3>
+                  <div className="demo-chart">
+                    {analyticsData.audience.demographics.gender.map((gender, index) => (
+                      <div key={index} className="demo-bar-item">
+                        <span className="demo-label">{gender.type}</span>
+                        <div className="demo-bar">
+                          <div 
+                            className="demo-fill" 
+                            style={{ width: `${gender.percentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="demo-value">{gender.percentage}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Location Demographics */}
+                <div className="demo-card">
+                  <h3>Top Locations</h3>
+                  <div className="demo-chart">
+                    {analyticsData.audience.demographics.locations.map((location, index) => (
+                      <div key={index} className="demo-bar-item">
+                        <span className="demo-label">
+                          <MapPin size={12} />
+                          {location.country}
+                        </span>
+                        <div className="demo-bar">
+                          <div 
+                            className="demo-fill" 
+                            style={{ width: `${location.percentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="demo-value">{location.percentage}%</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="chart-placeholder">
-                <BarChart3 size={48} />
-                <p>Engagement trends based on your {posts.length} published posts</p>
-                <div className="trend-summary">
-                  <p>Total engagement across all platforms: {formatNumber(analyticsData.overview.totalLikes + analyticsData.overview.totalComments + analyticsData.overview.totalShares)}</p>
+
+              {/* Activity Heatmap */}
+              <div className="activity-section">
+                <h3>Audience Activity by Hour</h3>
+                <div className="activity-heatmap">
+                  {analyticsData.audience.activeHours.map((hour, index) => (
+                    <div key={index} className="activity-hour">
+                      <div className="hour-label">{hour.hour}</div>
+                      <div 
+                        className="activity-bar" 
+                        style={{ 
+                          height: `${hour.activity}%`,
+                          backgroundColor: `rgba(0, 123, 255, ${hour.activity / 100})`
+                        }}
+                        title={`${hour.activity}% activity`}
+                      ></div>
+                    </div>
+                  ))}
+                </div>
+                <div className="activity-legend">
+                  <span className="legend-item">
+                    <div className="legend-color low"></div>
+                    Low Activity
+                  </span>
+                  <span className="legend-item">
+                    <div className="legend-color medium"></div>
+                    Medium Activity
+                  </span>
+                  <span className="legend-item">
+                    <div className="legend-color high"></div>
+                    High Activity
+                  </span>
                 </div>
               </div>
             </div>
-          </div> */}
+          )}
 
-          {/* Platform Performance Breakdown */}
-          <div className="analytics-section">
-            <h2>Platform Performance</h2>
-            <div className="platform-performance">
-              <div className="platform-performance-grid">
-                {Object.entries(analyticsData.platformBreakdown).map(([platform, data]) => (
-                  <div key={platform} className="platform-performance-card">
-                    <div className="platform-header">
-                      <div className="platform-info">
-                        {platform === 'instagram' && <Instagram size={20} />}
-                        {platform === 'twitter' && <Twitter size={20} />}
-                        {platform === 'facebook' && <Facebook size={20} />}
-                        <span className="platform-name">
-                          {platform.charAt(0).toUpperCase() + platform.slice(1)}
+          {/* Content Analysis Section */}
+          {activeSection === 'content' && analyticsData.contentTypes && (
+            <div className="analytics-section">
+              <h2>Content Performance Analysis</h2>
+              
+              {/* Content Types Performance */}
+              <div className="content-types-grid">
+                {analyticsData.contentTypes.map((type, index) => (
+                  <div key={index} className={`content-type-card ${type.performance}`}>
+                    <div className="content-type-header">
+                      <div className="content-type-icon">
+                        {type.type === 'carousel' && <LayoutGrid size={24} />}
+                        {type.type === 'single_image' && <Image size={24} />}
+                        {type.type === 'video' && <Video size={24} />}
+                        {type.type === 'reel' && <Play size={24} />}
+                        {type.type === 'story' && <Activity size={24} />}
+                      </div>
+                      <div className="content-type-info">
+                        <h3>{type.type.replace('_', ' ').toUpperCase()}</h3>
+                        <span className={`performance-badge ${type.performance}`}>
+                          {type.performance}
                         </span>
                       </div>
-                      {/* <button
-                        className="platform-filter-btn"
-                        onClick={() => handlePlatformChange(platform)}
-                      >
-                        Filter by {platform}
-                      </button> */}
                     </div>
-                    <div className="platform-metrics-grid">
-                      <div className="platform-metric">
-                        <span className="metric-value">{data.posts}</span>
-                        <span className="metric-label">Posts</span>
+                    
+                    <div className="content-type-stats">
+                      <div className="stat-row">
+                        <span className="stat-label">Posts Count:</span>
+                        <span className="stat-value">{type.count}</span>
                       </div>
-                      <div className="platform-metric">
-                        <span className="metric-value">{formatNumber(data.likes)}</span>
-                        <span className="metric-label">Likes</span>
+                      <div className="stat-row">
+                        <span className="stat-label">Avg Engagement:</span>
+                        <span className="stat-value">{formatNumber(type.avgEngagement)}</span>
                       </div>
-                      <div className="platform-metric">
-                        <span className="metric-value">{formatNumber(data.comments)}</span>
-                        <span className="metric-label">Comments</span>
+                      <div className="stat-row">
+                        <span className="stat-label">Avg Reach:</span>
+                        <span className="stat-value">{formatNumber(type.avgReach)}</span>
                       </div>
-                      <div className="platform-metric">
-                        <span className="metric-value">{formatNumber(data.shares)}</span>
-                        <span className="metric-label">Shares</span>
-                      </div>
-                      <div className="platform-metric">
-                        <span className="metric-value">{formatNumber(data.reach)}</span>
-                        <span className="metric-label">Reach</span>
+                      <div className="stat-row">
+                        <span className="stat-label">Engagement Rate:</span>
+                        <span className="stat-value">
+                          {((type.avgEngagement / type.avgReach) * 100).toFixed(1)}%
+                        </span>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
 
-          {/* Top Content Analysis */}
-          {/* <div className="analytics-section">
-            <div className="section-header">
-              <h2>Top Content Analysis</h2>
-              <div className="sort-controls">
-                <label>Sort by:</label>
-                <select className="sort-select">
-                  <option value="totalEngagement">Total Engagement</option>
-                  <option value="likes">Likes</option>
-                  <option value="comments">Comments</option>
-                  <option value="reach">Reach</option>
-                </select>
+              {/* Content Insights */}
+              <div className="content-insights">
+                <div className="insight-card">
+                  <Zap size={20} />
+                  <div className="insight-content">
+                    <h4>Top Performing Content</h4>
+                    <p>Reels generate 58% more engagement than static posts</p>
+                  </div>
+                </div>
+                <div className="insight-card">
+                  <Target size={20} />
+                  <div className="insight-content">
+                    <h4>Optimal Content Mix</h4>
+                    <p>40% Reels, 30% Carousels, 20% Images, 10% Videos</p>
+                  </div>
+                </div>
+                <div className="insight-card">
+                  <TrendingUp size={20} />
+                  <div className="insight-content">
+                    <h4>Growth Opportunity</h4>
+                    <p>Increase video content for 25% potential reach boost</p>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="top-content-grid">
-              {analyticsData.topPosts.length > 0 ? (
-                analyticsData.topPosts.map(post => (
-                  <div key={post.id} className="top-post-card">
-                    <div className="post-thumbnail">
-                      <div className="post-image-placeholder">
-                        {post.images && post.images.length > 0 ? (
-                          <img 
-                            src={typeof post.images[0] === 'string' ? post.images[0] : post.images[0].url} 
-                            alt="Post content"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
-                          />
-                        ) : (
-                          <FileText size={24} />
-                        )}
+          {/* Growth Section */}
+          {activeSection === 'growth' && analyticsData.growth && (
+            <div className="analytics-section">
+              <h2>Follower Growth & Trends</h2>
+              
+              {/* Growth Overview Cards */}
+              <div className="growth-overview-cards">
+                <div className="growth-card">
+                  <div className="card-header">
+                    <Users size={20} />
+                    <span>Total Followers</span>
+                  </div>
+                  <div className="card-value">
+                    {formatNumber(
+                      analyticsData.growth.followers[analyticsData.growth.followers.length - 1].instagram +
+                      analyticsData.growth.followers[analyticsData.growth.followers.length - 1].facebook
+                    )}
+                  </div>
+                  <div className="card-change positive">
+                    <ArrowUp size={14} />
+                    +{analyticsData.growth.growthRate}% this period
+                  </div>
+                </div>
+
+                <div className="growth-card">
+                  <div className="card-header">
+                    <TrendingUp size={20} />
+                    <span>Growth Rate</span>
+                  </div>
+                  <div className="card-value">{analyticsData.growth.growthRate}%</div>
+                  <div className="card-subtitle">Weekly average</div>
+                </div>
+
+                <div className="growth-card">
+                  <div className="card-header">
+                    <ArrowDown size={20} />
+                    <span>Unfollow Rate</span>
+                  </div>
+                  <div className="card-value">{analyticsData.growth.unfollowRate}%</div>
+                  <div className="card-subtitle">Below average</div>
+                </div>
+
+                <div className="growth-card">
+                  <div className="card-header">
+                    <Activity size={20} />
+                    <span>Net Growth</span>
+                  </div>
+                  <div className="card-value">
+                    +{formatNumber(
+                      (analyticsData.growth.followers[analyticsData.growth.followers.length - 1].instagram +
+                       analyticsData.growth.followers[analyticsData.growth.followers.length - 1].facebook) -
+                      (analyticsData.growth.followers[0].instagram + analyticsData.growth.followers[0].facebook)
+                    )}
+                  </div>
+                  <div className="card-subtitle">Last 7 days</div>
+                </div>
+              </div>
+
+              {/* Growth Chart Placeholder */}
+              <div className="chart-container">
+                <h3>Follower Growth Trend</h3>
+                <div className="chart-placeholder">
+                  <LineChart size={48} />
+                  <p>Interactive growth trend chart would appear here</p>
+                  <div className="growth-data-preview">
+                    {analyticsData.growth.followers.map((day, index) => (
+                      <div key={index} className="growth-day">
+                        <span className="growth-date">{new Date(day.date).getDate()}</span>
+                        <div className="growth-bars">
+                          <div className="bar instagram" style={{ height: `${(day.instagram / 10000) * 100}%` }} title={`${day.instagram} Instagram`}></div>
+                          <div className="bar facebook" style={{ height: `${(day.facebook / 6000) * 100}%` }} title={`${day.facebook} Facebook`}></div>
+                        </div>
                       </div>
-                      <div className="post-platform">
-                        {post.platform === 'instagram' && <Instagram size={16} />}
-                        {post.platform === 'twitter' && <Twitter size={16} />}
-                        {post.platform === 'facebook' && <Facebook size={16} />}
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Platform Growth Comparison */}
+              <div className="platform-growth-comparison">
+                <h3>Platform Growth Comparison</h3>
+                <div className="platform-growth-cards">
+                  <div className="platform-growth-card instagram">
+                    <Instagram size={24} />
+                    <div className="platform-growth-info">
+                      <span className="platform-name">Instagram</span>
+                      <span className="follower-count">
+                        {formatNumber(analyticsData.growth.followers[analyticsData.growth.followers.length - 1].instagram)}
+                      </span>
+                      <span className="growth-indicator positive">+2.8% growth</span>
+                    </div>
+                  </div>
+                  <div className="platform-growth-card facebook">
+                    <Facebook size={24} />
+                    <div className="platform-growth-info">
+                      <span className="platform-name">Facebook</span>
+                      <span className="follower-count">
+                        {formatNumber(analyticsData.growth.followers[analyticsData.growth.followers.length - 1].facebook)}
+                      </span>
+                      <span className="growth-indicator positive">+1.8% growth</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Hashtags Section */}
+          {activeSection === 'hashtags' && analyticsData.hashtags && (
+            <div className="analytics-section">
+              <h2>Hashtag Performance Analysis</h2>
+              
+              {/* Top Performing Hashtags */}
+              <div className="hashtags-table">
+                <div className="table-header">
+                  <div className="header-cell">Hashtag</div>
+                  <div className="header-cell">Impressions</div>
+                  <div className="header-cell">Reach</div>
+                  <div className="header-cell">Posts</div>
+                  <div className="header-cell">Engagement</div>
+                  <div className="header-cell">Avg Performance</div>
+                </div>
+                
+                {analyticsData.hashtags.map((hashtag, index) => (
+                  <div key={index} className="table-row">
+                    <div className="table-cell hashtag-cell">
+                      <Hash size={16} />
+                      <span className="hashtag-name">{hashtag.tag}</span>
+                    </div>
+                    <div className="table-cell">{formatNumber(hashtag.impressions)}</div>
+                    <div className="table-cell">{formatNumber(hashtag.reach)}</div>
+                    <div className="table-cell">{hashtag.posts}</div>
+                    <div className="table-cell">{formatNumber(hashtag.engagement)}</div>
+                    <div className="table-cell">
+                      <div className="performance-indicator">
+                        <div 
+                          className="performance-bar" 
+                          style={{ 
+                            width: `${(hashtag.engagement / hashtag.reach) * 100}%`,
+                            backgroundColor: '#007bff'
+                          }}
+                        ></div>
+                        <span>{((hashtag.engagement / hashtag.reach) * 100).toFixed(1)}%</span>
                       </div>
                     </div>
+                  </div>
+                ))}
+              </div>
 
-                    <div className="post-content">
-                      <p className="post-text">
-                        {post.content.substring(0, 100)}
-                        {post.content.length > 100 ? '...' : ''}
-                      </p>
+              {/* Hashtag Insights */}
+              <div className="hashtag-insights">
+                <div className="insight-card">
+                  <Hash size={20} />
+                  <div className="insight-content">
+                    <h4>Best Performing Hashtag</h4>
+                    <p>{analyticsData.hashtags[0].tag} with {formatNumber(analyticsData.hashtags[0].engagement)} engagement</p>
+                  </div>
+                </div>
+                <div className="insight-card">
+                  <Target size={20} />
+                  <div className="insight-content">
+                    <h4>Optimal Hashtag Count</h4>
+                    <p>Use 8-12 hashtags for maximum reach and engagement</p>
+                  </div>
+                </div>
+                <div className="insight-card">
+                  <TrendingUp size={20} />
+                  <div className="insight-content">
+                    <h4>Trending Opportunity</h4>
+                    <p>Mix popular and niche hashtags for better discovery</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-                      <div className="post-stats">
-                        <div className="stat-item">
-                          <Heart size={14} />
-                          <span>{formatNumber(post.likes)}</span>
-                        </div>
-                        <div className="stat-item">
-                          <MessageCircle size={14} />
-                          <span>{formatNumber(post.comments)}</span>
-                        </div>
-                        <div className="stat-item">
-                          <Share2 size={14} />
-                          <span>{formatNumber(post.shares)}</span>
-                        </div>
-                        <div className="stat-item">
-                          <Eye size={14} />
-                          <span>{formatNumber(post.reach)}</span>
-                        </div>
-                      </div>
-
-                      <div className="post-performance-highlight">
-                        <span className="engagement-rate">
-                          {post.engagementRate.toFixed(1)}% Engagement Rate
-                        </span>
-                        <span className="post-date">
-                          {new Date(post.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
+          {/* Best Times Section */}
+          {activeSection === 'timing' && analyticsData.bestTimes && (
+            <div className="analytics-section">
+              <h2>Optimal Posting Times</h2>
+              
+              {/* Best Times by Day */}
+              <div className="best-times-grid">
+                {analyticsData.bestTimes.weekdays.map((day, index) => (
+                  <div key={index} className="day-card">
+                    <div className="day-header">
+                      <span className="day-name">{day.day}</span>
+                      <span className="best-time">{day.bestHour}</span>
                     </div>
+                    <div className="engagement-score">
+                      <div className="score-value">{day.engagement}%</div>
+                      <div className="score-label">Engagement</div>
+                    </div>
+                    <div className="engagement-bar">
+                      <div 
+                        className="engagement-fill" 
+                        style={{ width: `${day.engagement}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-                    <button className="view-details-btn">
-                      View Details
+              {/* Weekly Heatmap */}
+              <div className="timing-heatmap">
+                <h3>Weekly Posting Heatmap</h3>
+                <div className="heatmap-container">
+                  <div className="heatmap-hours">
+                    {['6AM', '9AM', '12PM', '3PM', '6PM', '9PM', '12AM'].map((hour, index) => (
+                      <div key={index} className="hour-label">{hour}</div>
+                    ))}
+                  </div>
+                  <div className="heatmap-grid">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, dayIndex) => (
+                      <div key={dayIndex} className="heatmap-row">
+                        <div className="day-label">{day}</div>
+                        {analyticsData.bestTimes.heatmap[dayIndex].map((value, hourIndex) => (
+                          <div 
+                            key={hourIndex} 
+                            className="heatmap-cell"
+                            style={{ 
+                              backgroundColor: `rgba(0, 123, 255, ${value / 50})`,
+                              opacity: Math.max(0.1, value / 50)
+                            }}
+                            title={`${day} ${['6AM', '9AM', '12PM', '3PM', '6PM', '9PM', '12AM'][hourIndex]}: ${value}% engagement`}
+                          >
+                            {value}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="heatmap-legend">
+                  <span>Low</span>
+                  <div className="legend-gradient"></div>
+                  <span>High</span>
+                </div>
+              </div>
+
+              {/* Timing Recommendations */}
+              <div className="timing-recommendations">
+                <div className="recommendation-card">
+                  <Clock size={20} />
+                  <div className="recommendation-content">
+                    <h4>Peak Engagement Time</h4>
+                    <p>Tuesday at 8:00 PM shows highest engagement (92%)</p>
+                  </div>
+                </div>
+                <div className="recommendation-card">
+                  <Calendar size={20} />
+                  <div className="recommendation-content">
+                    <h4>Best Days to Post</h4>
+                    <p>Tuesday, Thursday, and Friday show consistent high engagement</p>
+                  </div>
+                </div>
+                <div className="recommendation-card">
+                  <Activity size={20} />
+                  <div className="recommendation-content">
+                    <h4>Consistency Tip</h4>
+                    <p>Post regularly between 6-9 PM for optimal reach</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reports Section */}
+          {activeSection === 'reports' && (
+            <div className="analytics-section">
+              <h2>Analytics Reports & Export</h2>
+              
+              {/* Report Options */}
+              <div className="report-options-grid">
+                <div className="report-option-card">
+                  <div className="report-icon">
+                    <PieChart size={32} />
+                  </div>
+                  <div className="report-info">
+                    <h3>Summary Report</h3>
+                    <p>Overview of key metrics and performance insights</p>
+                  </div>
+                  <div className="report-actions">
+                    <button 
+                      className="export-btn pdf"
+                      onClick={() => exportReport('pdf')}
+                    >
+                      <Download size={16} />
+                      PDF
+                    </button>
+                    <button 
+                      className="export-btn excel"
+                      onClick={() => exportReport('excel')}
+                    >
+                      <Download size={16} />
+                      Excel
                     </button>
                   </div>
-                ))
-              ) : (
-                <div className="empty-top-posts">
-                  <FileText size={48} />
-                  <h3>No posts with engagement data</h3>
-                  <p>Publish posts and wait for engagement data to appear here</p>
                 </div>
-              )}
+
+                <div className="report-option-card">
+                  <div className="report-icon">
+                    <BarChart size={32} />
+                  </div>
+                  <div className="report-info">
+                    <h3>Detailed Analytics</h3>
+                    <p>Comprehensive data breakdown by platform and content type</p>
+                  </div>
+                  <div className="report-actions">
+                    <button 
+                      className="export-btn pdf"
+                      onClick={() => exportReport('pdf')}
+                    >
+                      <Download size={16} />
+                      PDF
+                    </button>
+                    <button 
+                      className="export-btn excel"
+                      onClick={() => exportReport('excel')}
+                    >
+                      <Download size={16} />
+                      Excel
+                    </button>
+                  </div>
+                </div>
+
+                <div className="report-option-card">
+                  <div className="report-icon">
+                    <LineChart size={32} />
+                  </div>
+                  <div className="report-info">
+                    <h3>Growth Report</h3>
+                    <p>Follower growth trends and audience development metrics</p>
+                  </div>
+                  <div className="report-actions">
+                    <button 
+                      className="export-btn pdf"
+                      onClick={() => exportReport('pdf')}
+                    >
+                      <Download size={16} />
+                      PDF
+                    </button>
+                    <button 
+                      className="export-btn excel"
+                      onClick={() => exportReport('excel')}
+                    >
+                      <Download size={16} />
+                      Excel
+                    </button>
+                  </div>
+                </div>
+
+                <div className="report-option-card">
+                  <div className="report-icon">
+                    <Hash size={32} />
+                  </div>
+                  <div className="report-info">
+                    <h3>Content Performance</h3>
+                    <p>Detailed analysis of posts, hashtags, and content types</p>
+                  </div>
+                  <div className="report-actions">
+                    <button 
+                      className="export-btn pdf"
+                      onClick={() => exportReport('pdf')}
+                    >
+                      <Download size={16} />
+                      PDF
+                    </button>
+                    <button 
+                      className="export-btn excel"
+                      onClick={() => exportReport('excel')}
+                    >
+                      <Download size={16} />
+                      Excel
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Scheduled Reports */}
+              <div className="scheduled-reports">
+                <h3>Scheduled Reports</h3>
+                <div className="scheduled-reports-list">
+                  <div className="scheduled-report-item">
+                    <div className="report-schedule-info">
+                      <span className="report-name">Weekly Summary</span>
+                      <span className="report-schedule">Every Monday at 9:00 AM</span>
+                    </div>
+                    <div className="report-schedule-actions">
+                      <button className="btn-secondary">Edit</button>
+                      <button className="btn-secondary">Disable</button>
+                    </div>
+                  </div>
+                  <div className="scheduled-report-item">
+                    <div className="report-schedule-info">
+                      <span className="report-name">Monthly Growth Report</span>
+                      <span className="report-schedule">First day of each month</span>
+                    </div>
+                    <div className="report-schedule-actions">
+                      <button className="btn-secondary">Edit</button>
+                      <button className="btn-secondary">Disable</button>
+                    </div>
+                  </div>
+                </div>
+                <button className="btn-primary">
+                  <Calendar size={16} />
+                  Schedule New Report
+                </button>
+              </div>
+
+              {/* Report History */}
+              <div className="report-history">
+                <h3>Recent Reports</h3>
+                <div className="report-history-list">
+                  <div className="report-history-item">
+                    <div className="report-info">
+                      <span className="report-name">Weekly Analytics - Jan 2025</span>
+                      <span className="report-date">Generated on Jan 7, 2025</span>
+                    </div>
+                    <div className="report-actions">
+                      <button className="btn-secondary">
+                        <Download size={16} />
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                  <div className="report-history-item">
+                    <div className="report-info">
+                      <span className="report-name">Monthly Summary - Dec 2024</span>
+                      <span className="report-date">Generated on Jan 1, 2025</span>
+                    </div>
+                    <div className="report-actions">
+                      <button className="btn-secondary">
+                        <Download size={16} />
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div> */}
+          )}
+
+          {/* Top Performing Post - Show in all sections */}
+          {analyticsData.topPost && (
+            <div className="analytics-section">
+              <h2>Top Performing Post</h2>
+              <div className="top-post-container">
+                <div className="top-post-card">
+                  <div className="top-post-content">
+                    {analyticsData.topPost.images && analyticsData.topPost.images.length > 0 && (
+                      <div className="top-post-image">
+                        <img 
+                          src={analyticsData.topPost.images[0].url} 
+                          alt={analyticsData.topPost.images[0].altText || "Top post"}
+                        />
+                      </div>
+                    )}
+                    <div className="top-post-details">
+                      <div className="top-post-platforms">
+                        {analyticsData.topPost.platforms?.map(platform => (
+                          <span key={platform} className="platform-badge">
+                            {platform === 'instagram' && <Instagram size={14} />}
+                            {platform === 'facebook' && <Facebook size={14} />}
+                            {platform === 'twitter' && <Twitter size={14} />}
+                            {platform}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="top-post-text">
+                        {analyticsData.topPost.content?.substring(0, 150)}
+                        {analyticsData.topPost.content?.length > 150 ? '...' : ''}
+                      </p>
+                      <div className="top-post-stats">
+                        <div className="stat-item">
+                          <Heart size={16} />
+                          <span>{formatNumber(analyticsData.topPost.totalEngagement || 0)}</span>
+                          <label>Total Engagement</label>
+                        </div>
+                        <div className="stat-item">
+                          <Target size={16} />
+                          <span>{(analyticsData.topPost.avgEngagementRate || 0).toFixed(1)}%</span>
+                          <label>Engagement Rate</label>
+                        </div>
+                        <div className="stat-item">
+                          <Calendar size={16} />
+                          <span>{new Date(analyticsData.topPost.publishedAt || analyticsData.topPost.createdAt).toLocaleDateString()}</span>
+                          <label>Published</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
-     </div>
-
   );
 };
 

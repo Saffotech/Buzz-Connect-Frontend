@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import "./PostDetailModal.css";
-import { X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, Bookmark, Send, Eye, Instagram, Facebook, Twitter, ChevronRightCircle, ChevronLeftCircle, Edit, Trash2, RefreshCw } from "lucide-react";
+import { 
+  X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, 
+  Bookmark, Send, Eye, Instagram, Facebook, Twitter, ChevronRightCircle, 
+  ChevronLeftCircle, Edit, Trash2, RefreshCw, TrendingUp, BarChart3,
+  Users, ExternalLink, Copy
+} from "lucide-react";
 import axios from "axios";
 
 const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain }) => {
@@ -9,9 +14,46 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   const [accountDetails, setAccountDetails] = useState(null);
   const [loadingAccount, setLoadingAccount] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  
+  // New state for analytics and tabs
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [syncingAnalytics, setSyncingAnalytics] = useState(false);
+  const [activeTab, setActiveTab] = useState('preview');
 
   // ✅ Fixed: Declare platform first, handling null/undefined cases
   const platform = post?.selectedPlatform?.toLowerCase() || post?.platforms?.[0]?.toLowerCase() || "post";
+
+  // Mock comments data (replace with real API data)
+  const mockComments = [
+    {
+      id: 1,
+      platform: 'instagram',
+      author: 'sarah_marketing',
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face',
+      content: 'This is amazing! Love the creativity 🔥',
+      timestamp: '2 hours ago',
+      likes: 12
+    },
+    {
+      id: 2,
+      platform: 'facebook',
+      author: 'Digital Marketing Pro',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
+      content: 'Great content strategy! How did you come up with this concept?',
+      timestamp: '4 hours ago',
+      likes: 8
+    },
+    {
+      id: 3,
+      platform: 'instagram',
+      author: 'creative_minds',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face',
+      content: 'Bookmarked for inspiration! 💡',
+      timestamp: '6 hours ago',
+      likes: 5
+    }
+  ];
 
   // Get account ID based on platform
   const getAccountId = () => {
@@ -27,9 +69,99 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       case "twitter":
         return selectedAccounts.twitter?.[0] || null;
       default:
-        // Try to get from platformPosts
         const platformPost = post.platformPosts?.find(p => p.platform === platform);
         return platformPost?.accountId || null;
+    }
+  };
+
+  // Fetch detailed analytics for the post
+  const fetchPostAnalytics = async () => {
+    if (!post?._id && !post?.id) return;
+    
+    setLoadingAnalytics(true);
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
+      const postId = post._id || post.id;
+      console.log('Fetching analytics for post:', postId);
+
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/analytics/posts/${postId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'accept': '*/*'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        console.log('Analytics data received:', response.data.data);
+        setAnalyticsData(response.data.data);
+      } else {
+        console.error('Failed to fetch analytics:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching post analytics:', error);
+      if (error.response?.status === 404) {
+        console.log('Post not found in analytics - this is normal for draft posts');
+      } else {
+        showToast('Failed to load analytics data', 'error');
+      }
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  // Sync analytics for this specific post
+  const syncPostAnalytics = async () => {
+    if (!post?._id && !post?.id) return;
+    
+    setSyncingAnalytics(true);
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+      
+      if (!token) {
+        showToast('Authentication required', 'error');
+        return;
+      }
+
+      const postId = post._id || post.id;
+      console.log('Syncing analytics for post:', postId);
+
+      showToast('Syncing analytics from social platforms...', 'info');
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/analytics/posts/${postId}/sync`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'accept': '*/*'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        console.log('Sync successful:', response.data);
+        showToast(response.data.message || 'Analytics synced successfully!', 'success');
+        
+        // Refresh analytics data after sync
+        await fetchPostAnalytics();
+      } else {
+        throw new Error(response.data.message || 'Sync failed');
+      }
+    } catch (error) {
+      console.error('Error syncing post analytics:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to sync analytics';
+      showToast(errorMessage, 'error');
+    } finally {
+      setSyncingAnalytics(false);
     }
   };
 
@@ -42,7 +174,6 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       console.log("Fetching account details for ID:", accountId);
       
       if (accountId) {
-        // Get token from localStorage or wherever you store it
         const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
         
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/accounts/${accountId}`, {
@@ -70,7 +201,6 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
 
   // Toast notification function
   const showToast = (message, type = 'info') => {
-    // Create a simple toast notification
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
@@ -79,7 +209,6 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       </div>
     `;
     
-    // Add toast styles if they don't exist
     if (!document.getElementById('toast-styles')) {
       const style = document.createElement('style');
       style.id = 'toast-styles';
@@ -110,160 +239,171 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     
     document.body.appendChild(toast);
     
-    // Show toast
     setTimeout(() => toast.classList.add('show'), 100);
     
-    // Remove toast after 3 seconds
     setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => document.body.removeChild(toast), 300);
     }, 3000);
   };
 
-// Handle post again action - FIXED VERSION
-const handlePostAgain = async () => {
-  setShowDropdown(false);
-  setIsPosting(true);
+  // Handle post again action
+  const handlePostAgain = async () => {
+    setShowDropdown(false);
+    setIsPosting(true);
 
-  try {
-    // Get token from localStorage
-    const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
 
-    if (!token) {
-      throw new Error('Authentication token not found');
-    }
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
 
-    console.log('=== FIXED POST AGAIN ===');
-    console.log('Original post object:', post);
+      console.log('=== FIXED POST AGAIN ===');
+      console.log('Original post object:', post);
 
-    // Clean up selectedAccounts to remove null values and empty arrays
-    const cleanedSelectedAccounts = {};
-    if (post.selectedAccounts) {
-      Object.entries(post.selectedAccounts).forEach(([platform, accounts]) => {
-        if (accounts && Array.isArray(accounts)) {
-          const validAccounts = accounts.filter(account => account != null && account !== '');
-          if (validAccounts.length > 0) {
-            cleanedSelectedAccounts[platform] = validAccounts;
+      const cleanedSelectedAccounts = {};
+      if (post.selectedAccounts) {
+        Object.entries(post.selectedAccounts).forEach(([platform, accounts]) => {
+          if (accounts && Array.isArray(accounts)) {
+            const validAccounts = accounts.filter(account => account != null && account !== '');
+            if (validAccounts.length > 0) {
+              cleanedSelectedAccounts[platform] = validAccounts;
+            }
+          }
+        });
+      }
+
+      const processedImages = (post.images || []).map(img => ({
+        url: img.url,
+        altText: img.altText || 'Post image',
+        publicId: img.publicId || null
+      }));
+
+      const processedHashtags = Array.isArray(post.hashtags) 
+        ? post.hashtags 
+        : [];
+
+      const processedMentions = Array.isArray(post.mentions) 
+        ? post.mentions 
+        : [];
+
+      const postData = {
+        content: post.content || '',
+        platforms: post.platforms || [],
+        selectedAccounts: cleanedSelectedAccounts,
+        images: processedImages,
+        hashtags: processedHashtags,
+        mentions: processedMentions,
+        metadata: {
+          category: post.metadata?.category || 'other'
+        }
+      };
+
+      console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
+
+      showToast('Creating new post...', 'info');
+
+      const createResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
+        postData,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         }
-      });
-    }
+      );
 
-    // Process images properly - THIS WAS THE MISSING PART
-    const processedImages = (post.images || []).map(img => ({
-      url: img.url,
-      altText: img.altText || 'Post image',
-      publicId: img.publicId || null
-    }));
+      console.log('Post created successfully:', createResponse.data);
 
-    // Process hashtags
-    const processedHashtags = Array.isArray(post.hashtags) 
-      ? post.hashtags 
-      : [];
-
-    // Process mentions
-    const processedMentions = Array.isArray(post.mentions) 
-      ? post.mentions 
-      : [];
-
-    // Prepare the complete post data
-    const postData = {
-      content: post.content || '',
-      platforms: post.platforms || [],
-      selectedAccounts: cleanedSelectedAccounts,
-      images: processedImages, // Include the original images
-      hashtags: processedHashtags,
-      mentions: processedMentions,
-      metadata: {
-        category: post.metadata?.category || 'other'
+      if (!createResponse?.data?.data?._id && !createResponse?.data?._id) {
+        throw new Error('Failed to create post - no ID returned');
       }
-    };
 
-    console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
+      const postId = createResponse.data.data?._id || createResponse.data._id;
+      console.log('Publishing post with ID:', postId);
 
-    showToast('Creating new post...', 'info');
+      showToast('Publishing post...', 'info');
 
-    // Step 1: Create the post as draft
-    const createResponse = await axios.post(
-      `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
-      postData,
-      {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const publishResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
         }
+      );
+
+      console.log('Publish response:', publishResponse.data);
+
+      showToast('Post published again successfully!', 'success');
+
+      if (onPostAgain && typeof onPostAgain === 'function') {
+        onPostAgain(post, publishResponse.data);
       }
-    );
 
-    console.log('Post created successfully:', createResponse.data);
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
 
-    if (!createResponse?.data?.data?._id && !createResponse?.data?._id) {
-      throw new Error('Failed to create post - no ID returned');
-    }
-
-    // Step 2: Immediately publish the created post
-    const postId = createResponse.data.data?._id || createResponse.data._id;
-    console.log('Publishing post with ID:', postId);
-
-    showToast('Publishing post...', 'info');
-
-    const publishResponse = await axios.post(
-      `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` }
+    } catch (error) {
+      console.error('Failed to post again:', error);
+      
+      console.error('=== DETAILED ERROR INFO ===');
+      console.error('Status:', error.response?.status);
+      console.error('Error Data:', error.response?.data);
+      console.error('Error Message:', error.message);
+      
+      if (error.response?.data?.errors) {
+        console.error('Validation Errors:', error.response.data.errors);
       }
-    );
-
-    console.log('Publish response:', publishResponse.data);
-
-    showToast('Post published again successfully!', 'success');
-
-    // Call the parent callback if provided
-    if (onPostAgain && typeof onPostAgain === 'function') {
-      onPostAgain(post, publishResponse.data);
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+      showToast(`Failed to publish post: ${errorMessage}`, 'error');
+    } finally {
+      setIsPosting(false);
     }
+  };
 
-    // Close the modal after successful post
-    setTimeout(() => {
-      handleClose();
-    }, 1500);
+  // Handle copy link
+  const handleCopyLink = () => {
+    const postId = post._id || post.id;
+    navigator.clipboard.writeText(`${window.location.origin}/post/${postId}`);
+    showToast('Post link copied to clipboard!', 'success');
+  };
 
-  } catch (error) {
-    console.error('Failed to post again:', error);
-    
-    // Enhanced error logging
-    console.error('=== DETAILED ERROR INFO ===');
-    console.error('Status:', error.response?.status);
-    console.error('Error Data:', error.response?.data);
-    console.error('Error Message:', error.message);
-    
-    if (error.response?.data?.errors) {
-      console.error('Validation Errors:', error.response.data.errors);
+  // Handle share
+  const handleShare = () => {
+    const postId = post._id || post.id;
+    if (navigator.share) {
+      navigator.share({
+        title: 'Check out this post',
+        text: post.content?.substring(0, 100) + '...',
+        url: `${window.location.origin}/post/${postId}`
+      });
+    } else {
+      handleCopyLink();
     }
-    
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-    showToast(`Failed to publish post: ${errorMessage}`, 'error');
-  } finally {
-    setIsPosting(false);
-  }
-};
+  };
 
-
-  // Add keyboard event listener for ESC key and body scroll management
+  // Effects
   useEffect(() => {
     if (isOpen) {
       setImgIndex(0);
-      setShowDropdown(false); // Close dropdown when modal opens
-      setAccountDetails(null); // Reset account details
-      setIsPosting(false); // Reset posting state
+      setShowDropdown(false);
+      setAccountDetails(null);
+      setAnalyticsData(null);
+      setIsPosting(false);
+      setActiveTab('preview');
     }
   }, [isOpen, post]);
 
-  // Fetch account details when modal opens
   useEffect(() => {
     if (isOpen && post) {
       fetchAccountDetails();
+      if (post.status === 'published') {
+        fetchPostAnalytics();
+      }
     }
   }, [isOpen, post]);
 
@@ -276,7 +416,6 @@ const handlePostAgain = async () => {
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscapeKey);
-      // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden';
     }
 
@@ -286,32 +425,27 @@ const handlePostAgain = async () => {
     };
   }, [isOpen]);
 
-  // Enhanced close handler
+  // Helper functions
   const handleClose = () => {
     if (onClose && typeof onClose === 'function') {
       onClose();
     }
   };
 
-  // Handle overlay click (close when clicking outside modal)
   const handleOverlayClick = (event) => {
-    // Only close if clicking directly on the overlay, not on child elements
     if (event.target === event.currentTarget) {
       handleClose();
     }
   };
 
-  // Prevent modal content clicks from bubbling to overlay
   const handleModalClick = (event) => {
     event.stopPropagation();
   };
 
-  // Handle dropdown toggle
   const handleDropdownToggle = () => {
     setShowDropdown(!showDropdown);
   };
 
-  // Handle edit action
   const handleEdit = () => {
     setShowDropdown(false);
     if (onEdit) {
@@ -319,7 +453,6 @@ const handlePostAgain = async () => {
     }
   };
 
-  // Handle delete action
   const handleDelete = () => {
     setShowDropdown(false);
     if (onDelete) {
@@ -327,20 +460,12 @@ const handlePostAgain = async () => {
     }
   };
 
-  // Get social media username from account details or fallback
   const getSocialMediaUsername = () => {
-    console.log("=== USERNAME DEBUG ===");
-    console.log("Account details:", accountDetails);
-    console.log("Loading account:", loadingAccount);
-    console.log("Platform:", platform);
-    
     if (loadingAccount) {
       return "Loading...";
     }
     
     if (accountDetails) {
-      // Extract username from account details
-      // Adjust these field names based on what your account API returns
       const username = accountDetails.username || 
                        accountDetails.name || 
                        accountDetails.displayName ||
@@ -350,21 +475,16 @@ const handlePostAgain = async () => {
                        accountDetails.pageUsername ||
                        accountDetails.socialUsername;
       
-      console.log("Found username from account details:", username);
-      
       if (username) {
         return username;
       }
     }
     
-    // Fallback to user displayName if available
     const userDisplayName = post?.user?.displayName;
     if (userDisplayName) {
-      console.log("Using user displayName as fallback:", userDisplayName);
       return userDisplayName;
     }
     
-    // Final fallback usernames
     switch (platform) {
       case "instagram":
         return "instagram_user";
@@ -377,16 +497,14 @@ const handlePostAgain = async () => {
     }
   };
 
-  // Format username to ensure it has @ prefix
   const formatUsername = (username) => {
     if (!username) return "@user";
     if (username === "Loading...") return username;
     return username.startsWith('@') ? username : `@${username}`;
   };
 
-  // Get platform icon for the username display
-  const getPlatformIcon = () => {
-    switch (platform) {
+  const getPlatformIcon = (platformName) => {
+    switch (platformName) {
       case 'instagram':
         return <Instagram size={16} color="#E1306C" />;
       case 'facebook':
@@ -431,16 +549,11 @@ const handlePostAgain = async () => {
     }
   };
 
-  const platformStyle = getPlatformStyle();
-
-  // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return "No date available";
-
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Invalid date";
-
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -451,14 +564,11 @@ const handlePostAgain = async () => {
     }
   };
 
-  // Format time for display
   const formatTime = (dateString) => {
     if (!dateString) return "";
-
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "";
-
       return date.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit'
@@ -468,33 +578,61 @@ const handlePostAgain = async () => {
     }
   };
 
-  // Get engagement stats from analytics
-  const getEngagementStats = () => {
-    // Get analytics from platformPosts for the current platform
-    const currentPlatformPost = post?.platformPosts?.find(p => p.platform === platform);
-    const analytics = currentPlatformPost?.analytics;
-    
-    if (analytics) {
+  // Get platform-specific engagement stats
+  const getEngagementStatsByPlatform = (platformName) => {
+    if (analyticsData?.analytics?.platformPerformance) {
+      const platformData = analyticsData.analytics.platformPerformance.find(p => p.platform === platformName);
+      if (platformData) {
+        return {
+          likes: platformData.likes || 0,
+          comments: platformData.comments || 0,
+          shares: platformData.shares || 0,
+          reach: platformData.reach || 0,
+          impressions: platformData.impressions || 0,
+          engagement: platformData.engagement || 0,
+          clicks: platformData.clicks || 0,
+          saves: platformData.saves || 0
+        };
+      }
+    }
+
+    // Fallback to platformPosts data
+    const platformPost = post?.platformPosts?.find(p => p.platform === platformName);
+    if (platformPost?.analytics) {
       return {
-        likes: analytics.likes || 0,
-        comments: analytics.comments || 0,
-        shares: analytics.shares || 0,
-        views: analytics.reach || analytics.impressions || 0
+        likes: platformPost.analytics.likes || 0,
+        comments: platformPost.analytics.comments || 0,
+        shares: platformPost.analytics.shares || 0,
+        reach: platformPost.analytics.reach || 0,
+        impressions: platformPost.analytics.impressions || 0,
+        engagement: platformPost.analytics.engagement || 0,
+        clicks: platformPost.analytics.clicks || 0,
+        saves: platformPost.analytics.saves || 0
       };
     }
-    
-    // Fallback to post level engagement
+
     return {
-      likes: post?.likes || post?.engagement?.likes || 0,
-      comments: post?.comments || post?.engagement?.comments || 0,
-      shares: post?.shares || post?.engagement?.shares || 0,
-      views: post?.views || post?.engagement?.views || 0
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      reach: 0,
+      impressions: 0,
+      engagement: 0,
+      clicks: 0,
+      saves: 0
     };
   };
 
-  const engagement = getEngagementStats();
+  const formatNumber = (num) => {
+    if (typeof num !== 'number') return '0';
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  };
 
-  // Handle image source
   const getImageSource = (image) => {
     if (typeof image === "string") {
       return image;
@@ -504,224 +642,416 @@ const handlePostAgain = async () => {
     return "";
   };
 
-  // ✅ Move the conditional return AFTER all hooks have been called
-  if (!isOpen || !post) return null;
+  const platformStyle = getPlatformStyle();
 
-  // Debug platform detection
-  console.log("Platform detected:", platform);
-  console.log("Selected platform:", post.selectedPlatform);
-  console.log("Post platforms array:", post.platforms);
+  if (!isOpen || !post) return null;
 
   return (
     <div className="post-detail-overlay" onClick={handleOverlayClick}>
-      <div className="post-detail-container" onClick={handleModalClick}>
-        <button
-          className="post-detail-close-btn"
-          onClick={handleClose}
-          type="button"
-          aria-label="Close modal"
-        >
-          <X size={20} />
-        </button>
-
-        {/* Platform Header */}
-        <div className="post-detail-header" style={{ background: platformStyle.gradient }}>
-          <div className="post-detail-platform-info">
-            <div className="post-detail-platform-icon">
-              {platform === 'instagram' && <Instagram size={20} color="white" />}
-              {platform === 'facebook' && <Facebook size={20} color="white" />}
-              {platform === 'twitter' && <Twitter size={20} color="white" />}
-              {platform === 'post' && <MessageCircle size={20} color="white" />}
-            </div>
-            <div className="post-detail-platform-details">
-              <span className="post-detail-platform-name">
-                {platform.charAt(0).toUpperCase() + platform.slice(1)}
-              </span>
-              <span className="post-detail-post-type">Post</span>
+      <div className="post-detail-modal" onClick={handleModalClick}>
+        
+        {/* Modal Header */}
+        <div className="modal-header">
+          <div className="header-left">
+            <h2>Post Details</h2>
+            <div className="post-platforms">
+              {post.platforms?.map(platformName => (
+                <div 
+                  key={platformName} 
+                  className="platform-badge"
+                  style={{ borderColor: getPlatformStyle().primary }}
+                >
+                  {getPlatformIcon(platformName)}
+                  <span>{platformName}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-
-        {/* Main Content Area - Horizontal Layout */}
-        <div className="post-detail-main-content">
-          {/* Post Image */}
-          {post.images?.length > 0 && (
-            <div className="post-detail-image-container">
-              {post.images?.length > 1 && <div className="arrowsf">
-                <ChevronLeftCircle 
-                  onClick={() => {
-                    if (imgIndex > 0) {
-                      setImgIndex(prev => prev - 1);
-                    }
-                  }}
-                  style={{ 
-                    opacity: imgIndex > 0 ? 1 : 0.5,
-                    cursor: imgIndex > 0 ? 'pointer' : 'not-allowed'
-                  }}
-                />
-                <ChevronRightCircle 
-                  onClick={() => {
-                    if (imgIndex < post.images?.length - 1) {
-                      setImgIndex(prev => prev + 1);
-                    }
-                  }}
-                  style={{ 
-                    opacity: imgIndex < post.images?.length - 1 ? 1 : 0.5,
-                    cursor: imgIndex < post.images?.length - 1 ? 'pointer' : 'not-allowed'
-                  }}
-                />
-              </div>}
-
-              <img
-                className="post-detail-image"
-                src={getImageSource(post.images[imgIndex])}
-                alt={post.images[imgIndex]?.altText || "Post media"}
-                onError={(e) => {
-                  e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
-                }}
-              />
-            </div>
-          )}
-
-          {/* Post Content */}
-          <div className="post-detail-content">
-            {/* Social Media Username and Dropdown Section */}
-            <div className="post-detail-user-header">
-              <div className="post-detail-username-info">
-                <span className="sm-username">
-                  {formatUsername(getSocialMediaUsername())}
-                </span>
-              </div>
-              
-              {/* Dropdown Menu */}
-              {(onEdit || onDelete || onPostAgain) && (
-                <div className="post-detail-dropdown-container">
-                  <button
-                    className="post-detail-dropdown-btn"
-                    onClick={handleDropdownToggle}
-                    type="button"
-                    aria-label="More options"
-                    disabled={isPosting}
-                  >
-                    <MoreHorizontal size={18} />
+          
+          <div className="header-actions">
+            <div className="actions-dropdown">
+              <button 
+                className="actions-btn"
+                onClick={handleDropdownToggle}
+                disabled={isPosting}
+              >
+                <MoreHorizontal size={20} />
+              </button>
+              {showDropdown && (
+                <div className="actions-menu">
+                  {onEdit && (
+                    <button onClick={handleEdit}>
+                      <Edit size={16} />
+                      Edit Post
+                    </button>
+                  )}
+                  <button onClick={handleCopyLink}>
+                    <Copy size={16} />
+                    Copy Link
                   </button>
-                  
-                  {showDropdown && (
-                    <div className="post-detail-dropdown-menu">
-                      {onEdit && (
-                        <button
-                          className="post-detail-dropdown-item"
-                          onClick={handleEdit}
-                          type="button"
-                          disabled={isPosting}
-                        >
-                          <Edit size={16} />
-                          <span>Edit</span>
-                        </button>
-                      )}
-                      
-                      {/* Post Again Option */}
-                      <button
-                        className="post-detail-dropdown-item post-again-item"
-                        onClick={handlePostAgain}
-                        type="button"
-                        disabled={isPosting}
-                      >
-                        <RefreshCw size={16} className={isPosting ? 'spinning' : ''} />
-                        <span>{isPosting ? 'Posting...' : 'Repost Now'}</span>
-                      </button>
-                      {onDelete && (
-                        <button
-                          className="post-detail-dropdown-item delete-item"
-                          onClick={handleDelete}
-                          type="button"
-                          disabled={isPosting}
-                        >
-                          <Trash2 size={16} />
-                          <span>Delete</span>
-                        </button>
-                      )}
-                    </div>
+                  <button onClick={handleShare}>
+                    <Share size={16} />
+                    Share
+                  </button>
+                  <button onClick={handlePostAgain} disabled={isPosting}>
+                    <RefreshCw size={16} className={isPosting ? 'spinning' : ''} />
+                    {isPosting ? 'Posting...' : 'Repost Now'}
+                  </button>
+                  {onDelete && (
+                    <button className="delete-action" onClick={handleDelete}>
+                      <Trash2 size={16} />
+                      Delete
+                    </button>
                   )}
                 </div>
               )}
             </div>
+            <button className="close-btn" onClick={handleClose}>
+              <X size={24} />
+            </button>
+          </div>
+        </div>
 
-            <p className="post-detail-text">{post.content || 'No content available'}</p>
+        {/* Modal Tabs */}
+        <div className="modal-tabs">
+          <button 
+            className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('preview')}
+          >
+            Preview
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            <TrendingUp size={16} />
+            Analytics
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'comments' ? 'active' : ''}`}
+            onClick={() => setActiveTab('comments')}
+          >
+            <MessageCircle size={16} />
+            Comments ({mockComments.length})
+          </button>
+          {post.status === 'published' && (
+            <button 
+              className={`tab-btn sync-btn ${syncingAnalytics ? 'syncing' : ''}`}
+              onClick={syncPostAnalytics}
+              disabled={syncingAnalytics}
+              title="Sync analytics from social platforms"
+            >
+              <RefreshCw size={16} className={syncingAnalytics ? 'spinning' : ''} />
+              {syncingAnalytics ? 'Syncing...' : 'Sync'}
+            </button>
+          )}
+        </div>
 
-            {/* Hashtags section */}
-            {(post.hashtags && post.hashtags.length > 0) && (
-              <div className="post-detail-tags">
-                {post.hashtags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="post-detail-tag"
-                    style={{ color: platformStyle.hashtag }}
-                  >
-                    {tag.startsWith('#') ? tag : `#${tag}`}
+        {/* Modal Content */}
+        <div className="modal-content">
+          {activeTab === 'preview' && (
+            <div className="preview-tab">
+              <div className="post-content-section">
+                <div className="post-header">
+                  <span className="username">
+                    {formatUsername(getSocialMediaUsername())}
                   </span>
+                  <div className="post-meta">
+                    <div className="meta-item">
+                      <Calendar size={16} />
+                      <span>{formatDate(post.publishedAt || post.createdAt)}</span>
+                    </div>
+                    <div className="meta-item">
+                      <Clock size={16} />
+                      <span>{formatTime(post.publishedAt || post.createdAt)}</span>
+                    </div>
+                    <span className={`status-badge status-${post.status}`}>
+                      {post.status}
+                    </span>
+                  </div>
+                </div>
+
+                {post.images && post.images.length > 0 && (
+                  <div className="post-images">
+                    <div className="image-container">
+                      {post.images.length > 1 && (
+                        <div className="image-navigation">
+                          <ChevronLeftCircle 
+                            onClick={() => {
+                              if (imgIndex > 0) {
+                                setImgIndex(prev => prev - 1);
+                              }
+                            }}
+                            style={{ 
+                              opacity: imgIndex > 0 ? 1 : 0.5,
+                              cursor: imgIndex > 0 ? 'pointer' : 'not-allowed'
+                            }}
+                          />
+                          <ChevronRightCircle 
+                            onClick={() => {
+                              if (imgIndex < post.images.length - 1) {
+                                setImgIndex(prev => prev + 1);
+                              }
+                            }}
+                            style={{ 
+                              opacity: imgIndex < post.images.length - 1 ? 1 : 0.5,
+                              cursor: imgIndex < post.images.length - 1 ? 'pointer' : 'not-allowed'
+                            }}
+                          />
+                        </div>
+                      )}
+                      <img
+                        src={getImageSource(post.images[imgIndex])}
+                        alt={post.images[imgIndex]?.altText || "Post media"}
+                        onError={(e) => {
+                          e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
+                        }}
+                      />
+                      {post.images.length > 1 && (
+                        <div className="image-indicator">
+                          {imgIndex + 1} / {post.images.length}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="post-text">
+                  <p>{post.content}</p>
+                  {post.hashtags && post.hashtags.length > 0 && (
+                    <div className="hashtags">
+                      {post.hashtags.map((tag, index) => (
+                        <span 
+                          key={index} 
+                          className="hashtag"
+                          style={{ color: platformStyle.hashtag }}
+                        >
+                          {tag.startsWith('#') ? tag : `#${tag}`}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="engagement-summary">
+                  <div className="engagement-stats">
+                    <div className="stat-item">
+                      <Heart size={20} style={{ color: platformStyle.primary }} />
+                      <span>{formatNumber(analyticsData?.analytics?.engagementBreakdown?.likes || 0)}</span>
+                      <label>Likes</label>
+                    </div>
+                    <div className="stat-item">
+                      <MessageCircle size={20} />
+                      <span>{formatNumber(analyticsData?.analytics?.engagementBreakdown?.comments || 0)}</span>
+                      <label>Comments</label>
+                    </div>
+                    <div className="stat-item">
+                      <Share size={20} />
+                      <span>{formatNumber(analyticsData?.analytics?.engagementBreakdown?.shares || 0)}</span>
+                      <label>Shares</label>
+                    </div>
+                    <div className="stat-item">
+                      <TrendingUp size={20} />
+                      <span>{formatNumber(analyticsData?.analytics?.totalEngagement || 0)}</span>
+                      <label>Total</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <div className="analytics-tab">
+              {loadingAnalytics ? (
+                <div className="analytics-loading">
+                  <RefreshCw size={20} className="spinning" />
+                  <span>Loading analytics...</span>
+                </div>
+              ) : analyticsData?.analytics ? (
+                <div className="analytics-content">
+                  {/* Platform-specific Analytics */}
+                  <div className="platform-analytics-section">
+                    <h3>Platform Performance</h3>
+                    <div className="platform-analytics-grid">
+                      {post.platforms?.map(platformName => {
+                        const stats = getEngagementStatsByPlatform(platformName);
+                        return (
+                          <div key={platformName} className="platform-analytics-card">
+                            <div className="platform-header">
+                              {getPlatformIcon(platformName)}
+                              <span className="platform-name">
+                                {platformName.charAt(0).toUpperCase() + platformName.slice(1)}
+                              </span>
+                              <span className="platform-status published">Published</span>
+                            </div>
+                            
+                            <div className="analytics-grid">
+                              <div className="analytics-card">
+                                <div className="card-icon likes">
+                                  <Heart size={24} />
+                                </div>
+                                <div className="card-content">
+                                  <h3>{formatNumber(stats.likes)}</h3>
+                                  <p>Likes</p>
+                                </div>
+                              </div>
+                              
+                              <div className="analytics-card">
+                                <div className="card-icon comments">
+                                  <MessageCircle size={24} />
+                                </div>
+                                <div className="card-content">
+                                  <h3>{formatNumber(stats.comments)}</h3>
+                                  <p>Comments</p>
+                                </div>
+                              </div>
+                              
+                              <div className="analytics-card">
+                                <div className="card-icon shares">
+                                  <Share size={24} />
+                                </div>
+                                <div className="card-content">
+                                  <h3>{formatNumber(stats.shares)}</h3>
+                                  <p>Shares</p>
+                                </div>
+                              </div>
+                              
+                              <div className="analytics-card">
+                                <div className="card-icon reach">
+                                  <Users size={24} />
+                                </div>
+                                <div className="card-content">
+                                  <h3>{formatNumber(stats.reach)}</h3>
+                                  <p>Reach</p>
+                                </div>
+                              </div>
+                              
+                              <div className="analytics-card">
+                                <div className="card-icon impressions">
+                                  <Eye size={24} />
+                                </div>
+                                <div className="card-content">
+                                  <h3>{formatNumber(stats.impressions)}</h3>
+                                  <p>Impressions</p>
+                                </div>
+                              </div>
+                              
+                              <div className="analytics-card">
+                                <div className="card-icon engagement">
+                                  <TrendingUp size={24} />
+                                </div>
+                                <div className="card-content">
+                                  <h3>{formatNumber(stats.engagement)}</h3>
+                                  <p>Engagement</p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Platform-specific metrics */}
+                            {platformName === 'instagram' && (
+                              <div className="platform-specific-metrics">
+                                <div className="metric-row">
+                                  <span>Saves:</span>
+                                  <span>{formatNumber(stats.saves)}</span>
+                                </div>
+                                <div className="metric-row">
+                                  <span>Profile Visits:</span>
+                                  <span>{formatNumber(stats.clicks)}</span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {platformName === 'facebook' && (
+                              <div className="platform-specific-metrics">
+                                <div className="metric-row">
+                                  <span>Link Clicks:</span>
+                                  <span>{formatNumber(stats.clicks)}</span>
+                                </div>
+                                <div className="metric-row">
+                                  <span>Page Likes:</span>
+                                  <span>{formatNumber(stats.saves)}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Best Performing Platform */}
+                  {analyticsData.analytics.bestPerformingPlatform && (
+                    <div className="performance-summary">
+                      <h3>Performance Summary</h3>
+                      <div className="best-platform-badge">
+                        <TrendingUp size={16} />
+                        <span>Best performing on {analyticsData.analytics.bestPerformingPlatform}</span>
+                      </div>
+                      <div className="summary-stats">
+                        <div className="summary-item">
+                          <span className="label">Total Engagement:</span>
+                          <span className="value">{formatNumber(analyticsData.analytics.totalEngagement || 0)}</span>
+                        </div>
+                        <div className="summary-item">
+                          <span className="label">Engagement Rate:</span>
+                          <span className="value">{(analyticsData.analytics.avgEngagementRate || 0).toFixed(1)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="no-analytics">
+                  <BarChart3 size={48} />
+                  <span>No analytics data available</span>
+                  <p>Analytics may take some time to appear after publishing</p>
+                  {post.status === 'published' && (
+                    <button onClick={syncPostAnalytics} disabled={syncingAnalytics}>
+                      <RefreshCw size={16} className={syncingAnalytics ? 'spinning' : ''} />
+                      Sync Analytics
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'comments' && (
+            <div className="comments-tab">
+              <div className="comments-list">
+                {mockComments.map(comment => (
+                  <div key={comment.id} className="comment-item">
+                    <img src={comment.avatar} alt={comment.author} className="comment-avatar" />
+                    <div className="comment-content">
+                      <div className="comment-header">
+                        <div className="comment-author-info">
+                          {getPlatformIcon(comment.platform)}
+                          <span className="comment-author">{comment.author}</span>
+                        </div>
+                        <span className="comment-time">{comment.timestamp}</span>
+                      </div>
+                      <p className="comment-text">{comment.content}</p>
+                      <div className="comment-actions">
+                        <button className="comment-like">
+                          <Heart size={14} />
+                          {comment.likes}
+                        </button>
+                        <button className="comment-reply">Reply</button>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Engagement Actions */}
-        <div className="post-detail-engagement">
-          <div className="post-detail-action-buttons">
-            <button
-              className="post-detail-action-btn"
-              style={{ color: platformStyle.primary }}
-              type="button"
-            >
-              <Heart size={22} />
-              <span>{engagement.likes}</span>
-            </button>
-            <button className="post-detail-action-btn" type="button">
-              <MessageCircle size={22} />
-              <span>{engagement.comments}</span>
-            </button>
-            <button className="post-detail-action-btn" type="button">
-              {platform === 'twitter' ? <Share size={22} /> : <Send size={22} />}
-              <span>{engagement.shares}</span>
-            </button>
-            {engagement.views > 0 && (
-              <button className="post-detail-action-btn" type="button">
-                <Eye size={22} />
-                <span>{engagement.views}</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Post metadata - date, time and status */}
-        <div className="post-detail-metadata">
-          <div className="post-detail-datetime-section">
-            {(post.createdAt || post.publishedAt || post.date || post.scheduledDate) && (
-              <>
-                <div className="post-detail-metadata-item">
-                  <Calendar size={16} />
-                  <span className="post-detail-metadata-text">
-                    {formatDate(post.publishedAt || post.createdAt || post.date || post.scheduledDate)}
-                  </span>
-                </div>
-                <div className="post-detail-metadata-item">
-                  <Clock size={16} />
-                  <span className="post-detail-metadata-text">
-                    {formatTime(post.publishedAt || post.createdAt || post.date || post.scheduledDate)}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Status on the right */}
-          {post.status && (
-            <div className="post-detail-status-section">
-              <span className="post-detail-status-label">Status:</span>
-              <span className={`post-detail-status-badge post-detail-status-${post.status.toLowerCase()}`}>
-                {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-              </span>
+              
+              <div className="add-comment">
+                <input 
+                  type="text" 
+                  placeholder="Add a comment..." 
+                  className="comment-input"
+                />
+                <button className="comment-submit">Post</button>
+              </div>
             </div>
           )}
         </div>
