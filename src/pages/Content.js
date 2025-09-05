@@ -706,7 +706,6 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
           </span>
         </div>
         <div className="platform-info">
-          <PlatformIcon size={20} />
           <span className="platform-name">{primary}</span>
         </div>
 
