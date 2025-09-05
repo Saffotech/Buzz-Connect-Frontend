@@ -251,7 +251,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
           backgroundColor: 'white',
           borderRadius: '16px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-          maxWidth: '600px',
+          maxWidth: '1000px',
           width: '90%',
           position: 'relative',
           overflow: 'hidden',
@@ -293,7 +293,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
         <div style={{ textAlign: 'left' }}>
 
 
-          <h3
+          <h1
             style={{
               margin: '0 0 12px 0',
               fontSize: '24px',
@@ -303,7 +303,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
             }}
           >
             Terms and Conditions
-          </h3>
+          </h1>
 
           <div
             style={{
@@ -317,7 +317,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
               color: '#374151',
             }}
           >
-            <h3
+            {/* <h3
               style={{
                 margin: '0 0 20px 0',
                 fontSize: '28px',
@@ -328,7 +328,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
               }}
             >
               Privacy Policy
-            </h3>
+            </h3> */}
 
             <p>
               <strong>Effective Date:</strong> July 14, 2025

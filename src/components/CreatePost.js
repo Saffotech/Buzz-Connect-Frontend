@@ -1986,7 +1986,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 Save as Draft
               </button>
 
-              {/* Publish / Schedule Button */}
+              {/* Publish / Schedule Button Footer */}
               <button
                 type="submit"
                 className="btn-primary scpst"
