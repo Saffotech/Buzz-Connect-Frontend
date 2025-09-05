@@ -10,6 +10,37 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   const [loadingAccount, setLoadingAccount] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
+  // ✅ Add these helper functions at the top of your component
+  const isVideoFile = (mediaItem) => {
+    if (!mediaItem) return false;
+    
+    // Check fileType first
+    if (mediaItem.fileType === 'video' || mediaItem.fileType?.startsWith('video/')) {
+      return true;
+    }
+    
+    // Check URL patterns
+    if (mediaItem.url) {
+      const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.flv'];
+      const hasVideoExtension = videoExtensions.some(ext => 
+        mediaItem.url.toLowerCase().includes(ext)
+      );
+      
+      if (hasVideoExtension || mediaItem.url.includes('/video/')) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
+  const getMediaType = (media) => {
+    if (isVideoFile(media)) {
+      return 'video';
+    }
+    return 'image';
+  };
+
   // ✅ Fixed: Declare platform first, handling null/undefined cases
   const platform = post?.selectedPlatform?.toLowerCase() || post?.platforms?.[0]?.toLowerCase() || "post";
 
@@ -120,134 +151,134 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     }, 3000);
   };
 
-// Handle post again action - FIXED VERSION
-const handlePostAgain = async () => {
-  setShowDropdown(false);
-  setIsPosting(true);
+  // Handle post again action - FIXED VERSION
+  const handlePostAgain = async () => {
+    setShowDropdown(false);
+    setIsPosting(true);
 
-  try {
-    // Get token from localStorage
-    const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+    try {
+      // Get token from localStorage
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
 
-    if (!token) {
-      throw new Error('Authentication token not found');
-    }
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
 
-    console.log('=== FIXED POST AGAIN ===');
-    console.log('Original post object:', post);
+      console.log('=== FIXED POST AGAIN ===');
+      console.log('Original post object:', post);
 
-    // Clean up selectedAccounts to remove null values and empty arrays
-    const cleanedSelectedAccounts = {};
-    if (post.selectedAccounts) {
-      Object.entries(post.selectedAccounts).forEach(([platform, accounts]) => {
-        if (accounts && Array.isArray(accounts)) {
-          const validAccounts = accounts.filter(account => account != null && account !== '');
-          if (validAccounts.length > 0) {
-            cleanedSelectedAccounts[platform] = validAccounts;
+      // Clean up selectedAccounts to remove null values and empty arrays
+      const cleanedSelectedAccounts = {};
+      if (post.selectedAccounts) {
+        Object.entries(post.selectedAccounts).forEach(([platform, accounts]) => {
+          if (accounts && Array.isArray(accounts)) {
+            const validAccounts = accounts.filter(account => account != null && account !== '');
+            if (validAccounts.length > 0) {
+              cleanedSelectedAccounts[platform] = validAccounts;
+            }
+          }
+        });
+      }
+
+      // Process images properly - THIS WAS THE MISSING PART
+      const processedImages = (post.images || []).map(img => ({
+        url: img.url,
+        altText: img.altText || 'Post image',
+        publicId: img.publicId || null
+      }));
+
+      // Process hashtags
+      const processedHashtags = Array.isArray(post.hashtags) 
+        ? post.hashtags 
+        : [];
+
+      // Process mentions
+      const processedMentions = Array.isArray(post.mentions) 
+        ? post.mentions 
+        : [];
+
+      // Prepare the complete post data
+      const postData = {
+        content: post.content || '',
+        platforms: post.platforms || [],
+        selectedAccounts: cleanedSelectedAccounts,
+        images: processedImages, // Include the original images
+        hashtags: processedHashtags,
+        mentions: processedMentions,
+        metadata: {
+          category: post.metadata?.category || 'other'
+        }
+      };
+
+      console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
+
+      showToast('Creating new post...', 'info');
+
+      // Step 1: Create the post as draft
+      const createResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
+        postData,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         }
-      });
-    }
+      );
 
-    // Process images properly - THIS WAS THE MISSING PART
-    const processedImages = (post.images || []).map(img => ({
-      url: img.url,
-      altText: img.altText || 'Post image',
-      publicId: img.publicId || null
-    }));
+      console.log('Post created successfully:', createResponse.data);
 
-    // Process hashtags
-    const processedHashtags = Array.isArray(post.hashtags) 
-      ? post.hashtags 
-      : [];
-
-    // Process mentions
-    const processedMentions = Array.isArray(post.mentions) 
-      ? post.mentions 
-      : [];
-
-    // Prepare the complete post data
-    const postData = {
-      content: post.content || '',
-      platforms: post.platforms || [],
-      selectedAccounts: cleanedSelectedAccounts,
-      images: processedImages, // Include the original images
-      hashtags: processedHashtags,
-      mentions: processedMentions,
-      metadata: {
-        category: post.metadata?.category || 'other'
+      if (!createResponse?.data?.data?._id && !createResponse?.data?._id) {
+        throw new Error('Failed to create post - no ID returned');
       }
-    };
 
-    console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
+      // Step 2: Immediately publish the created post
+      const postId = createResponse.data.data?._id || createResponse.data._id;
+      console.log('Publishing post with ID:', postId);
 
-    showToast('Creating new post...', 'info');
+      showToast('Publishing post...', 'info');
 
-    // Step 1: Create the post as draft
-    const createResponse = await axios.post(
-      `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
-      postData,
-      {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const publishResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
         }
+      );
+
+      console.log('Publish response:', publishResponse.data);
+
+      showToast('Post published again successfully!', 'success');
+
+      // Call the parent callback if provided
+      if (onPostAgain && typeof onPostAgain === 'function') {
+        onPostAgain(post, publishResponse.data);
       }
-    );
 
-    console.log('Post created successfully:', createResponse.data);
+      // Close the modal after successful post
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
 
-    if (!createResponse?.data?.data?._id && !createResponse?.data?._id) {
-      throw new Error('Failed to create post - no ID returned');
-    }
-
-    // Step 2: Immediately publish the created post
-    const postId = createResponse.data.data?._id || createResponse.data._id;
-    console.log('Publishing post with ID:', postId);
-
-    showToast('Publishing post...', 'info');
-
-    const publishResponse = await axios.post(
-      `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` }
+    } catch (error) {
+      console.error('Failed to post again:', error);
+      
+      // Enhanced error logging
+      console.error('=== DETAILED ERROR INFO ===');
+      console.error('Status:', error.response?.status);
+      console.error('Error Data:', error.response?.data);
+      console.error('Error Message:', error.message);
+      
+      if (error.response?.data?.errors) {
+        console.error('Validation Errors:', error.response.data.errors);
       }
-    );
-
-    console.log('Publish response:', publishResponse.data);
-
-    showToast('Post published again successfully!', 'success');
-
-    // Call the parent callback if provided
-    if (onPostAgain && typeof onPostAgain === 'function') {
-      onPostAgain(post, publishResponse.data);
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+      showToast(`Failed to publish post: ${errorMessage}`, 'error');
+    } finally {
+      setIsPosting(false);
     }
-
-    // Close the modal after successful post
-    setTimeout(() => {
-      handleClose();
-    }, 1500);
-
-  } catch (error) {
-    console.error('Failed to post again:', error);
-    
-    // Enhanced error logging
-    console.error('=== DETAILED ERROR INFO ===');
-    console.error('Status:', error.response?.status);
-    console.error('Error Data:', error.response?.data);
-    console.error('Error Message:', error.message);
-    
-    if (error.response?.data?.errors) {
-      console.error('Validation Errors:', error.response.data.errors);
-    }
-    
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-    showToast(`Failed to publish post: ${errorMessage}`, 'error');
-  } finally {
-    setIsPosting(false);
-  }
-};
+  };
 
 
   // Add keyboard event listener for ESC key and body scroll management
@@ -544,42 +575,74 @@ const handlePostAgain = async () => {
 
         {/* Main Content Area - Horizontal Layout */}
         <div className="post-detail-main-content">
-          {/* Post Image */}
+          {/* ✅ UPDATED: Post Media (Images and Videos) */}
           {post.images?.length > 0 && (
             <div className="post-detail-image-container">
-              {post.images?.length > 1 && <div className="arrowsf">
-                <ChevronLeftCircle 
-                  onClick={() => {
-                    if (imgIndex > 0) {
-                      setImgIndex(prev => prev - 1);
-                    }
-                  }}
-                  style={{ 
-                    opacity: imgIndex > 0 ? 1 : 0.5,
-                    cursor: imgIndex > 0 ? 'pointer' : 'not-allowed'
-                  }}
-                />
-                <ChevronRightCircle 
-                  onClick={() => {
-                    if (imgIndex < post.images?.length - 1) {
-                      setImgIndex(prev => prev + 1);
-                    }
-                  }}
-                  style={{ 
-                    opacity: imgIndex < post.images?.length - 1 ? 1 : 0.5,
-                    cursor: imgIndex < post.images?.length - 1 ? 'pointer' : 'not-allowed'
-                  }}
-                />
-              </div>}
+              {post.images?.length > 1 && (
+                <div className="arrowsf">
+                  <ChevronLeftCircle 
+                    onClick={() => {
+                      if (imgIndex > 0) {
+                        setImgIndex(prev => prev - 1);
+                      }
+                    }}
+                    style={{ 
+                      opacity: imgIndex > 0 ? 1 : 0.5,
+                      cursor: imgIndex > 0 ? 'pointer' : 'not-allowed'
+                    }}
+                  />
+                  <ChevronRightCircle 
+                    onClick={() => {
+                      if (imgIndex < post.images?.length - 1) {
+                        setImgIndex(prev => prev + 1);
+                      }
+                    }}
+                    style={{ 
+                      opacity: imgIndex < post.images?.length - 1 ? 1 : 0.5,
+                      cursor: imgIndex < post.images?.length - 1 ? 'pointer' : 'not-allowed'
+                    }}
+                  />
+                </div>
+              )}
 
-              <img
-                className="post-detail-image"
-                src={getImageSource(post.images[imgIndex])}
-                alt={post.images[imgIndex]?.altText || "Post media"}
-                onError={(e) => {
-                  e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
-                }}
-              />
+              {(() => {
+                const currentMedia = post.images[imgIndex];
+                const mediaType = getMediaType(currentMedia);
+                const mediaSource = getImageSource(currentMedia);
+
+                return mediaType === 'video' ? (
+                  <video
+                    className="post-detail-video"
+                    src={mediaSource}
+                    controls
+                    muted
+                    playsInline
+                    poster={currentMedia?.thumbnail || currentMedia?.poster}
+                    onError={(e) => {
+                      console.error('Failed to load video:', mediaSource);
+                    }}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <img
+                    className="post-detail-image"
+                    src={mediaSource}
+                    alt={currentMedia?.altText || currentMedia?.displayName || "Post media"}
+                    onError={(e) => {
+                      console.error('Failed to load image:', mediaSource);
+                      e.target.src = "https://via.placeholder.com/400x300?text=Media+Not+Found";
+                    }}
+                  />
+                );
+              })()}
+
+              {/* Media info indicator */}
+              {post.images?.length > 1 && (
+                <div className="media-indicator">
+                  {imgIndex + 1} / {post.images.length}
+                </div>
+              )}
             </div>
           )}
 
