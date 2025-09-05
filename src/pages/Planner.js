@@ -240,12 +240,14 @@ const Planner = () => {
       {/* Header / Control Bar */}
       <div className="planner-header">
         <div className="header-left">
+
           {/* <button
             className="sidebar-toggle"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           >
             <Sidebar size={20} />
           </button> */}
+
           <h1>Content Planner</h1>
         </div>
 
