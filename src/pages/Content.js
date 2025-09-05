@@ -87,6 +87,7 @@ const Content = () => {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showMediaPreview, setShowMediaPreview] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [deleteFromInsta, setDeleteFromInsta] = useState(false);
 
   const [allPosts, setAllPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -457,6 +458,8 @@ const Content = () => {
 
       {/* ✅ NEW: Delete Confirmation Modal */}
       <DeleteConfirmationModal
+        deleteFromInsta={deleteFromInsta}
+        setDeleteFromInsta={setDeleteFromInsta}
         isOpen={showDeleteConfirm}
         onClose={() => {
           setShowDeleteConfirm(false);
@@ -741,7 +744,8 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
   );
 };
 
-const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDeleteEverywhere }) => {
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDeleteEverywhere, deleteFromInsta, setDeleteFromInsta }) => {
+
   if (!isOpen) return null;
 
   return (
@@ -756,39 +760,46 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDele
         <div className="modal-body">
           <div className="warning-icon-container">
             <div className="warning-icon-circle">
-              <AlertTriangle size={24} />
+              <Trash2 size={28} />
             </div>
           </div>
 
-          <h3 className="modal-title">Delete Post</h3>
-
-          <div className="post-info-box">
-            <div className="post-icon">
-              <FileText size={20} />
-            </div>
-            <div className="post-details">
-              <span className="post-name">{postTitle}</span>
-              <span className="post-subtitle">Post</span>
-            </div>
-          </div>
+          {/* <h3 className="modal-title">Delete Post</h3> */}
 
           <p className="warning-description">
-            This action cannot be undone. You'll need to recreate this post to continue using it for your blog.
+            Are you sure you want to delete this ?
           </p>
+
+          <div className="delete-extra-option">
+            <label id='ctinst'>
+              <input
+                type="checkbox"
+                checked={deleteFromInsta}
+                onChange={(e) => setDeleteFromInsta(e.target.checked)}
+              />
+              &nbsp; Delete from Instagram also
+            </label>
+          </div>
         </div>
 
         <div className="modal-footer">
 
           <div className='btnflx'>
+
+            {/* <button className="btn-primary" onClick={onConfirm}>
+              <Trash2 size={16} />
+              Cancel
+            </button> */}
+
             <button className="btn-danger" onClick={onConfirm}>
               <Trash2 size={16} />
-              Yes, Delete Post
+              Delete Post
             </button>
 
-            <button className="btn-warning" onClick={onDeleteEverywhere}>
+            {/* <button className="btn-" onClick={onDeleteEverywhere}>
               <Trash2 size={16} />
               Delete from Everywhere
-            </button>
+            </button> */}
           </div>
           {/* 
           <button className="btn-secondary btxc" onClick={onClose}>
@@ -1746,30 +1757,30 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
                   <span title={displayName}>{displayName}</span>
                 </div>
                 {/* ✅ OPTIONAL: Show Cloudinary filename separately */}
-                {media.originalName && media.filename !== media.originalName && (
+                {/* {media.originalName && media.filename !== media.originalName && (
                   <div className="metadata-item">
                     <label>Storage Name:</label>
                     <span className="storage-name">{media.filename}</span>
                   </div>
-                )}
+                )} */}
                 <div className="metadata-item">
                   <label>Size:</label>
                   <span>{humanSize}</span>
                 </div>
-                <div className="metadata-item">
+                {/* <div className="metadata-item">
                   <label>Type:</label>
                   <span>{media.fileType}</span>
-                </div>
+                </div> */}
                 {media.dimensions && (
                   <div className="metadata-item">
                     <label>Dimensions:</label>
                     <span>{media.dimensions.width} × {media.dimensions.height}</span>
                   </div>
                 )}
-                <div className="metadata-item">
+                {/* <div className="metadata-item">
                   <label>Folder:</label>
                   <span>{media.folder || 'general'}</span>
-                </div>
+                </div> */}
                 <div className="metadata-item">
                   <label>Uploaded:</label>
                   <span>{new Date(media.createdAt).toLocaleDateString()}</span>

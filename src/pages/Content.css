@@ -1133,8 +1133,7 @@
 .content-hub .modal-overlay .modal-content{
   padding: 0;
   flex: none;
-  height: 95%;
-
+  height: max-content;
 }
 
 
@@ -1905,10 +1904,10 @@ padding: 0;
 
 .delete-confirm-modal .modal-footer {
   display: block;
-  padding: 0 2rem;
   justify-content: center;
   gap: 0.75rem;
   border-top: none;
+  padding: 0;
 }
 
 .delete-confirm-modal .btn-secondary,
@@ -1944,9 +1943,10 @@ padding: 0;
 
 .btnflx{
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   gap: 2rem;
+  margin: 1rem;
 }
 
 
@@ -1955,4 +1955,26 @@ padding: 0;
 .btnflx button{
   white-space: nowrap;
 }
+}
+
+.delete-extra-option {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #374151; /* dark gray */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delete-extra-option input[type="checkbox"] {
+  accent-color: #ef4444; /* red checkbox (modern browsers) */
+  width: 16px;
+  height: 16px;
+}
+
+#ctinst {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    align-items: center;
 }
