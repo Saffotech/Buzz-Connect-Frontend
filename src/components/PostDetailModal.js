@@ -278,13 +278,11 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     }, 3000);
   };
 
-
   const handlePostAgain = async () => {
     setShowDropdown(false);
     setIsPosting(true);
 
     try {
-
       const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
 
       if (!token) {
@@ -306,30 +304,25 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         });
       }
 
-
       const processedImages = (post.images || []).map(img => ({
         url: img.url,
         altText: img.altText || 'Post image',
         publicId: img.publicId || null
       }));
 
-
       const processedHashtags = Array.isArray(post.hashtags) 
         ? post.hashtags 
         : [];
 
-
       const processedMentions = Array.isArray(post.mentions) 
         ? post.mentions 
         : [];
-
 
       const postData = {
         content: post.content || '',
         platforms: post.platforms || [],
         selectedAccounts: cleanedSelectedAccounts,
         images: processedImages,
-
         hashtags: processedHashtags,
         mentions: processedMentions,
         metadata: {
@@ -340,7 +333,6 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
 
       showToast('Creating new post...', 'info');
-
 
       const createResponse = await axios.post(
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
@@ -423,9 +415,6 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       handleCopyLink();
     }
   };
-
-
-     
 
   // Effects
   useEffect(() => {
@@ -695,7 +684,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         <div className="modal-header">
           <div className="header-left">
             <h2>Post Details</h2>
-            <div className="post-platforms">
+            {/* <div className="post-platforms">
               {post.platforms?.map(platformName => (
                 <div 
                   key={platformName} 
@@ -706,7 +695,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                   <span>{platformName}</span>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
           
           <div className="header-actions">
@@ -729,7 +718,6 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                   <button onClick={handleCopyLink}>
                     <Copy size={16} />
                     Copy Link
-
                   </button>
                   <button onClick={handleShare}>
                     <Share size={16} />
@@ -792,74 +780,58 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         {/* Modal Content */}
         <div className="modal-content">
           {activeTab === 'preview' && (
-            <div className="preview-tab">
-              <div className="post-content-section">
-                <div className="post-header">
+            <div className="preview-content-pd">
+              {/* Left Side - Main Image */}
+              <div className="preview-left">
+                {post.images && post.images.length > 0 && (
+                  <div className="main-image-container">
+                    {post.images.length > 1 && (
+                      <div className="image-navigation">
+                        <button 
+                          className="nav-btn nav-prev"
+                          onClick={() => setImgIndex(prev => Math.max(0, prev - 1))}
+                          disabled={imgIndex === 0}
+                        >
+                          <ChevronLeftCircle size={24} />
+                        </button>
+                        <button 
+                          className="nav-btn nav-next"
+                          onClick={() => setImgIndex(prev => Math.min(post.images.length - 1, prev + 1))}
+                          disabled={imgIndex === post.images.length - 1}
+                        >
+                          <ChevronRightCircle size={24} />
+                        </button>
+                      </div>
+                    )}
+                    <img
+                      src={getImageSource(post.images[imgIndex])}
+                      alt={post.images[imgIndex]?.altText || "Post media"}
+                      className="main-image"
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
+                      }}
+                    />
+                    {post.images.length > 1 && (
+                      <div className="image-counter">
+                        {imgIndex + 1} / {post.images.length}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Side - Content */}
+              <div className="preview-right">
+                {/* Username */}
+                <div className="post-username">
                   <span className="username">
                     {formatUsername(getSocialMediaUsername())}
                   </span>
-                  <div className="post-meta">
-                    <div className="meta-item">
-                      <Calendar size={16} />
-                      <span>{formatDate(post.publishedAt || post.createdAt)}</span>
-                    </div>
-                    <div className="meta-item">
-                      <Clock size={16} />
-                      <span>{formatTime(post.publishedAt || post.createdAt)}</span>
-                    </div>
-                    <span className={`status-badge status-${post.status}`}>
-                      {post.status}
-                    </span>
-                  </div>
                 </div>
 
-                {post.images && post.images.length > 0 && (
-                  <div className="post-images">
-                    <div className="image-container">
-                      {post.images.length > 1 && (
-                        <div className="image-navigation">
-                          <ChevronLeftCircle 
-                            onClick={() => {
-                              if (imgIndex > 0) {
-                                setImgIndex(prev => prev - 1);
-                              }
-                            }}
-                            style={{ 
-                              opacity: imgIndex > 0 ? 1 : 0.5,
-                              cursor: imgIndex > 0 ? 'pointer' : 'not-allowed'
-                            }}
-                          />
-                          <ChevronRightCircle 
-                            onClick={() => {
-                              if (imgIndex < post.images.length - 1) {
-                                setImgIndex(prev => prev + 1);
-                              }
-                            }}
-                            style={{ 
-                              opacity: imgIndex < post.images.length - 1 ? 1 : 0.5,
-                              cursor: imgIndex < post.images.length - 1 ? 'pointer' : 'not-allowed'
-                            }}
-                          />
-                        </div>
-                      )}
-                      <img
-                        src={getImageSource(post.images[imgIndex])}
-                        alt={post.images[imgIndex]?.altText || "Post media"}
-                        onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
-                        }}
-                      />
-                      {post.images.length > 1 && (
-                        <div className="image-indicator">
-                          {imgIndex + 1} / {post.images.length}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="post-text">
-                  <p>{post.content}</p>
+                {/* Caption */}
+                <div className="post-caption">
+                  <p className="caption-text">{post.content}</p>
                   {post.hashtags && post.hashtags.length > 0 && (
                     <div className="hashtags">
                       {post.hashtags.map((tag, index) => (
@@ -875,34 +847,47 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                   )}
                 </div>
 
-                <div className="engagement-summary">
-                  <div className="engagement-stats">
-                    <div className="stat-item">
-                      <Heart size={20} style={{ color: platformStyle.primary }} />
-                      <span>{formatNumber(analyticsData?.analytics?.engagementBreakdown?.likes || 0)}</span>
-                      <label>Likes</label>
-                    </div>
-                    <div className="stat-item">
-                      <MessageCircle size={20} />
-                      <span>{formatNumber(analyticsData?.analytics?.engagementBreakdown?.comments || 0)}</span>
-                      <label>Comments</label>
-                    </div>
-                    <div className="stat-item">
-                      <Share size={20} />
-                      <span>{formatNumber(analyticsData?.analytics?.engagementBreakdown?.shares || 0)}</span>
-                      <label>Shares</label>
-                    </div>
-                    <div className="stat-item">
-                      <TrendingUp size={20} />
-                      <span>{formatNumber(analyticsData?.analytics?.totalEngagement || 0)}</span>
-                      <label>Total</label>
-                    </div>
+                {/* Date, Time and Status - MOVED HERE */}
+                <div className="post-time-compact">
+                  <div className="time-info-compact">
+                    <Calendar size={14} />
+                    <span>{formatDate(post.publishedAt || post.createdAt)}</span>
+                    <Clock size={14} />
+                    <span>{formatTime(post.publishedAt || post.createdAt)}</span>
+                  </div>
+                  <span className={`status-badge status-${post.status}`}>
+                    {post.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom Section - Engagement Stats */}
+              <div className="engagement-section">
+                <div className="engagement-stats">
+                  <div className="stat-item">
+                    <Heart size={20} style={{ color: platformStyle.primary }} />
+                    <span>{formatNumber(analyticsData?.analytics?.engagementBreakdown?.likes || 0)}</span>
+                    <label>Likes</label>
+                  </div>
+                  <div className="stat-item">
+                    <MessageCircle size={20} />
+                    <span>{formatNumber(analyticsData?.analytics?.engagementBreakdown?.comments || 0)}</span>
+                    <label>Comments</label>
+                  </div>
+                  <div className="stat-item">
+                    <Share size={20} />
+                    <span>{formatNumber(analyticsData?.analytics?.engagementBreakdown?.shares || 0)}</span>
+                    <label>Shares</label>
+                  </div>
+                  <div className="stat-item">
+                    <TrendingUp size={20} />
+                    <span>{formatNumber(analyticsData?.analytics?.totalEngagement || 0)}</span>
+                    <label>Total</label>
                   </div>
                 </div>
               </div>
             </div>
           )}
-
           {activeTab === 'analytics' && (
             <div className="analytics-tab">
               {loadingAnalytics ? (
@@ -1058,7 +1043,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
               )}
             </div>
           )}
-
+          
           {activeTab === 'comments' && (
             <div className="comments-tab">
               <div className="comments-list">
