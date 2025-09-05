@@ -485,9 +485,8 @@ const Content = () => {
   );
 };
 
-// ✅ UPDATED: PlatformPostCard Component with Smart Image Detection
-// ✅ UPDATED: PlatformPostCard Component with Video Support (Same as Dashboard)
-const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
+// ✅ NEW: Unified PostCard Component (replacing PlatformPostCard)
+const PostCard = ({ post, onClick, onEdit, onDelete }) => {
   const [showActions, setShowActions] = useState(false);
   const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
   const [imageAspectRatios, setImageAspectRatios] = useState(new Map());
@@ -506,14 +505,12 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
     onDelete();
   };
 
-  const primary = platform.toLowerCase();
-  const colorMap = {
-    instagram: '#E4405F',
-    twitter: '#1DA1F2',
-    facebook: '#1877F2',
-  };
-  const style = { '--platform-color': colorMap[primary] || colorMap['instagram'] };
+  // Get all platforms for this post
+  const platforms = Array.isArray(post.platforms) && post.platforms.length > 0 
+    ? post.platforms 
+    : ['instagram']; // Default fallback
 
+  // Platform icon mapping
   const getPlatformIcon = (platform) => {
     switch (platform?.toLowerCase()) {
       case 'instagram': return Instagram;
@@ -522,8 +519,6 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
       default: return FileText;
     }
   };
-
-  const PlatformIcon = getPlatformIcon(platform);
 
   const getDisplayDate = () => {
     if (post.status === 'scheduled' && post.scheduledDate) {
@@ -542,18 +537,17 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
   const postStatus = post.status || 'draft';
   const postContent = post.content || '';
 
-  // ✅ NEW: Helper function to detect if URL is a video (same as Dashboard)
+  // Helper function to detect if URL is a video
   const isVideoUrl = (url) => {
     if (!url) return false;
     const videoExtensions = /\.(mp4|webm|ogg|mov|avi|m4v|3gp|mkv)(\?.*)?$/i;
     return videoExtensions.test(url);
   };
 
-  // ✅ NEW: Get all media items (same logic as Dashboard)
+  // Get all media items
   const getAllMedia = () => {
     const allMedia = [];
     
-    // Check post.images array
     if (post.images && Array.isArray(post.images)) {
       post.images.forEach(item => {
         const url = typeof item === 'string' ? item : item.url || item.src;
@@ -567,7 +561,6 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
       });
     }
 
-    // Check post.videos array
     if (post.videos && Array.isArray(post.videos)) {
       post.videos.forEach(item => {
         const url = typeof item === 'string' ? item : item.url || item.src;
@@ -581,7 +574,6 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
       });
     }
 
-    // Check post.media array
     if (post.media && Array.isArray(post.media)) {
       post.media.forEach(item => {
         const url = typeof item === 'string' ? item : item.url || item.src;
@@ -595,7 +587,6 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
       });
     }
 
-    // Check if there's a single video or image field
     if (post.video) {
       const url = typeof post.video === 'string' ? post.video : post.video.url || post.video.src;
       if (url) {
@@ -621,12 +612,10 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
     return allMedia;
   };
 
-  // ✅ Function to handle image loading errors
   const handleImageError = (imageIndex) => {
     setImageLoadErrors(prev => new Set([...prev, imageIndex]));
   };
 
-  // ✅ Enhanced image load handler with aspect ratio detection
   const handleImageLoad = (e, imageIndex) => {
     const img = e.target;
     const container = img.parentNode;
@@ -656,7 +645,6 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
     });
   };
 
-  // ✅ Get CSS class based on media count
   const getMediaLayoutClass = (count) => {
     if (count === 1) return 'single-media';
     if (count === 2) return 'two-media';
@@ -665,13 +653,12 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
   };
 
   const mediaItems = getAllMedia();
-  const displayMedia = mediaItems.slice(0, 1); // Show max 4 media items
+  const displayMedia = mediaItems.slice(0, 4); // Show max 4 media items
   const layoutClass = getMediaLayoutClass(displayMedia.length);
 
   return (
     <div
-      className={`platform-post-card platform-preview ${primary}`}
-      style={style}
+      className="unified-post-card"
       onClick={onClick}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -686,8 +673,8 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
             <Trash2 size={16} />
           </button>
         </div>
-
       )}
+      
       {showActions && (
         <div className="shw-exp-icon">
           <Maximize2 size={16} />
@@ -695,25 +682,42 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
       )}
 
 
-      <div className="platform-header">
-        <Clock size={35} />
-        <span className="schedule-time">
-          {new Date(post.scheduledDate).toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+      {/* Post Header with Multiple Platforms */}
+      <div className="post-header">
+        <div className="post-schedule">
+          <Clock size={35} />
+          <span className="schedule-time">
+            {displayDate.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+        </div>
+        
+        {/* Platform Icons */}
+        <div className="post-platforms">
+          {platforms.map((platform, index) => {
+            const PlatformIcon = getPlatformIcon(platform);
+            return (
+              <div 
+                key={index} 
+                className={`platform-icon ${platform.toLowerCase()}`}
+                title={platform}
+              >
+                <PlatformIcon size={18} />
+              </div>
+            );
           })}
-        </span>
-        <span className="platform-name">{primary}</span>
+        </div>
       </div>
 
-      {/* ✅ UPDATED: Media Section with Video Support (Same as Dashboard) */}
+      {/* Media Section */}
       {displayMedia.length > 0 && (
         <div className={`preview-images ${layoutClass}`}>
           {displayMedia.map((media, index) => {
-            // Skip media that failed to load (for images only)
             if (media.type === 'image' && imageLoadErrors.has(index)) {
               return null;
             }
@@ -759,14 +763,12 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
             );
           }).filter(Boolean)}
 
-          {/* Media count overlay - only show if more than 4 media items */}
           {mediaItems.length > 4 && (
             <div className="image-count">
               +{mediaItems.length - 4}
             </div>
           )}
 
-          {/* Show placeholder if no valid media loaded */}
           {displayMedia.length === 0 && (post.images?.length > 0 || post.videos?.length > 0 || post.media?.length > 0) && (
             <div className="preview-image-container">
               <div className="image-error">
@@ -790,7 +792,7 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
         <div className="preview-hashtags">
           {post.hashtags?.slice(0, 3).map((hashtag, i) => (
             <span key={i} className="hashtag">{hashtag}</span>
-          )) || <span className="hashtag">#{primary}</span>}
+          ))}
         </div>
 
         {/* Post Stats */}
@@ -853,7 +855,6 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDele
         </div>
 
         <div className="modal-footer">
-
           <div className='btnflx'>
 
             {/* <button className="btn-primary" onClick={onConfirm}>
@@ -869,17 +870,15 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDele
             {/* <button className="btn-" onClick={onDeleteEverywhere}>
               <Trash2 size={16} />
               Delete from Everywhere
-            </button> */}
+            </button>
           </div>
-          {/* 
-          <button className="btn-secondary btxc" onClick={onClose}>
-            Cancel
-          </button> */}
         </div>
       </div>
     </div>
   );
 };
+
+// ✅ UPDATED: PostsSubPage Component with Unified PostCard
 const PostsSubPage = ({
   posts,
   loading,
@@ -969,26 +968,8 @@ const PostsSubPage = ({
     return matchesHashtag && matchesSearch && matchesDateRange;
   });
 
-  const platformCards = filteredPosts.flatMap(post => {
-    const platformsArray = Array.isArray(post.platforms) && post.platforms.length > 0 ?
-      post.platforms : ['instagram'];
-
-    if (filters.platform !== 'all') {
-      return platformsArray
-        .filter(platform => platform?.toLowerCase() === filters.platform?.toLowerCase())
-        .map(platform => ({
-          post,
-          platform,
-          key: `${post._id || post.id}-${platform}`
-        }));
-    }
-
-    return platformsArray.map(platform => ({
-      post,
-      platform,
-      key: `${post._id || post.id}-${platform}`
-    }));
-  });
+  // ✅ UPDATED: Remove platform separation logic - use posts directly
+  const displayPosts = filteredPosts;
 
   if (loading) {
     return (
@@ -1104,7 +1085,7 @@ const PostsSubPage = ({
       {/* Posts Grid/List */}
       <div className="posts-content">
         <div className={`posts-container ${viewMode}`}>
-          {platformCards.length === 0 ? (
+          {displayPosts.length === 0 ? (
             <div className="empty-state">
               <FileText size={48} />
               <h3>No posts found</h3>
@@ -1122,20 +1103,12 @@ const PostsSubPage = ({
               )}
             </div>
           ) : (
-            // In your PostsSubPage component, update the PlatformPostCard mapping:
-            platformCards.map(({ post, platform, key }) => (
-              <PlatformPostCard
-                key={key}
+            // ✅ UPDATED: Use unified PostCard instead of PlatformPostCard
+            displayPosts.map((post) => (
+              <PostCard
+                key={post._id || post.id}
                 post={post}
-                platform={platform}
-                onClick={() => {
-                  // Create a post object with the clicked platform context
-                  const postWithPlatformContext = {
-                    ...post,
-                    selectedPlatform: platform // Add the clicked platform
-                  };
-                  onPostClick(postWithPlatformContext);
-                }}
+                onClick={() => onPostClick(post)}
                 onEdit={() => onEditPost(post)}
                 onDelete={() => onDeletePost(post)}
               />
@@ -1146,10 +1119,6 @@ const PostsSubPage = ({
     </div>
   );
 };
-
-
-
-
 
 // ✅ Keep your existing MediaLibrarySubPage and other components unchanged
 const MediaLibrarySubPage = ({
@@ -1178,184 +1147,162 @@ const MediaLibrarySubPage = ({
     });
   };
 
-  const filteredMedia = media.filter(mediaItem => {
-    if (!mediaItem) return false;
+const filteredMedia = media.filter(mediaItem => {
+  if (!mediaItem) return false;
 
-    const matchesType = filters.type === 'all' ||
-      (filters.type === 'image' && mediaItem.fileType?.startsWith('image')) ||
-      (filters.type === 'video' && mediaItem.fileType?.startsWith('video'));
+  const matchesType = filters.type === 'all' ||
+    (filters.type === 'image' && mediaItem.fileType?.startsWith('image')) ||
+    (filters.type === 'video' && mediaItem.fileType?.startsWith('video'));
 
-    const mediaFolder = mediaItem.folder || 'general';
-    const matchesFolder = filters.folder === 'all' || mediaFolder === filters.folder;
+  const mediaFolder = mediaItem.folder || 'general';
+  const matchesFolder = filters.folder === 'all' || mediaFolder === filters.folder;
 
-    const matchesTags = !filters.tags ||
+  const matchesTags = !filters.tags ||
+    (mediaItem.tags && Array.isArray(mediaItem.tags) &&
+      mediaItem.tags.some(tag =>
+        tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
+      ));
 
-      (mediaItem.tags && Array.isArray(mediaItem.tags) &&
-        mediaItem.tags.some(tag =>
-          tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
-        ));
+  // ✅ FIXED: Include originalName in search
+  const matchesSearch = !filters.search ||
+    (mediaItem.filename && mediaItem.filename.toLowerCase().includes(filters.search.toLowerCase())) ||
+    (mediaItem.originalName && mediaItem.originalName.toLowerCase().includes(filters.search.toLowerCase())) || // ✅ Added this line
+    (mediaItem.altText && mediaItem.altText.toLowerCase().includes(filters.search.toLowerCase())) ||
+    (mediaItem.tags && Array.isArray(mediaItem.tags) &&
+      mediaItem.tags.some(tag =>
+        tag && tag.toLowerCase().includes(filters.search.toLowerCase())
+      ));
 
-    // ✅ FIXED: Include originalName in search
+  return matchesType && matchesFolder && matchesTags && matchesSearch;
+});
 
-    const matchesSearch = !filters.search ||
-      (mediaItem.filename && mediaItem.filename.toLowerCase().includes(filters.search.toLowerCase())) ||
-      (mediaItem.originalName && mediaItem.originalName.toLowerCase().includes(filters.search.toLowerCase())) || // ✅ Added this line
-      (mediaItem.altText && mediaItem.altText.toLowerCase().includes(filters.search.toLowerCase())) ||
-      (mediaItem.tags && Array.isArray(mediaItem.tags) &&
-        mediaItem.tags.some(tag =>
-          tag && tag.toLowerCase().includes(filters.search.toLowerCase())
-        ));
-
-    return matchesType && matchesFolder && matchesTags && matchesSearch;
-  });
-
-  const sortedMedia = [...filteredMedia].sort((a, b) => {
-    switch (filters.sort) {
-      case 'oldest':
-        return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-      case 'mostUsed':
-        return (b.usage?.timesUsed || 0) - (a.usage?.timesUsed || 0);
-      case 'newest':
-      default:
-        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-    }
-  });
-
-  if (loading) {
-    return (
-      <div className="page-loading">
-        <Loader className="spinner" size={48} />
-        <p>Loading media library...</p>
-      </div>
-    );
+const sortedMedia = [...filteredMedia].sort((a, b) => {
+  switch (filters.sort) {
+    case 'oldest':
+      return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+    case 'mostUsed':
+      return (b.usage?.timesUsed || 0) - (a.usage?.timesUsed || 0);
+    case 'newest':
+    default:
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
   }
+});
 
+if (loading) {
   return (
-    <div className="media-subpage">
-      <div className="media-control-bar">
-        <div className="control-left">
-          <div className="filters-bar">
-            <div className="search-section">
-              <div className="search-box">
-                <Search size={16} />
-                <input
-                  type="text"
-                  placeholder="Search media..."
-                  value={filters.search || ''}
-                  onChange={(e) => {
-                    setFilters(prev => ({ ...prev, search: e.target.value }));
-                  }}
-                />
-              </div>
-            </div>
-
-            <select
-              value={filters.type}
-              onChange={(e) => {
-                setFilters(prev => ({ ...prev, type: e.target.value }));
-              }}
-            >
-              <option value="all">All Types ({media.length})</option>
-              <option value="image">
-                Images ({media.filter(m => m.fileType?.startsWith('image')).length})
-              </option>
-              <option value="video">
-                Videos ({media.filter(m => m.fileType?.startsWith('video')).length})
-              </option>
-            </select>
-            {/* 
-          <select
-            value={filters.folder}
-            onChange={(e) => {
-              setFilters(prev => ({ ...prev, folder: e.target.value }));
-            }}
-          >
-            <option value="all">All Folders</option>
-            <option value="general">General</option>
-            <option value="posts">Posts</option>
-            <option value="profile">Profile</option>
-            <option value="campaigns">Campaigns</option>
-          </select> */}
-
-            <select
-              value={filters.sort}
-              onChange={(e) => {
-                setFilters(prev => ({ ...prev, sort: e.target.value }));
-              }}
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="mostUsed">Most Used</option>
-            </select>
-
-            <button className="clear-filters-btn" onClick={clearFilters}>
-              Clear All
-            </button>
-          </div>
-        </div>
-
-
-        <div className="control-right">
-          <div className="view-controls">
-            <button
-              className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid size={16} />
-            </button>
-            <button
-              className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setViewMode('list')}
-            >
-              <List size={16} />
-            </button>
-          </div>
-          <button className="btn-primary" onClick={onUpload}>
-            <Upload size={18} />
-            Upload New Media
-          </button>
-        </div>
-
-      </div>
-
-      <div className="media-content">
-        <div className={`media-container ${viewMode}`}>
-          {sortedMedia.length === 0 ? (
-            <div className="empty-state">
-              <Image size={48} />
-              <h3>No media found</h3>
-              <p>
-                {(filters.type !== 'all' || filters.folder !== 'all' || filters.tags || filters.search)
-                  ? 'Try adjusting your filters to see more results'
-                  : 'Upload your first media file to get started!'
-                }
-              </p>
-              {(filters.type === 'all' && filters.folder === 'all' && !filters.tags && !filters.search) && (
-                <button onClick={onUpload} className="btn-primary">
-                  <Upload size={18} />
-                  Upload Your First Media
-                </button>
-              )}
-            </div>
-          ) : (
-            sortedMedia.map(mediaItem => (
-              <MediaCard
-                key={mediaItem._id || mediaItem.id}
-                media={mediaItem}
-                onClick={() => onMediaClick(mediaItem)}
-              />
-            ))
-          )}
-        </div>
-      </div>
+    <div className="page-loading">
+      <Loader className="spinner" size={48} />
+      <p>Loading media library...</p>
     </div>
   );
-};
+}
 
-// ✅ Keep all your existing component implementations for:
-// - MediaCard
-// - MediaUploadModal  
-// - MediaPreviewModal
+return (
+  <div className="media-subpage">
+    <div className="media-control-bar">
+      <div className="control-left">
+        <div className="filters-bar">
+          <div className="search-section">
+            <div className="search-box">
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search media..."
+                value={filters.search || ''}
+                onChange={(e) => {
+                  setFilters(prev => ({ ...prev, search: e.target.value }));
+                }}
+              />
+            </div>
+          </div>
+
+          <select
+            value={filters.type}
+            onChange={(e) => {
+              setFilters(prev => ({ ...prev, type: e.target.value }));
+            }}
+          >
+            <option value="all">All Types ({media.length})</option>
+            <option value="image">
+              Images ({media.filter(m => m.fileType?.startsWith('image')).length})
+            </option>
+            <option value="video">
+              Videos ({media.filter(m => m.fileType?.startsWith('video')).length})
+            </option>
+          </select>
+
+          <select
+            value={filters.sort}
+            onChange={(e) => {
+              setFilters(prev => ({ ...prev, sort: e.target.value }));
+            }}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="mostUsed">Most Used</option>
+          </select>
+
+          <button className="clear-filters-btn" onClick={clearFilters}>
+            Clear All
+          </button>
+        </div>
+      </div>
+
+      <div className="control-right">
+        <div className="view-controls">
+          <button
+            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            onClick={() => setViewMode('grid')}
+          >
+            <Grid size={16} />
+          </button>
+          <button
+            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
+          >
+            <List size={16} />
+          </button>
+        </div>
+        <button className="btn-primary" onClick={onUpload}>
+          <Upload size={18} />
+          Upload New Media
+        </button>
+      </div>
+    </div>
+
+    <div className="media-content">
+      <div className={`media-container ${viewMode}`}>
+        {sortedMedia.length === 0 ? (
+          <div className="empty-state">
+            <Image size={48} />
+            <h3>No media found</h3>
+            <p>
+              {(filters.type !== 'all' || filters.folder !== 'all' || filters.tags || filters.search)
+                ? 'Try adjusting your filters to see more results'
+                : 'Upload your first media file to get started!'
+              }
+            </p>
+            {(filters.type === 'all' && filters.folder === 'all' && !filters.tags && !filters.search) && (
+              <button onClick={onUpload} className="btn-primary">
+                <Upload size={18} />
+                Upload Your First Media
+              </button>
+            )}
+          </div>
+        ) : (
+          sortedMedia.map(mediaItem => (
+            <MediaCard
+              key={mediaItem._id || mediaItem.id}
+              media={mediaItem}
+              onClick={() => onMediaClick(mediaItem)}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  </div>
+);
+};
 
 // Media Card Component
 const MediaCard = ({ media, onClick }) => {
@@ -1875,16 +1822,6 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
                 </div>
               </div>
             )}
-
-            {/* {media.usage && (
-              <div className="metadata-section">
-                <h4>Usage Statistics</h4>
-                <p>Used in {media.usage.timesUsed || 0} posts</p>
-                {media.usage.lastUsed && (
-                  <p>Last used: {new Date(media.usage.lastUsed).toLocaleDateString()}</p>
-                )}
-              </div>
-            )} */}
           </div>
         </div>
 
