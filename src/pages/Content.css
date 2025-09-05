@@ -1127,8 +1127,8 @@
 
 .preview-image,
 .preview-video {
-  max-width: 30%;
-  /* max-height: 400px; */
+  max-width: 100%;
+  max-height: 400px;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -1653,10 +1653,7 @@ padding: 0;
 }
 /* Platform Post Cards (same styling as dashboard upcoming posts) */
 .platform-post-card {
-  position: relative;
-  border: 2px solid var(--platform-color, #e5e7eb);
-  border-radius: 12px;
-  padding: 1rem;
+  border: 0px !important;
   background: white;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1797,6 +1794,7 @@ padding: 0;
 
 /* Delete Confirmation Modal */
 .delete-confirm-modal {
+  width: 420px;
   max-width: 40%;
 }
 

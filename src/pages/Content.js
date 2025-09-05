@@ -694,25 +694,19 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
         </div>
       )}
 
-      {/* Platform Header Section */}
-      <div className="platform-header">
-        <div className="schedule-info">
-          {postStatus === 'scheduled' && <Clock size={16} />}
-          <span className="schedule-time">
-            {displayDate.toLocaleDateString('en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        </div>
-        <div className="platform-info">
-          <PlatformIcon size={20} />
-          <span className="platform-name">{primary}</span>
-        </div>
 
+      <div className="platform-header">
+        <Clock size={35} />
+        <span className="schedule-time">
+          {new Date(post.scheduledDate).toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </span>
+        <span className="platform-name">{primary}</span>
       </div>
 
       {/* ✅ UPDATED: Media Section with Video Support (Same as Dashboard) */}
