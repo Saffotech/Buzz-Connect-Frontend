@@ -85,7 +85,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const formatContentForDisplay = (content) => {
     // Convert **text** to <strong>text</strong> for display in preview
     return content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  };  
+  };
 
   // ✅ Add these helper functions at the top of your component
   const convertToUnicodeBold = (text) => {
@@ -97,7 +97,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       '0': '𝟎', '1': '𝟏', '2': '𝟐', '3': '𝟑', '4': '𝟒', '5': '𝟓', '6': '𝟔', '7': '𝟕', '8': '𝟖', '9': '𝟗',
       ' ': ' ' // Keep spaces as they are
     };
-    
+
     return text.split('').map(char => boldMap[char] || char).join('');
   };
 
@@ -112,24 +112,24 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   // ✅ ADDED: Helper function to extract hashtags from content
   const extractHashtagsFromContent = (text) => {
     if (!text) return { content: '', hashtags: [] };
-    
+
     // Split text into lines to better handle formatting
     const lines = text.split('\n');
     const contentLines = [];
     const hashtags = [];
-    
+
     lines.forEach(line => {
       const trimmedLine = line.trim();
-      
+
       // Check if this line contains hashtags
       const lineHashtags = trimmedLine.match(/#\w+/g) || [];
-      
+
       if (lineHashtags.length > 0) {
         hashtags.push(...lineHashtags);
-        
+
         // Remove hashtags from the line
         const cleanLine = trimmedLine.replace(/#\w+/g, '').replace(/\s+/g, ' ').trim();
-        
+
         // Only add the line if there's content left after removing hashtags
         if (cleanLine) {
           contentLines.push(cleanLine);
@@ -139,13 +139,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         contentLines.push(trimmedLine);
       }
     });
-    
+
     return {
       content: contentLines.join('\n').trim(),
       hashtags: [...new Set(hashtags)] // Remove duplicates
     };
   };
-    
+
   // Carousel handlers
   const openCarousel = (index = 0) => {
     setCurrentCarouselIndex(index);
@@ -158,13 +158,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   };
 
   const goToNextImage = () => {
-    setCurrentCarouselIndex((prev) => 
+    setCurrentCarouselIndex((prev) =>
       prev === postData.images.length - 1 ? 0 : prev + 1
     );
   };
 
   const goToPrevImage = () => {
-    setCurrentCarouselIndex((prev) => 
+    setCurrentCarouselIndex((prev) =>
       prev === 0 ? postData.images.length - 1 : prev - 1
     );
   };
@@ -198,7 +198,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const handleFileUpload = async (files) => {
     if (!files || files.length === 0) return;
 
-    // Enhanced file validation
+    // Enhanced file validation for Instagram
     const validFiles = [];
     const invalidFiles = [];
 
@@ -212,15 +212,27 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         return;
       }
 
-      // Check file size - 250MB for videos, 50MB for images
-      const maxSize = isVideo ? 250 * 1024 * 1024 : 50 * 1024 * 1024;
-      if (file.size > maxSize) {
-        const maxSizeText = isVideo ? '250MB' : '50MB';
-        invalidFiles.push({
-          file,
-          reason: `File too large (max ${maxSizeText})`
-        });
-        return;
+      // ✅ Instagram-specific validations
+      if (isVideo) {
+        // Check video size for Instagram (100MB limit)
+        if (file.size > 100 * 1024 * 1024) {
+          invalidFiles.push({
+            file,
+            reason: 'Video too large for Instagram (max 100MB)'
+          });
+          return;
+        }
+
+        console.log('Video file accepted:', file.name, 'Size:', file.size);
+      } else {
+        // Image size limit
+        if (file.size > 50 * 1024 * 1024) {
+          invalidFiles.push({
+            file,
+            reason: 'Image too large (max 50MB)'
+          });
+          return;
+        }
       }
 
       validFiles.push(file);
@@ -240,74 +252,63 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     setError(null);
 
     try {
-      // Store original filenames for mapping
-      const originalFilenames = validFiles.map(file => file.name);
+      console.log('✅ Uploading files:', validFiles.map(f => ({ name: f.name, type: f.type, size: f.size })));
 
-      // Create local previews with original names
-      const localPreviews = validFiles.map((file, index) => ({
-        url: URL.createObjectURL(file),
-        altText: file.name,
-        originalName: file.name,
-        displayName: file.name,
-        isLocal: true,
-        fileType: file.type.startsWith('video/') ? 'video' : 'image',
-        size: file.size,
-        index
-      }));
+      const response = await uploadMedia(validFiles);
+      console.log('✅ Upload response:', response);
+
+      if (!response.data || !Array.isArray(response.data)) {
+        throw new Error('Invalid upload response format');
+      }
+
+      const uploadedMedia = response.data.map((media, index) => {
+        const originalFile = validFiles[index];
+
+        // ✅ CRITICAL: Ensure all required fields are present
+        const processedMedia = {
+          url: media.url || media.secure_url,
+          altText: media.originalName || originalFile?.name || 'Post media',
+          // ✅ FIX: Ensure originalName is always present
+          originalName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
+          displayName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
+          filename: media.filename || originalFile?.name,
+          publicId: media.publicId,
+          fileType: media.fileType || (originalFile?.type.startsWith('video/') ? 'video' : 'image'),
+          size: media.size || originalFile?.size,
+          dimensions: media.dimensions,
+          // Video-specific fields
+          duration: media.duration || null,
+          fps: media.fps || null,
+          hasAudio: media.hasAudio || null,
+          // Enhanced fields
+          thumbnails: media.thumbnails || null,
+          videoQualities: media.videoQualities || null,
+          platformOptimized: media.platformOptimized || null,
+          // ✅ Add metadata for better compatibility
+          format: originalFile?.type || 'video/mp4',
+          createdAt: new Date().toISOString()
+        };
+
+        console.log('✅ Processed media:', processedMedia);
+        return processedMedia;
+      });
 
       setPostData(prev => ({
         ...prev,
-        images: [...prev.images, ...localPreviews]
+        images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
       }));
 
       const fileTypeText = validFiles.length === 1
         ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
         : 'files';
 
-      showToast(`Uploading ${validFiles.length} ${fileTypeText}...`, 'info');
-
-      const response = await uploadMedia(validFiles);
-      console.log('Upload response:', response);
-
-      const uploadedMedia = response.data.map((media, index) => {
-        const originalFile = validFiles[index];
-
-        console.log(`Mapping file ${index}:`, {
-          originalFileName: originalFile?.name,
-          apiOriginalName: media.originalName,
-          apiFilename: media.filename
-        });
-
-        return {
-          url: media.url,
-          altText: media.originalName || originalFile?.name || 'Post media',
-          originalName: media.originalName || originalFile?.name,
-          displayName: media.originalName || originalFile?.name || media.filename,
-          filename: media.filename,
-          publicId: media.publicId,
-          fileType: media.fileType || (media.url.includes('video') ? 'video' : 'image'),
-          size: media.size || originalFile?.size,
-          dimensions: media.dimensions,
-          cloudinaryFilename: media.filename
-        };
-      });
-
-      console.log('Final uploaded media:', uploadedMedia);
-
-      // Replace local previews with actual uploaded URLs
-      setPostData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
-      }));
-
       showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
 
     } catch (error) {
-      console.error('Failed to upload media:', error);
+      console.error('❌ Upload failed:', error);
       setError(error.message || 'Failed to upload media');
       showToast('Failed to upload media', 'error');
 
-      // Remove local previews on error
       setPostData(prev => ({
         ...prev,
         images: prev.images.filter(img => !img.isLocal)
@@ -702,6 +703,22 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
 
     try {
+      // ✅ Enhanced debugging
+      console.log('=== POST SUBMISSION DEBUG ===');
+      console.log('Post data:', JSON.stringify(postData, null, 2));
+      console.log('Images count:', postData.images?.length);
+      console.log('Platforms:', postData.platforms);
+      console.log('Selected accounts:', postData.selectedAccounts);
+
+      postData.images?.forEach((item, index) => {
+        console.log(`Media ${index}:`, {
+          url: item.url ? '✅ HAS URL' : '❌ NO URL',
+          fileType: item.fileType,
+          originalName: item.originalName,
+          size: item.size
+        });
+      });
+
       // Clean up selectedAccounts to remove null values and empty arrays
       const cleanedSelectedAccounts = {};
       Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
@@ -711,18 +728,28 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         }
       });
 
-      // ✅ FIXED: Strip markdown formatting for social media posting
-      const cleanedContent = stripMarkdownForSocialMedia(postData.content);
 
-      // Prepare post data for API (matching Swagger structure)
+      // ✅ Enhanced post data preparation with better media handling
       const apiPostData = {
-        content: cleanedContent, // ✅ Use cleaned content without **
+        content: postData.content,
         platforms: postData.platforms,
         selectedAccounts: cleanedSelectedAccounts,
-        images: postData.images.map(img => ({
+        images: postData.images.map((img, index) => ({
           url: img.url,
-          altText: img.altText || 'Post image',
-          publicId: img.publicId || null
+          altText: img.altText || img.originalName || 'Post media',
+          originalName: img.originalName || img.filename || `Media ${index + 1}`,
+          displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+          filename: img.filename,
+          publicId: img.publicId || null,
+          fileType: img.fileType || 'image',
+          size: img.size,
+          dimensions: img.dimensions,
+          duration: img.duration,
+          // ✅ Add order for carousel
+          order: index,
+          // ✅ Enhanced metadata
+          format: img.format,
+          humanSize: img.size ? formatFileSize(img.size) : null
         })),
         hashtags: Array.isArray(postData.hashtags)
           ? postData.hashtags
@@ -731,29 +758,33 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           ? postData.mentions
           : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
         metadata: {
-          category: postData.metadata?.category || 'other'
+          category: postData.metadata?.category || 'other',
+          source: 'web'
         }
       };
 
-      console.log('Submitting post data:', apiPostData);
-
-      let response;
-
+      // ✅ Handle scheduling vs immediate publishing
       if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-        // SCHEDULED POST - Create first, then schedule
+        // SCHEDULED POST
         const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
         apiPostData.scheduledDate = scheduledDateTime.toISOString();
 
+        console.log('📅 Creating scheduled post for:', scheduledDateTime.toISOString());
         showToast('Scheduling post...', 'info');
-        response = await onPostCreated(apiPostData);
+
+        const response = await onPostCreated(apiPostData);
+        console.log('✅ Scheduled post created:', response);
+
+        showToast('Post scheduled successfully!', 'success');
 
       } else {
-        // PUBLISH NOW - Create and immediately publish
+        // PUBLISH NOW
+        console.log('🚀 Creating and publishing post immediately...');
         showToast('Creating and publishing post...', 'info');
 
         // Step 1: Create the post as draft
         const createResponse = await onPostCreated(apiPostData);
-        console.log('Post created:', createResponse);
+        console.log('✅ Post created:', createResponse);
 
         if (!createResponse?.data?._id) {
           throw new Error('Failed to create post - no ID returned');
@@ -761,7 +792,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
         // Step 2: Immediately publish the created post
         const postId = createResponse.data._id;
-        console.log('Publishing post with ID:', postId);
+        console.log('📤 Publishing post with ID:', postId);
 
         const publishResponse = await axios.post(
           `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
@@ -771,26 +802,21 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           }
         );
 
-        console.log('Publish response:', publishResponse);
-        response = publishResponse;
+        console.log('✅ Publish response:', publishResponse);
+
+        if (publishResponse.data.success) {
+          showToast('Post published successfully!', 'success');
+        } else {
+          throw new Error(publishResponse.data.message || 'Publishing failed');
+        }
       }
-
-      console.log('Final response:', response);
-
-      const successMessage = isScheduled
-        ? 'Post scheduled successfully!'
-        : response?.data?.status === 'published'
-          ? 'Post published successfully!'
-          : 'Post created successfully!';
-
-      showToast(successMessage, 'success');
 
       // Reset form on success
       resetForm();
       onClose();
 
     } catch (error) {
-      console.error('Failed to create/publish post:', error);
+      console.error('❌ Failed to create/publish post:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
       setError(errorMessage);
       showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
@@ -859,7 +885,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         Object.entries(response.data.content).forEach(([platform, data]) => {
           // Extract hashtags from the AI-generated content
           const { content, hashtags } = extractHashtagsFromContent(data.content);
-          
+
           suggestions.push({
             id: `${platform}-${Date.now()}`,
             content: content, // Content without hashtags
@@ -938,7 +964,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     console.log('Applying AI suggestion:', suggestion);
     console.log('Original content:', suggestion.content);
     console.log('Suggestion hashtags:', suggestion.hashtags);
-    
+
     setPostData(prev => ({
       ...prev,
       content: suggestion.content, // Content should already be without hashtags
@@ -1295,10 +1321,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                               </div>
                             </div>
                             {/* ✅ FIXED: Display AI suggestion with formatted content */}
-                            <div 
+                            <div
                               className="suggestion-content"
-                              dangerouslySetInnerHTML={{ 
-                                __html: formatContentForDisplay(suggestion.content) 
+                              dangerouslySetInnerHTML={{
+                                __html: formatContentForDisplay(suggestion.content)
                               }}
                             />
                             <div className="suggestion-hashtags">
@@ -1508,7 +1534,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 {/* Enhanced Media Upload Section with Carousel Support */}
                 <div className="form-section">
 
-                  <label className="section-label">
+                  {/* <label className="section-label">
                     <Image size={16} />
                     Media (Images & Videos)
                     {postData.images.length > 0 && (
@@ -1524,9 +1550,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                         </button>
                       </div>
                     )}
-                  </label>
-                  
-
+                  </label> */}
 
                   <div className="headz">
                     <label className="section-label">
@@ -1581,8 +1605,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                                 Drag & drop or click to select
                               </small>
                               <div className="upload-specs">
-                                <span>📷 Images: PNG, JPG, GIF up to 50MB</span>
-                                <span>🎥 Videos: MP4, MOV, AVI up to 250MB</span>
+                                <span className='upidsc'><Image size={16} />  PNG, JPG, GIF up to 50MB</span>
+                                <span className='upidsc'><Video size={16} />  MP4, MOV, AVI up to 250MB</span>
                               </div>
                             </>
                           )}
@@ -1645,7 +1669,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                             <div key={index} className="media-preview-item">
                               <div className="media-preview-container">
                                 {/* Clickable Image/Video Preview */}
-                                <div 
+                                <div
                                   className="media-preview-wrapper"
                                   onClick={() => openCarousel(index)}
                                   title="Click to view in carousel"
@@ -1884,18 +1908,17 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                         </div>
                         <div className="preview-post">
                           {postData.images.length > 0 && (
-                            <div className={`preview-images ${
-                              postData.images.length === 1 ? 'single-image' :
+                            <div className={`preview-images ${postData.images.length === 1 ? 'single-image' :
                               postData.images.length === 2 ? 'two-images' :
-                              postData.images.length === 3 ? 'three-images' :
-                              postData.images.length === 4 ? 'four-images' : ''
-                            }`}>
+                                postData.images.length === 3 ? 'three-images' :
+                                  postData.images.length === 4 ? 'four-images' : ''
+                              }`}>
                               {postData.images.map((mediaItem, index) => {
-                                const isVideo = mediaItem.fileType === 'video' || 
-                                               mediaItem.url?.includes('video') || 
-                                               mediaItem.url?.includes('.mp4') || 
-                                               mediaItem.url?.includes('.mov') || 
-                                               mediaItem.url?.includes('.avi');
+                                const isVideo = mediaItem.fileType === 'video' ||
+                                  mediaItem.url?.includes('video') ||
+                                  mediaItem.url?.includes('.mp4') ||
+                                  mediaItem.url?.includes('.mov') ||
+                                  mediaItem.url?.includes('.avi');
 
                                 return isVideo ? (
                                   <video
@@ -1954,10 +1977,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
             <div className="footer-actions">
               {/* Save as Draft Button */}
-              <button 
-                type="button" 
-                className="btn-secondary-draft" 
-                onClick={onSaveDraft} 
+              <button
+                type="button"
+                className="btn-secondary-draft"
+                onClick={onSaveDraft}
                 disabled={isSubmitting}
               >
                 Save as Draft
@@ -1966,7 +1989,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
               {/* Publish / Schedule Button */}
               <button
                 type="submit"
-                className="btn-primary"
+                className="btn-primary scpst"
                 disabled={
                   !postData.content.trim() ||
                   postData.platforms.length === 0 ||
@@ -2083,16 +2106,8 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
   const handleClose = () => {
     setSelectedImages([]);
     setShowLibraryCarousel(false);
+    setLibraryCarouselIndex(0); // Reset carousel index when closing
     onClose();
-  };
-
-  const openLibraryCarousel = (index) => {
-    setLibraryCarouselIndex(index);
-    setShowLibraryCarousel(true);
-  };
-
-  const closeLibraryCarousel = () => {
-    setShowLibraryCarousel(false);
   };
 
   const filteredMedia = mediaList.filter(item => {
@@ -2104,14 +2119,72 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
     );
   });
 
+  const openLibraryCarousel = (index) => {
+    // Don't open carousel if no media or index is invalid
+    if (filteredMedia.length === 0) return;
+
+    // Ensure index is within bounds of filtered media
+    const safeIndex = Math.max(0, Math.min(index, filteredMedia.length - 1));
+    setLibraryCarouselIndex(safeIndex);
+    setShowLibraryCarousel(true);
+  };
+
+  const closeLibraryCarousel = () => {
+    setShowLibraryCarousel(false);
+    setLibraryCarouselIndex(0); // Reset index when closing carousel
+  };
+
+  // Keyboard navigation for library carousel
+  useEffect(() => {
+    if (!showLibraryCarousel || filteredMedia.length <= 1) return;
+
+    const handleKeyDown = (e) => {
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          setLibraryCarouselIndex(prev =>
+            prev === 0 ? filteredMedia.length - 1 : prev - 1
+          );
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          setLibraryCarouselIndex(prev =>
+            prev === filteredMedia.length - 1 ? 0 : prev + 1
+          );
+          break;
+        case 'Escape':
+          e.preventDefault();
+          closeLibraryCarousel();
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          if (filteredMedia[libraryCarouselIndex]) {
+            handleImageToggle(filteredMedia[libraryCarouselIndex]);
+            closeLibraryCarousel();
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showLibraryCarousel, filteredMedia.length, libraryCarouselIndex]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="media-library-modal-overlay" onClick={handleClose}>
-      {/* Library Carousel */}
+    <>
+      {/* Library Carousel - Separate overlay */}
       {showLibraryCarousel && (
-        <div className="library-carousel-overlay" onClick={(e) => e.stopPropagation()}>
-          <div className="library-carousel-modal">
+        <div
+          className="library-carousel-overlay"
+          onClick={closeLibraryCarousel}
+        >
+          <div
+            className="library-carousel-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="carousel-header">
               <div className="carousel-counter">
                 {libraryCarouselIndex + 1} of {filteredMedia.length}
@@ -2123,12 +2196,12 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="carousel-content">
               {filteredMedia.length > 1 && (
                 <button
                   className="carousel-nav carousel-nav-prev"
-                  onClick={() => setLibraryCarouselIndex(prev => 
+                  onClick={() => setLibraryCarouselIndex(prev =>
                     prev === 0 ? filteredMedia.length - 1 : prev - 1
                   )}
                 >
@@ -2167,7 +2240,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
               {filteredMedia.length > 1 && (
                 <button
                   className="carousel-nav carousel-nav-next"
-                  onClick={() => setLibraryCarouselIndex(prev => 
+                  onClick={() => setLibraryCarouselIndex(prev =>
                     prev === filteredMedia.length - 1 ? 0 : prev + 1
                   )}
                 >
@@ -2180,11 +2253,15 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
               <button
                 className="carousel-action-btn select-btn"
                 onClick={() => {
-                  handleImageToggle(filteredMedia[libraryCarouselIndex]);
-                  closeLibraryCarousel();
+                  const currentMedia = filteredMedia[libraryCarouselIndex];
+                  if (currentMedia) {
+                    handleImageToggle(currentMedia);
+                    closeLibraryCarousel();
+                  }
                 }}
+                disabled={!filteredMedia[libraryCarouselIndex]}
               >
-                {selectedImages.some(img => (img._id || img.id) === (filteredMedia[libraryCarouselIndex]._id || filteredMedia[libraryCarouselIndex].id))
+                {filteredMedia[libraryCarouselIndex] && selectedImages.some(img => (img._id || img.id) === (filteredMedia[libraryCarouselIndex]._id || filteredMedia[libraryCarouselIndex].id))
                   ? 'Remove from Selection'
                   : 'Add to Selection'
                 }
@@ -2194,145 +2271,151 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
         </div>
       )}
 
-      <div className="media-library-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Select Media from Library</h3>
-          <button className="modal-close" onClick={handleClose}>
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="modal-body">
-          {/* Search Bar */}
-          <div className="media-search-bar">
-            <Search size={16} />
-            <input
-              type="text"
-              placeholder="Search media..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          {/* Selected Images Counter */}
-          {selectedImages.length > 0 && (
-            <div className="selected-counter">
-              {selectedImages.length} item{selectedImages.length > 1 ? 's' : ''} selected
+      {/* Main Media Library Modal */}
+      {!showLibraryCarousel && (
+        <div className="media-library-modal-overlay" onClick={handleClose}>
+          <div className="media-library-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Select Media from Library</h3>
+              <button className="modal-close" onClick={handleClose}>
+                <X size={20} />
+              </button>
             </div>
-          )}
 
-          {/* Media Grid */}
-          <div className="media-library-grid">
-            {loading ? (
-              <div className="loading-media">
-                <Loader />
-                <span>Loading media library...</span>
+            <div className="modal-body">
+              {/* Search Bar */}
+              <div className="media-search-bar">
+                <Search size={16} />
+                <input
+                  type="text"
+                  placeholder="Search media..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-            ) : filteredMedia.length === 0 ? (
-              <div className="no-media">
-                <Image size={48} />
-                <h4>No media found</h4>
-                <p>
-                  {searchQuery
-                    ? `No media matches "${searchQuery}"`
-                    : "Upload some media to your library first"
-                  }
-                </p>
-              </div>
-            ) : (
-              filteredMedia.map((media, index) => {
-                const mediaId = media._id || media.id;
-                const isSelected = selectedImages.some(img => (img._id || img.id) === mediaId);
-                const displayName = media.originalName || media.filename;
-                const isVideo = media.fileType?.startsWith('video');
 
-                return (
-                  <div
-                    key={mediaId}
-                    className={`media-library-item ${isSelected ? 'selected' : ''}`}
-                  >
-                    <div className="media-thumbnail" onClick={() => openLibraryCarousel(index)}>
-                      {isVideo ? (
-                        <div className="video-thumbnail">
-                          <video src={media.url} muted />
-                          <div className="video-indicator">
-                            <Play size={16} />
+              {/* Selected Images Counter */}
+              {selectedImages.length > 0 && (
+                <div className="selected-counter">
+                  {selectedImages.length} item{selectedImages.length > 1 ? 's' : ''} selected
+                </div>
+              )}
+
+              {/* Media Grid */}
+              <div className="media-library-grid">
+                {loading ? (
+                  <div className="loading-media">
+                    <Loader />
+                    <span>Loading media library...</span>
+                  </div>
+                ) : filteredMedia.length === 0 ? (
+                  <div className="no-media">
+                    <Image size={48} />
+                    <h4>No media found</h4>
+                    <p>
+                      {searchQuery
+                        ? `No media matches "${searchQuery}"`
+                        : "Upload some media to your library first"
+                      }
+                    </p>
+                  </div>
+                ) : (
+                  filteredMedia.map((media, index) => {
+                    const mediaId = media._id || media.id;
+                    const isSelected = selectedImages.some(img => (img._id || img.id) === mediaId);
+                    const displayName = media.originalName || media.filename;
+                    const isVideo = media.fileType?.startsWith('video');
+
+                    return (
+                      <div
+                        key={mediaId}
+                        className={`media-library-item ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleImageToggle(media)} // ✅ select whole container
+                      >
+                        <div className="media-thumbnail">
+                          {isVideo ? (
+                            <div className="video-thumbnail">
+                              <video src={media.url} muted />
+                              <div className="video-indicator">
+                                <Play size={16} />
+                              </div>
+                            </div>
+                          ) : (
+                            <img
+                              src={media.url}
+                              alt={media.altText || displayName}
+                              loading="lazy"
+                            />
+                          )}
+
+                          <div className="thumbnail-overlay">
+                            <button
+                              className={`media-action-btn select-btn ${isSelected ? 'selected' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();      // ✅ prevent bubbling to parent
+                                handleImageToggle(media); // still works if you click just the button
+                              }}
+                              title={isSelected ? 'Remove from selection' : 'Add to selection'}
+                            >
+                              {isSelected ? <X size={14} /> : <Check size={14} />}
+                            </button>
                           </div>
                         </div>
-                      ) : (
-                        <img
-                          src={media.url}
-                          alt={media.altText || displayName}
-                          loading="lazy"
-                        />
-                      )}
-                      
-                      <div className="thumbnail-overlay">
-                        <Eye size={20} />
-                      </div>
-                      
-                      {isSelected && (
-                        <div className="selection-overlay">
-                          <Check size={20} />
-                        </div>
-                      )}
-                    </div>
 
-                    <div className="media-info">
-                      <span className="media-filename" title={displayName}>
-                        {displayName?.length > 25
-                          ? `${displayName.substring(0, 25)}...`
-                          : displayName || 'Untitled'
-                        }
-                      </span>
-                      <div className="media-metadata">
-                        <span className="media-size">
-                          {media.humanSize || `${Math.round(media.size / 1024)}KB`}
-                        </span>
-                        {media.dimensions && (
-                          <span className="media-dimensions">
-                            {media.dimensions.width} × {media.dimensions.height}
+                        <div className="media-info">
+                          <span className="media-filename" title={displayName}>
+                            {displayName?.length > 25
+                              ? `${displayName.substring(0, 25)}...`
+                              : displayName || 'Untitled'
+                            }
                           </span>
-                        )}
+                          <div className="media-metadata">
+                            <span className="media-size">
+                              {media.humanSize || `${Math.round(media.size / 1024)}KB`}
+                            </span>
+                            {media.dimensions && (
+                              <span className="media-dimensions">
+                                {media.dimensions.width} × {media.dimensions.height}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="media-actions">
+                          <button
+                            className="media-action-btn view-btn"
+                            onClick={(e) => {
+                              e.stopPropagation(); // ✅ so selecting isn’t triggered
+                              openLibraryCarousel(index);
+                            }}
+                            title="View in carousel"
+                          >
+                            <Eye size={14} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                                        <div className="media-actions">
-                      <button
-                        className="media-action-btn view-btn"
-                        onClick={() => openLibraryCarousel(index)}
-                        title="View in carousel"
-                      >
-                        <Eye size={14} />
-                      </button>
-                      <button
-                        className={`media-action-btn select-btn ${isSelected ? 'selected' : ''}`}
-                        onClick={() => handleImageToggle(media)}
-                        title={isSelected ? 'Remove from selection' : 'Add to selection'}
-                      >
-                        {isSelected ? <X size={14} /> : <Check size={14} />}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={handleClose}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                onClick={handleSelectImages}
+                disabled={selectedImages.length === 0}
+              >
+                Add {selectedImages.length} Item{selectedImages.length !== 1 ? 's' : ''} to Post
+              </button>
+            </div>
           </div>
         </div>
-
-        <div className="modal-footer">
-          <button className="btn-secondary" onClick={handleClose}>
-            Cancel
-          </button>
-          <button
-            className="btn-primary"
-            onClick={handleSelectImages}
-            disabled={selectedImages.length === 0}
-          >
-            Add {selectedImages.length} Item{selectedImages.length !== 1 ? 's' : ''} to Post
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 

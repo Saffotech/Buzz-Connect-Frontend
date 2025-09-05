@@ -420,6 +420,51 @@
   z-index: 10;
 }
 
+.platform-post-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Blur overlay */
+.platform-post-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3); /* dark overlay */
+  /* backdrop-filter: blur(4px);      */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 5; /* below the icon but above content */
+}
+
+/* Show overlay on hover */
+.platform-post-card:hover::after {
+  opacity: 1;
+}
+
+/* Expand icon */
+.shw-exp-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10; /* keeps it above overlay */
+  height: max-content;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  padding: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.platform-post-card:hover .shw-exp-icon {
+  opacity: 1;
+}
+
 .action-btn {
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid #e2e8f0;
@@ -1087,6 +1132,14 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
+.content-hub .modal-overlay .modal-content{
+  padding: 0;
+  flex: none;
+  height: 95%;
+
+}
+
 
 .media-metadata {
   display: flex;
@@ -1859,7 +1912,8 @@ padding: 0;
 }
 
 .delete-confirm-modal .modal-footer {
-  padding: 0 2rem 2rem 2rem;
+  display: block;
+  padding: 0 2rem;
   justify-content: center;
   gap: 0.75rem;
   border-top: none;
@@ -1867,7 +1921,7 @@ padding: 0;
 
 .delete-confirm-modal .btn-secondary,
 .delete-confirm-modal .btn-danger {
-  min-width: 140px;
+  /* min-width: 140px; */
   justify-content: center;
 }
 
@@ -1875,6 +1929,41 @@ padding: 0;
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+
+.btn-warning {
+  background: #f5bc5b;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease;
+
+}
+
+.btn-warning:hover {
+  background: #eea526;
+}
+
+.btnflx{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+
+
+@media (max-width: 640px) {
+.btnflx button{
+  white-space: nowrap;
+}
 }
 
 .media-item {
@@ -1890,4 +1979,5 @@ padding: 0;
   object-fit: cover;
   border-radius: 4px;
 }
+
 

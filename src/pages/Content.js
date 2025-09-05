@@ -29,7 +29,9 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Maximize2,
+  ExpandIcon
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -369,7 +371,7 @@ const Content = () => {
           <h1>Content Hub</h1>
           <p>
             A complete library of images, videos, and post media powering your content.
-            </p>
+          </p>
         </div>
       </div>
 
@@ -681,9 +683,14 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
             <Trash2 size={16} />
           </button>
         </div>
+
+      )}
+      {showActions && (
+        <div className="shw-exp-icon">
+          <Maximize2 size={16} />
+        </div>
       )}
 
-      {/* Platform Header */}
       <div className="platform-header">
         <Clock size={35} />
         <span className="schedule-time">
@@ -803,7 +810,7 @@ const PlatformPostCard = ({ post, platform, onClick, onEdit, onDelete }) => {
   );
 };
 
-const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDeleteEverywhere }) => {
   if (!isOpen) return null;
 
   return (
@@ -840,13 +847,22 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle }) => {
         </div>
 
         <div className="modal-footer">
-          <button className="btn-secondary" onClick={onClose}>
+
+          <div className='btnflx'>
+            <button className="btn-danger" onClick={onConfirm}>
+              <Trash2 size={16} />
+              Yes, Delete Post
+            </button>
+
+            <button className="btn-warning" onClick={onDeleteEverywhere}>
+              <Trash2 size={16} />
+              Delete from Everywhere
+            </button>
+          </div>
+          {/* 
+          <button className="btn-secondary btxc" onClick={onClose}>
             Cancel
-          </button>
-          <button className="btn-danger" onClick={onConfirm}>
-            <Trash2 size={16} />
-            Yes, Delete Post
-          </button>
+          </button> */}
         </div>
       </div>
     </div>
@@ -931,7 +947,7 @@ const PostsSubPage = ({
         startDate.setHours(0, 0, 0, 0); // Start of the day
         matchesDateRange = matchesDateRange && postDate >= startDate;
       }
-      
+
       if (filters.dateRange.end) {
         const endDate = new Date(filters.dateRange.end);
         endDate.setHours(23, 59, 59, 999); // ✅ End of the day - INCLUSIVE
@@ -1125,7 +1141,7 @@ const PostsSubPage = ({
 
 // ✅ Keep your existing MediaLibrarySubPage and other components unchanged
 const MediaLibrarySubPage = ({
-   media,
+  media,
   loading,
   viewMode,
   setViewMode,
@@ -1139,7 +1155,7 @@ const MediaLibrarySubPage = ({
 }) => {
   // ... (keep your existing MediaLibrarySubPage implementation)
   // I'll keep the existing implementation from your original code
-const clearFilters = () => {
+  const clearFilters = () => {
     setFilters({
       type: 'all',
       folder: 'all',
@@ -1162,11 +1178,11 @@ const clearFilters = () => {
 
     const matchesTags = !filters.tags ||
 
-      (mediaItem.tags && Array.isArray(mediaItem.tags) && 
-       mediaItem.tags.some(tag =>
-         tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
-       ));
-    
+      (mediaItem.tags && Array.isArray(mediaItem.tags) &&
+        mediaItem.tags.some(tag =>
+          tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
+        ));
+
     // ✅ FIXED: Include originalName in search
 
     const matchesSearch = !filters.search ||
@@ -1358,8 +1374,8 @@ const MediaCard = ({ media, onClick }) => {
       <div className="media-info">
         {/* ✅ FIXED: Show original filename instead of processed filename */}
         <div className="media-filename" title={displayName}>
-          {displayName.length > 20 
-            ? `${displayName.substring(0, 20)}...` 
+          {displayName.length > 20
+            ? `${displayName.substring(0, 20)}...`
             : displayName
           }
         </div>
@@ -1441,7 +1457,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
     files.forEach(file => {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
-      
+
       if (!isImage && !isVideo) {
         invalidFiles.push({ file, reason: 'Unsupported file type' });
         return;
@@ -1451,9 +1467,9 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
       const maxSize = isVideo ? 250 * 1024 * 1024 : 50 * 1024 * 1024;
       if (file.size > maxSize) {
         const maxSizeText = isVideo ? '250MB' : '50MB';
-        invalidFiles.push({ 
-          file, 
-          reason: `File too large (max ${maxSizeText})` 
+        invalidFiles.push({
+          file,
+          reason: `File too large (max ${maxSizeText})`
         });
         return;
       }
@@ -1475,7 +1491,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
 
     setIsUploading(true);
     setUploadedCount(0);
-    
+
     // Initialize progress for each file
     const initialProgress = {};
     selectedFiles.forEach((file, index) => {
@@ -1504,13 +1520,13 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
           ...prev,
           [i]: { ...prev[i], status: 'completed', progress: 100 }
         }));
-        
+
         setUploadedCount(prev => prev + 1);
       }
 
       // Call the actual upload function
       await onUpload(selectedFiles);
-      
+
       // Close modal after successful upload
       setTimeout(() => {
         onClose();
@@ -1523,7 +1539,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
     } catch (error) {
       console.error('Upload failed:', error);
       setIsUploading(false);
-      
+
       // Mark all as failed
       setUploadProgress(prev => {
         const updated = { ...prev };
@@ -1594,8 +1610,8 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
                 <h4>Drag and drop files here</h4>
                 <p>or click to select files</p>
                 <div className="upload-specs">
-                  <small>📷 Images: PNG, JPG, GIF up to 50MB</small>
-                  <small>🎥 Videos: MP4, MOV, AVI up to 250MB</small>
+                  <small>📷 PNG, JPG, GIF up to 50MB</small>
+                  <small>🎥 MP4, MOV, AVI up to 250MB</small>
                 </div>
                 <input
                   ref={fileInputRef}
@@ -1634,7 +1650,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
                 </div>
                 <div className="overall-progress">
                   <div className="progress-bar">
-                    <div 
+                    <div
                       className="progress-fill"
                       style={{ width: `${(uploadedCount / selectedFiles.length) * 100}%` }}
                     />
@@ -1657,10 +1673,10 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
                           <span className="file-size">{formatFileSize(file.size)}</span>
                         </div>
                       </div>
-                      
+
                       <div className="file-progress-status">
                         <div className="file-progress-bar">
-                          <div 
+                          <div
                             className="file-progress-fill"
                             style={{ width: `${fileProgress.progress}%` }}
                           />

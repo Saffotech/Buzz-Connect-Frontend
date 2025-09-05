@@ -527,7 +527,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
         {/* Footer Buttons */}
         <div
           style={{
-            padding: '1rem',
+            padding: '0.65rem',
             display: 'flex',
             flexDirection: 'row',
             justifyContent: 'space-between',
