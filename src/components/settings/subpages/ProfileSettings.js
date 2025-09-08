@@ -160,27 +160,27 @@ const ProfileSettings = ({ onNotify }) => {
       <div className="settings-content">
         <SettingsCard title="Profile Information">
           <div className="content-card">
-          <div className="form-row">
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                type="text"
-                value={name}
-                readOnly
-                className="readonly-input"
-              />
-            </div>
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={email}
-                readOnly
-                className="readonly-input"
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  readOnly
+                  className="readonly-input"
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  readOnly
+                  className="readonly-input"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
         </SettingsCard>
 
@@ -204,11 +204,18 @@ const ProfileSettings = ({ onNotify }) => {
                 <div className="password-verify-group">
                   <div className="password-input has-toggle">
                     <input
+                      name="current-pass-block"
                       type={showCurrentPassword ? 'text' : 'password'}
                       value={currentPassword}
                       onChange={handleCurrentPasswordChange}
                       placeholder="Enter your current password"
                       disabled={currentPasswordVerified}
+                      onCopy={(e) => e.preventDefault()}
+                      onCut={(e) => e.preventDefault()}
+                      onPaste={(e) => e.preventDefault()}
+                      onContextMenu={(e) => e.preventDefault()}
+                      readOnly
+                      onFocus={(e) => e.target.removeAttribute("readOnly")}
                     />
                     <button
                       type="button"

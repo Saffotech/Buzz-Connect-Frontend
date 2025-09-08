@@ -2023,7 +2023,7 @@ console.log("CreatePost component initialData:", initialData);
                 Save as Draft
               </button>
 
-              {/* Publish / Schedule Button */}
+              {/* Publish / Schedule Button Footer */}
               <button
                 type="submit"
                 className="btn-primary scpst"
