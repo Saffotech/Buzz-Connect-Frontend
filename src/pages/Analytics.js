@@ -498,16 +498,16 @@ const Analytics = () => {
           <p>Comprehensive social media performance insights and reporting</p>
         </div>
         <div className="analytics-header-actions">
-          <button 
+          {/* <button 
             className="export-btn"
             onClick={() => exportReport('pdf')}
             title="Export PDF Report"
           >
             <Download size={16} />
             Export Report
-          </button>
+          </button> */}
           <button 
-            className="sync-analytics-btn"
+            className="sync-analytics-btn synbtn"
             onClick={syncAnalyticsData}
             disabled={syncing}
           >
@@ -515,8 +515,8 @@ const Analytics = () => {
             {syncing ? 'Syncing...' : 'Sync Data'}
           </button>
           {lastSyncTime && (
-            <span className="last-sync-time">
-              Last synced: {new Date(lastSyncTime).toLocaleTimeString()}
+            <span className="last-sync-time ">
+              Last synced : {new Date(lastSyncTime).toLocaleTimeString()}
             </span>
           )}
         </div>
@@ -586,7 +586,7 @@ const Analytics = () => {
       </div>
 
       {/* Analytics Navigation */}
-      <div className="analytics-navigation">
+      {/* <div className="analytics-navigation">
         {analyticsSections.map(section => (
           <button
             key={section.id}
@@ -597,7 +597,7 @@ const Analytics = () => {
             {section.label}
           </button>
         ))}
-      </div>
+      </div> */}
 
       {/* Error State */}
       {error && (
@@ -734,7 +734,7 @@ const Analytics = () => {
 
               {/* Platform Performance */}
               <div className="platform-performance-section">
-                <h3>Platform Performance</h3>
+                <h3 className='pfbtn'>Platform Performance</h3>
                 <div className="platform-performance-grid">
                   {analyticsData.overview.platformBreakdown && Object.entries(analyticsData.overview.platformBreakdown).map(([platform, data]) => (
                     <div key={platform} className="platform-performance-card">
