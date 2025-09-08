@@ -401,13 +401,14 @@
 
 /* ✅ FIXED: Post Header matching the reference design */
 .unified-post-card .post-header {
-  padding: 16px;
+  padding: 6px 16px;
+  margin-bottom: 10px;
   border-bottom: 1px solid #f3f4f6;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #3b82f6;
-  color: white !important;
+  background: #dbeafe;
+  color: #1d4ed8 !important;
 }
 
 .unified-post-card .post-schedule {
@@ -415,6 +416,7 @@
   align-items: center;
   gap: 12px;
   font-size: 14px;
+  color: #1d4ed8 !important;
 }
 
 .unified-post-card .post-platforms {
@@ -430,11 +432,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #1d4ed8;
   font-size: 14px;
   /* border: 2px solid white; */
   /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
-  background-color: #3b82f6;
+  background-color: transparent;
 }
 
 /* .unified-post-card .platform-icon.instagram {
