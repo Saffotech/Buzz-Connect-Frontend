@@ -684,7 +684,7 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
       {/* Post Header with Multiple Platforms */}
       <div className="post-header">
         <div className="post-schedule">
-          <Clock size={35} />
+          <Clock size={16} />
           <span className="schedule-time">
             {displayDate.toLocaleDateString('en-US', {
               weekday: 'short',
@@ -703,10 +703,10 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
             return (
               <div 
                 key={index} 
-                className={`platform-icon ${platform.toLowerCase()}`}
+                className={`platform-icon `}
                 title={platform}
               >
-                <PlatformIcon size={18} />
+                <PlatformIcon size={20} />
               </div>
             );
           })}
