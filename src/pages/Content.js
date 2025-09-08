@@ -136,23 +136,35 @@ const Content = () => {
   };
 
   // ✅ NEW: Update post function for editing
-  const handleUpdatePost = async (postId, postData) => {
-    try {
-      const response = await apiClient.request(`/api/posts/${postId}`, {
-        method: 'PUT',
-        data: postData
+const handleUpdatePost = async (postId, postData) => {
+  try {    
+    const response = await apiClient.request(`/api/posts/${postId}`, {
+      method: 'PUT',
+      body: JSON.stringify(postData) // Note: using body instead of data based on your client
+    });    
+    if (response && (response.success || response.data || response._id)) {
+      setNotification({ 
+        type: 'success', 
+        message: response.message || 'Post updated successfully' 
       });
-      setNotification({ type: 'success', message: 'Post updated successfully' });
+      
       setShowCreatePost(false);
       setSelectedPost(null);
-
+      
       await fetchAllPosts();
-      return response;
-    } catch (error) {
-      setNotification({ type: 'error', message: error.message || 'Failed to update post' });
-      throw error;
+      
+      return response.data || response;
+    } else {
+      throw new Error('Update response indicated failure');
     }
-  };
+  } catch (error) {
+    setNotification({ 
+      type: 'error', 
+      message: error.message || 'Failed to update post' 
+    });
+    throw error;
+  }
+};
 
   // ✅ NEW: Delete post with confirmation
   const handleDeletePost = async (postId) => {
@@ -179,24 +191,32 @@ const Content = () => {
     setShowPostDetail(true);
   };
 
-  // ✅ NEW: Handle edit post - fetch latest data first
-  const handleEditPost = async (post) => {
-    try {
-      // Fetch the latest post data before editing
-      const response = await apiClient.request(`/api/posts/${post._id || post.id}`);
-      const latestPostData = response.data;
-
-      setSelectedPost(latestPostData);
+const handleEditPost = async (post) => {
+  try {
+    const postId = post._id || post.id;
+    const response = await apiClient.request(`/api/posts/${postId}`);
+    if (response && response.data) {
+      setSelectedPost(response.data);
       setShowPostDetail(false);
       setShowCreatePost(true);
-    } catch (error) {
-      console.error('Failed to fetch post for editing:', error);
-      // Fallback to using the existing post data
-      setSelectedPost(post);
+    } 
+    else if (response && response._id) {
+      setSelectedPost(response);
       setShowPostDetail(false);
       setShowCreatePost(true);
     }
-  };
+    else {
+      console.error("Unexpected API response structure:", response);
+      throw new Error('Post data not found in API response');
+    }
+  } catch (error) {
+    console.error('Failed to fetch post for editing:', error);
+    // Fallback to using the existing post data
+    setSelectedPost(post);
+    setShowPostDetail(false);
+    setShowCreatePost(true);
+  }
+};
 
   // Initial data fetch
   useEffect(() => {
@@ -434,18 +454,18 @@ const Content = () => {
       </div>
 
       {/* ✅ Updated CreatePost Modal - handles both create and edit */}
-      <CreatePost
-        isOpen={showCreatePost}
-        onClose={() => {
-          setShowCreatePost(false);
-          setSelectedPost(null);
-        }}
-        onPostCreated={selectedPost ?
-          (postData) => handleUpdatePost(selectedPost._id || selectedPost.id, postData) :
-          handleCreatePost
-        }
-        initialData={selectedPost}
-      />
+<CreatePost
+  isOpen={showCreatePost}
+  onClose={() => {
+    setShowCreatePost(false);
+    setSelectedPost(null);
+  }}
+  onPostCreated={selectedPost ?
+    (postData) => handleUpdatePost(selectedPost._id || selectedPost.id, postData) :
+    handleCreatePost
+  }
+  initialData={selectedPost}
+/>
 
       {/* Post Detail Modal */}
       <PostDetailModal
