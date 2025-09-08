@@ -18,7 +18,11 @@
 
 /* Page Header */
 .analytics-header {
-  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  /* margin-bottom: 2rem; */
   background-color: white;
   padding: 1rem 2rem;
 }
@@ -507,6 +511,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
+  padding: 1.5rem;
 }
 
 .platform-performance-card {
@@ -2507,8 +2512,16 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     background: #f9f9f9;
-    margin-bottom: 15px;
+    margin-bottom: 9px;
     background: #007bff;
     color: white;
     border-radius: 7px;
+}
+
+.pfbtn{
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    padding: 1.5rem 1.5rem 0 1.5rem;
 }
