@@ -1058,7 +1058,7 @@ const PostsSubPage = ({
           </button>
         </div>
 
-        <div className="control-actions">
+        {/* <div className="control-actions">
           <div className="view-controls">
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
@@ -1078,7 +1078,7 @@ const PostsSubPage = ({
             <Plus size={18} />
             Create Post
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Posts Grid/List */}

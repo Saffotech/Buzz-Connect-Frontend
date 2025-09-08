@@ -52,16 +52,34 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       return true;
     }
     
+    // Check MIME type
+    if (mediaItem.type && mediaItem.type.startsWith('video/')) {
+      return true;
+    }
+    
     // Check URL patterns
     if (mediaItem.url) {
-      const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.flv'];
-      const hasVideoExtension = videoExtensions.some(ext => 
-        mediaItem.url.toLowerCase().includes(ext)
-      );
+      const url = mediaItem.url.toLowerCase();
       
-      if (hasVideoExtension || mediaItem.url.includes('/video/')) {
+      // Common video extensions
+      const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.flv', '.m4v', '.wmv', '.3gp', '.ogg', '.ogv'];
+      const hasVideoExtension = videoExtensions.some(ext => url.includes(ext));
+      
+      if (hasVideoExtension) {
         return true;
       }
+      
+      // Check for video-related URL patterns
+      if (url.includes('/video/') || url.includes('video_') || url.includes('.video')) {
+        return true;
+      }
+    }
+    
+    // Check filename if available
+    if (mediaItem.filename) {
+      const filename = mediaItem.filename.toLowerCase();
+      const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.flv', '.m4v', '.wmv', '.3gp', '.ogg', '.ogv'];
+      return videoExtensions.some(ext => filename.endsWith(ext));
     }
     
     return false;
@@ -74,7 +92,24 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     return 'image';
   };
 
-  // ✅ Fixed: Declare platform first, handling null/undefined cases
+  const getMediaMimeType = (mediaItem) => {
+    if (mediaItem.type) return mediaItem.type;
+    if (mediaItem.fileType) return mediaItem.fileType;
+    
+    // Try to guess from URL extension
+    if (mediaItem.url) {
+      const url = mediaItem.url.toLowerCase();
+      if (url.includes('.mp4')) return 'video/mp4';
+      if (url.includes('.mov')) return 'video/quicktime';
+      if (url.includes('.webm')) return 'video/webm';
+      if (url.includes('.avi')) return 'video/x-msvideo';
+      if (url.includes('.mkv')) return 'video/x-matroska';
+    }
+    
+    return 'video/mp4'; // Default fallback
+  };
+
+  // Fixed: Declare platform first, handling null/undefined cases
   const platform = post?.selectedPlatform?.toLowerCase() || post?.platforms?.[0]?.toLowerCase() || "post";
 
   // Mock comments data (replace with real API data)
@@ -721,7 +756,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
           </div>
           
           <div className="header-actions">
-            <div className="actions-dropdown">
+            <div className="actions-dropdown" ref={dropdownRef}>
               <button 
                 className="actions-btn"
                 onClick={handleDropdownToggle}
@@ -779,13 +814,13 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
             <TrendingUp size={16} />
             Analytics
           </button>
-          <button 
+          {/* <button 
             className={`tab-btn ${activeTab === 'comments' ? 'active' : ''}`}
             onClick={() => setActiveTab('comments')}
           >
             <MessageCircle size={16} />
             Comments ({mockComments.length})
-          </button>
+          </button> */}
           {post.status === 'published' && (
             <button 
               className={`tab-btn sync-btn ${syncingAnalytics ? 'syncing' : ''}`}
@@ -803,7 +838,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         <div className="modal-content">
           {activeTab === 'preview' && (
             <div className="preview-content-pd">
-              {/* Left Side - Main Image */}
+              {/* Left Side - Main Image/Video */}
               <div className="preview-left">
                 {post.images && post.images.length > 0 && (
                   <div className="main-image-container">
@@ -825,17 +860,50 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                         </button>
                       </div>
                     )}
-                    <img
-                      src={getImageSource(post.images[imgIndex])}
-                      alt={post.images[imgIndex]?.altText || "Post media"}
-                      className="main-image"
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
-                      }}
-                    />
+                    
+                    {/* Conditionally render video or image */}
+                    {isVideoFile(post.images[imgIndex]) ? (
+                      <video
+                        src={getImageSource(post.images[imgIndex])}
+                        className="main-image main-video"
+                        controls
+                        preload="metadata"
+                        onError={(e) => {
+                          console.error('Video failed to load:', e);
+                          e.target.style.display = 'none';
+                          // Create a fallback image element
+                          const fallback = document.createElement('img');
+                          fallback.src = "https://via.placeholder.com/400x300?text=Video+Not+Available";
+                          fallback.className = "main-image";
+                          e.target.parentNode.appendChild(fallback);
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src={getImageSource(post.images[imgIndex])}
+                        alt={post.images[imgIndex]?.altText || "Post media"}
+                        className="main-image"
+                        onError={(e) => {
+                          e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
+                        }}
+                      />
+                    )}
+                    
                     {post.images.length > 1 && (
                       <div className="image-counter">
                         {imgIndex + 1} / {post.images.length}
+                      </div>
+                    )}
+                    
+                    {/* Video type indicator */}
+                    {isVideoFile(post.images[imgIndex]) && (
+                      <div className="media-type-indicator">
+                        <div className="video-badge">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                            <path d="M8 5v14l11-7z"/>
+                          </svg>
+                          VIDEO
+                        </div>
                       </div>
                     )}
                   </div>
