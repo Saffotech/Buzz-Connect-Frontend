@@ -65,6 +65,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       category: 'other'
     }
   });
+const [publishMode, setPublishMode] = useState('now'); // 'now' or 'later'
 
   const [activeTab, setActiveTab] = useState('compose');
   const [isScheduled, setIsScheduled] = useState(false);
@@ -80,6 +81,38 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
+
+useEffect(() => {
+  if (initialData) {
+    console.log("Setting form data from initialData:", initialData);
+
+    setPostData(prev => ({
+      ...prev,
+      content: initialData.content || '',
+      platforms: initialData.platforms || [],
+      hashtags: initialData.hashtags || '',
+      mentions: initialData.mentions || '',
+      selectedAccounts: initialData.selectedAccounts || {},
+      images: initialData.images && initialData.images.length > 0 ? initialData.images : [],
+      scheduledDate: initialData.scheduledDate ? new Date(initialData.scheduledDate) : null,
+      metadata: {
+        ...prev.metadata,
+        ...(initialData.metadata || {})
+      }
+    }));
+
+    // ✅ handle publish mode separately
+    if (initialData.scheduledDate || initialData.status === 'scheduled') {
+      setPublishMode('later');
+    } else {
+      setPublishMode('now');
+    }
+  }
+}, [initialData]);
+
+
+console.log("CreatePost component initialData:", initialData);
+
 
   // ✅ Helper functions for content formatting
   const formatContentForDisplay = (content) => {
@@ -1786,107 +1819,111 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 </div>
 
                 {/* Scheduler Section */}
-                <div className="form-section">
-                  <label className="section-label">
-                    <Clock size={16} />
-                    Scheduler
-                  </label>
+<div className="form-section">
+  <label className="section-label">
+    <Clock size={16} />
+    Scheduler
+  </label>
 
-                  <div className="scheduler-options">
-                    <div className="radio-group">
-                      <label className="radio-option">
-                        <input
-                          type="radio"
-                          name="scheduler"
-                          value="now"
-                          checked={!isScheduled}
-                          onChange={() => setIsScheduled(false)}
-                        />
-                        <span className="radio-custom"></span>
-                        <div className="radio-content">
-                          <small
-                            className="radio-description"
-                            data-tooltip="Post will be published immediately"
-                          >
-                            <span className="radio-label">Schedule Now</span>
-                          </small>
-                        </div>
-                      </label>
+  <div className="scheduler-options">
+    <div className="radio-group">
+      <label className={`radio-option ${!isScheduled ? 'active' : ''}`}>
+        <input
+          type="radio"
+          name="scheduler"
+          value="now"
+          checked={!isScheduled}
+          onChange={() => {
+            setIsScheduled(false);
+            setPostData(prev => ({
+              ...prev,
+              scheduledDate: '',
+              scheduledTime: ''
+            }));
+          }}
+        />
+        <span className="radio-custom"></span>
+        <div className="radio-content">
+          <small className="radio-description">
+            <span className="radio-label">Publish Now</span>
+          </small>
+        </div>
+      </label>
 
-                      <label className="radio-option">
-                        <input
-                          type="radio"
-                          name="scheduler"
-                          value="later"
-                          checked={isScheduled}
-                          onChange={() => setIsScheduled(true)}
-                        />
-                        <span className="radio-custom"></span>
-                        <small
-                          className="radio-description"
-                          data-tooltip="Choose a specific date and time for publishing"
-                        >
-                          <div className="radio-content">
-                            <span className="radio-label">Schedule For Later</span>
-                          </div>
-                        </small>
-                      </label>
-                    </div>
+      <label className={`radio-option ${isScheduled ? 'active' : ''}`}>
+        <input
+          type="radio"
+          name="scheduler"
+          value="later"
+          checked={isScheduled}
+          onChange={() => {
+            setIsScheduled(true);
+            // Default: 1 hour later if no date set
+            if (!postData.scheduledDate) {
+              const defaultDate = new Date();
+              defaultDate.setHours(defaultDate.getHours() + 1);
+              setPostData(prev => ({
+                ...prev,
+                scheduledDate: defaultDate.toISOString().split("T")[0],
+                scheduledTime: defaultDate.toTimeString().slice(0,5)
+              }));
+            }
+          }}
+        />
+        <span className="radio-custom"></span>
+        <small className="radio-description">
+          <div className="radio-content">
+            <span className="radio-label">Schedule For Later</span>
+          </div>
+        </small>
+      </label>
+    </div>
 
-                    {/* Date and Time inputs */}
-                    {isScheduled && (
-                      <div className="schedule-inputs">
-                        <div className="input-group"
-                          onClick={() => {
-                            const input = document.getElementById("dt");
-                            if (input) {
-                              if (input.showPicker) {
-                                input.showPicker(); // modern browsers
-                              } else {
-                                input.click(); // fallback
-                              }
-                            }
-                          }
-                          }>
-                          <div className="date-input-wrapper">
-                            <input
-                              id='dt'
-                              type="date"
-                              value={postData.scheduledDate}
-                              onChange={(e) => setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                              className="form-input dt"
-                              min={new Date().toISOString().split('T')[0]}
-                              required
-                            />
-                          </div>
-                        </div>
-                        <div className="input-group">
-                          <div className="time-input-wrapper"
-                            onClick={() => {
-                              const input = document.getElementById("tm");
-                              if (input) {
-                                if (input.showPicker) {
-                                  input.showPicker(); // modern browsers
-                                } else {
-                                  input.click(); // fallback
-                                }
-                              }
-                            }}
-                          >
-                            <input
-                              id='tm'
-                              type="time"
-                              value={postData.scheduledTime}
-                              onChange={(e) => setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))}
-                              className="form-input"
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+    {/* Show date/time picker only if scheduled */}
+    {isScheduled && (
+      <div className="schedule-inputs">
+        <div className="input-group">
+          <input
+            type="date"
+            value={postData.scheduledDate}
+            onChange={(e) =>
+              setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))
+            }
+            className="form-input"
+            min={new Date().toISOString().split("T")[0]}
+            required
+          />
+        </div>
+        <div className="input-group">
+          <input
+            type="time"
+            value={postData.scheduledTime}
+            onChange={(e) =>
+              setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))
+            }
+            className="form-input"
+            required
+          />
+        </div>
+
+        {(postData.scheduledDate && postData.scheduledTime) && (
+          <div className="scheduled-display">
+            <Calendar size={14} />
+            <span>
+              Scheduled for{" "}
+              {new Date(`${postData.scheduledDate}T${postData.scheduledTime}`)
+                .toLocaleDateString()}{" "}
+              at{" "}
+              {new Date(`${postData.scheduledDate}T${postData.scheduledTime}`)
+                .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+</div>
+
               </div>
             </div>
           )}
