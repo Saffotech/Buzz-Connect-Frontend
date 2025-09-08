@@ -586,7 +586,7 @@ const Analytics = () => {
       </div>
 
       {/* Analytics Navigation */}
-      <div className="analytics-navigation">
+      {/* <div className="analytics-navigation">
         {analyticsSections.map(section => (
           <button
             key={section.id}
@@ -597,7 +597,7 @@ const Analytics = () => {
             {section.label}
           </button>
         ))}
-      </div>
+      </div> */}
 
       {/* Error State */}
       {error && (
@@ -734,7 +734,7 @@ const Analytics = () => {
 
               {/* Platform Performance */}
               <div className="platform-performance-section">
-                <h3>Platform Performance</h3>
+                <h3 className='pfbtn'>Platform Performance</h3>
                 <div className="platform-performance-grid">
                   {analyticsData.overview.platformBreakdown && Object.entries(analyticsData.overview.platformBreakdown).map(([platform, data]) => (
                     <div key={platform} className="platform-performance-card">
