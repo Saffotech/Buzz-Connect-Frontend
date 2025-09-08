@@ -1928,8 +1928,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-=======
-
+}
 /* Add these styles to PostDetailModal.css */
 .post-detail-image-container {
   position: relative;
