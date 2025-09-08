@@ -498,16 +498,16 @@ const Analytics = () => {
           <p>Comprehensive social media performance insights and reporting</p>
         </div>
         <div className="analytics-header-actions">
-          <button 
+          {/* <button 
             className="export-btn"
             onClick={() => exportReport('pdf')}
             title="Export PDF Report"
           >
             <Download size={16} />
             Export Report
-          </button>
+          </button> */}
           <button 
-            className="sync-analytics-btn"
+            className="sync-analytics-btn synbtn"
             onClick={syncAnalyticsData}
             disabled={syncing}
           >
@@ -515,8 +515,8 @@ const Analytics = () => {
             {syncing ? 'Syncing...' : 'Sync Data'}
           </button>
           {lastSyncTime && (
-            <span className="last-sync-time">
-              Last synced: {new Date(lastSyncTime).toLocaleTimeString()}
+            <span className="last-sync-time ">
+              Last synced : {new Date(lastSyncTime).toLocaleTimeString()}
             </span>
           )}
         </div>
