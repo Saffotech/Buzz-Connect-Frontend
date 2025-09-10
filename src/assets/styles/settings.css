@@ -1394,3 +1394,47 @@ body, html {
   max-width: 100%;
   overflow-x: hidden;
 }
+
+/* Add this to your CSS */
+.connection-badge {
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: normal;
+}
+
+/* If you have platform-specific styling */
+.platform-instagram.direct {
+  background-color: #FDF2F8;
+  border-color: #FCE7F3;
+}
+
+.account-card.instagram-only {
+  border-color: rgba(219, 39, 119, 0.3);
+}
+
+.account-card.full-access {
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.account-card.view-only {
+  opacity: 0.85;
+  border-style: dashed;
+  border-color: rgba(100, 116, 139, 0.5);
+}
+
+.connection-badge.instagram-only {
+  color: #db2777;
+}
+
+.connection-badge.full-access {
+  color: #2563eb;
+}
+
+.connection-badge.view-only {
+  color: #64748b;
+}
+
+.connection-status.view-only {
+  background-color: #f1f5f9;
+  color: #64748b;
+}

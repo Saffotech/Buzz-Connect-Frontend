@@ -39,11 +39,80 @@ import {
   useMedia
 } from '../hooks/useApi';
 import CreatePost from '../components/CreatePost';
-import PostDetailModal from '../components/PostDetailModal'; // ✅ Updated import
+import PostDetailModal from '../components/PostDetailModal';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import apiClient from '../utils/api';
 import './Content.css';
 import Loader from '../components/common/Loader';
+
+// Create Post Button component that uses Dashboard's approach
+const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [notification, setNotification] = useState(null);
+  
+  const {
+    createPost: apiCreatePost,
+  } = useDashboardData();
+
+  const handleCreatePost = async (postData) => {
+    try {
+      console.log('Creating post with data:', postData);
+      const response = await apiCreatePost(postData);
+      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
+      setShowCreatePost(false);
+      
+      if (refreshPosts) {
+        await refreshPosts();
+      }
+      
+      if (onPostCreated) {
+        onPostCreated(response);
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Post creation failed:', error);
+      setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  return (
+    <>
+      <button className="btn-primary" onClick={() => setShowCreatePost(true)}>
+        <Plus size={18} />
+        Create Post
+      </button>
+      
+      <CreatePost
+        isOpen={showCreatePost}
+        onClose={() => {
+          setShowCreatePost(false);
+          setSelectedPost(null);
+        }}
+        onPostCreated={handleCreatePost}
+        initialData={selectedPost}
+      />
+      
+      {notification && (
+        <div className={`notification ${notification.type}`}>
+          <span>{notification.message}</span>
+          <button onClick={() => setNotification(null)}>×</button>
+        </div>
+      )}
+    </>
+  );
+};
 
 const Content = () => {
   const location = useLocation();
@@ -84,6 +153,7 @@ const Content = () => {
   });
 
   const { media: basicMedia, loading: basicLoading, refetch: refetchMedia, uploadMedia } = useMedia();
+  const { createPost: apiCreatePost } = useDashboardData();
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showMediaPreview, setShowMediaPreview] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -117,56 +187,60 @@ const Content = () => {
     }
   }, []);
 
-  // ✅ Create post function
+  // ✅ Create post function using apiCreatePost from dashboard hook
   const handleCreatePost = async (postData) => {
     try {
-      const response = await apiClient.request('/api/posts', {
-        method: 'POST',
-        data: postData
-      });
+      console.log('Creating post with data:', postData);
+      const response = await apiCreatePost(postData);
       setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
       setShowCreatePost(false);
 
       await fetchAllPosts();
       return response;
     } catch (error) {
+      console.error('Post creation failed:', error);
       setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
       throw error;
     }
   };
 
-  // ✅ NEW: Update post function for editing
-const handleUpdatePost = async (postId, postData) => {
-  try {    
-    const response = await apiClient.request(`/api/posts/${postId}`, {
-      method: 'PUT',
-      body: JSON.stringify(postData) // Note: using body instead of data based on your client
-    });    
-    if (response && (response.success || response.data || response._id)) {
+  // ✅ Update post function for editing
+  const handleUpdatePost = async (postId, postData) => {
+    try {    
+      console.log('Updating post with ID:', postId);
+      console.log('Update data:', postData);
+      
+      const response = await apiClient.request(`/api/posts/${postId}`, {
+        method: 'PUT',
+        data: postData  // Use data instead of body
+      });    
+      
+      if (response && (response.success || response.data || response._id)) {
+        setNotification({ 
+          type: 'success', 
+          message: response.message || 'Post updated successfully' 
+        });
+        
+        setShowCreatePost(false);
+        setSelectedPost(null);
+        
+        await fetchAllPosts();
+        
+        return response.data || response;
+      } else {
+        throw new Error('Update response indicated failure');
+      }
+    } catch (error) {
+      console.error('Update post failed:', error);
       setNotification({ 
-        type: 'success', 
-        message: response.message || 'Post updated successfully' 
+        type: 'error', 
+        message: error.message || 'Failed to update post' 
       });
-      
-      setShowCreatePost(false);
-      setSelectedPost(null);
-      
-      await fetchAllPosts();
-      
-      return response.data || response;
-    } else {
-      throw new Error('Update response indicated failure');
+      throw error;
     }
-  } catch (error) {
-    setNotification({ 
-      type: 'error', 
-      message: error.message || 'Failed to update post' 
-    });
-    throw error;
-  }
-};
+  };
 
-  // ✅ NEW: Delete post with confirmation
+  // ✅ Delete post with confirmation
   const handleDeletePost = async (postId) => {
     try {
       await apiClient.request(`/api/posts/${postId}`, { method: 'DELETE' });
@@ -179,7 +253,7 @@ const handleUpdatePost = async (postId, postData) => {
     }
   };
 
-  // ✅ NEW: Show delete confirmation
+  // ✅ Show delete confirmation
   const showDeleteConfirmation = (post) => {
     setPostToDelete(post);
     setShowDeleteConfirm(true);
@@ -191,32 +265,33 @@ const handleUpdatePost = async (postId, postData) => {
     setShowPostDetail(true);
   };
 
-const handleEditPost = async (post) => {
-  try {
-    const postId = post._id || post.id;
-    const response = await apiClient.request(`/api/posts/${postId}`);
-    if (response && response.data) {
-      setSelectedPost(response.data);
-      setShowPostDetail(false);
-      setShowCreatePost(true);
-    } 
-    else if (response && response._id) {
-      setSelectedPost(response);
+  const handleEditPost = async (post) => {
+    try {
+      const postId = post._id || post.id;
+      const response = await apiClient.request(`/api/posts/${postId}`);
+      
+      if (response && response.data) {
+        setSelectedPost(response.data);
+        setShowPostDetail(false);
+        setShowCreatePost(true);
+      } 
+      else if (response && response._id) {
+        setSelectedPost(response);
+        setShowPostDetail(false);
+        setShowCreatePost(true);
+      }
+      else {
+        console.error("Unexpected API response structure:", response);
+        throw new Error('Post data not found in API response');
+      }
+    } catch (error) {
+      console.error('Failed to fetch post for editing:', error);
+      // Fallback to using the existing post data
+      setSelectedPost(post);
       setShowPostDetail(false);
       setShowCreatePost(true);
     }
-    else {
-      console.error("Unexpected API response structure:", response);
-      throw new Error('Post data not found in API response');
-    }
-  } catch (error) {
-    console.error('Failed to fetch post for editing:', error);
-    // Fallback to using the existing post data
-    setSelectedPost(post);
-    setShowPostDetail(false);
-    setShowCreatePost(true);
-  }
-};
+  };
 
   // Initial data fetch
   useEffect(() => {
@@ -391,7 +466,7 @@ const handleEditPost = async (post) => {
         <div className="header-content header-content-left">
           <h1>Content Hub</h1>
           <p>
-            A complete library of images, videos, and post media powering your content.
+            A complete library of images, videos, and post media powering your content.
           </p>
         </div>
       </div>
@@ -431,7 +506,8 @@ const handleEditPost = async (post) => {
             onPostClick={handlePostClick}
             onRefetch={fetchAllPosts}
             onEditPost={handleEditPost}
-            onDeletePost={showDeleteConfirmation} // ✅ Use confirmation function
+            onDeletePost={showDeleteConfirmation}
+            createPostButton={<CreatePostButton refreshPosts={fetchAllPosts} />}
           />
         ) : (
           <MediaLibrarySubPage
@@ -453,19 +529,19 @@ const handleEditPost = async (post) => {
         )}
       </div>
 
-      {/* ✅ Updated CreatePost Modal - handles both create and edit */}
-<CreatePost
-  isOpen={showCreatePost}
-  onClose={() => {
-    setShowCreatePost(false);
-    setSelectedPost(null);
-  }}
-  onPostCreated={selectedPost ?
-    (postData) => handleUpdatePost(selectedPost._id || selectedPost.id, postData) :
-    handleCreatePost
-  }
-  initialData={selectedPost}
-/>
+      {/* ✅ Create Post Modal - Using the Dashboard approach */}
+      <CreatePost
+        isOpen={showCreatePost}
+        onClose={() => {
+          setShowCreatePost(false);
+          setSelectedPost(null);
+        }}
+        onPostCreated={selectedPost 
+          ? (postData) => handleUpdatePost(selectedPost._id || selectedPost.id, postData)
+          : handleCreatePost
+        }
+        initialData={selectedPost}
+      />
 
       {/* Post Detail Modal */}
       <PostDetailModal
@@ -473,10 +549,10 @@ const handleEditPost = async (post) => {
         isOpen={showPostDetail}
         onClose={() => setShowPostDetail(false)}
         onEdit={handleEditPost}
-        onDelete={showDeleteConfirmation} // ✅ Use confirmation function
+        onDelete={showDeleteConfirmation}
       />
 
-      {/* ✅ NEW: Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         deleteFromInsta={deleteFromInsta}
         setDeleteFromInsta={setDeleteFromInsta}
@@ -505,7 +581,255 @@ const handleEditPost = async (post) => {
   );
 };
 
-// ✅ NEW: Unified PostCard Component (replacing PlatformPostCard)
+// Updated PostsSubPage Component with CreatePostButton component
+const PostsSubPage = ({
+  posts,
+  loading,
+  error,
+  viewMode,
+  setViewMode,
+  filters,
+  setFilters,
+  searchQuery,
+  setSearchQuery,
+  onCreatePost,
+  onPostClick,
+  onRefetch,
+  onEditPost,
+  onDeletePost,
+  createPostButton // New prop to accept the CreatePostButton component
+}) => {
+  const clearFilters = () => {
+    setFilters({
+      status: 'all',
+      platform: 'all',
+      hashtag: '',
+      dateRange: { start: '', end: '' }
+    });
+    setSearchQuery('');
+  };
+
+  const allPosts = posts;
+
+  const postCounts = {
+    all: allPosts.length,
+    draft: allPosts.filter(p => (p?.status || 'draft') === 'draft').length,
+    scheduled: allPosts.filter(p => (p?.status || 'draft') === 'scheduled').length,
+    published: allPosts.filter(p => (p?.status || 'draft') === 'published').length,
+    failed: allPosts.filter(p => (p?.status || 'draft') === 'failed').length
+  };
+
+  const filteredPosts = allPosts.filter(post => {
+    if (!post) return false;
+
+    if (filters.status !== 'all' && post.status !== filters.status) {
+      return false;
+    }
+
+    if (filters.platform !== 'all' &&
+      post.platforms && post.platforms.length > 0 &&
+      !post.platforms.some(p => p === filters.platform)) {
+      return false;
+    }
+
+    const postHashtags = post.hashtags || [];
+    const postContent = post.content || '';
+
+    const matchesHashtag = !filters.hashtag ||
+      postHashtags.some(tag =>
+        (tag || '').toLowerCase().includes(filters.hashtag.toLowerCase())
+      );
+
+    const matchesSearch = !searchQuery ||
+      postContent.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      postHashtags.some(tag =>
+        (tag || '').toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+    let matchesDateRange = true;
+    if (filters.dateRange.start || filters.dateRange.end) {
+      let postDate;
+      if (post.status === 'published' && post.publishedAt) {
+        postDate = new Date(post.publishedAt);
+      } else if (post.scheduledDate) {
+        postDate = new Date(post.scheduledDate);
+      } else {
+        postDate = new Date(post.createdAt);
+      }
+
+      if (filters.dateRange.start) {
+        const startDate = new Date(filters.dateRange.start);
+        startDate.setHours(0, 0, 0, 0); // Start of the day
+        matchesDateRange = matchesDateRange && postDate >= startDate;
+      }
+
+      if (filters.dateRange.end) {
+        const endDate = new Date(filters.dateRange.end);
+        endDate.setHours(23, 59, 59, 999); // End of the day - INCLUSIVE
+        matchesDateRange = matchesDateRange && postDate <= endDate;
+      }
+    }
+    return matchesHashtag && matchesSearch && matchesDateRange;
+  });
+
+  const displayPosts = filteredPosts;
+
+  if (loading) {
+    return (
+      <div className="page-loading">
+        <Loader className="spinner" size={48} />
+        <p>Loading your posts...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="page-error">
+        <AlertCircle size={48} />
+        <h3>Unable to load posts</h3>
+        <p>{error}</p>
+        <button onClick={onRefetch} className="btn-primary">
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="posts-subpage">
+      {/* Control Bar & Search */}
+      <div className="posts-control-bar">
+        <div className="search-section">
+          <div className="search-box">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Search posts by content or hashtags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="filters-bar">
+          <select
+            value={filters.status}
+            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+          >
+            <option value="all">All Posts</option>
+            <option value="draft">Draft</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="published">Published</option>
+            <option value="failed">Failed</option>
+          </select>
+
+          <select
+            value={filters.platform}
+            onChange={(e) => setFilters(prev => ({ ...prev, platform: e.target.value }))}
+          >
+            <option value="all">All Platforms</option>
+            <option value="instagram">Instagram</option>
+            <option value="facebook">Facebook</option>
+          </select>
+
+          <div className="date-range-dropdown">
+            <span className="date-label">Date Range :</span>
+            <input
+              type="date"
+              value={filters.dateRange.start}
+              onChange={(e) =>
+                setFilters(prev => ({
+                  ...prev,
+                  dateRange: { ...prev.dateRange, start: e.target.value }
+                }))
+              }
+            />
+            <span className="date-separator">to</span>
+            <input
+              type="date"
+              value={filters.dateRange.end}
+              onChange={(e) =>
+                setFilters(prev => ({
+                  ...prev,
+                  dateRange: { ...prev.dateRange, end: e.target.value }
+                }))
+              }
+            />
+          </div>
+
+          <button className="clear-filters-btn" onClick={clearFilters}>
+            Clear All
+          </button>
+        </div>
+
+        <div className="control-actions">
+          <div className="view-controls">
+            <button
+              className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid size={16} />
+            </button>
+            <button
+              className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+            >
+              <List size={16} />
+            </button>
+          </div>
+
+          {/* Use the CreatePostButton component instead of a simple button */}
+          {createPostButton || (
+            <button className="btn-primary" onClick={onCreatePost}>
+              <Plus size={18} />
+              Create Post
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Posts Grid/List */}
+      <div className="posts-content">
+        <div className={`posts-container ${viewMode}`}>
+          {displayPosts.length === 0 ? (
+            <div className="empty-state">
+              <FileText size={48} />
+              <h3>No posts found</h3>
+              <p>
+                {searchQuery || filters.status !== 'all' || filters.platform !== 'all' || filters.hashtag || filters.dateRange.start || filters.dateRange.end
+                  ? 'Try adjusting your search or filters'
+                  : 'Create your first post to get started!'
+                }
+              </p>
+              {(!searchQuery && filters.status === 'all' && filters.platform === 'all' && !filters.hashtag && !filters.dateRange.start && !filters.dateRange.end) && (
+                <>
+                  {createPostButton || (
+                    <button onClick={onCreatePost} className="btn-primary">
+                      <Plus size={18} />
+                      Create Your First Post
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            displayPosts.map((post) => (
+              <PostCard
+                key={post._id || post.id}
+                post={post}
+                onClick={() => onPostClick(post)}
+                onEdit={() => onEditPost(post)}
+                onDelete={() => onDeletePost(post)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// PostCard Component (unchanged)
 const PostCard = ({ post, onClick, onEdit, onDelete }) => {
   const [showActions, setShowActions] = useState(false);
   const [imageLoadErrors, setImageLoadErrors] = useState(new Set());
@@ -525,7 +849,10 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
     onDelete();
   };
 
-  // Get all platforms for this post
+  // Rest of PostCard component (unchanged)
+  // ...
+
+  // I'm keeping the rest of the PostCard implementation as is from your original code
   const platforms = Array.isArray(post.platforms) && post.platforms.length > 0 
     ? post.platforms 
     : ['instagram']; // Default fallback
@@ -835,8 +1162,8 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
   );
 };
 
+// Delete Confirmation Modal Component
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDeleteEverywhere, deleteFromInsta, setDeleteFromInsta }) => {
-
   if (!isOpen) return null;
 
   return (
@@ -855,10 +1182,8 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDele
             </div>
           </div>
 
-          {/* <h3 className="modal-title">Delete Post</h3> */}
-
           <p className="warning-description">
-            Are you sure you want to delete this ?
+            Are you sure you want to delete this post?
           </p>
 
           <div className="delete-extra-option">
@@ -875,21 +1200,10 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDele
 
         <div className="modal-footer">
           <div className='btnflx'>
-
-            {/* <button className="btn-primary" onClick={onConfirm}>
-              <Trash2 size={16} />
-              Cancel
-            </button> */}
-
             <button className="btn-danger" onClick={onConfirm}>
               <Trash2 size={16} />
               Delete Post
             </button>
-
-            {/* <button className="btn-" onClick={onDeleteEverywhere}>
-              <Trash2 size={16} />
-              Delete from Everywhere
-            </button> */}
           </div>
         </div>
       </div>
@@ -897,188 +1211,132 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDele
   );
 };
 
-// ✅ UPDATED: PostsSubPage Component with Unified PostCard
-const PostsSubPage = ({
-  posts,
+// Media Library Subpage Component
+const MediaLibrarySubPage = ({
+  media,
   loading,
-  error,
   viewMode,
   setViewMode,
   filters,
   setFilters,
-  searchQuery,
-  setSearchQuery,
-  onCreatePost,
-  onPostClick,
+  onUpload,
+  onMediaClick,
   onRefetch,
-  onEditPost,
-  onDeletePost
+  onSearch,
+  onLoadMore
 }) => {
   const clearFilters = () => {
     setFilters({
-      status: 'all',
-      platform: 'all',
-      hashtag: '',
-      dateRange: { start: '', end: '' }
+      type: 'all',
+      folder: 'all',
+      tags: '',
+      sort: 'newest',
+      search: '',
+      page: 1
     });
-    setSearchQuery('');
   };
 
-  const allPosts = posts;
+  const filteredMedia = media.filter(mediaItem => {
+    if (!mediaItem) return false;
 
-  const postCounts = {
-    all: allPosts.length,
-    draft: allPosts.filter(p => (p?.status || 'draft') === 'draft').length,
-    scheduled: allPosts.filter(p => (p?.status || 'draft') === 'scheduled').length,
-    published: allPosts.filter(p => (p?.status || 'draft') === 'published').length,
-    failed: allPosts.filter(p => (p?.status || 'draft') === 'failed').length
-  };
+    const matchesType = filters.type === 'all' ||
+      (filters.type === 'image' && mediaItem.fileType?.startsWith('image')) ||
+      (filters.type === 'video' && mediaItem.fileType?.startsWith('video'));
 
-  const filteredPosts = allPosts.filter(post => {
-    if (!post) return false;
+    const mediaFolder = mediaItem.folder || 'general';
+    const matchesFolder = filters.folder === 'all' || mediaFolder === filters.folder;
 
-    if (filters.status !== 'all' && post.status !== filters.status) {
-      return false;
-    }
+    const matchesTags = !filters.tags ||
+      (mediaItem.tags && Array.isArray(mediaItem.tags) &&
+        mediaItem.tags.some(tag =>
+          tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
+        ));
 
-    if (filters.platform !== 'all' &&
-      post.platforms && post.platforms.length > 0 &&
-      !post.platforms.some(p => p === filters.platform)) {
-      return false;
-    }
+    const matchesSearch = !filters.search ||
+      (mediaItem.filename && mediaItem.filename.toLowerCase().includes(filters.search.toLowerCase())) ||
+      (mediaItem.originalName && mediaItem.originalName.toLowerCase().includes(filters.search.toLowerCase())) ||
+      (mediaItem.altText && mediaItem.altText.toLowerCase().includes(filters.search.toLowerCase())) ||
+      (mediaItem.tags && Array.isArray(mediaItem.tags) &&
+        mediaItem.tags.some(tag =>
+          tag && tag.toLowerCase().includes(filters.search.toLowerCase())
+        ));
 
-    const postHashtags = post.hashtags || [];
-    const postContent = post.content || '';
-
-    const matchesHashtag = !filters.hashtag ||
-      postHashtags.some(tag =>
-        (tag || '').toLowerCase().includes(filters.hashtag.toLowerCase())
-      );
-
-    const matchesSearch = !searchQuery ||
-      postContent.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      postHashtags.some(tag =>
-        (tag || '').toLowerCase().includes(searchQuery.toLowerCase())
-      );
-
-    let matchesDateRange = true;
-    if (filters.dateRange.start || filters.dateRange.end) {
-      let postDate;
-      if (post.status === 'published' && post.publishedAt) {
-        postDate = new Date(post.publishedAt);
-      } else if (post.scheduledDate) {
-        postDate = new Date(post.scheduledDate);
-      } else {
-        postDate = new Date(post.createdAt);
-      }
-
-      if (filters.dateRange.start) {
-        const startDate = new Date(filters.dateRange.start);
-        startDate.setHours(0, 0, 0, 0); // Start of the day
-        matchesDateRange = matchesDateRange && postDate >= startDate;
-      }
-
-      if (filters.dateRange.end) {
-        const endDate = new Date(filters.dateRange.end);
-        endDate.setHours(23, 59, 59, 999); // ✅ End of the day - INCLUSIVE
-        matchesDateRange = matchesDateRange && postDate <= endDate;
-      }
-    }
-    return matchesHashtag && matchesSearch && matchesDateRange;
+    return matchesType && matchesFolder && matchesTags && matchesSearch;
   });
 
-  // ✅ UPDATED: Remove platform separation logic - use posts directly
-  const displayPosts = filteredPosts;
+  const sortedMedia = [...filteredMedia].sort((a, b) => {
+    switch (filters.sort) {
+      case 'oldest':
+        return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+      case 'mostUsed':
+        return (b.usage?.timesUsed || 0) - (a.usage?.timesUsed || 0);
+      case 'newest':
+      default:
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    }
+  });
 
   if (loading) {
     return (
       <div className="page-loading">
         <Loader className="spinner" size={48} />
-        <p>Loading your posts...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="page-error">
-        <AlertCircle size={48} />
-        <h3>Unable to load posts</h3>
-        <p>{error}</p>
-        <button onClick={onRefetch} className="btn-primary">
-          Try Again
-        </button>
+        <p>Loading media library...</p>
       </div>
     );
   }
 
   return (
-    <div className="posts-subpage">
-      {/* Control Bar & Search */}
-      <div className="posts-control-bar">
-        <div className="search-section">
-          <div className="search-box">
-            <Search size={16} />
-            <input
-              type="text"
-              placeholder="Search posts by content or hashtags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <div className="media-subpage">
+      <div className="media-control-bar">
+        <div className="control-left">
+          <div className="filters-bar">
+            <div className="search-section">
+              <div className="search-box">
+                <Search size={16} />
+                <input
+                  type="text"
+                  placeholder="Search media..."
+                  value={filters.search || ''}
+                  onChange={(e) => {
+                    setFilters(prev => ({ ...prev, search: e.target.value }));
+                  }}
+                />
+              </div>
+            </div>
+
+            <select
+              value={filters.type}
+              onChange={(e) => {
+                setFilters(prev => ({ ...prev, type: e.target.value }));
+              }}
+            >
+              <option value="all">All Types ({media.length})</option>
+              <option value="image">
+                Images ({media.filter(m => m.fileType?.startsWith('image')).length})
+              </option>
+              <option value="video">
+                Videos ({media.filter(m => m.fileType?.startsWith('video')).length})
+              </option>
+            </select>
+
+            <select
+              value={filters.sort}
+              onChange={(e) => {
+                setFilters(prev => ({ ...prev, sort: e.target.value }));
+              }}
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="mostUsed">Most Used</option>
+            </select>
+
+            <button className="clear-filters-btn" onClick={clearFilters}>
+              Clear All
+            </button>
           </div>
         </div>
-        <div className="filters-bar">
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-          >
-            <option value="all">All Posts</option>
-            <option value="draft">Draft</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="published">Published</option>
-            <option value="failed">Failed</option>
-          </select>
 
-          <select
-            value={filters.platform}
-            onChange={(e) => setFilters(prev => ({ ...prev, platform: e.target.value }))}
-          >
-            <option value="all">All Platforms</option>
-            <option value="instagram">Instagram</option>
-            <option value="facebook">Facebook</option>
-          </select>
-
-          <div className="date-range-dropdown">
-            <span className="date-label">Date Range :</span>
-            <input
-              type="date"
-              value={filters.dateRange.start}
-              onChange={(e) =>
-                setFilters(prev => ({
-                  ...prev,
-                  dateRange: { ...prev.dateRange, start: e.target.value }
-                }))
-              }
-            />
-            <span className="date-separator">to</span>
-            <input
-              type="date"
-              value={filters.dateRange.end}
-              onChange={(e) =>
-                setFilters(prev => ({
-                  ...prev,
-                  dateRange: { ...prev.dateRange, end: e.target.value }
-                }))
-              }
-            />
-          </div>
-
-          <button className="clear-filters-btn" onClick={clearFilters}>
-            Clear All
-          </button>
-        </div>
-
-        {/* <div className="control-actions">
+        <div className="control-right">
           <div className="view-controls">
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
@@ -1093,43 +1351,38 @@ const PostsSubPage = ({
               <List size={16} />
             </button>
           </div>
-
-          <button className="btn-primary" onClick={onCreatePost}>
-            <Plus size={18} />
-            Create Post
+          <button className="btn-primary" onClick={onUpload}>
+            <Upload size={18} />
+            Upload New Media
           </button>
-        </div> */}
+        </div>
       </div>
 
-      {/* Posts Grid/List */}
-      <div className="posts-content">
-        <div className={`posts-container ${viewMode}`}>
-          {displayPosts.length === 0 ? (
+      <div className="media-content">
+        <div className={`media-container ${viewMode}`}>
+          {sortedMedia.length === 0 ? (
             <div className="empty-state">
-              <FileText size={48} />
-              <h3>No posts found</h3>
+              <Image size={48} />
+              <h3>No media found</h3>
               <p>
-                {searchQuery || filters.status !== 'all' || filters.platform !== 'all' || filters.hashtag || filters.dateRange.start || filters.dateRange.end
-                  ? 'Try adjusting your search or filters'
-                  : 'Create your first post to get started!'
+                {(filters.type !== 'all' || filters.folder !== 'all' || filters.tags || filters.search)
+                  ? 'Try adjusting your filters to see more results'
+                  : 'Upload your first media file to get started!'
                 }
               </p>
-              {(!searchQuery && filters.status === 'all' && filters.platform === 'all' && !filters.hashtag && !filters.dateRange.start && !filters.dateRange.end) && (
-                <button onClick={onCreatePost} className="btn-primary">
-                  <Plus size={18} />
-                  Create Your First Post
+              {(filters.type === 'all' && filters.folder === 'all' && !filters.tags && !filters.search) && (
+                <button onClick={onUpload} className="btn-primary">
+                  <Upload size={18} />
+                  Upload Your First Media
                 </button>
               )}
             </div>
           ) : (
-            // ✅ UPDATED: Use unified PostCard instead of PlatformPostCard
-            displayPosts.map((post) => (
-              <PostCard
-                key={post._id || post.id}
-                post={post}
-                onClick={() => onPostClick(post)}
-                onEdit={() => onEditPost(post)}
-                onDelete={() => onDeletePost(post)}
+            sortedMedia.map(mediaItem => (
+              <MediaCard
+                key={mediaItem._id || mediaItem.id}
+                media={mediaItem}
+                onClick={() => onMediaClick(mediaItem)}
               />
             ))
           )}
@@ -1139,196 +1392,12 @@ const PostsSubPage = ({
   );
 };
 
-// ✅ Keep your existing MediaLibrarySubPage and other components unchanged
-const MediaLibrarySubPage = ({
-  media,
-  loading,
-  viewMode,
-  setViewMode,
-  filters,
-  setFilters,
-  onUpload,
-  onMediaClick,
-  onRefetch,
-  onSearch,
-  onLoadMore
-}) => {
-  // ... (keep your existing MediaLibrarySubPage implementation)
-  // I'll keep the existing implementation from your original code
-  const clearFilters = () => {
-    setFilters({
-      type: 'all',
-      folder: 'all',
-      tags: '',
-      sort: 'newest',
-      search: '',
-      page: 1
-    });
-  };
-
-const filteredMedia = media.filter(mediaItem => {
-  if (!mediaItem) return false;
-
-  const matchesType = filters.type === 'all' ||
-    (filters.type === 'image' && mediaItem.fileType?.startsWith('image')) ||
-    (filters.type === 'video' && mediaItem.fileType?.startsWith('video'));
-
-  const mediaFolder = mediaItem.folder || 'general';
-  const matchesFolder = filters.folder === 'all' || mediaFolder === filters.folder;
-
-  const matchesTags = !filters.tags ||
-    (mediaItem.tags && Array.isArray(mediaItem.tags) &&
-      mediaItem.tags.some(tag =>
-        tag && tag.toLowerCase().includes(filters.tags.toLowerCase())
-      ));
-
-  // ✅ FIXED: Include originalName in search
-  const matchesSearch = !filters.search ||
-    (mediaItem.filename && mediaItem.filename.toLowerCase().includes(filters.search.toLowerCase())) ||
-    (mediaItem.originalName && mediaItem.originalName.toLowerCase().includes(filters.search.toLowerCase())) || // ✅ Added this line
-    (mediaItem.altText && mediaItem.altText.toLowerCase().includes(filters.search.toLowerCase())) ||
-    (mediaItem.tags && Array.isArray(mediaItem.tags) &&
-      mediaItem.tags.some(tag =>
-        tag && tag.toLowerCase().includes(filters.search.toLowerCase())
-      ));
-
-  return matchesType && matchesFolder && matchesTags && matchesSearch;
-});
-
-const sortedMedia = [...filteredMedia].sort((a, b) => {
-  switch (filters.sort) {
-    case 'oldest':
-      return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
-    case 'mostUsed':
-      return (b.usage?.timesUsed || 0) - (a.usage?.timesUsed || 0);
-    case 'newest':
-    default:
-      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-  }
-});
-
-if (loading) {
-  return (
-    <div className="page-loading">
-      <Loader className="spinner" size={48} />
-      <p>Loading media library...</p>
-    </div>
-  );
-}
-
-return (
-  <div className="media-subpage">
-    <div className="media-control-bar">
-      <div className="control-left">
-        <div className="filters-bar">
-          <div className="search-section">
-            <div className="search-box">
-              <Search size={16} />
-              <input
-                type="text"
-                placeholder="Search media..."
-                value={filters.search || ''}
-                onChange={(e) => {
-                  setFilters(prev => ({ ...prev, search: e.target.value }));
-                }}
-              />
-            </div>
-          </div>
-
-          <select
-            value={filters.type}
-            onChange={(e) => {
-              setFilters(prev => ({ ...prev, type: e.target.value }));
-            }}
-          >
-            <option value="all">All Types ({media.length})</option>
-            <option value="image">
-              Images ({media.filter(m => m.fileType?.startsWith('image')).length})
-            </option>
-            <option value="video">
-              Videos ({media.filter(m => m.fileType?.startsWith('video')).length})
-            </option>
-          </select>
-
-          <select
-            value={filters.sort}
-            onChange={(e) => {
-              setFilters(prev => ({ ...prev, sort: e.target.value }));
-            }}
-          >
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="mostUsed">Most Used</option>
-          </select>
-
-          <button className="clear-filters-btn" onClick={clearFilters}>
-            Clear All
-          </button>
-        </div>
-      </div>
-
-      <div className="control-right">
-        <div className="view-controls">
-          <button
-            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-            onClick={() => setViewMode('grid')}
-          >
-            <Grid size={16} />
-          </button>
-          <button
-            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-            onClick={() => setViewMode('list')}
-          >
-            <List size={16} />
-          </button>
-        </div>
-        <button className="btn-primary" onClick={onUpload}>
-          <Upload size={18} />
-          Upload New Media
-        </button>
-      </div>
-    </div>
-
-    <div className="media-content">
-      <div className={`media-container ${viewMode}`}>
-        {sortedMedia.length === 0 ? (
-          <div className="empty-state">
-            <Image size={48} />
-            <h3>No media found</h3>
-            <p>
-              {(filters.type !== 'all' || filters.folder !== 'all' || filters.tags || filters.search)
-                ? 'Try adjusting your filters to see more results'
-                : 'Upload your first media file to get started!'
-              }
-            </p>
-            {(filters.type === 'all' && filters.folder === 'all' && !filters.tags && !filters.search) && (
-              <button onClick={onUpload} className="btn-primary">
-                <Upload size={18} />
-                Upload Your First Media
-              </button>
-            )}
-          </div>
-        ) : (
-          sortedMedia.map(mediaItem => (
-            <MediaCard
-              key={mediaItem._id || mediaItem.id}
-              media={mediaItem}
-              onClick={() => onMediaClick(mediaItem)}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  </div>
-);
-};
-
 // Media Card Component
 const MediaCard = ({ media, onClick }) => {
   const isVideo = media.fileType?.startsWith('video');
   const humanSize = media.humanSize || `${Math.round(media.size / 1024)}KB`;
 
-  // ✅ FIXED: Prioritize originalName over processed filename
+  // Prioritize originalName over processed filename
   const displayName = media.originalName || media.filename || 'Untitled';
 
   return (
@@ -1350,7 +1419,6 @@ const MediaCard = ({ media, onClick }) => {
       </div>
 
       <div className="media-info">
-        {/* ✅ FIXED: Show original filename instead of processed filename */}
         <div className="media-filename" title={displayName}>
           {displayName.length > 20
             ? `${displayName.substring(0, 20)}...`
@@ -1382,9 +1450,9 @@ const MediaCard = ({ media, onClick }) => {
 const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [isUploading, setIsUploading] = useState(false); // ✅ NEW: Upload loading state
-  const [uploadProgress, setUploadProgress] = useState({}); // ✅ NEW: Progress tracking per file
-  const [uploadedCount, setUploadedCount] = useState(0); // ✅ NEW: Count of uploaded files
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({});
+  const [uploadedCount, setUploadedCount] = useState(0);
   const fileInputRef = useRef(null);
 
   // Reset states when modal opens/closes
@@ -1427,7 +1495,6 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
     }
   };
 
-  // ✅ NEW: File validation function
   const validateFiles = (files) => {
     const validFiles = [];
     const invalidFiles = [];
@@ -1463,7 +1530,6 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
     setSelectedFiles(validFiles);
   };
 
-  // ✅ NEW: Enhanced upload function with progress tracking
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
@@ -1574,7 +1640,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
 
         <div className="modal-body">
           {!isUploading ? (
-            // ✅ File Selection UI
+            // File Selection UI
             <>
               <div
                 className={`upload-area ${dragActive ? 'drag-active' : ''}`}
@@ -1619,7 +1685,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
               )}
             </>
           ) : (
-            // ✅ Upload Progress UI
+            // Upload Progress UI
             <div className="upload-progress-container">
               <div className="upload-header">
                 <div className="upload-stats">
@@ -1716,7 +1782,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
   const isVideo = media.fileType?.startsWith('video');
   const humanSize = media.humanSize || `${Math.round(media.size / 1024)}KB`;
 
-  // ✅ FIXED: Prioritize originalName for display
+  // Prioritize originalName for display
   const displayName = media.originalName || media.filename || 'Untitled';
 
   const handleDelete = () => {
@@ -1747,7 +1813,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
       // Create a temporary anchor element and trigger download
       const link = document.createElement('a');
       link.href = url;
-      // ✅ FIXED: Use original name for download
+      // Use original name for download
       link.download = media.originalName || media.filename || `media-${media._id || media.id}`;
 
       // Append to body, click, and remove
@@ -1787,36 +1853,20 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
             <div className="metadata-section">
               <h4>File Information</h4>
               <div className="metadata-grid">
-                {/* ✅ FIXED: Show original filename in metadata */}
                 <div className="metadata-item">
                   <label>Filename:</label>
                   <span title={displayName}>{displayName}</span>
                 </div>
-                {/* ✅ OPTIONAL: Show Cloudinary filename separately */}
-                {/* {media.originalName && media.filename !== media.originalName && (
-                  <div className="metadata-item">
-                    <label>Storage Name:</label>
-                    <span className="storage-name">{media.filename}</span>
-                  </div>
-                )} */}
                 <div className="metadata-item">
                   <label>Size:</label>
                   <span>{humanSize}</span>
                 </div>
-                {/* <div className="metadata-item">
-                  <label>Type:</label>
-                  <span>{media.fileType}</span>
-                </div> */}
                 {media.dimensions && (
                   <div className="metadata-item">
                     <label>Dimensions:</label>
                     <span>{media.dimensions.width} × {media.dimensions.height}</span>
                   </div>
                 )}
-                {/* <div className="metadata-item">
-                  <label>Folder:</label>
-                  <span>{media.folder || 'general'}</span>
-                </div> */}
                 <div className="metadata-item">
                   <label>Uploaded:</label>
                   <span>{new Date(media.createdAt).toLocaleDateString()}</span>
@@ -1864,3 +1914,4 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
 };
 
 export default Content;
+        
