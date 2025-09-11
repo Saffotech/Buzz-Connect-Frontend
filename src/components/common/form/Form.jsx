@@ -4,12 +4,23 @@ import Input from '../input/Input';
 import Button from '../button/Button';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, X } from 'lucide-react';
 import './Form.module.css';
 
 const Form = ({ isLogin, setIsLogin, formMode, setFormMode }) => {
-  const { login, register, isLoading } = useAuth();
+const { login, register, isLoading } = useAuth();
 
+
+  const [termsConditionModal, setTermsConditionModal] = useState({
+    isOpen: false,
+  });
+
+  // ✅ Add this here
+  const handleCloseTerms = () => {
+    setTermsConditionModal({
+      isOpen: false,
+    });
+  };
   
 
   useEffect(() => {
@@ -485,7 +496,7 @@ const Form = ({ isLogin, setIsLogin, formMode, setFormMode }) => {
           alignItems: 'center',
           marginBottom: '1rem'
         }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.95em', color: '#374151' }}>
+          {/* <label style={{ display: 'flex', alignItems: 'center', gap: '0.5em', fontSize: '0.95em', color: '#374151' }}>
             <input
               type="checkbox"
               name="rememberMe"
@@ -494,7 +505,7 @@ const Form = ({ isLogin, setIsLogin, formMode, setFormMode }) => {
               style={{ accentColor: "#3b82f6" }}
             />
             Remember me
-          </label>
+          </label> */}
           <a
           style={{cursor: 'pointer'}}
             className="forgot-password"
@@ -525,10 +536,13 @@ const Form = ({ isLogin, setIsLogin, formMode, setFormMode }) => {
             fontSize: '0.875rem',
             color: '#6b7280'
           }}>
-            I accept the <a href="#" target="_blank" style={{
+            I accept the <a style={{
               textDecoration: 'none',
               color: '#3b82f6'
-            }}>Terms and Conditions</a>
+            }}
+            onClick={()=>setTermsConditionModal({isOpen:true})}
+            
+            >Terms and Conditions</a>
           </label>
         </div>
       )}
@@ -709,8 +723,6 @@ const Form = ({ isLogin, setIsLogin, formMode, setFormMode }) => {
   </form>
 );
 
-
-
   return (
     <>
       {/* Conditional form rendering */}
@@ -734,7 +746,374 @@ const Form = ({ isLogin, setIsLogin, formMode, setFormMode }) => {
           </p>
         </div>
       )}
+        {/* Confirmation Modal Terms & Conditions */}
+      <TermsConditionModal
+        isOpen={termsConditionModal.isOpen}
+        onClose={handleCloseTerms}
+        onConfirm={handleCloseTerms}
+      />
     </>
+  );
+};
+
+
+const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease-out'
+      }}
+    >
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          height: '90vh',
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          maxWidth: '1000px',
+          width: '90%',
+          position: 'relative',
+          overflow: 'hidden',
+          animation: 'slideUp 0.3s ease-out'
+        }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            color: '#6B7280',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = '#F3F4F6';
+            e.target.style.color = '#374151';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = 'transparent';
+            e.target.style.color = '#6B7280';
+          }}
+        >
+          <X size={30} />
+        </button>
+
+        {/* Header with Icon */}
+        <div style={{ textAlign: 'left' }}>
+
+
+          <h1
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#111827',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            Terms and Conditions
+          </h1>
+
+          <div
+            style={{
+              padding: '32px 40px 24px 40px',
+              textAlign: 'left',
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              fontFamily: 'Inter, Arial, sans-serif',
+              lineHeight: '1.7',
+              fontSize: '16px',
+              color: '#374151',
+            }}
+          >
+            {/* <h3
+              style={{
+                margin: '0 0 20px 0',
+                fontSize: '28px',
+                fontWeight: '700',
+                color: '#111827',
+                letterSpacing: '-0.02em',
+                textAlign: 'center',
+              }}
+            >
+              Privacy Policy
+            </h3> */}
+
+            <p>
+              <strong>Effective Date:</strong> July 14, 2025
+            </p>
+
+            <p>
+              <strong>MGA Buzz Connect</strong> ("we", "our", or "us") is committed to
+              protecting your privacy. This Privacy Policy explains how we collect, use,
+              disclose, and safeguard your information when you use our platform to
+              manage and schedule content across social media platforms.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              1. Information We Collect
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                <strong>Account Information:</strong> Your name, email address, and
+                contact details.
+              </li>
+              <li>
+                <strong>Social Media Data:</strong> With your permission, we collect data
+                from your connected social media accounts (e.g., Instagram, Facebook)
+                such as profile information, posts, analytics, and scheduling data.
+              </li>
+              <li>
+                <strong>Usage Data:</strong> Information about how you interact with our
+                platform, including pages visited and actions taken.
+              </li>
+              <li>
+                <strong>Device Data:</strong> IP address, browser type, and operating
+                system.
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              2. How We Use Your Information
+            </h4>
+            <p>We use your data to:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Provide and maintain our service</li>
+              <li>Allow you to schedule and manage social media posts</li>
+              <li>Send notifications and updates</li>
+              <li>Analyze usage to improve our platform</li>
+              <li>Comply with legal obligations</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              3. Sharing Your Information
+            </h4>
+            <p>
+              We do <strong>not</strong> sell or rent your personal data. We only share
+              your information with:
+            </p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                Social media platforms (e.g., Instagram Graph API) to publish and
+                retrieve your content
+              </li>
+              <li>
+                Service providers who help operate our platform (e.g., cloud hosting,
+                analytics)
+              </li>
+              <li>Legal authorities when required by law</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              4. Data Security
+            </h4>
+            <p>
+              We use industry-standard security practices, including encryption and
+              access control, to protect your data. However, no method is 100% secure,
+              and we cannot guarantee absolute security.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              5. Your Rights
+            </h4>
+            <p>You may:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Access and update your personal information</li>
+              <li>Disconnect your social media accounts at any time</li>
+              <li>
+                Request deletion of your data by contacting us at{' '}
+                <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              6. Cookies
+            </h4>
+            <p>
+              We use cookies and similar technologies to improve your experience. You can
+              disable cookies through your browser settings.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              7. Third-Party Links
+            </h4>
+            <p>
+              Our platform may contain links to third-party websites. We are not
+              responsible for their privacy practices.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              8. Changes to This Policy
+            </h4>
+            <p>
+              We may update this Privacy Policy periodically. Changes will be posted on
+              this page with an updated effective date.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              9. Contact Us
+            </h4>
+            <p>
+              If you have questions about this policy, please contact us at:{' '}
+              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+            </p>
+          </div>
+
+        </div>
+
+        {/* Footer Buttons */}
+        <div
+          style={{
+            padding: '0.65rem',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            justifyContent: 'flex-end'
+          }}
+        >
+          {/* <button
+            onClick={onClose}
+            style={{
+              padding: '12px 24px',
+              border: '1px solid #D1D5DB',
+              backgroundColor: 'white',
+              color: '#374151',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '500',
+              transition: 'all 0.2s ease',
+              minWidth: '180px'
+            }}
+          >
+            Accept
+          </button> */}
+
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              color: 'white',
+              background: '#3b82f6',
+              // background: 'linear-gradient(to right, hsla(276, 76%, 47%, 1), hsla(311, 91%, 54%, 1), hsla(221, 83%, 60%, 1))',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              minWidth: '180px'
+            }}
+          >
+            Accept & Continue
+          </button>
+        </div>
+      </div>
+    </div >
   );
 };
 
