@@ -264,20 +264,10 @@ const Dashboard = () => {
     new Date(post.createdAt) >= startOfMonth
   ).length;
 
-  // Real analytics data with fallbacks
 
-  // const stats = {
-  //   followers: data?.stats?.totalFollowers?.toLocaleString() || '0',
-  //   engagement: data?.analyticsOverview?.avgEngagementRate
-  //     ? `${data.analyticsOverview.avgEngagementRate.toFixed(1)}%`
-  //     : '0%',
-  //   postsThisMonth: data?.stats?.publishedPosts || '0', // or totalPosts if you prefer
-  //   reach: data?.analyticsOverview?.totalReach?.toLocaleString() || '0'
-  // };
 
 
   // In Dashboard.js, update the stats calculation
-  // Update the connection status check
   const isConnected = data?.stats?.connectedPlatforms > 0;
 
   // Simplified stats object - let individual cards handle the connection logic
