@@ -517,8 +517,7 @@
 .platform-performance-card {
   background: #f8fafc;
   border-radius: 12px;
-  padding: 1.5rem;
-  border: 1px solid #e2e8f0;
+  /* border: 1px solid #e2e8f0; */
   transition: all 0.2s ease;
 }
 
@@ -528,6 +527,7 @@
 }
 
 .platform-header {
+  border-radius: 12px 12px 0 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -562,8 +562,9 @@
 }
 
 .platform-metrics-grid {
+  padding: 1rem;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
 }
 

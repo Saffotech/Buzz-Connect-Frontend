@@ -69,6 +69,9 @@ const Analytics = () => {
     bestTimes: null
   });
 
+  // Individual accounts data state
+  const [individualAccountsData, setIndividualAccountsData] = useState({});
+
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState(null);
@@ -238,6 +241,77 @@ const Analytics = () => {
     };
   };
 
+  // Fetch individual account analytics data
+  const fetchIndividualAccountsData = async () => {
+    if (!user?.connectedAccounts?.length) {
+      setIndividualAccountsData({});
+      return;
+    }
+
+    try {
+      const accountsData = {};
+      
+      // Fetch data for each connected account
+      await Promise.all(
+        user.connectedAccounts.map(async (account) => {
+          try {
+            const params = new URLSearchParams();
+            
+            // Add period parameter
+            if (filters.period === 'custom' && filters.customDateRange.start && filters.customDateRange.end) {
+              params.append('startDate', filters.customDateRange.start);
+              params.append('endDate', filters.customDateRange.end);
+            } else {
+              params.append('period', filters.period);
+            }
+
+            console.log(`Fetching data for account ${account.id} (${account.platform}):`, params.toString());
+
+            const response = await apiClient.request(`/api/analytics/account/${account.id}?${params.toString()}`, {
+              method: 'GET'
+            });
+
+            if (response.success && response.data) {
+              accountsData[account.id] = {
+                ...response.data,
+                accountInfo: account
+              };
+              console.log(`Data loaded for ${account.username || account.platform}:`, response.data);
+            } else {
+              console.warn(`No data found for account ${account.id}:`, response.message);
+              accountsData[account.id] = {
+                posts: 0,
+                likes: 0,
+                comments: 0,
+                shares: 0,
+                reach: 0,
+                impressions: 0,
+                accountInfo: account
+              };
+            }
+          } catch (accountError) {
+            console.error(`Error fetching data for account ${account.id}:`, accountError);
+            accountsData[account.id] = {
+              posts: 0,
+              likes: 0,
+              comments: 0,
+              shares: 0,
+              reach: 0,
+              impressions: 0,
+              accountInfo: account
+            };
+          }
+        })
+      );
+
+      setIndividualAccountsData(accountsData);
+      console.log('All individual accounts data loaded:', accountsData);
+
+    } catch (error) {
+      console.error('Error fetching individual accounts data:', error);
+    }
+  };
+
   // Fetch analytics overview data
   const fetchAnalyticsOverview = async () => {
     if (!user?.connectedAccounts?.length) {
@@ -267,22 +341,26 @@ const Analytics = () => {
 
       console.log('Fetching analytics with params:', params.toString());
 
-      const response = await apiClient.request(`/api/analytics/overview?${params.toString()}`, {
-        method: 'GET'
-      });
+      // Fetch overview data and individual account data concurrently
+      const [overviewResponse] = await Promise.all([
+        apiClient.request(`/api/analytics/overview?${params.toString()}`, {
+          method: 'GET'
+        }),
+        fetchIndividualAccountsData() // Fetch individual data concurrently
+      ]);
 
-      if (response.success && response.data) {
+      if (overviewResponse.success && overviewResponse.data) {
         const advancedData = generateMockAdvancedData();
         
         setAnalyticsData({
-          overview: response.data,
+          overview: overviewResponse.data,
           posts: [],
-          topPost: response.data.topPerformingPost || null,
+          topPost: overviewResponse.data.topPerformingPost || null,
           ...advancedData
         });
         setLastSyncTime(new Date().toISOString());
       } else {
-        throw new Error(response.message || 'Failed to fetch analytics data');
+        throw new Error(overviewResponse.message || 'Failed to fetch analytics data');
       }
 
     } catch (err) {
@@ -317,6 +395,7 @@ const Analytics = () => {
 
       if (response.success) {
         showToast(`Successfully synced analytics for ${response.data.platformsSynced} platforms`, 'success');
+        // This will refresh both overview and individual account data
         await fetchAnalyticsOverview();
       } else {
         throw new Error(response.message || 'Failed to sync analytics');
@@ -498,14 +577,6 @@ const Analytics = () => {
           <p>Comprehensive social media performance insights and reporting</p>
         </div>
         <div className="analytics-header-actions">
-          {/* <button 
-            className="export-btn"
-            onClick={() => exportReport('pdf')}
-            title="Export PDF Report"
-          >
-            <Download size={16} />
-            Export Report
-          </button> */}
           <button 
             className="sync-analytics-btn synbtn"
             onClick={syncAnalyticsData}
@@ -584,20 +655,6 @@ const Analytics = () => {
           </div>
         </div>
       </div>
-
-      {/* Analytics Navigation */}
-      {/* <div className="analytics-navigation">
-        {analyticsSections.map(section => (
-          <button
-            key={section.id}
-            className={`nav-btn ${activeSection === section.id ? 'active' : ''}`}
-            onClick={() => setActiveSection(section.id)}
-          >
-            {section.icon}
-            {section.label}
-          </button>
-        ))}
-      </div> */}
 
       {/* Error State */}
       {error && (
@@ -732,50 +789,100 @@ const Analytics = () => {
                 </div>
               </div>
 
-              {/* Platform Performance */}
+              {/* Individual Account Performance */}
               <div className="platform-performance-section">
-                <h3 className='pfbtn'>Platform Performance</h3>
+                <h3 className='pfbtn'>Individual Account Performance</h3>
                 <div className="platform-performance-grid">
-                  {analyticsData.overview.platformBreakdown && Object.entries(analyticsData.overview.platformBreakdown).map(([platform, data]) => (
-                    <div key={platform} className="platform-performance-card">
+                  {user?.connectedAccounts?.map((account, index) => {
+                    // Get individual account data
+                    const accountData = individualAccountsData[account.id] || {
+                      posts: 0,
+                      likes: 0,
+                      comments: 0,
+                      shares: 0,
+                      reach: 0,
+                      impressions: 0
+                    };
+
+                    return (
+                      <div key={account.id || index} className="platform-performance-card">
+                        <div className="platform-header">
+                          <div className="platform-info">
+                            {account.platform === 'instagram' && <Instagram size={20} />}
+                            {account.platform === 'twitter' && <Twitter size={20} />}
+                            {account.platform === 'facebook' && <Facebook size={20} />}
+                            <span className="platform-name">
+                              {account.username || account.name || `${account.platform.charAt(0).toUpperCase() + account.platform.slice(1)} Account`}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="platform-metrics-grid">
+                          <div className="platform-metric">
+                            <span className="metric-value">{accountData.posts || 0}</span>
+                            <span className="metric-label">Posts</span>
+                          </div>
+                          <div className="platform-metric">
+                            <span className="metric-value">{formatNumber(accountData.likes || 0)}</span>
+                            <span className="metric-label">Likes</span>
+                          </div>
+                          <div className="platform-metric">
+                            <span className="metric-value">{formatNumber(accountData.comments || 0)}</span>
+                            <span className="metric-label">Comments</span>
+                          </div>
+                          <div className="platform-metric">
+                            <span className="metric-value">{formatNumber(accountData.shares || 0)}</span>
+                            <span className="metric-label">Shares</span>
+                          </div>
+                          <div className="platform-metric">
+                            <span className="metric-value">{formatNumber(accountData.reach || 0)}</span>
+                            <span className="metric-label">Reach</span>
+                          </div>
+                          <div className="platform-metric">
+                            <span className="metric-value">{formatNumber(accountData.impressions || 0)}</span>
+                            <span className="metric-label">Impressions</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Show message if no accounts connected */}
+                  {(!user?.connectedAccounts || user.connectedAccounts.length === 0) && (
+                    <div className="platform-performance-card">
                       <div className="platform-header">
                         <div className="platform-info">
-                          {platform === 'instagram' && <Instagram size={20} />}
-                          {platform === 'twitter' && <Twitter size={20} />}
-                          {platform === 'facebook' && <Facebook size={20} />}
-                          <span className="platform-name">
-                            {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                          </span>
+                          <Users size={20} />
+                          <span className="platform-name">No Connected Accounts</span>
                         </div>
                       </div>
                       <div className="platform-metrics-grid">
                         <div className="platform-metric">
-                          <span className="metric-value">{data.posts || 0}</span>
+                          <span className="metric-value">0</span>
                           <span className="metric-label">Posts</span>
                         </div>
                         <div className="platform-metric">
-                          <span className="metric-value">{formatNumber(data.likes || 0)}</span>
+                          <span className="metric-value">0</span>
                           <span className="metric-label">Likes</span>
                         </div>
                         <div className="platform-metric">
-                          <span className="metric-value">{formatNumber(data.comments || 0)}</span>
+                          <span className="metric-value">0</span>
                           <span className="metric-label">Comments</span>
                         </div>
                         <div className="platform-metric">
-                          <span className="metric-value">{formatNumber(data.shares || 0)}</span>
+                          <span className="metric-value">0</span>
                           <span className="metric-label">Shares</span>
                         </div>
                         <div className="platform-metric">
-                          <span className="metric-value">{formatNumber(data.reach || 0)}</span>
+                          <span className="metric-value">0</span>
                           <span className="metric-label">Reach</span>
                         </div>
                         <div className="platform-metric">
-                          <span className="metric-value">{formatNumber(data.impressions || 0)}</span>
+                          <span className="metric-value">0</span>
                           <span className="metric-label">Impressions</span>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -832,7 +939,6 @@ const Analytics = () => {
                   <div className="card-subtitle">Best performing format</div>
                 </div>
               </div>
-
               {/* Engagement Trends Chart Placeholder */}
               <div className="chart-container">
                 <h3>Engagement Trends (Last 7 Days)</h3>
