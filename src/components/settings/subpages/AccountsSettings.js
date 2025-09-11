@@ -221,7 +221,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
 };
 
 // Terms & Condition Modal Component
-const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
+const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => {
   if (!isOpen) return null;
 
   return (
@@ -289,10 +289,8 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
           <X size={30} />
         </button>
 
-        {/* Header with Icon */}
-        <div style={{ textAlign: 'left' }}>
-
-
+        {/* Content */}
+        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
           <h1
             style={{
               margin: '0 0 12px 0',
@@ -307,8 +305,6 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
 
           <div
             style={{
-              padding: '32px 40px 24px 40px',
-              textAlign: 'left',
               maxHeight: '70vh',
               overflowY: 'auto',
               fontFamily: 'Inter, Arial, sans-serif',
@@ -317,19 +313,6 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
               color: '#374151',
             }}
           >
-            {/* <h3
-              style={{
-                margin: '0 0 20px 0',
-                fontSize: '28px',
-                fontWeight: '700',
-                color: '#111827',
-                letterSpacing: '-0.02em',
-                textAlign: 'center',
-              }}
-            >
-              Privacy Policy
-            </h3> */}
-
             <p>
               <strong>Effective Date:</strong> July 14, 2025
             </p>
@@ -392,7 +375,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
               <li>Comply with legal obligations</li>
             </ul>
 
-            <h4
+  <h4
               style={{
                 marginTop: '24px',
                 marginBottom: '12px',
@@ -520,8 +503,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
               If you have questions about this policy, please contact us at:{' '}
               <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
             </p>
-          </div>
-
+                      </div>
         </div>
 
         {/* Footer Buttons */}
@@ -530,37 +512,16 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
             padding: '0.65rem',
             display: 'flex',
             flexDirection: 'row',
-            justifyContent: 'space-between',
             justifyContent: 'flex-end'
           }}
         >
-          {/* <button
-            onClick={onClose}
-            style={{
-              padding: '12px 24px',
-              border: '1px solid #D1D5DB',
-              backgroundColor: 'white',
-              color: '#374151',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              fontSize: '15px',
-              fontWeight: '500',
-              transition: 'all 0.2s ease',
-              minWidth: '180px'
-            }}
-          >
-            Accept
-          </button> */}
-
-
           <button
-            onClick={onConfirm}
+            onClick={() => onConfirm(connectionType)}
             style={{
               padding: '12px 24px',
               border: 'none',
               color: 'white',
               background: '#3b82f6',
-              // background: 'linear-gradient(to right, hsla(276, 76%, 47%, 1), hsla(311, 91%, 54%, 1), hsla(221, 83%, 60%, 1))',
               borderRadius: '10px',
               cursor: 'pointer',
               fontSize: '15px',
@@ -578,7 +539,156 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
           </button>
         </div>
       </div>
-    </div >
+    </div>
+  );
+};
+
+// Connection Options Modal Component
+const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose} style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      backdropFilter: 'blur(4px)',
+    }}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
+        backgroundColor: 'white',
+        borderRadius: '16px',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        width: '90%',
+        maxWidth: '600px',
+        padding: '32px',
+      }}>
+        <button onClick={onClose} style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+        }}>
+          <X size={24} />
+        </button>
+
+        <h3 style={{
+          fontSize: '24px',
+          fontWeight: '700',
+          marginBottom: '24px',
+          textAlign: 'center'
+        }}>
+          Connect Your Meta Account
+        </h3>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <button
+            onClick={onSelectInstagram}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '10px',
+              backgroundColor: '#FDF2F8',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #FCE7F3'
+            }}>
+              <Instagram size={24} style={{ color: '#E91E63' }} />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                Instagram Only
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect just your Instagram business account
+                <span style={{ display: 'block', fontStyle: 'italic', fontSize: '12px', marginTop: '4px' }}>
+                  (Note: Requires Facebook login for authentication)
+                </span>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={onSelectFacebookInstagram}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '10px',
+              backgroundColor: '#EFF6FF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #DBEAFE',
+              position: 'relative'
+            }}>
+              <Facebook size={20} style={{ color: '#1877F2', position: 'absolute', left: '10px', top: '14px' }} />
+              <Instagram size={20} style={{ color: '#E91E63', position: 'absolute', right: '10px', bottom: '14px' }} />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                Instagram + Facebook Pages
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect Instagram and Facebook business pages (recommended)
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div style={{ marginTop: '24px', fontSize: '14px', color: '#6B7280', textAlign: 'center' }}>
+          Both options require an Instagram Business account linked to a Facebook Page
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -586,6 +696,8 @@ const AccountsSettings = ({ onNotify }) => {
   const { user, token, isLoading } = useAuth();
   const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showConnectionOptions, setShowConnectionOptions] = useState(false);
+
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
     accountId: null,
@@ -595,15 +707,17 @@ const AccountsSettings = ({ onNotify }) => {
 
   const [termsConditionModal, setTermsConditionModal] = useState({
     isOpen: false,
+    connectionType: null
+  });
+  
+  const [connectionOptionsModal, setConnectionOptionsModal] = useState({
+    isOpen: false
   });
 
-  // ✅ Add this here
   const handleCloseTerms = () => {
     setTermsConditionModal({
       isOpen: false,
-      accountId: null,
-      accountUsername: '',
-      platform: ''
+      connectionType: null
     });
   };
 
@@ -627,7 +741,7 @@ const AccountsSettings = ({ onNotify }) => {
         });
         let accounts = res.data.accounts || [];
 
-        // ADD THE DEBUG CODE HERE - BEFORE processing
+        // Debug: Log raw account data
         console.log('Raw account data:', res.data.accounts);
 
         // Add linked Facebook account if not already present
@@ -645,7 +759,7 @@ const AccountsSettings = ({ onNotify }) => {
           });
         }
 
-        // ADD THE SECOND DEBUG CODE HERE - AFTER processing
+        // Debug: Log processed accounts
         console.log('Processed accounts:', accounts);
 
         setConnectedAccounts(accounts);
@@ -724,7 +838,7 @@ const AccountsSettings = ({ onNotify }) => {
       return false;
     };
 
-    // Check for direct connections (existing logic)
+    // Check for direct connections
     const areDirectlyConnected = (acc1, acc2) => {
       // Check ID patterns
       const baseId1 = acc1._id.replace('-fb', '');
@@ -848,8 +962,7 @@ const AccountsSettings = ({ onNotify }) => {
     return groups;
   };
 
-
-  // ADD THE FALLBACK FUNCTION RIGHT HERE - AFTER groupAccountsByOwner
+  // Add fallback grouping for ungrouped Meta accounts
   const addFallbackGrouping = (groups, accounts) => {
     // Find any ungrouped Meta accounts
     const groupedAccountIds = new Set(groups.flatMap(g => g.accounts.map(a => a._id)));
@@ -882,11 +995,68 @@ const AccountsSettings = ({ onNotify }) => {
     });
   };
 
-  const handleConnectMeta = async () => {
+  // Open connection options modal
+  const handleConnectMeta = () => {
+    setConnectionOptionsModal({ isOpen: true });
+  };
 
-    setTermsConditionModal({ isOpen: true });
+  // Connect with Facebook (Instagram + Facebook pages)
+  const handleConnectMetaWithFacebook = async () => {
+    setConnectionOptionsModal({ isOpen: false });
+    setTermsConditionModal({
+      isOpen: true,
+      connectionType: 'standard'
+    });
+  };
 
+  // Connect Instagram directly
+ const handleConnectInstagramDirect = async () => {
+  setConnectionOptionsModal({ isOpen: false });
+  setTermsConditionModal({
+    isOpen: true,
+    connectionType: 'direct'
+  });
+};
 
+  // Handle Terms & Conditions acceptance
+  const handleTermsConfirm = async (connectionType) => {
+    const storedToken = authToken;
+    if (!storedToken) {
+      toast.error('User not logged in');
+      return;
+    }
+
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${storedToken}` }
+      });
+
+      if (res.data.success && res.data.data) {
+        const freshUser = res.data.data;
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+        // Check which connection flow to use
+        if (connectionType === 'direct') {
+          // Instagram-only connection
+          window.location.href = `${apiUrl}/api/auth/instagram/instagram-only?userId=${freshUser._id}&token=${storedToken}`;
+        } else {
+          // Standard Instagram+Facebook connection
+          window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+        }
+      } else {
+        toast.error('Failed to get user data');
+      }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      if (err.response?.status === 401) {
+        toast.error('Session expired, please login again');
+      } else {
+        toast.error('Failed to get user data');
+      }
+    }
+
+    // Close the modal
+    setTermsConditionModal({ isOpen: false, connectionType: null });
   };
 
   const handleDisconnectClick = (account) => {
@@ -928,7 +1098,7 @@ const AccountsSettings = ({ onNotify }) => {
     (acc) => acc.platform === 'instagram' || acc.platform === 'facebook'
   );
 
-  // Use the correct function name
+  // Group and sort accounts
   const accountGroups = groupAccountsByOwner(connectedAccounts).map(group => ({
     ...group,
     accounts: sortAccountsInGroup(group.accounts)
@@ -946,7 +1116,11 @@ const AccountsSettings = ({ onNotify }) => {
           title="Connected Accounts"
           connAcc={
             <div className="connection-buttons">
-              <button onClick={handleConnectMeta} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={handleConnectMeta}
+                className="btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
                 <Instagram size={16} />
                 <Facebook size={16} />
                 <Plus size={16} />
@@ -965,65 +1139,158 @@ const AccountsSettings = ({ onNotify }) => {
                 <div className="accounts-container">
                   {accountGroups.map((group, groupIndex) => (
                     <div key={groupIndex} className="account-group">
-                      {/* <div className="account-group-header">
-                        <h3 className="account-group-title">
-                          {group.name.charAt(0).toUpperCase() + group.name.slice(1)}
-                        </h3>
-                        <span className="account-count">
-                          {group.accounts.length} platform{group.accounts.length !== 1 ? 's' : ''}
-                        </span>
-                      </div> */}
-
                       <div className="accounts-grid">
-                        {group.accounts.map((account, index) => {
-                          const PlatformIcon = platformIcons[account.platform];
-                          return (
-                            <div key={index} className="account-card">
-                              <div className="account-card-header">
-                                <div className="account-avatar">
-                                  {account.profilePicture ? (
-                                    <img src={account.profilePicture} alt={account.username} className="avatar-img" />
-                                  ) : (
-                                    <User size={32} strokeWidth={1.5} />
-                                  )}
-                                  <div className={`platform-badge platform-${account.platform}`}>
-                                    <PlatformIcon size={12} />
-                                  </div>
-                                </div>
+     {group.accounts.map((account, index) => {
+  const PlatformIcon = platformIcons[account.platform];
+  
+  // Determine connection type from metadata and connection properties
+  const isDirectConnection = 
+    account.connectionType === 'direct' || 
+    account.metadata?.connectionType === 'direct' ||
+    account.metadata?.directConnection === true || 
+    account.metadata?.instagramOnly === true;
+  
+  const isFullAccess = 
+    account.connectionType === 'standard' || 
+    account.metadata?.connectionType === 'standard' ||
+    account.metadata?.fullAccess === true;
+  
+  const isViewOnlyFacebook = 
+    account.platform === 'facebook' && 
+    (account.metadata?.viewOnly === true || 
+     account.metadata?.linkedViaInstagram === true ||
+     account.username.includes('linked via Instagram'));
+  
+  // Skip Facebook accounts that should be hidden
+  if (account.platform === 'facebook' && 
+      account.metadata?.hideFacebookLink === true) {
+    return null;
+  }
 
-                                <button
-                                  onClick={() => handleDisconnectClick(account)}
-                                  className="account-delete-btn"
-                                  title="Disconnect account"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
+  return (
+    <div
+      key={index}
+      className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''}`}
+      style={{
+        position: 'relative',
+        border: isDirectConnection && account.platform === 'instagram' 
+          ? '1px solid rgba(219, 39, 119, 0.3)' 
+          : isFullAccess && account.platform === 'instagram'
+            ? '1px solid rgba(37, 99, 235, 0.3)'
+            : isViewOnlyFacebook 
+              ? '1px dashed rgba(100, 116, 139, 0.5)'
+              : '1px solid #e5e7eb',
+        opacity: isViewOnlyFacebook ? 0.85 : 1
+      }}
+    >
+      <div className="account-card-header">
+        <div className="account-avatar">
+          {account.profilePicture ? (
+            <img
+              src={account.profilePicture}
+              alt={account.username}
+              className="avatar-img"
+            />
+          ) : (
+            <User size={32} strokeWidth={1.5} />
+          )}
+          <div className={`platform-badge platform-${account.platform}`}>
+            <PlatformIcon size={12} />
+          </div>
+        </div>
 
-                              <div className="account-card-content">
-                                <h4 className="account-username">{account.username}</h4>
-                                <p className="platform-name">
-                                  {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
-                                </p>
-                                <span className="followers-count">{account.followerCount ?? '-'} followers</span>
-                              </div>
+        {/* Only show delete button for non-view-only accounts */}
+        {!isViewOnlyFacebook && (
+          <button
+            onClick={() => handleDisconnectClick(account)}
+            className="account-delete-btn"
+            title="Disconnect account"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
+      </div>
 
-                              <div className="account-actions">
-                                <div className="connection-status connected">
-                                  <Check size={14} />
-                                  Connected
-                                </div>
-                                {/* <button
-                                  onClick={() => handleDisconnectClick(account)}
-                                  className="btn-danger-outline"
-                                >
-                                  <Trash2 size={16} />
-                                  Disconnect
-                                </button> */}
-                              </div>
-                            </div>
-                          );
-                        })}
+      <div className="account-card-content">
+        <h4 className="account-username">{account.username}</h4>
+        <p className="platform-name">
+          {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
+          {account.platform === 'instagram' && (
+            isDirectConnection ? (
+              <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
+            ) : (
+              <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
+            )
+          )}
+          {account.platform === 'facebook' && (
+            isViewOnlyFacebook ? (
+              <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
+            ) : (
+              <span className="connection-badge"> • Business Page</span>
+            )
+          )}
+        </p>
+        <span className="followers-count">
+          {account.followerCount ? `${account.followerCount} followers` : '-'}
+        </span>
+      </div>
+
+      <div className="account-actions">
+        <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
+          style={{
+            backgroundColor: isViewOnlyFacebook ? '#f1f5f9' : '',
+            color: isViewOnlyFacebook ? '#64748b' : ''
+          }}
+        >
+          <Check size={14} />
+          {isViewOnlyFacebook ? 'View Only' : 'Connected'}
+        </div>
+      </div>
+
+      {/* Connection type badge */}
+      {account.platform === 'instagram' && (
+        <div 
+          className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '40px',
+            background: isDirectConnection 
+              ? 'linear-gradient(to right, #e11d48, #db2777)' 
+              : 'linear-gradient(to right, #1d4ed8, #2563eb)',
+            color: 'white',
+            fontSize: '10px',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontWeight: '500'
+          }}
+        >
+          {isDirectConnection ? 'Instagram Only' : 'Full Access'}
+        </div>
+      )}
+      
+      {/* View-only badge for Facebook accounts */}
+      {isViewOnlyFacebook && (
+        <div 
+          className="view-only-badge"
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '40px',
+            background: 'linear-gradient(to right, #64748b, #94a3b8)',
+            color: 'white',
+            fontSize: '10px',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontWeight: '500'
+          }}
+        >
+          View Only
+        </div>
+      )}
+    </div>
+  );
+})}
                       </div>
                     </div>
                   ))}
@@ -1040,7 +1307,15 @@ const AccountsSettings = ({ onNotify }) => {
         </SettingsCard>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Connection Options Modal */}
+      <ConnectionOptionsModal
+        isOpen={connectionOptionsModal.isOpen}
+        onClose={() => setConnectionOptionsModal({ isOpen: false })}
+        onSelectInstagram={handleConnectInstagramDirect}
+        onSelectFacebookInstagram={handleConnectMetaWithFacebook}
+      />
+
+      {/* Disconnect Confirmation Modal */}
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         onClose={handleCancelDisconnect}
@@ -1049,41 +1324,13 @@ const AccountsSettings = ({ onNotify }) => {
         platform={confirmationModal.platform}
       />
 
-
-      {/* Confirmation Modal Terms & Conditions */}
+      {/* Terms & Conditions Modal */}
       <TermsConditionModal
         isOpen={termsConditionModal.isOpen}
         onClose={handleCloseTerms}
-        onConfirm={async () => {
-          const storedToken = authToken;
-          if (!storedToken) {
-            toast.error('User not logged in');
-            return;
-          }
-
-          try {
-            const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-              headers: { Authorization: `Bearer ${storedToken}` }
-            });
-
-            if (res.data.success && res.data.data) {
-              const freshUser = res.data.data;
-              const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-              window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
-            } else {
-              toast.error('Failed to get user data');
-            }
-          } catch (err) {
-            console.error('Error fetching user data:', err);
-            if (err.response?.status === 401) {
-              toast.error('Session expired, please login again');
-            } else {
-              toast.error('Failed to get user data');
-            }
-          }
-        }}  // or a different action for "Continue"
+        onConfirm={handleTermsConfirm}
+        connectionType={termsConditionModal.connectionType}
       />
-
     </div>
   );
 };
