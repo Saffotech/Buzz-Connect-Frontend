@@ -1646,8 +1646,9 @@
 
 .content-hub .modal-overlay .modal-content{
   padding: 0;
-  flex: none;
-  height: 95%;
+  /* flex: none; */
+  height: 60%;
+  width: max-content;
 }
 
 .media-metadata {
@@ -2116,6 +2117,8 @@
   font-size: 0.875rem;
   line-height: 1.5;
   margin: 0;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
 }
 
 .delete-confirm-modal .modal-footer {
@@ -2123,7 +2126,9 @@
   justify-content: center;
   gap: 0.75rem;
   border-top: none;
-  padding: 0;
+  /* padding: 0; */
+  /* margin-left: 7.5rem; */
+  align-self: center;
 }
 
 .delete-confirm-modal .btn-secondary,
@@ -2411,4 +2416,8 @@
   display: flex;
   align-items: center;
   gap: 2px;
+}
+
+.xyz{
+  height: 85% !important;
 }

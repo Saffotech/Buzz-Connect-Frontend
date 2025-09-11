@@ -338,7 +338,7 @@
 }
 
 .username {
-  font-size: 16px; /* Increased from 14px */
+   /* Increased from 14px */
   font-weight: 600;
   color: #2c3e50;
   margin: 0;
@@ -476,6 +476,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px; /* Increased gap */
+  margin-bottom: 2rem;
 }
 
 .stat-item {

@@ -1539,12 +1539,12 @@
   color: #6b7280;
   font-size: 0.875rem; /* Increased from 0.75rem */
   line-height: 1.4; /* Better line height for readability */
-  cursor: help;
+  /* cursor: help; */
   position: relative;
 }
 
 /* Hover Tooltip */
-.radio-description:hover::after {
+/* .radio-description:hover::after {
   content: attr(data-tooltip);
   position: absolute;
   bottom: 100%;
@@ -1553,7 +1553,7 @@
   color: white;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  font-size: 0.8rem; /* Slightly larger tooltip text */
+  font-size: 0.8rem; 
   white-space: nowrap;
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -1569,7 +1569,7 @@
   border-top-color: #1f2937;
   transform: translateY(4px);
   z-index: 1000;
-}
+} */
 
 @keyframes tooltipFadeIn {
   from {

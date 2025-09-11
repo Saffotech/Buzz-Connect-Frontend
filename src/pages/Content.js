@@ -1825,7 +1825,7 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content preview-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content preview-modal xyz" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Media Details</h3>
           <button className="modal-close" onClick={onClose}>
