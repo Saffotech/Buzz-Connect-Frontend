@@ -375,7 +375,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
               <li>Comply with legal obligations</li>
             </ul>
 
-  <h4
+            <h4
               style={{
                 marginTop: '24px',
                 marginBottom: '12px',
@@ -503,7 +503,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
               If you have questions about this policy, please contact us at:{' '}
               <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
             </p>
-                      </div>
+          </div>
         </div>
 
         {/* Footer Buttons */}
@@ -709,7 +709,7 @@ const AccountsSettings = ({ onNotify }) => {
     isOpen: false,
     connectionType: null
   });
-  
+
   const [connectionOptionsModal, setConnectionOptionsModal] = useState({
     isOpen: false
   });
@@ -755,7 +755,12 @@ const AccountsSettings = ({ onNotify }) => {
             profilePicture: fbPic,
             noProfilePicture: !fbPic,
             followerCount: instaAccount.fbFollowerCount ?? '-',
-            accountName: instaAccount.accountName || instaAccount.username
+            accountName: instaAccount.accountName || instaAccount.username,
+            metadata: {
+              viewOnly: true,
+              linkedViaInstagram: true,
+              sourceAccountId: instaAccount._id
+            }
           });
         }
 
@@ -850,6 +855,9 @@ const AccountsSettings = ({ onNotify }) => {
 
       // Check Facebook user ID
       if (acc1.fbUserId && acc2.fbUserId && acc1.fbUserId === acc2.fbUserId) return true;
+
+      // Check source account reference
+      if (acc1.metadata?.sourceAccountId === acc2._id || acc2.metadata?.sourceAccountId === acc1._id) return true;
 
       return false;
     };
@@ -1010,13 +1018,13 @@ const AccountsSettings = ({ onNotify }) => {
   };
 
   // Connect Instagram directly
- const handleConnectInstagramDirect = async () => {
-  setConnectionOptionsModal({ isOpen: false });
-  setTermsConditionModal({
-    isOpen: true,
-    connectionType: 'direct'
-  });
-};
+  const handleConnectInstagramDirect = async () => {
+    setConnectionOptionsModal({ isOpen: false });
+    setTermsConditionModal({
+      isOpen: true,
+      connectionType: 'direct'
+    });
+  };
 
   // Handle Terms & Conditions acceptance
   const handleTermsConfirm = async (connectionType) => {
@@ -1060,10 +1068,32 @@ const AccountsSettings = ({ onNotify }) => {
   };
 
   const handleDisconnectClick = (account) => {
+    // Determine if this is a view-only Facebook account linked to Instagram
+    let displayAccount = account;
+    let actualAccountId = account._id;
+    
+    if (account.platform === 'facebook' && 
+        (account.metadata?.viewOnly || 
+         account.metadata?.linkedViaInstagram || 
+         account.username.includes('linked via Instagram'))) {
+      // Find the associated Instagram account
+      const sourceId = account.metadata?.sourceAccountId || account._id.replace('-fb', '');
+      const sourceAccount = connectedAccounts.find(acc => acc._id === sourceId);
+      
+      if (sourceAccount) {
+        // Set a more descriptive username for the confirmation modal
+        displayAccount = {
+          ...account,
+          username: `${account.username} (via ${sourceAccount.username})`,
+        };
+        actualAccountId = sourceId; // We'll disconnect the source Instagram account
+      }
+    }
+    
     setConfirmationModal({
       isOpen: true,
-      accountId: account._id,
-      accountUsername: account.username,
+      accountId: actualAccountId,
+      accountUsername: displayAccount.username,
       platform: account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
     });
   };
@@ -1077,8 +1107,40 @@ const AccountsSettings = ({ onNotify }) => {
         headers: { Authorization: `Bearer ${authToken}` }
       });
 
-      setConnectedAccounts((prev) =>
-        prev.filter((acc) => acc._id !== baseId && acc._id !== `${baseId}-fb`)
+      // Remove both the main account and any linked view-only accounts
+      setConnectedAccounts((prev) => 
+        prev.filter((acc) => {
+          // Remove the account with this ID
+          if (acc._id === baseId || acc._id === `${baseId}-fb`) {
+            return false;
+          }
+          
+          // Also remove any account that references this account as its source
+          if (acc.metadata?.linkedViaInstagram && 
+              (acc.metadata.sourceAccountId === baseId || 
+               acc.connectedTo === baseId)) {
+            return false;
+          }
+          
+          // If it's a Facebook account with the username indicating it's linked
+          if (acc.platform === 'facebook' && 
+              (acc.username.includes('linked via Instagram') || 
+               acc.username.includes('Facebook (linked'))) {
+            // Check if this might be linked to the account we're deleting
+            const linkedInstagram = prev.find(
+              insta => insta.platform === 'instagram' && 
+                      insta._id === baseId
+            );
+            
+            // If we found the Instagram account and there's a username match
+            if (linkedInstagram && 
+                acc.username.includes(linkedInstagram.username)) {
+              return false;
+            }
+          }
+          
+          return true;
+        })
       );
 
       onNotify('success', 'Account disconnected successfully');
@@ -1140,157 +1202,155 @@ const AccountsSettings = ({ onNotify }) => {
                   {accountGroups.map((group, groupIndex) => (
                     <div key={groupIndex} className="account-group">
                       <div className="accounts-grid">
-     {group.accounts.map((account, index) => {
-  const PlatformIcon = platformIcons[account.platform];
-  
-  // Determine connection type from metadata and connection properties
-  const isDirectConnection = 
-    account.connectionType === 'direct' || 
-    account.metadata?.connectionType === 'direct' ||
-    account.metadata?.directConnection === true || 
-    account.metadata?.instagramOnly === true;
-  
-  const isFullAccess = 
-    account.connectionType === 'standard' || 
-    account.metadata?.connectionType === 'standard' ||
-    account.metadata?.fullAccess === true;
-  
-  const isViewOnlyFacebook = 
-    account.platform === 'facebook' && 
-    (account.metadata?.viewOnly === true || 
-     account.metadata?.linkedViaInstagram === true ||
-     account.username.includes('linked via Instagram'));
-  
-  // Skip Facebook accounts that should be hidden
-  if (account.platform === 'facebook' && 
-      account.metadata?.hideFacebookLink === true) {
-    return null;
-  }
+                        {group.accounts.map((account, index) => {
+                          const PlatformIcon = platformIcons[account.platform];
 
-  return (
-    <div
-      key={index}
-      className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''}`}
-      style={{
-        position: 'relative',
-        border: isDirectConnection && account.platform === 'instagram' 
-          ? '1px solid rgba(219, 39, 119, 0.3)' 
-          : isFullAccess && account.platform === 'instagram'
-            ? '1px solid rgba(37, 99, 235, 0.3)'
-            : isViewOnlyFacebook 
-              ? '1px dashed rgba(100, 116, 139, 0.5)'
-              : '1px solid #e5e7eb',
-        opacity: isViewOnlyFacebook ? 0.85 : 1
-      }}
-    >
-      <div className="account-card-header">
-        <div className="account-avatar">
-          {account.profilePicture ? (
-            <img
-              src={account.profilePicture}
-              alt={account.username}
-              className="avatar-img"
-            />
-          ) : (
-            <User size={32} strokeWidth={1.5} />
-          )}
-          <div className={`platform-badge platform-${account.platform}`}>
-            <PlatformIcon size={12} />
-          </div>
-        </div>
+                          // Determine connection type from metadata and connection properties
+                          const isDirectConnection =
+                            account.connectionType === 'direct' ||
+                            account.metadata?.connectionType === 'direct' ||
+                            account.metadata?.directConnection === true ||
+                            account.metadata?.instagramOnly === true;
 
-        {/* Only show delete button for non-view-only accounts */}
-        {!isViewOnlyFacebook && (
-          <button
-            onClick={() => handleDisconnectClick(account)}
-            className="account-delete-btn"
-            title="Disconnect account"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
-      </div>
+                          const isFullAccess =
+                            account.connectionType === 'standard' ||
+                            account.metadata?.connectionType === 'standard' ||
+                            account.metadata?.fullAccess === true;
 
-      <div className="account-card-content">
-        <h4 className="account-username">{account.username}</h4>
-        <p className="platform-name">
-          {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
-          {account.platform === 'instagram' && (
-            isDirectConnection ? (
-              <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
-            ) : (
-              <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
-            )
-          )}
-          {account.platform === 'facebook' && (
-            isViewOnlyFacebook ? (
-              <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
-            ) : (
-              <span className="connection-badge"> • Business Page</span>
-            )
-          )}
-        </p>
-        <span className="followers-count">
-          {account.followerCount ? `${account.followerCount} followers` : '-'}
-        </span>
-      </div>
+                          const isViewOnlyFacebook =
+                            account.platform === 'facebook' &&
+                            (account.metadata?.viewOnly === true ||
+                              account.metadata?.linkedViaInstagram === true ||
+                              account.username.includes('linked via Instagram'));
 
-      <div className="account-actions">
-        <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
-          style={{
-            backgroundColor: isViewOnlyFacebook ? '#f1f5f9' : '',
-            color: isViewOnlyFacebook ? '#64748b' : ''
-          }}
-        >
-          <Check size={14} />
-          {isViewOnlyFacebook ? 'View Only' : 'Connected'}
-        </div>
-      </div>
+                          // Skip Facebook accounts that should be hidden
+                          if (account.platform === 'facebook' &&
+                            account.metadata?.hideFacebookLink === true) {
+                            return null;
+                          }
 
-      {/* Connection type badge */}
-      {account.platform === 'instagram' && (
-        <div 
-          className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '40px',
-            background: isDirectConnection 
-              ? 'linear-gradient(to right, #e11d48, #db2777)' 
-              : 'linear-gradient(to right, #1d4ed8, #2563eb)',
-            color: 'white',
-            fontSize: '10px',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontWeight: '500'
-          }}
-        >
-          {isDirectConnection ? 'Instagram Only' : 'Full Access'}
-        </div>
-      )}
-      
-      {/* View-only badge for Facebook accounts */}
-      {isViewOnlyFacebook && (
-        <div 
-          className="view-only-badge"
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '40px',
-            background: 'linear-gradient(to right, #64748b, #94a3b8)',
-            color: 'white',
-            fontSize: '10px',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontWeight: '500'
-          }}
-        >
-          View Only
-        </div>
-      )}
-    </div>
-  );
-})}
+                          return (
+                            <div
+                              key={index}
+                              className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''}`}
+                              style={{
+                                position: 'relative',
+                                border: isDirectConnection && account.platform === 'instagram'
+                                  ? '1px solid rgba(219, 39, 119, 0.3)'
+                                  : isFullAccess && account.platform === 'instagram'
+                                    ? '1px solid rgba(37, 99, 235, 0.3)'
+                                    : isViewOnlyFacebook
+                                      ? '1px dashed rgba(100, 116, 139, 0.5)'
+                                      : '1px solid #e5e7eb',
+                                opacity: isViewOnlyFacebook ? 0.85 : 1
+                              }}
+                            >
+                              <div className="account-card-header">
+                                <div className="account-avatar">
+                                  {account.profilePicture ? (
+                                    <img
+                                      src={account.profilePicture}
+                                      alt={account.username}
+                                      className="avatar-img"
+                                    />
+                                  ) : (
+                                    <User size={32} strokeWidth={1.5} />
+                                  )}
+                                  <div className={`platform-badge platform-${account.platform}`}>
+                                    <PlatformIcon size={12} />
+                                  </div>
+                                </div>
+
+                                {/* Show delete button for ALL accounts, including view-only */}
+                                <button
+                                  onClick={() => handleDisconnectClick(account)}
+                                  className="account-delete-btn"
+                                  title="Disconnect account"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+
+                              <div className="account-card-content">
+                                <h4 className="account-username">{account.username}</h4>
+                                <p className="platform-name">
+                                  {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
+                                  {account.platform === 'instagram' && (
+                                    isDirectConnection ? (
+                                      <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
+                                    ) : (
+                                      <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
+                                    )
+                                  )}
+                                  {account.platform === 'facebook' && (
+                                    isViewOnlyFacebook ? (
+                                      <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
+                                    ) : (
+                                      <span className="connection-badge"> • Business Page</span>
+                                    )
+                                  )}
+                                </p>
+                                <span className="followers-count">
+                                  {account.followerCount ? `${account.followerCount} followers` : '-'}
+                                </span>
+                              </div>
+
+                              <div className="account-actions">
+                                <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
+                                  style={{
+                                    backgroundColor: isViewOnlyFacebook ? '#f1f5f9' : '',
+                                    color: isViewOnlyFacebook ? '#64748b' : ''
+                                  }}
+                                >
+                                  <Check size={14} />
+                                  {isViewOnlyFacebook ? 'View Only' : 'Connected'}
+                                </div>
+                              </div>
+
+                              {/* Connection type badge */}
+                              {account.platform === 'instagram' && (
+                                <div
+                                  className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '40px',
+                                    background: isDirectConnection
+                                      ? 'linear-gradient(to right, #e11d48, #db2777)'
+                                      : 'linear-gradient(to right, #1d4ed8, #2563eb)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontWeight: '500'
+                                  }}
+                                >
+                                  {isDirectConnection ? 'Instagram Only' : 'Full Access'}
+                                </div>
+                              )}
+
+                              {/* View-only badge for Facebook accounts */}
+                              {isViewOnlyFacebook && (
+                                <div
+                                  className="view-only-badge"
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '40px',
+                                    background: 'linear-gradient(to right, #64748b, #94a3b8)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontWeight: '500'
+                                  }}
+                                >
+                                  View Only
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
