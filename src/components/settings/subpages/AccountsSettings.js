@@ -375,8 +375,135 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
               <li>Comply with legal obligations</li>
             </ul>
 
-            {/* Additional content omitted for brevity */}
-          </div>
+  <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              3. Sharing Your Information
+            </h4>
+            <p>
+              We do <strong>not</strong> sell or rent your personal data. We only share
+              your information with:
+            </p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                Social media platforms (e.g., Instagram Graph API) to publish and
+                retrieve your content
+              </li>
+              <li>
+                Service providers who help operate our platform (e.g., cloud hosting,
+                analytics)
+              </li>
+              <li>Legal authorities when required by law</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              4. Data Security
+            </h4>
+            <p>
+              We use industry-standard security practices, including encryption and
+              access control, to protect your data. However, no method is 100% secure,
+              and we cannot guarantee absolute security.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              5. Your Rights
+            </h4>
+            <p>You may:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Access and update your personal information</li>
+              <li>Disconnect your social media accounts at any time</li>
+              <li>
+                Request deletion of your data by contacting us at{' '}
+                <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              6. Cookies
+            </h4>
+            <p>
+              We use cookies and similar technologies to improve your experience. You can
+              disable cookies through your browser settings.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              7. Third-Party Links
+            </h4>
+            <p>
+              Our platform may contain links to third-party websites. We are not
+              responsible for their privacy practices.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              8. Changes to This Policy
+            </h4>
+            <p>
+              We may update this Privacy Policy periodically. Changes will be posted on
+              this page with an updated effective date.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              9. Contact Us
+            </h4>
+            <p>
+              If you have questions about this policy, please contact us at:{' '}
+              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+            </p>
+                      </div>
         </div>
 
         {/* Footer Buttons */}

@@ -190,7 +190,6 @@ const Content = () => {
   // ✅ Create post function using apiCreatePost from dashboard hook
   const handleCreatePost = async (postData) => {
     try {
-      console.log('Creating post with data:', postData);
       const response = await apiCreatePost(postData);
       setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
       setShowCreatePost(false);
@@ -198,7 +197,6 @@ const Content = () => {
       await fetchAllPosts();
       return response;
     } catch (error) {
-      console.error('Post creation failed:', error);
       setNotification({ type: 'error', message: error.message || ERROR_MESSAGES.SERVER_ERROR });
       throw error;
     }
@@ -207,8 +205,7 @@ const Content = () => {
   // ✅ Update post function for editing
   const handleUpdatePost = async (postId, postData) => {
     try {    
-      console.log('Updating post with ID:', postId);
-      console.log('Update data:', postData);
+     
       
       const response = await apiClient.request(`/api/posts/${postId}`, {
         method: 'PUT',
@@ -231,7 +228,6 @@ const Content = () => {
         throw new Error('Update response indicated failure');
       }
     } catch (error) {
-      console.error('Update post failed:', error);
       setNotification({ 
         type: 'error', 
         message: error.message || 'Failed to update post' 
@@ -849,10 +845,7 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
     onDelete();
   };
 
-  // Rest of PostCard component (unchanged)
-  // ...
 
-  // I'm keeping the rest of the PostCard implementation as is from your original code
   const platforms = Array.isArray(post.platforms) && post.platforms.length > 0 
     ? post.platforms 
     : ['instagram']; // Default fallback
