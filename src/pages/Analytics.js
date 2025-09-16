@@ -92,9 +92,9 @@ const Analytics = () => {
     { id: 'audience', label: 'Audience', icon: <Users size={16} /> },
     { id: 'content', label: 'Content Analysis', icon: <FileText size={16} /> },
     { id: 'growth', label: 'Growth', icon: <TrendingUp size={16} /> },
-    { id: 'hashtags', label: 'Hashtags', icon: <Hash size={16} /> },
+    // { id: 'hashtags', label: 'Hashtags', icon: <Hash size={16} /> },
     { id: 'timing', label: 'Best Times', icon: <Clock size={16} /> },
-    { id: 'reports', label: 'Reports', icon: <Download size={16} /> }
+    // { id: 'reports', label: 'Reports', icon: <Download size={16} /> }
   ];
 
   // Period options matching your backend
@@ -144,7 +144,7 @@ const Analytics = () => {
         ],
         engagementRate: 8.4,
         bestPerformingTime: '7:00 PM - 9:00 PM',
-        topContentType: 'carousel'
+        topContentType: 'Carousel'
       },
       audience: {
         demographics: {
@@ -654,6 +654,20 @@ const Analytics = () => {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Analytics Navigation */}
+      <div className="analytics-navigation">
+        {analyticsSections.map(section => (
+          <button
+            key={section.id}
+            className={`nav-btn ${activeSection === section.id ? 'active' : ''}`}
+            onClick={() => setActiveSection(section.id)}
+          >
+            {section.icon}
+            {section.label}
+          </button>
+        ))}
       </div>
 
       {/* Error State */}
@@ -1346,7 +1360,7 @@ const Analytics = () => {
               </div>
 
               {/* Weekly Heatmap */}
-              <div className="timing-heatmap">
+              {/* <div className="timing-heatmap">
                 <h3>Weekly Posting Heatmap</h3>
                 <div className="heatmap-container">
                   <div className="heatmap-hours">
@@ -1381,7 +1395,7 @@ const Analytics = () => {
                   <div className="legend-gradient"></div>
                   <span>High</span>
                 </div>
-              </div>
+              </div> */}
 
               {/* Timing Recommendations */}
               <div className="timing-recommendations">
