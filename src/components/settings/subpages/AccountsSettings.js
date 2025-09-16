@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User, X, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Info, AlertCircle, Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User, X, AlertTriangle } from 'lucide-react';
 import SettingsCard from '../SettingsCard';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSquareXTwitter, faSquareThreads } from '@fortawesome/free-brands-svg-icons';
+
+
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platform }) => {
@@ -305,7 +309,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
 
           <div
             style={{
-              maxHeight: '70vh',
+              maxHeight: '60vh',
               overflowY: 'auto',
               fontFamily: 'Inter, Arial, sans-serif',
               lineHeight: '1.7',
@@ -375,7 +379,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
               <li>Comply with legal obligations</li>
             </ul>
 
-  <h4
+            <h4
               style={{
                 marginTop: '24px',
                 marginBottom: '12px',
@@ -503,7 +507,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
               If you have questions about this policy, please contact us at:{' '}
               <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
             </p>
-                      </div>
+          </div>
         </div>
 
         {/* Footer Buttons */}
@@ -544,9 +548,8 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
 };
 
 // Connection Options Modal Component
-const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram }) => {
+const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, youtubeFn, onSelectFacebookInstagram, onSelectTwitter, onSelectLinkedIn, onSelectThreads }) => {
   if (!isOpen) return null;
-
   return (
     <div className="modal-overlay" onClick={onClose} style={{
       position: 'fixed',
@@ -568,6 +571,8 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
         width: '90%',
         maxWidth: '600px',
         padding: '32px',
+        height: '90vh',
+        'overflow-y': 'auto',
       }}>
         <button onClick={onClose} style={{
           position: 'absolute',
@@ -586,7 +591,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
           marginBottom: '24px',
           textAlign: 'center'
         }}>
-          Connect Your Meta Account
+          Connect Your Social Account
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -670,8 +675,8 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
               border: '1px solid #DBEAFE',
               position: 'relative'
             }}>
-              <Facebook size={20} style={{ color: '#1877F2', position: 'absolute', left: '10px', top: '14px' }} />
-              <Instagram size={20} style={{ color: '#E91E63', position: 'absolute', right: '10px', bottom: '14px' }} />
+              <Instagram size={20} style={{ color: '#E91E63', position: 'absolute', right: '3px', top: '15px' }} />
+              <Facebook size={20} style={{ color: '#1877F2', position: 'absolute', left: '0', top: '15px' }} />
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
@@ -682,13 +687,242 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
               </div>
             </div>
           </button>
+
+          <button
+            onClick={youtubeFn}
+            style={{
+
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                backgroundColor: '#FEE2E2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #FCA5A5',
+              }}
+
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style={{ color: '#FF0000' }}
+              >
+                <path d="M19.615 3.184c.897.24 1.6.944 1.84 1.84C22 6.88 22 12 22 12s0 5.12-.545 6.976c-.24.896-.943 1.6-1.84 1.84C18.76 21.36 12 21.36 12 21.36s-6.76 0-7.615-.544c-.897-.24-1.6-.944-1.84-1.84C2 17.12 2 12 2 12s0-5.12.545-6.976c.24-.896.943-1.6 1.84-1.84C5.24 2.64 12 2.64 12 2.64s6.76 0 7.615.544zM10 8v8l6-4-6-4z" />
+              </svg>
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                YouTube
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your YouTube account
+              </div>
+            </div>
+          </button>
+
+
+          <button
+            onClick={onSelectLinkedIn}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                backgroundColor: '#EEF2FF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #C7D2FE',
+              }}
+            >
+              <Linkedin size={24} style={{ color: '#0A66C2' }} />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                LinkedIn
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your LinkedIn account
+                {/* <span
+                  style={{
+                    display: 'block',
+                    fontStyle: 'italic',
+                    fontSize: '12px',
+                    marginTop: '4px',
+                  }}
+                >
+                  (Note: Requires LinkedIn login for authentication)
+                </span> */}
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={onSelectTwitter}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                backgroundColor: '#E6F6FF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #BAE6FD',
+              }}
+            >
+              <FontAwesomeIcon icon={faSquareXTwitter} size="xl" />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                Twitter
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your Twitter (X) account
+                {/* <span
+                  style={{
+                    display: 'block',
+                    fontStyle: 'italic',
+                    fontSize: '12px',
+                    marginTop: '4px',
+                  }}
+                >
+                  (Note: Requires Twitter login for authentication)
+                </span> */}
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={onSelectTwitter}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                backgroundColor: '#E6F6FF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #BAE6FD',
+              }}
+            >
+              <FontAwesomeIcon icon={faSquareThreads} size="xl" />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                Threads
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your Threads (@) account
+                {/* <span
+                  style={{
+                    display: 'block',
+                    fontStyle: 'italic',
+                    fontSize: '12px',
+                    marginTop: '4px',
+                  }}
+                >
+                  (Note: Requires Twitter login for authentication)
+                </span> */}
+              </div>
+            </div>
+          </button>
+
+
+
         </div>
 
         <div style={{ marginTop: '24px', fontSize: '14px', color: '#6B7280', textAlign: 'center' }}>
           Both options require an Instagram Business account linked to a Facebook Page
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
@@ -697,6 +931,9 @@ const AccountsSettings = ({ onNotify }) => {
   const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showConnectionOptions, setShowConnectionOptions] = useState(false);
+
+
+
 
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -709,7 +946,7 @@ const AccountsSettings = ({ onNotify }) => {
     isOpen: false,
     connectionType: null
   });
-  
+
   const [connectionOptionsModal, setConnectionOptionsModal] = useState({
     isOpen: false
   });
@@ -1010,13 +1247,13 @@ const AccountsSettings = ({ onNotify }) => {
   };
 
   // Connect Instagram directly
- const handleConnectInstagramDirect = async () => {
-  setConnectionOptionsModal({ isOpen: false });
-  setTermsConditionModal({
-    isOpen: true,
-    connectionType: 'direct'
-  });
-};
+  const handleConnectInstagramDirect = async () => {
+    setConnectionOptionsModal({ isOpen: false });
+    setTermsConditionModal({
+      isOpen: true,
+      connectionType: 'direct'
+    });
+  };
 
   // Handle Terms & Conditions acceptance
   const handleTermsConfirm = async (connectionType) => {
@@ -1042,7 +1279,7 @@ const AccountsSettings = ({ onNotify }) => {
         } else {
           // Standard Instagram+Facebook connection
           window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
-        }
+        } 
       } else {
         toast.error('Failed to get user data');
       }
@@ -1124,7 +1361,7 @@ const AccountsSettings = ({ onNotify }) => {
                 <Instagram size={16} />
                 <Facebook size={16} />
                 <Plus size={16} />
-                {isMetaConnected ? 'Add Another Meta Account' : 'Connect with Meta'}
+                {isMetaConnected ? 'Add Another Social Account' : 'Connect Social Account'}
               </button>
             </div>
           }
@@ -1140,157 +1377,157 @@ const AccountsSettings = ({ onNotify }) => {
                   {accountGroups.map((group, groupIndex) => (
                     <div key={groupIndex} className="account-group">
                       <div className="accounts-grid">
-     {group.accounts.map((account, index) => {
-  const PlatformIcon = platformIcons[account.platform];
-  
-  // Determine connection type from metadata and connection properties
-  const isDirectConnection = 
-    account.connectionType === 'direct' || 
-    account.metadata?.connectionType === 'direct' ||
-    account.metadata?.directConnection === true || 
-    account.metadata?.instagramOnly === true;
-  
-  const isFullAccess = 
-    account.connectionType === 'standard' || 
-    account.metadata?.connectionType === 'standard' ||
-    account.metadata?.fullAccess === true;
-  
-  const isViewOnlyFacebook = 
-    account.platform === 'facebook' && 
-    (account.metadata?.viewOnly === true || 
-     account.metadata?.linkedViaInstagram === true ||
-     account.username.includes('linked via Instagram'));
-  
-  // Skip Facebook accounts that should be hidden
-  if (account.platform === 'facebook' && 
-      account.metadata?.hideFacebookLink === true) {
-    return null;
-  }
+                        {group.accounts.map((account, index) => {
+                          const PlatformIcon = platformIcons[account.platform];
 
-  return (
-    <div
-      key={index}
-      className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''}`}
-      style={{
-        position: 'relative',
-        border: isDirectConnection && account.platform === 'instagram' 
-          ? '1px solid rgba(219, 39, 119, 0.3)' 
-          : isFullAccess && account.platform === 'instagram'
-            ? '1px solid rgba(37, 99, 235, 0.3)'
-            : isViewOnlyFacebook 
-              ? '1px dashed rgba(100, 116, 139, 0.5)'
-              : '1px solid #e5e7eb',
-        opacity: isViewOnlyFacebook ? 0.85 : 1
-      }}
-    >
-      <div className="account-card-header">
-        <div className="account-avatar">
-          {account.profilePicture ? (
-            <img
-              src={account.profilePicture}
-              alt={account.username}
-              className="avatar-img"
-            />
-          ) : (
-            <User size={32} strokeWidth={1.5} />
-          )}
-          <div className={`platform-badge platform-${account.platform}`}>
-            <PlatformIcon size={12} />
-          </div>
-        </div>
+                          // Determine connection type from metadata and connection properties
+                          const isDirectConnection =
+                            account.connectionType === 'direct' ||
+                            account.metadata?.connectionType === 'direct' ||
+                            account.metadata?.directConnection === true ||
+                            account.metadata?.instagramOnly === true;
 
-        {/* Only show delete button for non-view-only accounts */}
-        {!isViewOnlyFacebook && (
-          <button
-            onClick={() => handleDisconnectClick(account)}
-            className="account-delete-btn"
-            title="Disconnect account"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
-      </div>
+                          const isFullAccess =
+                            account.connectionType === 'standard' ||
+                            account.metadata?.connectionType === 'standard' ||
+                            account.metadata?.fullAccess === true;
 
-      <div className="account-card-content">
-        <h4 className="account-username">{account.username}</h4>
-        <p className="platform-name">
-          {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
-          {account.platform === 'instagram' && (
-            isDirectConnection ? (
-              <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
-            ) : (
-              <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
-            )
-          )}
-          {account.platform === 'facebook' && (
-            isViewOnlyFacebook ? (
-              <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
-            ) : (
-              <span className="connection-badge"> • Business Page</span>
-            )
-          )}
-        </p>
-        <span className="followers-count">
-          {account.followerCount ? `${account.followerCount} followers` : '-'}
-        </span>
-      </div>
+                          const isViewOnlyFacebook =
+                            account.platform === 'facebook' &&
+                            (account.metadata?.viewOnly === true ||
+                              account.metadata?.linkedViaInstagram === true ||
+                              account.username.includes('linked via Instagram'));
 
-      <div className="account-actions">
-        <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
-          style={{
-            backgroundColor: isViewOnlyFacebook ? '#f1f5f9' : '',
-            color: isViewOnlyFacebook ? '#64748b' : ''
-          }}
-        >
-          <Check size={14} />
-          {isViewOnlyFacebook ? 'View Only' : 'Connected'}
-        </div>
-      </div>
+                          // Skip Facebook accounts that should be hidden
+                          if (account.platform === 'facebook' &&
+                            account.metadata?.hideFacebookLink === true) {
+                            return null;
+                          }
 
-      {/* Connection type badge */}
-      {account.platform === 'instagram' && (
-        <div 
-          className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '40px',
-            background: isDirectConnection 
-              ? 'linear-gradient(to right, #e11d48, #db2777)' 
-              : 'linear-gradient(to right, #1d4ed8, #2563eb)',
-            color: 'white',
-            fontSize: '10px',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontWeight: '500'
-          }}
-        >
-          {isDirectConnection ? 'Instagram Only' : 'Full Access'}
-        </div>
-      )}
-      
-      {/* View-only badge for Facebook accounts */}
-      {isViewOnlyFacebook && (
-        <div 
-          className="view-only-badge"
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '40px',
-            background: 'linear-gradient(to right, #64748b, #94a3b8)',
-            color: 'white',
-            fontSize: '10px',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontWeight: '500'
-          }}
-        >
-          View Only
-        </div>
-      )}
-    </div>
-  );
-})}
+                          return (
+                            <div
+                              key={index}
+                              className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''}`}
+                              style={{
+                                position: 'relative',
+                                border: isDirectConnection && account.platform === 'instagram'
+                                  ? '1px solid rgba(219, 39, 119, 0.3)'
+                                  : isFullAccess && account.platform === 'instagram'
+                                    ? '1px solid rgba(37, 99, 235, 0.3)'
+                                    : isViewOnlyFacebook
+                                      ? '1px dashed rgba(100, 116, 139, 0.5)'
+                                      : '1px solid #e5e7eb',
+                                opacity: isViewOnlyFacebook ? 0.85 : 1
+                              }}
+                            >
+                              <div className="account-card-header">
+                                <div className="account-avatar">
+                                  {account.profilePicture ? (
+                                    <img
+                                      src={account.profilePicture}
+                                      alt={account.username}
+                                      className="avatar-img"
+                                    />
+                                  ) : (
+                                    <User size={32} strokeWidth={1.5} />
+                                  )}
+                                  <div className={`platform-badge platform-${account.platform}`}>
+                                    <PlatformIcon size={12} />
+                                  </div>
+                                </div>
+
+                                {/* Only show delete button for non-view-only accounts */}
+                                {!isViewOnlyFacebook && (
+                                  <button
+                                    onClick={() => handleDisconnectClick(account)}
+                                    className="account-delete-btn"
+                                    title="Disconnect account"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="account-card-content">
+                                <h4 className="account-username">{account.username}</h4>
+                                <p className="platform-name">
+                                  {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
+                                  {account.platform === 'instagram' && (
+                                    isDirectConnection ? (
+                                      <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
+                                    ) : (
+                                      <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
+                                    )
+                                  )}
+                                  {account.platform === 'facebook' && (
+                                    isViewOnlyFacebook ? (
+                                      <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
+                                    ) : (
+                                      <span className="connection-badge"> • Business Page</span>
+                                    )
+                                  )}
+                                </p>
+                                <span className="followers-count">
+                                  {account.followerCount ? `${account.followerCount} followers` : '-'}
+                                </span>
+                              </div>
+
+                              <div className="account-actions">
+                                <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
+                                  style={{
+                                    backgroundColor: isViewOnlyFacebook ? '#f1f5f9' : '',
+                                    color: isViewOnlyFacebook ? '#64748b' : ''
+                                  }}
+                                >
+                                  <Check size={14} />
+                                  {isViewOnlyFacebook ? 'View Only' : 'Connected'}
+                                </div>
+                              </div>
+
+                              {/* Connection type badge */}
+                              {account.platform === 'instagram' && (
+                                <div
+                                  className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '40px',
+                                    background: isDirectConnection
+                                      ? 'linear-gradient(to right, #e11d48, #db2777)'
+                                      : 'linear-gradient(to right, #1d4ed8, #2563eb)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontWeight: '500'
+                                  }}
+                                >
+                                  {isDirectConnection ? 'Instagram Only' : 'Full Access'}
+                                </div>
+                              )}
+
+                              {/* View-only badge for Facebook accounts */}
+                              {isViewOnlyFacebook && (
+                                <div
+                                  className="view-only-badge"
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '40px',
+                                    background: 'linear-gradient(to right, #64748b, #94a3b8)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontWeight: '500'
+                                  }}
+                                >
+                                  View Only
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -1310,6 +1547,7 @@ const AccountsSettings = ({ onNotify }) => {
       {/* Connection Options Modal */}
       <ConnectionOptionsModal
         isOpen={connectionOptionsModal.isOpen}
+        youtubeFn={() => {}}
         onClose={() => setConnectionOptionsModal({ isOpen: false })}
         onSelectInstagram={handleConnectInstagramDirect}
         onSelectFacebookInstagram={handleConnectMetaWithFacebook}

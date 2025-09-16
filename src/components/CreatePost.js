@@ -210,12 +210,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const onSaveDraft = () => {
     const draftData = { ...postData, status: "draft" };
     console.log("Saving draft:", draftData);
-
     setToast({
       type: 'success',
       message: 'Draft saved successfully!',
     });
-
     // Auto-hide toast after 3 seconds
     setTimeout(() => setToast(null), 3000);
   };
