@@ -282,11 +282,11 @@ const convertTo24Hour = (hour12, minute, period) => {
 
       // ✅ Instagram-specific validations
       if (isVideo) {
-        // Check video size for Instagram (100MB limit)
-        if (file.size > 100 * 1024 * 1024) {
+        // Check video size for Instagram (250MB limit)
+        if (file.size > 250 * 1024 * 1024) {
           invalidFiles.push({
             file,
-            reason: 'Video too large for Instagram (max 100MB)'
+            reason: 'Video too large for Instagram (max 250MB)'
           });
           return;
         }
