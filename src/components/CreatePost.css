@@ -560,12 +560,17 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
+.platform-preview.instagram .platform-header {
+  --platform-background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+  color: white;
+}
+
 .platform-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 1.25rem;
-  background: color-mix(in srgb, var(--platform-color) 8%, white);
+  background: var(--platform-background) !important;
   color: var(--platform-color);
   font-weight: 600;
   font-size: 0.9rem;
@@ -3796,4 +3801,198 @@
        padding: .65rem 1rem !important;
     font-size: 0.875rem !important;
     font-weight: 500 !important;
+}
+
+/* Time input to match date input exactly */
+.time-input-container {
+  position: relative;
+  width: 100%;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  padding: 0.875rem 1rem;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.time-input-container:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.time-input-container:focus-within {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  background: white;
+  transform: translateY(-1px);
+}
+
+/* Time input header with label and icon */
+.time-input-header {
+  padding-top: 14px;
+}
+
+/* Time input label positioned like date input */
+.time-input-label {
+  position: absolute;
+  top: 5px;
+  left: 16px;
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
+  background: white;
+  padding: 0 2px;
+  padding-top: 14px;
+}
+
+/* Time input icon positioned like date input */
+.time-input-icon {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.time-input-container:hover .time-input-icon {
+  color: #3b82f6;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.time-input-container:focus-within .time-input-icon {
+  color: #3b82f6;
+}
+
+.time-input-container:focus-within .time-input-label {
+  color: #3b82f6;
+}
+
+/* Time picker display area */
+.time-picker-12hr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 40px); /* Account for icon space */
+}
+
+/* Time select dropdowns styled to match date input text */
+.time-picker-12hr .time-select {
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.time-picker-12hr .time-select:hover {
+  background: #f3f4f6;
+}
+
+.time-picker-12hr .time-select:focus {
+  outline: none;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+/* Hour select sizing */
+.time-picker-12hr .time-select:nth-child(1) {
+  width: 32px;
+  text-align: center;
+}
+
+/* Minute select sizing */
+.time-picker-12hr .time-select:nth-child(3) {
+  width: 32px;
+  text-align: center;
+}
+
+/* AM/PM select sizing */
+.time-picker-12hr .period-select {
+  width: 40px;
+  text-align: center;
+  margin-left: 4px;
+}
+
+/* Time separator styling */
+.time-separator {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+  user-select: none;
+  padding: 0 2px;
+}
+
+/* Custom dropdown arrow removal */
+.time-picker-12hr .time-select::-ms-expand {
+  display: none;
+}
+
+.time-picker-12hr .time-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .schedule-inputs {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+  }
+  
+  .time-input-container,
+  .form-input[type="date"] {
+    height: 44px;
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    padding-top: 22px;
+    padding-bottom: 10px;
+  }
+  
+  .time-input-label,
+  .input-group::before {
+    font-size: 10px;
+    top: 4px;
+  }
+  
+  .time-picker-12hr {
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
