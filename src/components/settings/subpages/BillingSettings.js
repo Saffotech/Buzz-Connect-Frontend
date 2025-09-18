@@ -3,14 +3,14 @@ import { CreditCard, ExternalLink, Mail } from 'lucide-react';
 import SettingsCard from '../SettingsCard';
 
 const BillingSettings = ({ onNotify }) => {
-  const handleContactSales = () => {
+const handleContactSales = () => {
 window.open(
   "https://mail.google.com/mail/?view=cm&fs=1&to=mgabuzzconnect@gmail.com",
   "_blank"
 );
   };
 
-  const handleGetUpdates = () => {
+ const handleGetUpdates = () => {
     onNotify('success', 'You\'ll be notified when billing features are available!');
   };
 
