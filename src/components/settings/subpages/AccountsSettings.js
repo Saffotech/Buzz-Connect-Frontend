@@ -1485,7 +1485,7 @@ const AccountsSettings = ({ onNotify }) => {
                               </div>
 
                               {/* Connection type badge */}
-                              {account.platform === 'instagram' && (
+                              {/* {account.platform === 'instagram' && (
                                 <div
                                   className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
                                   style={{
@@ -1504,7 +1504,7 @@ const AccountsSettings = ({ onNotify }) => {
                                 >
                                   {isDirectConnection ? 'Instagram Only' : 'Full Access'}
                                 </div>
-                              )}
+                              )} */}
 
                               {/* View-only badge for Facebook accounts */}
                               {isViewOnlyFacebook && (
