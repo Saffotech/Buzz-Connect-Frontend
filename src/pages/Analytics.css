@@ -20,6 +20,7 @@
 /* Page Header */
 .analytics-header {
   display: flex;
+  max-width: 100%;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
@@ -2558,3 +2559,122 @@ background: linear-gradient(135deg, #fde047, #facc15);
     margin: 0;
     padding: 1.5rem 1.5rem 0 1.5rem;
 }
+
+
+/* CSS */
+.key-metrics-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.key-metrics-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.metric-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.metric-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+}
+
+.metric-subtitle {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.metric-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.metric-change.positive {
+  color: #059669;
+}
+
+.metric-change.negative {
+  color: #dc2626;
+}
+
+/* Engagement rate */
+.metric-rate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+
+/* Peak Engagement rate */
+.metric-peak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* Peak Engagement rate */
+.metric-topcontent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+
+
+
