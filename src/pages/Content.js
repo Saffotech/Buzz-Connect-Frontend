@@ -759,7 +759,7 @@ const PostsSubPage = ({
         </div>
 
         <div className="control-actions">
-          <div className="view-controls">
+          {/* <div className="view-controls">
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
               onClick={() => setViewMode('grid')}
@@ -772,7 +772,7 @@ const PostsSubPage = ({
             >
               <List size={16} />
             </button>
-          </div>
+          </div> */}
 
           {/* Use the CreatePostButton component instead of a simple button */}
           {createPostButton || (
@@ -1452,12 +1452,12 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
   // ✅ NEW: Get file size limits from backend (you should fetch this from your API)
   const FILE_SIZE_LIMITS = {
     video: {
-      maxSize: 100 * 1024 * 1024, // 100MB to match backend
-      maxSizeMB: 100
+      maxSize: 250 * 1024 * 1024, // 100MB to match backend
+      maxSizeMB: 250
     },
     image: {
-      maxSize: 10 * 1024 * 1024, // 10MB to match backend
-      maxSizeMB: 10
+      maxSize: 50 * 1024 * 1024, // 10MB to match backend
+      maxSizeMB: 50
     }
   };
 

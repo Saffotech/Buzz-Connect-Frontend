@@ -35,7 +35,8 @@ import {
   MapPin,
   PieChart,
   BarChart,
-  LineChart
+  LineChart,
+  Grid
 } from 'lucide-react';
 import { useDashboardData } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -52,6 +53,8 @@ const Analytics = () => {
       end: ''
     }
   });
+
+
 
   // Active section state
   const [activeSection, setActiveSection] = useState('overview');
@@ -92,9 +95,9 @@ const Analytics = () => {
     { id: 'audience', label: 'Audience', icon: <Users size={16} /> },
     { id: 'content', label: 'Content Analysis', icon: <FileText size={16} /> },
     { id: 'growth', label: 'Growth', icon: <TrendingUp size={16} /> },
-    { id: 'hashtags', label: 'Hashtags', icon: <Hash size={16} /> },
+    // { id: 'hashtags', label: 'Hashtags', icon: <Hash size={16} /> },
     { id: 'timing', label: 'Best Times', icon: <Clock size={16} /> },
-    { id: 'reports', label: 'Reports', icon: <Download size={16} /> }
+    // { id: 'reports', label: 'Reports', icon: <Download size={16} /> }
   ];
 
   // Period options matching your backend
@@ -115,7 +118,7 @@ const Analytics = () => {
     if (!user?.connectedAccounts) return baseOptions;
 
     const connectedPlatforms = user.connectedAccounts.map(account => account.platform);
-    
+
     if (connectedPlatforms.includes('instagram')) {
       baseOptions.push({ value: 'instagram', label: 'Instagram', icon: <Instagram size={20} /> });
     }
@@ -144,7 +147,7 @@ const Analytics = () => {
         ],
         engagementRate: 8.4,
         bestPerformingTime: '7:00 PM - 9:00 PM',
-        topContentType: 'carousel'
+        topContentType: 'Carousel'
       },
       audience: {
         demographics: {
@@ -250,13 +253,13 @@ const Analytics = () => {
 
     try {
       const accountsData = {};
-      
+
       // Fetch data for each connected account
       await Promise.all(
         user.connectedAccounts.map(async (account) => {
           try {
             const params = new URLSearchParams();
-            
+
             // Add period parameter
             if (filters.period === 'custom' && filters.customDateRange.start && filters.customDateRange.end) {
               params.append('startDate', filters.customDateRange.start);
@@ -325,7 +328,7 @@ const Analytics = () => {
 
     try {
       const params = new URLSearchParams();
-      
+
       // Add period parameter
       if (filters.period === 'custom' && filters.customDateRange.start && filters.customDateRange.end) {
         params.append('startDate', filters.customDateRange.start);
@@ -351,7 +354,7 @@ const Analytics = () => {
 
       if (overviewResponse.success && overviewResponse.data) {
         const advancedData = generateMockAdvancedData();
-        
+
         setAnalyticsData({
           overview: overviewResponse.data,
           posts: [],
@@ -412,12 +415,12 @@ const Analytics = () => {
   const exportReport = async (format = 'pdf') => {
     try {
       showToast(`Generating ${format.toUpperCase()} report...`, 'info');
-      
+
       // Simulate report generation
       setTimeout(() => {
         showToast(`${format.toUpperCase()} report downloaded successfully!`, 'success');
       }, 2000);
-      
+
     } catch (error) {
       showToast('Failed to generate report', 'error');
     }
@@ -428,7 +431,7 @@ const Analytics = () => {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `<div class="toast-content"><span>${message}</span></div>`;
-    
+
     if (!document.getElementById('toast-styles')) {
       const style = document.createElement('style');
       style.id = 'toast-styles';
@@ -456,7 +459,7 @@ const Analytics = () => {
       `;
       document.head.appendChild(style);
     }
-    
+
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 100);
     setTimeout(() => {
@@ -556,7 +559,7 @@ const Analytics = () => {
             <BarChart3 size={64} />
             <h3>No Connected Accounts</h3>
             <p>Connect your social media accounts to start tracking analytics</p>
-            <button 
+            <button
               className="btn-primary"
               onClick={() => window.location.href = '/settings?tab=accounts'}
             >
@@ -577,7 +580,7 @@ const Analytics = () => {
           <p>Comprehensive social media performance insights and reporting</p>
         </div>
         <div className="analytics-header-actions">
-          <button 
+          <button
             className="sync-analytics-btn synbtn"
             onClick={syncAnalyticsData}
             disabled={syncing}
@@ -644,9 +647,8 @@ const Analytics = () => {
               <button
                 key={platform.value}
                 onClick={() => handlePlatformChange(platform.value)}
-                className={`platform-filter ${
-                  filters.platforms.includes(platform.value) ? 'active' : ''
-                }`}
+                className={`platform-filter ${filters.platforms.includes(platform.value) ? 'active' : ''
+                  }`}
               >
                 <span className="platform-icon">{platform.icon}</span>
                 {platform.label}
@@ -654,6 +656,20 @@ const Analytics = () => {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Analytics Navigation */}
+      <div className="analytics-navigation">
+        {analyticsSections.map(section => (
+          <button
+            key={section.id}
+            className={`nav-btn ${activeSection === section.id ? 'active' : ''}`}
+            onClick={() => setActiveSection(section.id)}
+          >
+            {section.icon}
+            {section.label}
+          </button>
+        ))}
       </div>
 
       {/* Error State */}
@@ -670,12 +686,13 @@ const Analytics = () => {
       {/* Analytics Content */}
       {!loading && !error && analyticsData.overview && (
         <div className="analytics-content">
-          
+
           {/* Overview Section */}
           {activeSection === 'overview' && (
             <div className="analytics-section">
               <h2>Key Metrics Overview</h2>
               <div className="kpi-grid">
+
                 <div className="kpi-card">
                   <div className="kpi-icon posts">
                     <FileText size={24} />
@@ -845,7 +862,7 @@ const Analytics = () => {
                       </div>
                     );
                   })}
-                  
+
                   {/* Show message if no accounts connected */}
                   {(!user?.connectedAccounts || user.connectedAccounts.length === 0) && (
                     <div className="platform-performance-card">
@@ -892,9 +909,82 @@ const Analytics = () => {
           {activeSection === 'engagement' && analyticsData.engagement && (
             <div className="analytics-section">
               <h2>Engagement Trends & Analysis</h2>
-              
+
               {/* Engagement Overview Cards */}
               <div className="engagement-overview-cards">
+
+
+                {/* Total Engagement */}
+                <div className="key-metrics-card">
+                  <div className="metric-icon">
+                    <Heart size={20} />
+                  </div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {formatNumber(analyticsData.overview.totalLikes + analyticsData.overview.totalComments + analyticsData.overview.totalShares)}
+                    </div>
+                    <div className="metric-label">Total Engagement</div>
+                    <div className="metric-subtitle">— Period total</div>
+                    <div className="metric-change positive">
+                      <ArrowUp size={12} />
+                      +15.2%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Engagement Rate */}
+                <div className="key-metrics-card">
+                  <div className="metric-rate">
+                    <Target size={20} />
+                  </div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      8.4%
+                    </div>
+                    <div className="metric-label">Engagement Rate</div>
+                    <div className="metric-subtitle">— Period average</div>
+                    <div className="metric-change positive">
+                      <ArrowUp size={12} />
+                      +0.8% vs last period
+                    </div>
+                  </div>
+                </div>
+
+
+                {/* Peak Engagement Rate */}
+                <div className="key-metrics-card">
+                  <div className="metric-peak">
+                    <Clock size={20} />
+                  </div>
+                  <div className="metric-content">
+                    <div className="metric-value">
+                      {analyticsData.engagement.bestPerformingTime}
+                    </div>
+                    <div className="metric-label">Best Time</div>
+                    <div className="metric-subtitle">— Peak engagement window</div>
+                  </div>
+                </div>
+
+                {/* Top Content */}
+                <div className="key-metrics-card">
+                  <div className="metric-topcontent">
+                    <Grid size={20} />
+                  </div>
+                  <div className="metric-content">
+                     <div className="metric-value">
+                      Carousel
+                    </div>
+                    <div className="metric-value">
+                      {/* {analyticsData.content.topContent} */}
+                    </div>
+                    <div className="metric-label">Top Content</div>
+                    <div className="metric-subtitle">— Best performing post</div>
+                  </div>
+                </div>
+                
+              </div>
+
+                {/* 
                 <div className="engagement-card">
                   <div className="card-header">
                     <Heart size={20} />
@@ -919,26 +1009,27 @@ const Analytics = () => {
                     <ArrowUp size={14} />
                     +0.8% vs last period
                   </div>
-                </div>
+                </div> */}
 
-                <div className="engagement-card">
+                {/* <div className="engagement-card">
                   <div className="card-header">
                     <Clock size={20} />
                     <span>Best Time</span>
                   </div>
                   <div className="card-value">{analyticsData.engagement.bestPerformingTime}</div>
                   <div className="card-subtitle">Peak engagement window</div>
-                </div>
+                </div> */}
 
-                <div className="engagement-card">
+                {/* <div className="engagement-card">
                   <div className="card-header">
                     <LayoutGrid size={20} />
                     <span>Top Content</span>
                   </div>
                   <div className="card-value">{analyticsData.engagement.topContentType}</div>
                   <div className="card-subtitle">Best performing format</div>
-                </div>
-              </div>
+                </div> */}
+
+
               {/* Engagement Trends Chart Placeholder */}
               <div className="chart-container">
                 <h3>Engagement Trends (Last 7 Days)</h3>
@@ -966,7 +1057,7 @@ const Analytics = () => {
           {activeSection === 'audience' && analyticsData.audience && (
             <div className="analytics-section">
               <h2>Audience Demographics & Activity</h2>
-              
+
               {/* Demographics Grid */}
               <div className="demographics-grid">
                 {/* Age Demographics */}
@@ -977,8 +1068,8 @@ const Analytics = () => {
                       <div key={index} className="demo-bar-item">
                         <span className="demo-label">{age.range}</span>
                         <div className="demo-bar">
-                          <div 
-                            className="demo-fill" 
+                          <div
+                            className="demo-fill"
                             style={{ width: `${age.percentage}%` }}
                           ></div>
                         </div>
@@ -996,8 +1087,8 @@ const Analytics = () => {
                       <div key={index} className="demo-bar-item">
                         <span className="demo-label">{gender.type}</span>
                         <div className="demo-bar">
-                          <div 
-                            className="demo-fill" 
+                          <div
+                            className="demo-fill"
                             style={{ width: `${gender.percentage}%` }}
                           ></div>
                         </div>
@@ -1018,8 +1109,8 @@ const Analytics = () => {
                           {location.country}
                         </span>
                         <div className="demo-bar">
-                          <div 
-                            className="demo-fill" 
+                          <div
+                            className="demo-fill"
                             style={{ width: `${location.percentage}%` }}
                           ></div>
                         </div>
@@ -1037,9 +1128,9 @@ const Analytics = () => {
                   {analyticsData.audience.activeHours.map((hour, index) => (
                     <div key={index} className="activity-hour">
                       <div className="hour-label">{hour.hour}</div>
-                      <div 
-                        className="activity-bar" 
-                        style={{ 
+                      <div
+                        className="activity-bar"
+                        style={{
                           height: `${hour.activity}%`,
                           backgroundColor: `rgba(0, 123, 255, ${hour.activity / 100})`
                         }}
@@ -1070,7 +1161,7 @@ const Analytics = () => {
           {activeSection === 'content' && analyticsData.contentTypes && (
             <div className="analytics-section">
               <h2>Content Performance Analysis</h2>
-              
+
               {/* Content Types Performance */}
               <div className="content-types-grid">
                 {analyticsData.contentTypes.map((type, index) => (
@@ -1090,7 +1181,7 @@ const Analytics = () => {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="content-type-stats">
                       <div className="stat-row">
                         <span className="stat-label">Posts Count:</span>
@@ -1146,9 +1237,10 @@ const Analytics = () => {
           {activeSection === 'growth' && analyticsData.growth && (
             <div className="analytics-section">
               <h2>Follower Growth & Trends</h2>
-              
+
               {/* Growth Overview Cards */}
               <div className="growth-overview-cards">
+
                 <div className="growth-card">
                   <div className="card-header">
                     <Users size={20} />
@@ -1192,12 +1284,13 @@ const Analytics = () => {
                   <div className="card-value">
                     +{formatNumber(
                       (analyticsData.growth.followers[analyticsData.growth.followers.length - 1].instagram +
-                       analyticsData.growth.followers[analyticsData.growth.followers.length - 1].facebook) -
+                        analyticsData.growth.followers[analyticsData.growth.followers.length - 1].facebook) -
                       (analyticsData.growth.followers[0].instagram + analyticsData.growth.followers[0].facebook)
                     )}
                   </div>
                   <div className="card-subtitle">Last 7 days</div>
                 </div>
+
               </div>
 
               {/* Growth Chart Placeholder */}
@@ -1253,7 +1346,7 @@ const Analytics = () => {
           {activeSection === 'hashtags' && analyticsData.hashtags && (
             <div className="analytics-section">
               <h2>Hashtag Performance Analysis</h2>
-              
+
               {/* Top Performing Hashtags */}
               <div className="hashtags-table">
                 <div className="table-header">
@@ -1264,7 +1357,7 @@ const Analytics = () => {
                   <div className="header-cell">Engagement</div>
                   <div className="header-cell">Avg Performance</div>
                 </div>
-                
+
                 {analyticsData.hashtags.map((hashtag, index) => (
                   <div key={index} className="table-row">
                     <div className="table-cell hashtag-cell">
@@ -1277,9 +1370,9 @@ const Analytics = () => {
                     <div className="table-cell">{formatNumber(hashtag.engagement)}</div>
                     <div className="table-cell">
                       <div className="performance-indicator">
-                        <div 
-                          className="performance-bar" 
-                          style={{ 
+                        <div
+                          className="performance-bar"
+                          style={{
                             width: `${(hashtag.engagement / hashtag.reach) * 100}%`,
                             backgroundColor: '#007bff'
                           }}
@@ -1322,7 +1415,7 @@ const Analytics = () => {
           {activeSection === 'timing' && analyticsData.bestTimes && (
             <div className="analytics-section">
               <h2>Optimal Posting Times</h2>
-              
+
               {/* Best Times by Day */}
               <div className="best-times-grid">
                 {analyticsData.bestTimes.weekdays.map((day, index) => (
@@ -1336,8 +1429,8 @@ const Analytics = () => {
                       <div className="score-label">Engagement</div>
                     </div>
                     <div className="engagement-bar">
-                      <div 
-                        className="engagement-fill" 
+                      <div
+                        className="engagement-fill"
                         style={{ width: `${day.engagement}%` }}
                       ></div>
                     </div>
@@ -1346,7 +1439,7 @@ const Analytics = () => {
               </div>
 
               {/* Weekly Heatmap */}
-              <div className="timing-heatmap">
+              {/* <div className="timing-heatmap">
                 <h3>Weekly Posting Heatmap</h3>
                 <div className="heatmap-container">
                   <div className="heatmap-hours">
@@ -1381,7 +1474,7 @@ const Analytics = () => {
                   <div className="legend-gradient"></div>
                   <span>High</span>
                 </div>
-              </div>
+              </div> */}
 
               {/* Timing Recommendations */}
               <div className="timing-recommendations">
@@ -1414,7 +1507,7 @@ const Analytics = () => {
           {activeSection === 'reports' && (
             <div className="analytics-section">
               <h2>Analytics Reports & Export</h2>
-              
+
               {/* Report Options */}
               <div className="report-options-grid">
                 <div className="report-option-card">
@@ -1426,14 +1519,14 @@ const Analytics = () => {
                     <p>Overview of key metrics and performance insights</p>
                   </div>
                   <div className="report-actions">
-                    <button 
+                    <button
                       className="export-btn pdf"
                       onClick={() => exportReport('pdf')}
                     >
                       <Download size={16} />
                       PDF
                     </button>
-                    <button 
+                    <button
                       className="export-btn excel"
                       onClick={() => exportReport('excel')}
                     >
@@ -1452,14 +1545,14 @@ const Analytics = () => {
                     <p>Comprehensive data breakdown by platform and content type</p>
                   </div>
                   <div className="report-actions">
-                    <button 
+                    <button
                       className="export-btn pdf"
                       onClick={() => exportReport('pdf')}
                     >
                       <Download size={16} />
                       PDF
                     </button>
-                    <button 
+                    <button
                       className="export-btn excel"
                       onClick={() => exportReport('excel')}
                     >
@@ -1478,14 +1571,14 @@ const Analytics = () => {
                     <p>Follower growth trends and audience development metrics</p>
                   </div>
                   <div className="report-actions">
-                    <button 
+                    <button
                       className="export-btn pdf"
                       onClick={() => exportReport('pdf')}
                     >
                       <Download size={16} />
                       PDF
                     </button>
-                    <button 
+                    <button
                       className="export-btn excel"
                       onClick={() => exportReport('excel')}
                     >
@@ -1504,14 +1597,14 @@ const Analytics = () => {
                     <p>Detailed analysis of posts, hashtags, and content types</p>
                   </div>
                   <div className="report-actions">
-                    <button 
+                    <button
                       className="export-btn pdf"
                       onClick={() => exportReport('pdf')}
                     >
                       <Download size={16} />
                       PDF
                     </button>
-                    <button 
+                    <button
                       className="export-btn excel"
                       onClick={() => exportReport('excel')}
                     >
@@ -1595,8 +1688,8 @@ const Analytics = () => {
                   <div className="top-post-content">
                     {analyticsData.topPost.images && analyticsData.topPost.images.length > 0 && (
                       <div className="top-post-image">
-                        <img 
-                          src={analyticsData.topPost.images[0].url} 
+                        <img
+                          src={analyticsData.topPost.images[0].url}
                           alt={analyticsData.topPost.images[0].altText || "Top post"}
                         />
                       </div>

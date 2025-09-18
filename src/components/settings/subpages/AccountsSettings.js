@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User, X, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Info, AlertCircle, Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User, X, AlertTriangle } from 'lucide-react';
 import SettingsCard from '../SettingsCard';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSquareXTwitter, faSquareThreads } from '@fortawesome/free-brands-svg-icons';
+
+
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platform }) => {
@@ -314,7 +318,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
 
           <div
             style={{
-              maxHeight: '70vh',
+              maxHeight: '60vh',
               overflowY: 'auto',
               fontFamily: 'Inter, Arial, sans-serif',
               lineHeight: '1.7',
@@ -554,9 +558,9 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
 
 // Connection Options Modal Component
 // Connection Options Modal Component
-const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedIn, onSelectYouTube }) => {
-  if (!isOpen) return null;
+const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedIn, onSelectYouTube, onSelectTwitter, onSelectThreads }) => {
 
+  if (!isOpen) return null;
   return (
     <div className="modal-overlay" onClick={onClose} style={{
       position: 'fixed',
@@ -578,6 +582,8 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
         width: '90%',
         maxWidth: '600px',
         padding: '32px',
+        height: '90vh',
+        'overflow-y': 'auto',
       }}>
         <button onClick={onClose} style={{
           position: 'absolute',
@@ -596,7 +602,8 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
           marginBottom: '24px',
           textAlign: 'center'
         }}>
-          Connect Social Accounts
+
+          Connect Your Social Account
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -680,8 +687,8 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
               border: '1px solid #DBEAFE',
               position: 'relative'
             }}>
-              <Facebook size={20} style={{ color: '#1877F2', position: 'absolute', left: '10px', top: '14px' }} />
-              <Instagram size={20} style={{ color: '#E91E63', position: 'absolute', right: '10px', bottom: '14px' }} />
+              <Instagram size={20} style={{ color: '#E91E63', position: 'absolute', right: '3px', top: '15px' }} />
+              <Facebook size={20} style={{ color: '#1877F2', position: 'absolute', left: '0', top: '15px' }} />
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
@@ -697,6 +704,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
           <button
             onClick={onSelectLinkedIn}
             style={{
+
               display: 'flex',
               alignItems: 'center',
               padding: '16px 24px',
@@ -726,6 +734,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
               justifyContent: 'center',
               border: '1px solid #E0E7FF'
             }}>
+
               <Linkedin size={24} style={{ color: '#0A66C2' }} />
             </div>
             <div style={{ textAlign: 'left' }}>
@@ -741,6 +750,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
           {/* YouTube Connection Option */}
           <button
             onClick={onSelectYouTube}
+
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -782,16 +792,142 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
               </div>
             </div>
           </button>
+
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                backgroundColor: '#E6F6FF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #BAE6FD',
+              }}
+            >
+              <FontAwesomeIcon icon={faSquareXTwitter} size="xl" />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                Twitter
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your Twitter (X) account
+                {/* <span
+                  style={{
+                    display: 'block',
+                    fontStyle: 'italic',
+                    fontSize: '12px',
+                    marginTop: '4px',
+                  }}
+                >
+                  (Note: Requires Twitter login for authentication)
+                </span> */}
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={onSelectTwitter}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                backgroundColor: '#E6F6FF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #BAE6FD',
+              }}
+            >
+              <FontAwesomeIcon icon={faSquareThreads} size="xl" />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                Threads
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your Threads (@) account
+                {/* <span
+                  style={{
+                    display: 'block',
+                    fontStyle: 'italic',
+                    fontSize: '12px',
+                    marginTop: '4px',
+                  }}
+                >
+                  (Note: Requires Twitter login for authentication)
+                </span> */}
+              </div>
+            </div>
+          </button>
+
+
+
+
         </div>
 
         <div style={{ marginTop: '24px', fontSize: '14px', color: '#6B7280', textAlign: 'center' }}>
           Connect your social accounts to start scheduling and publishing content
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
+
+const AccountsSettings = ({ onNotify }) => {
+  const { user, token, isLoading } = useAuth();
+  const [connectedAccounts, setConnectedAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showConnectionOptions, setShowConnectionOptions] = useState(false);
+
+
+
+
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    accountId: null,
+    accountUsername: '',
+    platform: ''
+  });
+
+  const [termsConditionModal, setTermsConditionModal] = useState({
+    isOpen: false,
+    connectionType: null
+  });
+
+  const [connectionOptionsModal, setConnectionOptionsModal] = useState({
+    isOpen: false
+  });
+
+  const handleCloseTerms = () => {
+    setTermsConditionModal({
+      isOpen: false,
+      connectionType: null
+    });
+  };
 
 // LinkedIn Terms Modal Component
 const LinkedInTermsModal = ({ isOpen, onClose, onConfirm }) => {
@@ -1625,6 +1761,7 @@ const handleConnectYouTube = async () => {
   });
 };
 
+
 // Handle YouTube Terms acceptance
 const handleYouTubeTermsConfirm = async () => {
   const storedToken = authToken;
@@ -1686,7 +1823,7 @@ const handleYouTubeTermsConfirm = async () => {
         } else {
           // Standard Instagram+Facebook connection
           window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
-        }
+        } 
       } else {
         toast.error('Failed to get user data');
       }
@@ -1798,7 +1935,8 @@ const handleYouTubeTermsConfirm = async () => {
                 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
                 <Plus size={16} />
-                Connect Social Account
+
+                {isMetaConnected ? 'Add Another Social Account' : 'Connect Social Account'}
               </button>
             </div>
           }
@@ -1840,6 +1978,7 @@ const handleYouTubeTermsConfirm = async () => {
                             (account.accountType === 'company' || 
                              account.isCompanyPage === true);
 
+
                           // Skip Facebook accounts that should be hidden
                           if (account.platform === 'facebook' &&
                             account.metadata?.hideFacebookLink === true) {
@@ -1866,6 +2005,7 @@ const handleYouTubeTermsConfirm = async () => {
       opacity: isViewOnlyFacebook ? 0.85 : 1
     }}
   >
+
                               <div className="account-card-header">
                                 <div className="account-avatar">
                                   {account.profilePicture ? (
@@ -1890,6 +2030,7 @@ const handleYouTubeTermsConfirm = async () => {
                                 >
                                   <Trash2 size={14} />
                                 </button>
+
                               </div>
 
                               <div className="account-card-content">
@@ -1948,6 +2089,7 @@ const handleYouTubeTermsConfirm = async () => {
 
                               {/* Connection type badge */}
                               {account.platform === 'instagram' && (
+
                                 <div
                                   className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
                                   style={{
@@ -1988,6 +2130,7 @@ const handleYouTubeTermsConfirm = async () => {
                                 </div>
                               )}
 
+
                               {/* View-only badge for Facebook accounts */}
                               {isViewOnlyFacebook && (
                                 <div
@@ -2027,6 +2170,7 @@ const handleYouTubeTermsConfirm = async () => {
       </div>
     )}
 
+
                             </div>
                           );
                         })}
@@ -2055,6 +2199,7 @@ const handleYouTubeTermsConfirm = async () => {
   onSelectLinkedIn={handleConnectLinkedIn}
   onSelectYouTube={handleConnectYouTube}
 />
+
 
 
       {/* Disconnect Confirmation Modal */}

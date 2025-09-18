@@ -97,6 +97,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         selectedAccounts: initialData.selectedAccounts || {},
         images: initialData.images && initialData.images.length > 0 ? initialData.images : [],
         scheduledDate: initialData.scheduledDate ? new Date(initialData.scheduledDate) : null,
+        scheduledTime: initialData.scheduledTime || '', // Keep in 24-hour format for backend
         metadata: {
           ...prev.metadata,
           ...(initialData.metadata || {})
@@ -181,6 +182,40 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     };
   };
 
+  // Convert 24-hour time to 12-hour format
+  const convertTo12Hour = (time24) => {
+    if (!time24) return { hour: '12', minute: '00', period: 'PM' };
+    
+    const [hours, minutes] = time24.split(':');
+    const hour24 = parseInt(hours, 10);
+    const minute = minutes || '00';
+    
+    if (hour24 === 0) {
+      return { hour: '12', minute, period: 'AM' };
+    } else if (hour24 < 12) {
+      return { hour: hour24.toString(), minute, period: 'AM' };
+    } else if (hour24 === 12) {
+      return { hour: '12', minute, period: 'PM' };
+    } else {
+      return { hour: (hour24 - 12).toString(), minute, period: 'PM' };
+    }
+  };
+
+// Convert 12-hour time to 24-hour format
+const convertTo24Hour = (hour12, minute, period) => {
+  const hour = parseInt(hour12, 10);
+  let hour24;
+  
+  if (period === 'AM') {
+    hour24 = hour === 12 ? 0 : hour;
+  } else {
+    hour24 = hour === 12 ? 12 : hour + 12;
+  }
+  
+  return `${hour24.toString().padStart(2, '0')}:${minute}`;
+};
+
+
   // Carousel handlers
   const openCarousel = (index = 0) => {
     setCurrentCarouselIndex(index);
@@ -212,12 +247,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const onSaveDraft = () => {
     const draftData = { ...postData, status: "draft" };
     console.log("Saving draft:", draftData);
-
     setToast({
       type: 'success',
       message: 'Draft saved successfully!',
     });
-
     // Auto-hide toast after 3 seconds
     setTimeout(() => setToast(null), 3000);
   };
@@ -249,11 +282,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
       // ✅ Instagram-specific validations
       if (isVideo) {
-        // Check video size for Instagram (100MB limit)
-        if (file.size > 100 * 1024 * 1024) {
+        // Check video size for Instagram (250MB limit)
+        if (file.size > 250 * 1024 * 1024) {
           invalidFiles.push({
             file,
-            reason: 'Video too large for Instagram (max 100MB)'
+            reason: 'Video too large for Instagram (max 250MB)'
           });
           return;
         }
@@ -1963,30 +1996,91 @@ if (postData.platforms.includes('youtube')) {
 
                     {/* Show date/time picker only if scheduled */}
                     {isScheduled && (
-                      <div className="schedule-inputs">
-                        <div className="input-group">
-                          <input
-                            type="date"
-                            value={postData.scheduledDate}
-                            onChange={(e) =>
-                              setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))
-                            }
-                            className="form-input"
-                            min={new Date().toISOString().split("T")[0]}
-                            required
-                          />
-                        </div>
-                        <div className="input-group">
-                          <input
-                            type="time"
-                            value={postData.scheduledTime}
-                            onChange={(e) =>
-                              setPostData(prev => ({ ...prev, scheduledTime: e.target.value }))
-                            }
-                            className="form-input"
-                            required
-                          />
-                        </div>
+<div className="schedule-inputs">
+  <div className="input-group">
+    <input
+      type="date"
+      value={postData.scheduledDate}
+      onChange={(e) =>
+        setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))
+      }
+      className="form-input"
+      min={new Date().toISOString().split("T")[0]}
+      required
+    />
+  </div>
+  
+  <div className="input-group">
+    <div className="time-input-container">
+      <div className="time-input-header">
+        <span className="time-input-label">Select time</span>
+        <Clock size={16} className="time-input-icon" />
+      </div>
+      <div className="time-picker-12hr">
+        <select
+          value={postData.scheduledTime ? convertTo12Hour(postData.scheduledTime).hour : '12'}
+          onChange={(e) => {
+            const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
+            const newTime = { ...currentTime, hour: e.target.value };
+            const time24 = convertTo24Hour(newTime.hour, newTime.minute, newTime.period);
+            setPostData(prev => ({ ...prev, scheduledTime: time24 }));
+          }}
+          className="time-select"
+          required
+        >
+          {[...Array(12)].map((_, i) => {
+            const hour = i + 1;
+            return (
+              <option key={hour} value={hour.toString()}>
+                {hour}
+              </option>
+            );
+          })}
+        </select>
+        
+        <span className="time-separator">:</span>
+        
+        <select
+          value={postData.scheduledTime ? convertTo12Hour(postData.scheduledTime).minute : '00'}
+          onChange={(e) => {
+            const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
+            const newTime = { ...currentTime, minute: e.target.value };
+            const time24 = convertTo24Hour(newTime.hour, newTime.minute, newTime.period);
+            setPostData(prev => ({ ...prev, scheduledTime: time24 }));
+          }}
+          className="time-select"
+          required
+        >
+          {[...Array(60)].map((_, i) => {
+            const minute = i.toString().padStart(2, '0');
+            return (
+              <option key={minute} value={minute}>
+                {minute}
+              </option>
+            );
+          })}
+        </select>
+        
+        <select
+          value={postData.scheduledTime ? convertTo12Hour(postData.scheduledTime).period : 'PM'}
+          onChange={(e) => {
+            const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
+            const newTime = { ...currentTime, period: e.target.value };
+            const time24 = convertTo24Hour(newTime.hour, newTime.minute, newTime.period);
+            setPostData(prev => ({ ...prev, scheduledTime: time24 }));
+          }}
+          className="time-select period-select"
+          required
+        >
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  
+
 
                         {/* {(postData.scheduledDate && postData.scheduledTime) && (
           <div className="scheduled-display">

@@ -1647,7 +1647,7 @@
 .content-hub .modal-overlay .modal-content{
   padding: 0;
   /* flex: none; */
-  height: 60%;
+  /* height: 60%; */
   width: max-content;
 }
 

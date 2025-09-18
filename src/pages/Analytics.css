@@ -1,6 +1,7 @@
 /* Analytics.css */
 .analytics-page {
-  padding-bottom: 2rem;
+  /* padding-bottom: 2rem; */
+  padding: 1rem 1rem;
   /* max-width: 1400px; */
   /* margin: 0 auto; */
 
@@ -19,12 +20,13 @@
 /* Page Header */
 .analytics-header {
   display: flex;
+  max-width: 100%;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
   /* margin-bottom: 2rem; */
-  background-color: white;
-  padding: 1rem 2rem;
+  /* background-color: white; */
+  padding: 1rem 0;
 }
 
 .analytics-header h1 {
@@ -234,6 +236,8 @@
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  padding: 0 2rem;
+  padding-bottom: 1rem;
 }
 
 .analytics-section h2 {
@@ -241,7 +245,7 @@
   font-weight: 600;
   color: #1e293b;
   margin: 0;
-  padding: 1.5rem 1.5rem 0 1.5rem;
+  padding: 1.5rem;
 }
 
 /* KPI Grid */
@@ -289,6 +293,14 @@
 
 .kpi-icon.engagement {
   background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.kpi-icon.comments{
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.kpi-icon.shares{
+background: linear-gradient(135deg, #fde047, #facc15);
 }
 
 .kpi-icon.engagement-rate {
@@ -954,8 +966,8 @@
 /* Navigation */
 .analytics-navigation {
   display: flex;
-  gap: 8px;
-  padding: 16px 20px;
+  justify-content: space-between;
+  padding: 16px 0;
   background: #f8f9fa;
   border-bottom: 1px solid #e9ecef;
   overflow-x: auto;
@@ -965,7 +977,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 8px 3.1rem;
   border: none;
   background: white;
   color: #6c757d;
@@ -993,8 +1005,8 @@
 .engagement-overview-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 15px;
+  margin: 1.5rem;
 }
 
 .engagement-card {
@@ -1015,7 +1027,7 @@
 }
 
 .card-value {
-  font-size: 28px;
+  font-size: 25px;
   font-weight: 700;
   color: #2c3e50;
   margin-bottom: 8px;
@@ -1049,7 +1061,7 @@
   border: 1px solid #e9ecef;
   border-radius: 12px;
   padding: 20px;
-  margin: 20px 0;
+  margin: 1.5rem;
 }
 
 .chart-container h3 {
@@ -1144,6 +1156,9 @@
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
+  padding-top: 0.5rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .demo-card {
@@ -1215,6 +1230,7 @@
   font-size: 18px;
   font-weight: 600;
   color: #2c3e50;
+  margin-left: 1.5rem;
 }
 
 .activity-heatmap {
@@ -1225,6 +1241,8 @@
   border: 1px solid #e9ecef;
   border-radius: 12px;
   overflow-x: auto;
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
 
 .activity-hour {
@@ -1261,6 +1279,7 @@
   justify-content: center;
   gap: 20px;
   margin-top: 16px;
+  margin-bottom: 1.5rem;
 }
 
 .legend-item {
@@ -1295,6 +1314,9 @@
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
+  margin-top: 1rem;
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
 
 .content-type-card {
@@ -1311,19 +1333,19 @@
 }
 
 .content-type-card.outstanding {
-  border-left: 4px solid #28a745;
+  /* border-left: 4px solid #28a745; */
 }
 
 .content-type-card.excellent {
-  border-left: 4px solid #17a2b8;
+  /* border-left: 4px solid #17a2b8; */
 }
 
 .content-type-card.good {
-  border-left: 4px solid #ffc107;
+  /* border-left: 4px solid #ffc107; */
 }
 
 .content-type-card.average {
-  border-left: 4px solid #6c757d;
+  /* border-left: 4px solid #6c757d; */
 }
 
 .content-type-header {
@@ -1409,6 +1431,9 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 16px;
   margin-top: 30px;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .insight-card {
@@ -1447,6 +1472,9 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
+  margin-top: 0.5rem;
+  margin-left: 1rem;
+  margin-right: 1rem;
 }
 
 .growth-card {
@@ -1466,12 +1494,15 @@
   font-size: 18px;
   font-weight: 600;
   color: #2c3e50;
+  margin-left: 2rem;
 }
 
 .platform-growth-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 16px;
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
 }
 
 .platform-growth-card {
@@ -1491,11 +1522,11 @@
 }
 
 .platform-growth-card.instagram {
-  border-left: 4px solid #e1306c;
+  /* border-left: 4px solid #e1306c; */
 }
 
 .platform-growth-card.facebook {
-  border-left: 4px solid #1877f2;
+  /* border-left: 4px solid #1877f2; */
 }
 
 .platform-growth-card svg {
@@ -1626,17 +1657,19 @@
 
 /* Best Times Section */
 .best-times-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
+  /* display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); */
+  display: flex;
+  gap: 2rem;
   margin-bottom: 30px;
+  flex-wrap: wrap;
 }
 
 .day-card {
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 12px;
-  padding: 16px;
+  padding: 16px 5rem;
   text-align: center;
   transition: all 0.2s ease;
 }
@@ -2526,3 +2559,122 @@
     margin: 0;
     padding: 1.5rem 1.5rem 0 1.5rem;
 }
+
+
+/* CSS */
+.key-metrics-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.key-metrics-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.metric-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.metric-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+}
+
+.metric-subtitle {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.metric-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.metric-change.positive {
+  color: #059669;
+}
+
+.metric-change.negative {
+  color: #dc2626;
+}
+
+/* Engagement rate */
+.metric-rate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+
+/* Peak Engagement rate */
+.metric-peak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ec4899, #db2777);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* Peak Engagement rate */
+.metric-topcontent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+
+
+
