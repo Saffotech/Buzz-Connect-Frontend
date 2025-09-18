@@ -6,6 +6,8 @@ import {
   Instagram,
   Twitter,
   Facebook,
+  Linkedin, // Added LinkedIn icon
+  Youtube,
   Upload,
   Eye,
   Send,
@@ -458,35 +460,60 @@ const convertTo24Hour = (hour12, minute, period) => {
   };
 
   const fetchUserProfile = async () => {
-    setLoadingProfile(true);
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data.success) {
-        setUserProfile(response.data.data);
+  setLoadingProfile(true);
+  try {
+    const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    if (response.data.success) {
+      // Ensure YouTube is added to connectedPlatforms if a YouTube account exists
+      const userData = response.data.data;
+      
+      // Check if YouTube account exists but is not in connectedPlatforms
+      const hasYouTubeAccount = userData.connectedAccounts?.some(acc => acc.platform === 'youtube');
+      if (hasYouTubeAccount && !userData.connectedPlatforms?.includes('youtube')) {
+        userData.connectedPlatforms = [...(userData.connectedPlatforms || []), 'youtube'];
       }
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-      showToast('Failed to load user profile', 'error');
-    } finally {
-      setLoadingProfile(false);
+      
+      setUserProfile(userData);
     }
-  };
+  } catch (error) {
+    console.error('Failed to fetch user profile:', error);
+    showToast('Failed to load user profile', 'error');
+  } finally {
+    setLoadingProfile(false);
+  }
+};
+console.log('User profile data:', {
+  connectedPlatforms: userProfile?.connectedPlatforms,
+  connectedAccounts: userProfile?.connectedAccounts
+});
 
   // Generate platforms array based on connected accounts
-  const getAvailablePlatforms = () => {
-    const allPlatforms = [
-      { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
-      { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
-    ];
+const getAvailablePlatforms = () => {
+  const allPlatforms = [
+    { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
+    { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
+    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
+    { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' }
+  ];
 
-    return allPlatforms.map(platform => ({
+  return allPlatforms.map(platform => {
+    // Specific check for YouTube account
+    const isYouTubeConnected = 
+      platform.id === 'youtube' && 
+      userProfile?.connectedAccounts?.some(acc => acc.platform === 'youtube');
+    
+    return {
       ...platform,
-      connected: userProfile?.connectedPlatforms?.includes(platform.id) || false,
+      connected: isYouTubeConnected || userProfile?.connectedPlatforms?.includes(platform.id) || false,
       accounts: userProfile?.connectedAccounts?.filter(acc => acc.platform === platform.id) || []
-    }));
-  };
+    };
+  });
+};
+// console.log('Generated platforms:', platforms);
+
 
   const platforms = userProfile ? getAvailablePlatforms() : [];
 
@@ -506,7 +533,9 @@ const convertTo24Hour = (hour12, minute, period) => {
     const limits = {
       twitter: 280,
       instagram: 2200,
-      facebook: 63206
+      facebook: 63206,
+      linkedin: 3000,
+          youtube: 5000 // YouTube description limit
     };
 
     const selectedPlatforms = postData.platforms;
@@ -554,7 +583,7 @@ const convertTo24Hour = (hour12, minute, period) => {
     }
 
     // Check if accounts are selected for platforms that require it
-    const platformsRequiringAccounts = ['instagram', 'facebook'];
+const platformsRequiringAccounts = ['instagram', 'facebook', 'linkedin', 'youtube']; 
     for (const platform of postData.platforms) {
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
@@ -606,8 +635,14 @@ const convertTo24Hour = (hour12, minute, period) => {
       return false;
     }
 
+    // Add YouTube-specific validation
+  if (postData.platforms.includes('youtube') && !validateYouTubeContent()) {
+    return false;
+  }
+
+
     // Check if accounts are selected for platforms that require it
-    const platformsRequiringAccounts = ['instagram', 'facebook'];
+    const platformsRequiringAccounts = ['instagram', 'facebook', 'linkedin']; // Added LinkedIn
     for (const platform of postData.platforms) {
       if (platformsRequiringAccounts.includes(platform)) {
         const selectedAccountsForPlatform = postData.selectedAccounts[platform] || [];
@@ -623,7 +658,29 @@ const convertTo24Hour = (hour12, minute, period) => {
 
     return true;
   };
-
+  const validateYouTubeContent = () => {
+  if (postData.platforms.includes('youtube')) {
+    // Check if we have any video
+    const hasVideo = postData.images.some(img => 
+      img.fileType === 'video' || 
+      img.url?.includes('video') || 
+      img.url?.includes('.mp4')
+    );
+    
+    if (!hasVideo) {
+      showToast('YouTube posts require at least one video', 'error');
+      return false;
+    }
+    
+    // Check if title (content) is too long
+    if (postData.content.length > 100) {
+      showToast('YouTube title cannot exceed 100 characters', 'error');
+      return false;
+    }
+  }
+  
+  return true;
+};
   // Handle preview tab click with validation
   const handlePreviewClick = () => {
     if (validatePreview()) {
@@ -797,38 +854,57 @@ const convertTo24Hour = (hour12, minute, period) => {
 
       // ✅ Enhanced post data preparation with better media handling
       const apiPostData = {
-        content: stripMarkdownForSocialMedia(postData.content), // ✅ Apply markdown stripping
-        platforms: postData.platforms,
-        selectedAccounts: cleanedSelectedAccounts,
-        images: postData.images.map((img, index) => ({
-          url: img.url,
-          altText: img.altText || img.originalName || 'Post media',
-          originalName: img.originalName || img.filename || `Media ${index + 1}`,
-          displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-          filename: img.filename,
-          publicId: img.publicId || null,
-          fileType: img.fileType || 'image',
-          size: img.size,
-          dimensions: img.dimensions,
-          duration: img.duration,
-          // ✅ Add order for carousel
-          order: index,
-          // ✅ Enhanced metadata
-          format: img.format,
-          humanSize: img.size ? formatFileSize(img.size) : null
-        })),
-        hashtags: Array.isArray(postData.hashtags)
-          ? postData.hashtags
-          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-        mentions: Array.isArray(postData.mentions)
-          ? postData.mentions
-          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-        metadata: {
-          category: postData.metadata?.category || 'other',
-          source: 'web'
-        }
-      };
-
+  content: postData.content,
+  platforms: postData.platforms,
+  selectedAccounts: cleanedSelectedAccounts,
+  images: postData.images.map((img, index) => ({
+    url: img.url,
+    altText: img.altText || img.originalName || 'Post media',
+    originalName: img.originalName || img.filename || `Media ${index + 1}`,
+    displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+    filename: img.filename,
+    publicId: img.publicId || null,
+    fileType: img.fileType || 'image',
+    size: img.size,
+    dimensions: img.dimensions,
+    duration: img.duration,
+    order: index,
+    format: img.format,
+    humanSize: img.size ? formatFileSize(img.size) : null
+  })),
+  hashtags: Array.isArray(postData.hashtags)
+    ? postData.hashtags
+    : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+  mentions: Array.isArray(postData.mentions)
+    ? postData.mentions
+    : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+  metadata: {
+    category: postData.metadata?.category || 'other',
+    source: 'web'
+  }
+};
+if (postData.platforms.includes('youtube')) {
+  // For YouTube, we use content as the video title
+  apiPostData.title = postData.content.substring(0, 100);
+  
+  // For YouTube, we should prioritize video files
+  const videoFiles = postData.images.filter(img => 
+    img.fileType === 'video' || 
+    img.url?.includes('video') || 
+    img.url?.includes('.mp4')
+  );
+  
+  if (videoFiles.length > 0) {
+    // Use only the first video for YouTube
+    apiPostData.youtubeVideo = videoFiles[0];
+    console.log('YouTube video selected:', apiPostData.youtubeVideo.url);
+    
+    // If YouTube is the only platform, we might want to remove other images
+    if (postData.platforms.length === 1) {
+      apiPostData.images = [videoFiles[0]];
+    }
+  }
+}
       // ✅ Handle scheduling vs immediate publishing
       if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
         // SCHEDULED POST
@@ -1025,6 +1101,54 @@ const convertTo24Hour = (hour12, minute, period) => {
     }
   };
 
+  const generateMentions = async () => {
+    // Check if platforms are selected
+    if (postData.platforms.length === 0) {
+      showToast('Please select at least one social media platform first', 'error');
+      return;
+    }
+
+    if (!postData.content.trim()) {
+      showToast('Please enter some content first to generate mentions', 'error');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    showToast('Generating mentions...', 'info');
+
+    try {
+      const selectedPlatform = postData.platforms[0];
+
+      const response = await apiClient.suggestMentions({
+        content: postData.content,
+        platform: selectedPlatform,
+        count: 5,
+        mentionTypes: ['influencers', 'brands'],
+        verifiedOnly: false
+      });
+
+      console.log('Mentions Response:', response);
+
+      if (response.success && response.data.mentions) {
+        const newMentions = response.data.mentions.join(' ');
+        setPostData(prev => ({
+          ...prev,
+          mentions: prev.mentions ? `${prev.mentions} ${newMentions}` : newMentions
+        }));
+        showToast(`Added ${response.data.mentions.length} mentions`, 'success');
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Mentions generation failed:', error);
+      setError('Failed to generate mentions. Please try again.');
+      showToast('Failed to generate mentions', 'error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   // ✅ UPDATED: Apply AI suggestion with hashtag extraction
   const applyAISuggestion = (suggestion) => {
     console.log('Applying AI suggestion:', suggestion);
@@ -1061,7 +1185,7 @@ const convertTo24Hour = (hour12, minute, period) => {
     };
   }, []);
 
-  // Keyboard navigation for carousel
+    // Keyboard navigation for carousel
   useEffect(() => {
     if (!showImageCarousel) return;
 
@@ -1381,7 +1505,8 @@ const convertTo24Hour = (hour12, minute, period) => {
                               <div className="suggestion-platforms">
                                 {suggestion.platforms.map(platform => {
                                   const Icon = platform === 'instagram' ? Instagram :
-                                    platform === 'twitter' ? Twitter : Facebook;
+                                    platform === 'twitter' ? Twitter : 
+                                    platform === 'linkedin' ? Linkedin : Facebook;
                                   return <Icon key={platform} size={14} />;
                                 })}
                               </div>
@@ -1467,7 +1592,7 @@ const convertTo24Hour = (hour12, minute, period) => {
                               </label>
                               <div className="accounts-checkbox-list">
                                 {platform.accounts.map((account) => {
-                                  const accountId = account.accountId || account.id || account._id || account.pageId;
+                                  const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId; // Added companyId for LinkedIn
 
                                   if (!accountId) {
                                     console.warn('Account missing ID:', account);
@@ -1475,6 +1600,11 @@ const convertTo24Hour = (hour12, minute, period) => {
                                   }
 
                                   const isChecked = isAccountSelected(platform.id, accountId);
+                                  
+                                  // Special handling for LinkedIn accounts to show company or personal type
+                                  const accountName = platform.id === 'linkedin' && account.accountType === 'company' 
+                                    ? `${account.username || account.companyName || accountId} (Company Page)` 
+                                    : account.username || account.name || account.displayName || accountId;
 
                                   return (
                                     <label key={`${platform.id}-${accountId}`} className="account-checkbox-item">
@@ -1486,7 +1616,7 @@ const convertTo24Hour = (hour12, minute, period) => {
                                       />
                                       <span className="checkbox-custom"></span>
                                       <span className="account-name">
-                                        {account.username || account.name || account.displayName || accountId}
+                                        {accountName}
                                         {account.pageId && account.pageId !== accountId && (
                                           <span className="account-id"> (ID: {account.pageId})</span>
                                         )}
@@ -1503,7 +1633,7 @@ const convertTo24Hour = (hour12, minute, period) => {
                                     className="select-all-btn"
                                     onClick={() => {
                                       platform.accounts.forEach(account => {
-                                        const accountId = account.accountId || account.id || account._id || account.pageId;
+                                        const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId; // Added companyId for LinkedIn
                                         if (accountId && !isAccountSelected(platform.id, accountId)) {
                                           handleAccountSelection(platform.id, accountId, true);
                                         }
@@ -1586,6 +1716,16 @@ const convertTo24Hour = (hour12, minute, period) => {
                     <label className="section-label">
                       <AtSign size={16} />
                       Mentions
+                      <button
+                        type="button"
+                        className="ai-hashtag-btn" // reuse the same styling as hashtags
+                        onClick={generateMentions}
+                        disabled={isGenerating || !postData.content.trim()}
+                        title="Generate mentions with AI"
+                      >
+                        {isGenerating ? <></> : <Sparkles size={14} />}
+                        AI
+                      </button>
                     </label>
                     <input
                       type="text"
@@ -2022,85 +2162,113 @@ const convertTo24Hour = (hour12, minute, period) => {
             </div>
           )}
 
-          {activeTab === 'preview' && (
-            <div className="preview-tab">
-              <div className="preview-content">
-                <h3>Post Preview</h3>
-                <div className="preview-platforms-grid">
-                  {postData.platforms.map(platformId => {
-                    const platform = platforms.find(p => p.id === platformId);
-                    const Icon = platform.icon;
+         {activeTab === 'preview' && (
+  <div className="preview-tab">
+    <div className="preview-content">
+      <h3>Post Preview</h3>
+      <div className="preview-platforms-grid">
+        {postData.platforms.map(platformId => {
+          const platform = platforms.find(p => p.id === platformId);
+          const Icon = platform.icon;
 
-                    return (
-                      <div key={platformId} className={`platform-preview ${platformId}`} style={{ '--platform-color': platform.color }}>
-                        <div className="platform-header">
-                          <Icon size={20} />
-                          <span>{platform.name}</span>
-                        </div>
-                        <div className="preview-post">
-                          {postData.images.length > 0 && (
-                            <div className={`preview-images ${postData.images.length === 1 ? 'single-image' :
-                              postData.images.length === 2 ? 'two-images' :
-                                postData.images.length === 3 ? 'three-images' :
-                                  postData.images.length === 4 ? 'four-images' : ''
-                              }`}>
-                              {postData.images.map((mediaItem, index) => {
-                                const isVideo = mediaItem.fileType === 'video' ||
-                                  mediaItem.url?.includes('video') ||
-                                  mediaItem.url?.includes('.mp4') ||
-                                  mediaItem.url?.includes('.mov') ||
-                                  mediaItem.url?.includes('.avi');
-
-                                return isVideo ? (
-                                  <video
-                                    key={index}
-                                    src={mediaItem.url}
-                                    className="preview-video"
-                                    controls
-                                    muted
-                                    playsInline
-                                    onError={(e) => {
-                                      console.error('Preview video failed to load');
-                                      e.target.style.display = 'none';
-                                    }}
-                                  />
-                                ) : (
-                                  <img
-                                    key={index}
-                                    src={mediaItem.url}
-                                    alt={mediaItem.altText || "Post preview"}
-                                    onError={(e) => {
-                                      console.error('Preview image failed to load');
-                                      e.target.style.display = 'none';
-                                    }}
-                                  />
-                                );
-                              })}
-                            </div>
-                          )}
-                          <div className="preview-text">
-                            <p>{postData.content}</p>
-                            {postData.hashtags && (
-                              <div className="preview-hashtags">
-                                {(typeof postData.hashtags === 'string' ?
-                                  postData.hashtags.split(' ') :
-                                  Array.isArray(postData.hashtags) ? postData.hashtags : []
-                                )
-                                  .filter(tag => tag.startsWith('#'))
-                                  .map((tag, index) => (
-                                    <span key={index} className="hashtag">{tag}</span>
-                                  ))}
-                              </div>
-                            )}
+          return (
+            <div key={platformId} className={`platform-preview ${platformId}`} style={{ '--platform-color': platform.color }}>
+              <div className="platform-header">
+                <Icon size={20} />
+                <span>{platform.name}</span>
+              </div>
+              <div className="preview-post">
+                {postData.images.length > 0 && (
+                  <div className={`preview-images ${platformId === 'youtube' ? 'youtube-video' : 
+                    postData.images.length === 1 ? 'single-image' :
+                    postData.images.length === 2 ? 'two-images' :
+                    postData.images.length === 3 ? 'three-images' :
+                    postData.images.length === 4 ? 'four-images' : ''
+                  }`}>
+                    {/* For YouTube, only show the first video */}
+                    {platformId === 'youtube' ? (
+                      postData.images.filter(img => img.fileType === 'video' || 
+                        img.url?.includes('video') || 
+                        img.url?.includes('.mp4'))
+                      .slice(0, 1)
+                      .map((videoItem, index) => (
+                        <div key={index} className="youtube-preview-container">
+                          <video
+                            src={videoItem.url}
+                            className="preview-video youtube-preview"
+                            controls
+                            muted
+                            playsInline
+                            onError={(e) => {
+                              console.error('Preview video failed to load');
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                          <div className="youtube-title">
+                            {postData.content.substring(0, 100)}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      ))
+                    ) : (
+                      // Normal media display for other platforms
+                      postData.images.map((mediaItem, index) => {
+                        const isVideo = mediaItem.fileType === 'video' ||
+                          mediaItem.url?.includes('video') ||
+                          mediaItem.url?.includes('.mp4') ||
+                          mediaItem.url?.includes('.mov') ||
+                          mediaItem.url?.includes('.avi');
+
+                        return isVideo ? (
+                          <video
+                            key={index}
+                            src={mediaItem.url}
+                            className="preview-video"
+                            controls
+                            muted
+                            playsInline
+                            onError={(e) => {
+                              console.error('Preview video failed to load');
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <img
+                            key={index}
+                            src={mediaItem.url}
+                            alt={mediaItem.altText || "Post preview"}
+                            onError={(e) => {
+                              console.error('Preview image failed to load');
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+                <div className={`preview-text ${platformId === 'youtube' ? 'youtube-description' : ''}`}>
+                  <p>{postData.content}</p>
+                  {postData.hashtags && (
+                    <div className="preview-hashtags">
+                      {(typeof postData.hashtags === 'string' ?
+                        postData.hashtags.split(' ') :
+                        Array.isArray(postData.hashtags) ? postData.hashtags : []
+                      )
+                        .filter(tag => tag.startsWith('#'))
+                        .map((tag, index) => (
+                          <span key={index} className="hashtag">{tag}</span>
+                        ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          )}
+          );
+        })}
+      </div>
+    </div>
+  </div>
+)}
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
@@ -2161,7 +2329,7 @@ const convertTo24Hour = (hour12, minute, period) => {
         )}
       </div>
 
-      <MediaLibraryModal
+           <MediaLibraryModal
         isOpen={showMediaLibrary}
         onClose={() => setShowMediaLibrary(false)}
         onSelectImages={handleImportFromLibrary}
@@ -2516,7 +2684,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
                           <button
                             className="media-action-btn view-btn"
                             onClick={(e) => {
-                              e.stopPropagation(); // ✅ so selecting isn’t triggered
+                              e.stopPropagation(); // ✅ so selecting isn't triggered
                               openLibraryCarousel(index);
                             }}
                             title="View in carousel"
