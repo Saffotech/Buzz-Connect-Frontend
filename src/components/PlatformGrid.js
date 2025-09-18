@@ -1,15 +1,15 @@
-import React from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import { AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useConnectedPlatforms } from "../hooks/useApi";
 import { usePlatformGridTracking } from "../hooks/useAnalytics";
 import { getPlatformIcon } from "../utils/platform-helpers";
 import "./PlatformGrid.css";
-import { useNavigate } from "react-router-dom";
 
 /**
- * PlatformButton - Sub-component for individual platform selection
+ * Memoized PlatformButton - Sub-component for individual platform selection
  */
-const PlatformButton = ({
+const PlatformButton = memo(({
   platform,
   isSelected,
   onSelect,
@@ -19,29 +19,31 @@ const PlatformButton = ({
   const Icon = getPlatformIcon(platform.id);
   const navigate = useNavigate();
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (!platform.connected) {
-      // Redirect if not connected
       navigate('/settings?tab=accounts');
       return;
     }
     if (!disabled) {
       onSelect(platform.id);
     }
-  };
+  }, [platform.connected, platform.id, disabled, onSelect, navigate]);
+
+  const title = platform.connected 
+    ? platform.name 
+    : `${platform.name} - Not Connected`;
+
+  const buttonClass = `platform-btn ${isSelected ? "selected" : ""} ${
+    !platform.connected ? "not-connected" : ""
+  } ${disabled ? "disabled" : ""}`;
 
   return (
     <button
-      className={`platform-btn ${isSelected ? "selected" : ""} ${!platform.connected ? "not-connected" : ""
-        } ${disabled ? "disabled" : ""}`}
+      className={buttonClass}
       onClick={handleClick}
       disabled={disabled}
-      title={
-        platform.connected ? platform.name : `${platform.name} - Not Connected`
-      }
-      style={{
-        "--platform-color": platform.color,
-      }}
+      title={title}
+      style={{ "--platform-color": platform.color }}
     >
       <div className="platform-btn-content">
         <div className="platform-icon">
@@ -70,41 +72,113 @@ const PlatformButton = ({
       </div>
     </button>
   );
-};
+});
 
+PlatformButton.displayName = 'PlatformButton';
 
 /**
- * PlatformGridSkeleton - Loading skeleton for the platform grid
+ * Memoized PlatformGridSkeleton - Loading skeleton for the platform grid
  */
-const PlatformGridSkeleton = ({ layout, count = 3 }) => {
+const PlatformGridSkeleton = memo(({ layout, count = 3 }) => {
+  const skeletonItems = useMemo(
+    () => Array.from({ length: count }, (_, index) => (
+      <div key={index} className="platform-btn-skeleton">
+        <div className="skeleton-icon"></div>
+        <div className="skeleton-text">
+          <div className="skeleton-line"></div>
+          <div className="skeleton-line short"></div>
+        </div>
+      </div>
+    )),
+    [count]
+  );
+
   return (
     <div className={`platform-grid-skeleton ${layout}`}>
-      {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="platform-btn-skeleton">
-          <div className="skeleton-icon"></div>
-          <div className="skeleton-text">
-            <div className="skeleton-line"></div>
-            <div className="skeleton-line short"></div>
-          </div>
-        </div>
-      ))}
+      {skeletonItems}
     </div>
   );
+});
+
+PlatformGridSkeleton.displayName = 'PlatformGridSkeleton';
+
+/**
+ * Memoized ErrorState component
+ */
+const ErrorState = memo(() => (
+  <div className="platform-grid-error">
+    <AlertCircle size={20} />
+    <span>Failed to load platforms</span>
+    <button onClick={() => window.location.reload()} className="retry-btn">
+      Retry
+    </button>
+  </div>
+));
+
+ErrorState.displayName = 'ErrorState';
+
+/**
+ * Memoized EmptyState component
+ */
+const EmptyState = memo(({ showOnlyConnected }) => (
+  <div className="platform-grid-empty">
+    <AlertCircle size={24} />
+    <span>
+      {showOnlyConnected
+        ? "No connected platforms found"
+        : "No platforms available"}
+    </span>
+  </div>
+));
+
+EmptyState.displayName = 'EmptyState';
+
+/**
+ * Hook for platform filtering and sorting logic
+ */
+const useFilteredPlatforms = (platforms, showOnlyConnected, allowedPlatforms) => {
+  return useMemo(() => {
+    let filtered = platforms;
+
+    // Filter by connection status
+    if (showOnlyConnected) {
+      filtered = filtered.filter((platform) => platform.connected);
+    }
+
+    // Filter by allowed platforms
+    if (allowedPlatforms && Array.isArray(allowedPlatforms)) {
+      filtered = filtered.filter((platform) =>
+        allowedPlatforms.includes(platform.id)
+      );
+    }
+
+    // Sort by priority and then alphabetically
+    const priorityOrder = ["instagram", "facebook", "twitter"];
+    
+    filtered.sort((a, b) => {
+      const aPriority = priorityOrder.indexOf(a.id);
+      const bPriority = priorityOrder.indexOf(b.id);
+
+      // Both in priority list → maintain defined order
+      if (aPriority !== -1 && bPriority !== -1) {
+        return aPriority - bPriority;
+      }
+      // One in priority list → move it first
+      if (aPriority !== -1) return -1;
+      if (bPriority !== -1) return 1;
+
+      // Otherwise alphabetical
+      return a.name.localeCompare(b.name);
+    });
+
+    return filtered;
+  }, [platforms, showOnlyConnected, allowedPlatforms]);
 };
 
 /**
- * PlatformGrid - Main component for platform selection
- *
- * @param {Array} selectedPlatforms - Array of selected platform IDs
- * @param {Function} onPlatformChange - Callback when selection changes
- * @param {string} layout - 'horizontal' or 'vertical' layout
- * @param {boolean} multiSelect - Allow multiple platform selection
- * @param {boolean} showLabels - Show platform names and usernames
- * @param {boolean} showOnlyConnected - Only show connected platforms
- * @param {Array} allowedPlatforms - Restrict to specific platforms
- * @param {boolean} disabled - Disable all interactions
+ * Main PlatformGrid component - Optimized and memoized
  */
-const PlatformGrid = ({
+const PlatformGrid = memo(({
   selectedPlatforms = [],
   onPlatformChange,
   layout = "horizontal",
@@ -113,12 +187,19 @@ const PlatformGrid = ({
   showOnlyConnected = false,
   allowedPlatforms = null,
   disabled = false,
-  context = "unknown", // For analytics tracking
+  context = "unknown",
 }) => {
   const { platforms, loading, error } = useConnectedPlatforms();
   const { trackGridUsage, trackSelection } = usePlatformGridTracking();
 
-  // Track grid usage when component mounts
+  // Filter and sort platforms
+  const filteredPlatforms = useFilteredPlatforms(
+    platforms, 
+    showOnlyConnected, 
+    allowedPlatforms
+  );
+
+  // Track grid usage when component mounts or key props change
   React.useEffect(() => {
     if (platforms.length > 0) {
       trackGridUsage("viewed", {
@@ -140,14 +221,15 @@ const PlatformGrid = ({
     trackGridUsage,
   ]);
 
-  const handlePlatformSelect = (platformId) => {
+  // Optimized platform selection handler
+  const handlePlatformSelect = useCallback((platformId) => {
     if (disabled) return;
 
     const platformData = platforms.find((p) => p.id === platformId);
+    
+    // Early return if platform not connected
     if (!platformData?.connected) {
-      // Redirect if not connected
-      navigate('/settings?tab=accounts');
-      return;
+      return; // Navigation handled in PlatformButton
     }
 
     const wasSelected = selectedPlatforms.includes(platformId);
@@ -161,48 +243,38 @@ const PlatformGrid = ({
       newSelection = wasSelected ? [] : [platformId];
     }
 
+    // Track the selection
     trackSelection(platformId, !wasSelected, context);
+    
+    // Call the change handler
     onPlatformChange(newSelection);
-  };
+  }, [
+    disabled,
+    platforms,
+    selectedPlatforms,
+    multiSelect,
+    trackSelection,
+    context,
+    onPlatformChange
+  ]);
 
-
-  // Filter platforms based on props
-  const filteredPlatforms = React.useMemo(() => {
-    let filtered = platforms;
-
-    // If only connected ones should be shown
-    if (showOnlyConnected) {
-      filtered = filtered.filter((platform) => platform.connected);
-    }
-
-    if (allowedPlatforms && Array.isArray(allowedPlatforms)) {
-      filtered = filtered.filter((platform) =>
-        allowedPlatforms.includes(platform.id)
+  // Memoize the platform buttons to prevent unnecessary re-renders
+  const platformButtons = useMemo(() => {
+    return filteredPlatforms.map((platform) => {
+      const isSelected = platform.connected && selectedPlatforms.includes(platform.id);
+      
+      return (
+        <PlatformButton
+          key={platform.id}
+          platform={platform}
+          isSelected={isSelected}
+          onSelect={handlePlatformSelect}
+          disabled={disabled}
+          showLabel={showLabels}
+        />
       );
-    }
-
-    // Priority order
-    const priorityOrder = ["instagram", "facebook", "twitter"];
-
-    // Step 1: Sort by priority first
-    filtered.sort((a, b) => {
-      const aPriority = priorityOrder.indexOf(a.id);
-      const bPriority = priorityOrder.indexOf(b.id);
-
-      // Both in priority list → keep defined order
-      if (aPriority !== -1 && bPriority !== -1) return aPriority - bPriority;
-      // One in priority list → move it first
-      if (aPriority !== -1) return -1;
-      if (bPriority !== -1) return 1;
-
-      // Otherwise alphabetical
-      return a.name.localeCompare(b.name);
     });
-
-    return filtered;
-  }, [platforms, showOnlyConnected, allowedPlatforms]);
-
-
+  }, [filteredPlatforms, selectedPlatforms, handlePlatformSelect, disabled, showLabels]);
 
   // Loading state
   if (loading) {
@@ -216,47 +288,23 @@ const PlatformGrid = ({
 
   // Error state
   if (error) {
-    return (
-      <div className="platform-grid-error">
-        <AlertCircle size={20} />
-        <span>Failed to load platforms</span>
-        <button onClick={() => window.location.reload()} className="retry-btn">
-          Retry
-        </button>
-      </div>
-    );
+    return <ErrorState />;
   }
 
   // Empty state
   if (filteredPlatforms.length === 0) {
-    return (
-      <div className="platform-grid-empty">
-        <AlertCircle size={24} />
-        <span>
-          {showOnlyConnected
-            ? "No connected platforms found"
-            : "No platforms available"}
-        </span>
-      </div>
-    );
+    return <EmptyState showOnlyConnected={showOnlyConnected} />;
   }
 
-  return (
-    <div className={`platform-grid ${layout} ${disabled ? "disabled" : ""}`}>
-      {filteredPlatforms.map((platform) => (
-        <PlatformButton
-          key={platform.id}
-          platform={platform}
-          isSelected={platform.connected && selectedPlatforms.includes(platform.id)} // ✅ Only allow if connected
-          onSelect={handlePlatformSelect}
-          disabled={disabled}
-          showLabel={showLabels}
-          style={{ "--platform-color": platform.color }}
-        />
+  const gridClass = `platform-grid ${layout} ${disabled ? "disabled" : ""}`;
 
-      ))}
+  return (
+    <div className={gridClass}>
+      {platformButtons}
     </div>
   );
-};
+});
+
+PlatformGrid.displayName = 'PlatformGrid';
 
 export default PlatformGrid;
