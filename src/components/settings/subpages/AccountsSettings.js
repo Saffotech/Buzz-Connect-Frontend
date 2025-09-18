@@ -116,24 +116,33 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
             }}
           >
             {/* Platform Icon */}
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '10px',
-                backgroundColor: platform === 'Instagram' ? '#FDF2F8' : '#EFF6FF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: `1px solid ${platform === 'Instagram' ? '#FCE7F3' : '#DBEAFE'}`
-              }}
-            >
-              {platform === 'Instagram' ? (
-                <Instagram size={24} style={{ color: '#E91E63' }} />
-              ) : (
-                <Facebook size={24} style={{ color: '#1877F2' }} />
-              )}
-            </div>
+<div
+  style={{
+    width: '48px',
+    height: '48px',
+    borderRadius: '10px',
+    backgroundColor: platform === 'Instagram' ? '#FDF2F8' : 
+                    platform === 'LinkedIn' ? '#EEF2FF' : 
+                    platform === 'YouTube' ? '#FEF2F2' : '#EFF6FF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: `1px solid ${platform === 'Instagram' ? '#FCE7F3' : 
+                        platform === 'LinkedIn' ? '#E0E7FF' : 
+                        platform === 'YouTube' ? '#FEE2E2' : '#DBEAFE'}`
+  }}
+>
+  {platform === 'Instagram' ? (
+    <Instagram size={24} style={{ color: '#E91E63' }} />
+  ) : platform === 'LinkedIn' ? (
+    <Linkedin size={24} style={{ color: '#0A66C2' }} />
+  ) : platform === 'YouTube' ? (
+    <Youtube size={24} style={{ color: '#FF0000' }} />
+  ) : (
+    <Facebook size={24} style={{ color: '#1877F2' }} />
+  )}
+</div>
+
 
             <div style={{ textAlign: 'left', flex: 1 }}>
               <div
@@ -544,7 +553,8 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
 };
 
 // Connection Options Modal Component
-const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram }) => {
+// Connection Options Modal Component
+const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedIn, onSelectYouTube }) => {
   if (!isOpen) return null;
 
   return (
@@ -586,7 +596,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
           marginBottom: '24px',
           textAlign: 'center'
         }}>
-          Connect Your Meta Account
+          Connect Social Accounts
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -682,15 +692,481 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
               </div>
             </div>
           </button>
+
+          {/* LinkedIn Connection Option */}
+          <button
+            onClick={onSelectLinkedIn}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '10px',
+              backgroundColor: '#EEF2FF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #E0E7FF'
+            }}>
+              <Linkedin size={24} style={{ color: '#0A66C2' }} />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                LinkedIn
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your LinkedIn profile or company pages
+              </div>
+            </div>
+          </button>
+          
+          {/* YouTube Connection Option */}
+          <button
+            onClick={onSelectYouTube}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '10px',
+              backgroundColor: '#FEF2F2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #FEE2E2'
+            }}>
+              <Youtube size={24} style={{ color: '#FF0000' }} />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                YouTube
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your YouTube channel for video publishing
+              </div>
+            </div>
+          </button>
         </div>
 
         <div style={{ marginTop: '24px', fontSize: '14px', color: '#6B7280', textAlign: 'center' }}>
-          Both options require an Instagram Business account linked to a Facebook Page
+          Connect your social accounts to start scheduling and publishing content
         </div>
       </div>
     </div>
   );
 };
+
+
+// LinkedIn Terms Modal Component
+const LinkedInTermsModal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease-out'
+      }}
+    >
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          height: '90vh',
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          maxWidth: '1000px',
+          width: '90%',
+          position: 'relative',
+          overflow: 'hidden',
+          animation: 'slideUp 0.3s ease-out'
+        }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            color: '#6B7280',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1
+          }}
+        >
+          <X size={30} />
+        </button>
+
+        {/* Content */}
+        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
+          <h1
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#111827',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            LinkedIn Terms and Conditions
+          </h1>
+
+          <div
+            style={{
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              fontFamily: 'Inter, Arial, sans-serif',
+              lineHeight: '1.7',
+              fontSize: '16px',
+              color: '#374151',
+            }}
+          >
+            <p>
+              <strong>LinkedIn Integration Terms:</strong> July 14, 2025
+            </p>
+
+            <p>
+              By connecting your LinkedIn account to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
+            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Access your basic profile information</li>
+              <li>Post content on your behalf</li>
+              <li>Access your company pages (if applicable)</li>
+              <li>Schedule and publish content to your LinkedIn profile and company pages</li>
+            </ul>
+
+            <p>
+              We prioritize your privacy and data security. Your authorization helps us provide seamless LinkedIn publishing 
+              and analytics services. You can revoke this access at any time by disconnecting your LinkedIn account from 
+              our platform.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Permission Scope
+            </h4>
+            <p>We request the following permissions:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li><strong>r_liteprofile</strong>: To access your basic profile information</li>
+              <li><strong>r_emailaddress</strong>: To access your email address for account association</li>
+              <li><strong>w_member_social</strong>: To create and manage posts on your behalf</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Data Storage
+            </h4>
+            <p>
+              We securely store your LinkedIn access token to facilitate your content publishing. 
+              Your token is encrypted and never shared with third parties.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer Buttons */}
+        <div
+          style={{
+            padding: '0.65rem',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end'
+          }}
+        >
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              color: 'white',
+              background: '#0A66C2',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              minWidth: '180px'
+            }}
+          >
+            <Linkedin size={16} />
+            Connect with LinkedIn
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+// YouTube Terms Modal Component
+const YouTubeTermsModal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease-out'
+      }}
+    >
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          height: '90vh',
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          maxWidth: '1000px',
+          width: '90%',
+          position: 'relative',
+          overflow: 'hidden',
+          animation: 'slideUp 0.3s ease-out'
+        }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            color: '#6B7280',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1
+          }}
+        >
+          <X size={30} />
+        </button>
+
+        {/* Content */}
+        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
+          <h1
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#111827',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            YouTube Terms and Conditions
+          </h1>
+
+          <div
+            style={{
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              fontFamily: 'Inter, Arial, sans-serif',
+              lineHeight: '1.7',
+              fontSize: '16px',
+              color: '#374151',
+            }}
+          >
+            <p>
+              <strong>YouTube Integration Terms:</strong> July 14, 2025
+            </p>
+
+            <p>
+              By connecting your YouTube account to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
+            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Access your YouTube channel information</li>
+              <li>Upload videos to your YouTube channel</li>
+              <li>Manage your video content and metadata</li>
+              <li>Schedule and publish content to your YouTube channel</li>
+            </ul>
+
+            <p>
+              We prioritize your privacy and data security. Your authorization helps us provide seamless YouTube publishing 
+              and analytics services. You can revoke this access at any time by disconnecting your YouTube account from 
+              our platform.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Permission Scope
+            </h4>
+            <p>We request the following permissions:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li><strong>youtube</strong>: To access your YouTube channel information</li>
+              <li><strong>youtube.upload</strong>: To upload videos to your channel</li>
+              <li><strong>youtube.readonly</strong>: To read your channel data for analytics</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Data Storage
+            </h4>
+            <p>
+              We securely store your YouTube access tokens to facilitate content publishing. 
+              Your tokens are encrypted and never shared with third parties.
+            </p>
+            
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Google Privacy Policy
+            </h4>
+            <p>
+              This integration is subject to <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google's Privacy Policy</a> and the <a href="https://developers.google.com/youtube/terms/developer-policies" target="_blank" rel="noopener noreferrer">YouTube API Services Terms of Service</a>.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer Buttons */}
+        <div
+          style={{
+            padding: '0.65rem',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end'
+          }}
+        >
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              color: 'white',
+              background: '#FF0000',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              minWidth: '180px'
+            }}
+          >
+            <Youtube size={16} />
+            Connect with YouTube
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const AccountsSettings = ({ onNotify }) => {
   const { user, token, isLoading } = useAuth();
@@ -710,6 +1186,15 @@ const AccountsSettings = ({ onNotify }) => {
     connectionType: null
   });
 
+  const [linkedInTermsModal, setLinkedInTermsModal] = useState({
+    isOpen: false
+  });
+
+    // New YouTube modal state
+    const [youtubeTermsModal, setYoutubeTermsModal] = useState({
+      isOpen: false
+    });
+
   const [connectionOptionsModal, setConnectionOptionsModal] = useState({
     isOpen: false
   });
@@ -721,6 +1206,23 @@ const AccountsSettings = ({ onNotify }) => {
     });
   };
 
+  const handleCloseLinkedInTerms = () => {
+    setLinkedInTermsModal({
+      isOpen: false
+    });
+  };
+
+ const handleCloseYouTubeTerms = () => {
+  setYoutubeTermsModal({
+    isOpen: false
+  });
+};
+const isYouTubeConnected = connectedAccounts.some(
+  (acc) => acc.platform === 'youtube'
+);
+
+
+
   const platformIcons = {
     instagram: Instagram,
     twitter: Twitter,
@@ -731,53 +1233,96 @@ const AccountsSettings = ({ onNotify }) => {
 
   const authToken = token || localStorage.getItem('token');
 
-  useEffect(() => {
-    if (!authToken || isLoading) return;
+ useEffect(() => {
+  if (!authToken || isLoading) return;
 
-    const fetchAccounts = async () => {
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch Instagram/Facebook accounts first
+      const instaRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      
+      let accounts = instaRes.data.accounts || [];
+      
+      // Now fetch YouTube accounts
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`, {
+        const youtubeRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/youtube/status`, {
           headers: { Authorization: `Bearer ${authToken}` }
         });
-        let accounts = res.data.accounts || [];
-
-        // Debug: Log raw account data
-        console.log('Raw account data:', res.data.accounts);
-
-        // Add linked Facebook account if not already present
-        const instaAccount = accounts.find((acc) => acc.platform === 'instagram');
-        if (instaAccount && !accounts.some((acc) => acc.platform === 'facebook')) {
-          const fbPic = instaAccount.fbProfilePicture || instaAccount.profilePicture || null;
-          accounts.push({
-            _id: `${instaAccount._id}-fb`,
-            username: instaAccount.fbUsername || 'Facebook (linked via Instagram)',
-            platform: 'facebook',
-            profilePicture: fbPic,
-            noProfilePicture: !fbPic,
-            followerCount: instaAccount.fbFollowerCount ?? '-',
-            accountName: instaAccount.accountName || instaAccount.username,
-            metadata: {
-              viewOnly: true,
-              linkedViaInstagram: true,
-              sourceAccountId: instaAccount._id
-            }
+        
+        // If YouTube is connected, get channel details
+        if (youtubeRes.data.connected) {
+          const channelRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/youtube/channel`, {
+            headers: { Authorization: `Bearer ${authToken}` }
           });
+          
+          if (channelRes.data.success && channelRes.data.data) {
+            // Find if this account already exists in the list
+            const ytData = channelRes.data.data;
+            
+            // Only add if not already in the accounts list
+            if (!accounts.some(acc => acc.platform === 'youtube' && acc.platformUserId === ytData.id)) {
+              accounts.push({
+                _id: `youtube-${ytData.id}`,
+                platform: 'youtube',
+                username: ytData.title,
+                platformUserId: ytData.id,
+                profilePicture: ytData.thumbnails?.default?.url || ytData.thumbnails?.medium?.url,
+                followerCount: parseInt(ytData.statistics?.subscriberCount || 0),
+                metadata: {
+                  description: ytData.description,
+                  videoCount: ytData.statistics?.videoCount,
+                  viewCount: ytData.statistics?.viewCount,
+                  publishedAt: ytData.publishedAt,
+                  uploadsPlaylistId: ytData.uploadsPlaylistId
+                }
+              });
+            }
+          }
         }
-
-        // Debug: Log processed accounts
-        console.log('Processed accounts:', accounts);
-
-        setConnectedAccounts(accounts);
-      } catch (err) {
-        console.error('Failed to fetch connected accounts', err);
-        toast.error('Failed to load accounts');
-      } finally {
-        setLoading(false);
+      } catch (ytErr) {
+        console.error('Error fetching YouTube account:', ytErr);
+        // Continue even if YouTube fetch fails
       }
-    };
 
-    fetchAccounts();
-  }, [authToken, isLoading]);
+      // Debug: Log all accounts after fetching
+      console.log('All accounts after fetching:', accounts);
+
+      // Process accounts (existing Facebook logic)
+      const instaAccount = accounts.find((acc) => acc.platform === 'instagram');
+      if (instaAccount && !accounts.some((acc) => acc.platform === 'facebook')) {
+        const fbPic = instaAccount.fbProfilePicture || instaAccount.profilePicture || null;
+        accounts.push({
+          _id: `${instaAccount._id}-fb`,
+          username: instaAccount.fbUsername || 'Facebook (linked via Instagram)',
+          platform: 'facebook',
+          profilePicture: fbPic,
+          noProfilePicture: !fbPic,
+          followerCount: instaAccount.fbFollowerCount ?? '-',
+          accountName: instaAccount.accountName || instaAccount.username,
+          metadata: {
+            viewOnly: true,
+            linkedViaInstagram: true,
+            sourceAccountId: instaAccount._id
+          }
+        });
+      }
+
+      setConnectedAccounts(accounts);
+    } catch (err) {
+      console.error('Failed to fetch connected accounts', err);
+      toast.error('Failed to load accounts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchAccounts();
+}, [authToken, isLoading]);
+
 
   // Updated grouping logic based on shared access tokens
   const groupAccountsByOwner = (accounts) => {
@@ -879,7 +1424,7 @@ const AccountsSettings = ({ onNotify }) => {
       const personalNamePattern = /^[a-z]+ [a-z]+$/;
       const businessKeywords = ['developer', 'dev', 'design', 'designer', 'studio', 'agency', 'company'];
 
-      // Case: Personal name (e.g., "neal kumar") + Business page (e.g., "frontend developer")
+            // Case: Personal name (e.g., "neal kumar") + Business page (e.g., "frontend developer")
       if (personalNamePattern.test(name1)) {
         const [firstName, lastName] = name1.split(' ');
         const hasBusinessKeyword = businessKeywords.some(keyword => name2.includes(keyword));
@@ -929,7 +1474,7 @@ const AccountsSettings = ({ onNotify }) => {
 
       // Sort accounts by platform priority (Instagram first, then Facebook)
       const sortedAccounts = relatedAccounts.sort((a, b) => {
-        const platformOrder = { instagram: 1, facebook: 2, twitter: 3, linkedin: 4, youtube: 5 };
+        const platformOrder = { instagram: 1, facebook: 2, linkedin: 3, twitter: 4, youtube: 5 };
         return (platformOrder[a.platform] || 999) - (platformOrder[b.platform] || 999);
       });
 
@@ -998,13 +1543,13 @@ const AccountsSettings = ({ onNotify }) => {
 
   const sortAccountsInGroup = (accounts) => {
     return accounts.sort((a, b) => {
-      const order = { instagram: 1, facebook: 2, twitter: 3, linkedin: 4, youtube: 5 };
+      const order = { instagram: 1, facebook: 2, linkedin: 3, twitter: 4, youtube: 5 };
       return (order[a.platform] || 999) - (order[b.platform] || 999);
     });
   };
 
   // Open connection options modal
-  const handleConnectMeta = () => {
+  const handleConnectSocial = () => {
     setConnectionOptionsModal({ isOpen: true });
   };
 
@@ -1025,6 +1570,97 @@ const AccountsSettings = ({ onNotify }) => {
       connectionType: 'direct'
     });
   };
+
+  // Connect LinkedIn
+  const handleConnectLinkedIn = async () => {
+    setConnectionOptionsModal({ isOpen: false });
+    setLinkedInTermsModal({
+      isOpen: true
+    });
+  };
+
+
+
+  // Handle LinkedIn Terms acceptance
+const handleLinkedInTermsConfirm = async () => {
+  const storedToken = authToken;
+  if (!storedToken) {
+    toast.error('User not logged in');
+    return;
+  }
+
+  try {
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${storedToken}` }
+    });
+
+    if (res.data.success && res.data.data) {
+      const freshUser = res.data.data;
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      
+      // Construct the LinkedIn auth URL
+      const linkedInAuthUrl = `${apiUrl}/api/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
+      
+      console.log('Redirecting to LinkedIn auth:', linkedInAuthUrl);
+      
+      // Open in the same window
+      window.location.href = linkedInAuthUrl;
+    } else {
+      toast.error('Failed to get user data');
+    }
+  } catch (err) {
+    console.error('Error starting LinkedIn auth:', err);
+    toast.error('Failed to start LinkedIn authentication');
+  }
+
+  // Close the modal
+  setLinkedInTermsModal({ isOpen: false });
+};
+
+ // Connect YouTube
+const handleConnectYouTube = async () => {
+  setConnectionOptionsModal({ isOpen: false });
+  setYoutubeTermsModal({
+    isOpen: true
+  });
+};
+
+// Handle YouTube Terms acceptance
+const handleYouTubeTermsConfirm = async () => {
+  const storedToken = authToken;
+  if (!storedToken) {
+    toast.error('User not logged in');
+    return;
+  }
+
+  try {
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${storedToken}` }
+    });
+
+    if (res.data.success && res.data.data) {
+      const freshUser = res.data.data;
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      
+      // Construct the YouTube auth URL
+      const youtubeAuthUrl = `${apiUrl}/api/auth/youtube?userId=${freshUser._id}&token=${storedToken}`;
+      
+      console.log('Redirecting to YouTube auth:', youtubeAuthUrl);
+      
+      // Open in the same window
+      window.location.href = youtubeAuthUrl;
+    } else {
+      toast.error('Failed to get user data');
+    }
+  } catch (err) {
+    console.error('Error starting YouTube auth:', err);
+    toast.error('Failed to start YouTube authentication');
+  }
+
+  // Close the modal
+  setYoutubeTermsModal({ isOpen: false });
+};
+
 
   // Handle Terms & Conditions acceptance
   const handleTermsConfirm = async (connectionType) => {
@@ -1099,58 +1735,32 @@ const AccountsSettings = ({ onNotify }) => {
   };
 
   const handleConfirmDisconnect = async () => {
-    try {
-      const { accountId } = confirmationModal;
-      const baseId = accountId.replace('-fb', '');
+  try {
+    const { accountId } = confirmationModal;
+    const baseId = accountId.replace('-fb', '');
 
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/auth/instagram/disconnect/${baseId}`, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-
-      // Remove both the main account and any linked view-only accounts
-      setConnectedAccounts((prev) => 
-        prev.filter((acc) => {
-          // Remove the account with this ID
-          if (acc._id === baseId || acc._id === `${baseId}-fb`) {
-            return false;
-          }
-          
-          // Also remove any account that references this account as its source
-          if (acc.metadata?.linkedViaInstagram && 
-              (acc.metadata.sourceAccountId === baseId || 
-               acc.connectedTo === baseId)) {
-            return false;
-          }
-          
-          // If it's a Facebook account with the username indicating it's linked
-          if (acc.platform === 'facebook' && 
-              (acc.username.includes('linked via Instagram') || 
-               acc.username.includes('Facebook (linked'))) {
-            // Check if this might be linked to the account we're deleting
-            const linkedInstagram = prev.find(
-              insta => insta.platform === 'instagram' && 
-                      insta._id === baseId
-            );
-            
-            // If we found the Instagram account and there's a username match
-            if (linkedInstagram && 
-                acc.username.includes(linkedInstagram.username)) {
-              return false;
-            }
-          }
-          
-          return true;
-        })
-      );
-
-      onNotify('success', 'Account disconnected successfully');
-
-      setConfirmationModal({ isOpen: false, accountId: null, accountUsername: '', platform: '' });
-    } catch (err) {
-      console.error('Failed to disconnect account', err);
-      toast.error('Failed to disconnect account');
+    // Determine the API endpoint based on the account platform
+    const platform = connectedAccounts.find(acc => acc._id === baseId)?.platform || 'instagram';
+    
+    let endpoint = `${process.env.REACT_APP_API_URL}/api/auth/instagram/disconnect/${baseId}`;
+    
+    if (platform === 'linkedin') {
+      endpoint = `${process.env.REACT_APP_API_URL}/api/auth/linkedin/accounts/${baseId}`;
+    } else if (platform === 'youtube') {
+      endpoint = `${process.env.REACT_APP_API_URL}/api/auth/youtube/disconnect/${baseId}`;
     }
-  };
+
+    await axios.delete(endpoint, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    });
+
+    // Rest of the function remains the same...
+  } catch (err) {
+    console.error('Failed to disconnect account', err);
+    toast.error('Failed to disconnect account');
+  }
+};
+
 
   const handleCancelDisconnect = () => {
     setConfirmationModal({ isOpen: false, accountId: null, accountUsername: '', platform: '' });
@@ -1158,6 +1768,10 @@ const AccountsSettings = ({ onNotify }) => {
 
   const isMetaConnected = connectedAccounts.some(
     (acc) => acc.platform === 'instagram' || acc.platform === 'facebook'
+  );
+
+  const isLinkedInConnected = connectedAccounts.some(
+    (acc) => acc.platform === 'linkedin'
   );
 
   // Group and sort accounts
@@ -1179,14 +1793,12 @@ const AccountsSettings = ({ onNotify }) => {
           connAcc={
             <div className="connection-buttons">
               <button
-                onClick={handleConnectMeta}
+                onClick={handleConnectSocial}
                 className="btn-primary"
                 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                <Instagram size={16} />
-                <Facebook size={16} />
                 <Plus size={16} />
-                {isMetaConnected ? 'Add Another Meta Account' : 'Connect with Meta'}
+                Connect Social Account
               </button>
             </div>
           }
@@ -1222,6 +1834,11 @@ const AccountsSettings = ({ onNotify }) => {
                             (account.metadata?.viewOnly === true ||
                               account.metadata?.linkedViaInstagram === true ||
                               account.username.includes('linked via Instagram'));
+                              
+                          const isLinkedInCompany = 
+                            account.platform === 'linkedin' && 
+                            (account.accountType === 'company' || 
+                             account.isCompanyPage === true);
 
                           // Skip Facebook accounts that should be hidden
                           if (account.platform === 'facebook' &&
@@ -1229,22 +1846,26 @@ const AccountsSettings = ({ onNotify }) => {
                             return null;
                           }
 
-                          return (
-                            <div
-                              key={index}
-                              className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''}`}
-                              style={{
-                                position: 'relative',
-                                border: isDirectConnection && account.platform === 'instagram'
-                                  ? '1px solid rgba(219, 39, 119, 0.3)'
-                                  : isFullAccess && account.platform === 'instagram'
-                                    ? '1px solid rgba(37, 99, 235, 0.3)'
-                                    : isViewOnlyFacebook
-                                      ? '1px dashed rgba(100, 116, 139, 0.5)'
-                                      : '1px solid #e5e7eb',
-                                opacity: isViewOnlyFacebook ? 0.85 : 1
-                              }}
-                            >
+                         return (
+  <div
+    key={index}
+    className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''} ${account.platform === 'youtube' ? 'youtube-channel' : ''}`}
+    style={{
+      position: 'relative',
+      border: isDirectConnection && account.platform === 'instagram'
+        ? '1px solid rgba(219, 39, 119, 0.3)'
+        : isFullAccess && account.platform === 'instagram'
+          ? '1px solid rgba(37, 99, 235, 0.3)'
+          : isViewOnlyFacebook
+            ? '1px dashed rgba(100, 116, 139, 0.5)'
+            : account.platform === 'linkedin' 
+              ? '1px solid rgba(10, 102, 194, 0.3)'
+              : account.platform === 'youtube'
+                ? '1px solid rgba(255, 0, 0, 0.3)'
+                : '1px solid #e5e7eb',
+      opacity: isViewOnlyFacebook ? 0.85 : 1
+    }}
+  >
                               <div className="account-card-header">
                                 <div className="account-avatar">
                                   {account.profilePicture ? (
@@ -1273,38 +1894,56 @@ const AccountsSettings = ({ onNotify }) => {
 
                               <div className="account-card-content">
                                 <h4 className="account-username">{account.username}</h4>
-                                <p className="platform-name">
-                                  {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
-                                  {account.platform === 'instagram' && (
-                                    isDirectConnection ? (
-                                      <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
-                                    ) : (
-                                      <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
-                                    )
-                                  )}
-                                  {account.platform === 'facebook' && (
-                                    isViewOnlyFacebook ? (
-                                      <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
-                                    ) : (
-                                      <span className="connection-badge"> • Business Page</span>
-                                    )
-                                  )}
-                                </p>
-                                <span className="followers-count">
-                                  {account.followerCount ? `${account.followerCount} followers` : '-'}
-                                </span>
+                               <p className="platform-name">
+      {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
+      {account.platform === 'instagram' && (
+        isDirectConnection ? (
+          <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
+        ) : (
+          <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
+        )
+      )}
+      {account.platform === 'facebook' && (
+        isViewOnlyFacebook ? (
+          <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
+        ) : (
+          <span className="connection-badge"> • Business Page</span>
+        )
+      )}
+      {account.platform === 'linkedin' && (
+        isLinkedInCompany ? (
+          <span className="connection-badge" style={{ color: '#0A66C2' }}> • Company Page</span>
+        ) : (
+          <span className="connection-badge" style={{ color: '#0A66C2' }}> • Personal Profile</span>
+        )
+      )}
+      {account.platform === 'youtube' && (
+        <span className="connection-badge" style={{ color: '#FF0000' }}> • Channel</span>
+      )}
+    </p>
+                              <span className="followers-count">
+      {account.platform === 'youtube' 
+        ? `${account.followerCount || 0} subscribers` 
+        : account.followerCount 
+          ? `${account.followerCount} followers` 
+          : '-'}
+    </span>
                               </div>
 
                               <div className="account-actions">
-                                <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
-                                  style={{
-                                    backgroundColor: isViewOnlyFacebook ? '#f1f5f9' : '',
-                                    color: isViewOnlyFacebook ? '#64748b' : ''
-                                  }}
-                                >
-                                  <Check size={14} />
-                                  {isViewOnlyFacebook ? 'View Only' : 'Connected'}
-                                </div>
+                               <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
+      style={{
+        backgroundColor: isViewOnlyFacebook ? '#f1f5f9' : 
+                       account.platform === 'linkedin' ? '#EEF2FF' :
+                       account.platform === 'youtube' ? '#FEF2F2' : '',
+        color: isViewOnlyFacebook ? '#64748b' : 
+              account.platform === 'linkedin' ? '#0A66C2' :
+              account.platform === 'youtube' ? '#FF0000' : ''
+      }}
+    >
+      <Check size={14} />
+      {isViewOnlyFacebook ? 'View Only' : 'Connected'}
+    </div>
                               </div>
 
                               {/* Connection type badge */}
@@ -1329,6 +1968,26 @@ const AccountsSettings = ({ onNotify }) => {
                                 </div>
                               )}
 
+                              {/* LinkedIn badge */}
+                              {account.platform === 'linkedin' && (
+                                <div
+                                  className="linkedin-badge"
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '40px',
+                                    background: 'linear-gradient(to right, #0A66C2, #0077B5)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontWeight: '500'
+                                  }}
+                                >
+                                  {isLinkedInCompany ? 'Company Page' : 'Personal Profile'}
+                                </div>
+                              )}
+
                               {/* View-only badge for Facebook accounts */}
                               {isViewOnlyFacebook && (
                                 <div
@@ -1348,6 +2007,26 @@ const AccountsSettings = ({ onNotify }) => {
                                   View Only
                                 </div>
                               )}
+
+                              {account.platform === 'youtube' && (
+      <div
+        className="youtube-badge"
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '40px',
+          background: 'linear-gradient(to right, #FF0000, #FF5252)',
+          color: 'white',
+          fontSize: '10px',
+          padding: '2px 6px',
+          borderRadius: '4px',
+          fontWeight: '500'
+        }}
+      >
+        Channel
+      </div>
+    )}
+
                             </div>
                           );
                         })}
@@ -1369,11 +2048,14 @@ const AccountsSettings = ({ onNotify }) => {
 
       {/* Connection Options Modal */}
       <ConnectionOptionsModal
-        isOpen={connectionOptionsModal.isOpen}
-        onClose={() => setConnectionOptionsModal({ isOpen: false })}
-        onSelectInstagram={handleConnectInstagramDirect}
-        onSelectFacebookInstagram={handleConnectMetaWithFacebook}
-      />
+  isOpen={connectionOptionsModal.isOpen}
+  onClose={() => setConnectionOptionsModal({ isOpen: false })}
+  onSelectInstagram={handleConnectInstagramDirect}
+  onSelectFacebookInstagram={handleConnectMetaWithFacebook}
+  onSelectLinkedIn={handleConnectLinkedIn}
+  onSelectYouTube={handleConnectYouTube}
+/>
+
 
       {/* Disconnect Confirmation Modal */}
       <ConfirmationModal
@@ -1391,6 +2073,21 @@ const AccountsSettings = ({ onNotify }) => {
         onConfirm={handleTermsConfirm}
         connectionType={termsConditionModal.connectionType}
       />
+
+      {/* LinkedIn Terms Modal */}
+      <LinkedInTermsModal
+        isOpen={linkedInTermsModal.isOpen}
+        onClose={handleCloseLinkedInTerms}
+        onConfirm={handleLinkedInTermsConfirm}
+      />
+       {/* YouTube Terms Modal */}
+<YouTubeTermsModal
+  isOpen={youtubeTermsModal.isOpen}
+  onClose={handleCloseYouTubeTerms}
+  onConfirm={handleYouTubeTermsConfirm}
+/>
+
+
     </div>
   );
 };

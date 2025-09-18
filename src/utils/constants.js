@@ -58,53 +58,53 @@ export const APP_CONFIG = {
 // Social Media Platforms
 export const PLATFORMS = {
   INSTAGRAM: 'instagram',
+  FACEBOOK: 'facebook',
   TWITTER: 'twitter',
-  FACEBOOK: 'facebook'
+  LINKEDIN: 'linkedin', // Added LinkedIn
 };
 
 export const PLATFORM_CONFIGS = {
   [PLATFORMS.INSTAGRAM]: {
-    id: 'instagram',
     name: 'Instagram',
     color: '#E4405F',
-    emoji: '📷',
-    maxLength: 2200,
-    supportsImages: true,
-    supportsVideos: true,
-    supportsHashtags: true,
-    maxImages: 10,
-    description: 'Share photos and stories'
-  },
-  [PLATFORMS.TWITTER]: {
-    id: 'twitter',
-    name: 'Twitter',
-    color: '#1DA1F2',
-    emoji: '🐦',
-    maxLength: 280,
-    supportsImages: true,
-    supportsVideos: true,
-    supportsHashtags: true,
-    maxImages: 4,
-    description: 'Share thoughts and updates'
+    contentLimit: 2200,
+    supportedMedia: ['image', 'video', 'carousel'],
+    hasHashtags: true,
+    hasMentions: true
   },
   [PLATFORMS.FACEBOOK]: {
-    id: 'facebook',
     name: 'Facebook',
     color: '#1877F2',
-    emoji: '👥',
-    maxLength: 63206,
-    supportsImages: true,
-    supportsVideos: true,
-    supportsHashtags: true,
-    maxImages: 10,
-    description: 'Connect with friends and family'
+    contentLimit: 63206,
+    supportedMedia: ['image', 'video', 'carousel', 'link'],
+    hasHashtags: true,
+    hasMentions: true
+  },
+  [PLATFORMS.TWITTER]: {
+    name: 'Twitter',
+    color: '#1DA1F2',
+    contentLimit: 280,
+    supportedMedia: ['image', 'video', 'gif'],
+    hasHashtags: true,
+    hasMentions: true
+  },
+  [PLATFORMS.LINKEDIN]: {
+    name: 'LinkedIn',
+    color: '#0A66C2',
+    contentLimit: 3000,
+    supportedMedia: ['image', 'video', 'document'],
+    hasHashtags: true,
+    hasMentions: false, // LinkedIn doesn't use @ mentions the same way
+    imageLimit: 1 // LinkedIn only supports one image per post via API
   }
 };
 
  export const platformColors = {
   instagram: '#E1306C',
   twitter: '#1DA1F2',
-  facebook: '#1877F2'
+  facebook: '#1877F2',
+  linkedin: '#0A66C2',
+  youtube: '#FF0000'
 };
 
 // Post Status
