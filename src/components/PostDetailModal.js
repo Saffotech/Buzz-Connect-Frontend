@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./PostDetailModal.css";
-import { 
-  X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal, 
-  Bookmark, Send, Eye, Instagram, Facebook, Twitter, ChevronRightCircle, 
+import {
+  X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal,
+  Bookmark, Send, Eye, Instagram, Facebook, Twitter, ChevronRightCircle,
   ChevronLeftCircle, Edit, Trash2, RefreshCw, TrendingUp, BarChart3,
   Users, ExternalLink, Copy
 } from "lucide-react";
@@ -14,7 +14,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   const [accountDetails, setAccountDetails] = useState(null);
   const [loadingAccount, setLoadingAccount] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
-  
+
   // New state for analytics and tabs
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
@@ -22,7 +22,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   const [activeTab, setActiveTab] = useState('preview');
 
 
-    // ✅ Ref for dropdown container
+  // ✅ Ref for dropdown container
   const dropdownRef = useRef(null);
 
   // ✅ Outside click handler
@@ -46,42 +46,42 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   // ✅ Add these helper functions at the top of your component
   const isVideoFile = (mediaItem) => {
     if (!mediaItem) return false;
-    
+
     // Check fileType first
     if (mediaItem.fileType === 'video' || mediaItem.fileType?.startsWith('video/')) {
       return true;
     }
-    
+
     // Check MIME type
     if (mediaItem.type && mediaItem.type.startsWith('video/')) {
       return true;
     }
-    
+
     // Check URL patterns
     if (mediaItem.url) {
       const url = mediaItem.url.toLowerCase();
-      
+
       // Common video extensions
       const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.flv', '.m4v', '.wmv', '.3gp', '.ogg', '.ogv'];
       const hasVideoExtension = videoExtensions.some(ext => url.includes(ext));
-      
+
       if (hasVideoExtension) {
         return true;
       }
-      
+
       // Check for video-related URL patterns
       if (url.includes('/video/') || url.includes('video_') || url.includes('.video')) {
         return true;
       }
     }
-    
+
     // Check filename if available
     if (mediaItem.filename) {
       const filename = mediaItem.filename.toLowerCase();
       const videoExtensions = ['.mp4', '.mov', '.avi', '.webm', '.mkv', '.flv', '.m4v', '.wmv', '.3gp', '.ogg', '.ogv'];
       return videoExtensions.some(ext => filename.endsWith(ext));
     }
-    
+
     return false;
   };
 
@@ -95,7 +95,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   const getMediaMimeType = (mediaItem) => {
     if (mediaItem.type) return mediaItem.type;
     if (mediaItem.fileType) return mediaItem.fileType;
-    
+
     // Try to guess from URL extension
     if (mediaItem.url) {
       const url = mediaItem.url.toLowerCase();
@@ -105,7 +105,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       if (url.includes('.avi')) return 'video/x-msvideo';
       if (url.includes('.mkv')) return 'video/x-matroska';
     }
-    
+
     return 'video/mp4'; // Default fallback
   };
 
@@ -146,9 +146,9 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   // Get account ID based on platform
   const getAccountId = () => {
     if (!post?.selectedAccounts) return null;
-    
+
     const selectedAccounts = post.selectedAccounts;
-    
+
     switch (platform) {
       case "facebook":
         return selectedAccounts.facebook?.[0] || null;
@@ -165,11 +165,11 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   // Fetch detailed analytics for the post
   const fetchPostAnalytics = async () => {
     if (!post?._id && !post?.id) return;
-    
+
     setLoadingAnalytics(true);
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-      
+
       if (!token) {
         console.error('No authentication token found');
         return;
@@ -209,11 +209,11 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   // Sync analytics for this specific post
   const syncPostAnalytics = async () => {
     if (!post?._id && !post?.id) return;
-    
+
     setSyncingAnalytics(true);
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-      
+
       if (!token) {
         showToast('Authentication required', 'error');
         return;
@@ -238,7 +238,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       if (response.data.success) {
         console.log('Sync successful:', response.data);
         showToast(response.data.message || 'Analytics synced successfully!', 'success');
-        
+
         // Refresh analytics data after sync
         await fetchPostAnalytics();
       } else {
@@ -258,12 +258,12 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     try {
       setLoadingAccount(true);
       const accountId = getAccountId();
-      
+
       console.log("Fetching account details for ID:", accountId);
-      
+
       if (accountId) {
         const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-        
+
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/accounts/${accountId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -271,7 +271,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
             'Content-Type': 'application/json'
           }
         });
-        
+
         if (response.ok) {
           const accountData = await response.json();
           console.log("Account data received:", accountData);
@@ -296,7 +296,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         <span>${message}</span>
       </div>
     `;
-    
+
     if (!document.getElementById('toast-styles')) {
       const style = document.createElement('style');
       style.id = 'toast-styles';
@@ -324,11 +324,11 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       `;
       document.head.appendChild(style);
     }
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => toast.classList.add('show'), 100);
-    
+
     setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => document.body.removeChild(toast), 300);
@@ -367,12 +367,12 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         publicId: img.publicId || null
       }));
 
-      const processedHashtags = Array.isArray(post.hashtags) 
-        ? post.hashtags 
+      const processedHashtags = Array.isArray(post.hashtags)
+        ? post.hashtags
         : [];
 
-      const processedMentions = Array.isArray(post.mentions) 
-        ? post.mentions 
+      const processedMentions = Array.isArray(post.mentions)
+        ? post.mentions
         : [];
 
       const postData = {
@@ -395,7 +395,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
         postData,
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
@@ -435,16 +435,16 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
 
     } catch (error) {
       console.error('Failed to post again:', error);
-      
+
       console.error('=== DETAILED ERROR INFO ===');
       console.error('Status:', error.response?.status);
       console.error('Error Data:', error.response?.data);
       console.error('Error Message:', error.message);
-      
+
       if (error.response?.data?.errors) {
         console.error('Validation Errors:', error.response.data.errors);
       }
-      
+
       const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
       showToast(`Failed to publish post: ${errorMessage}`, 'error');
     } finally {
@@ -551,27 +551,27 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     if (loadingAccount) {
       return "Loading...";
     }
-    
+
     if (accountDetails) {
-      const username = accountDetails.username || 
-                       accountDetails.name || 
-                       accountDetails.displayName ||
-                       accountDetails.pageName ||
-                       accountDetails.handle ||
-                       accountDetails.accountName ||
-                       accountDetails.pageUsername ||
-                       accountDetails.socialUsername;
-      
+      const username = accountDetails.username ||
+        accountDetails.name ||
+        accountDetails.displayName ||
+        accountDetails.pageName ||
+        accountDetails.handle ||
+        accountDetails.accountName ||
+        accountDetails.pageUsername ||
+        accountDetails.socialUsername;
+
       if (username) {
         return username;
       }
     }
-    
+
     const userDisplayName = post?.user?.displayName;
     if (userDisplayName) {
       return userDisplayName;
     }
-    
+
     switch (platform) {
       case "instagram":
         return "instagram_user";
@@ -736,7 +736,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   return (
     <div className="post-detail-overlay" onClick={handleOverlayClick}>
       <div className="post-detail-modal" onClick={handleModalClick}>
-        
+
         {/* Modal Header */}
         <div className="modal-header">
           <div className="header-left">
@@ -754,10 +754,23 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
               ))}
             </div> */}
           </div>
-          
+
+
+
           <div className="header-actions">
+            {post.status === 'published' && (
+              <button
+                className={`tab-btn sync-btn ${syncingAnalytics ? 'syncing' : ''}`}
+                onClick={syncPostAnalytics}
+                disabled={syncingAnalytics}
+                title="Sync analytics from social platforms"
+              >
+                <RefreshCw size={16} className={syncingAnalytics ? 'spinning' : ''} />
+                {syncingAnalytics ? 'Syncing...' : 'Sync'}
+              </button>
+            )}
             <div className="actions-dropdown" ref={dropdownRef}>
-              <button 
+              <button
                 className="actions-btn"
                 onClick={handleDropdownToggle}
                 disabled={isPosting}
@@ -772,14 +785,6 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                       Edit Post
                     </button>
                   )}
-                  <button onClick={handleCopyLink}>
-                    <Copy size={16} />
-                    Copy Link
-                  </button>
-                  <button onClick={handleShare}>
-                    <Share size={16} />
-                    Share
-                  </button>
                   <button onClick={handlePostAgain} disabled={isPosting}>
                     <RefreshCw size={16} className={isPosting ? 'spinning' : ''} />
                     {isPosting ? 'Posting...' : 'Repost Now'}
@@ -801,13 +806,13 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
 
         {/* Modal Tabs */}
         <div className="modal-tabs">
-          <button 
+          <button
             className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
             onClick={() => setActiveTab('preview')}
           >
             Preview
           </button>
-          <button 
+          <button
             className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
             onClick={() => setActiveTab('analytics')}
           >
@@ -821,7 +826,9 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
             <MessageCircle size={16} />
             Comments ({mockComments.length})
           </button> */}
-          {post.status === 'published' && (
+
+
+          {/* {post.status === 'published' && (
             <button 
               className={`tab-btn sync-btn ${syncingAnalytics ? 'syncing' : ''}`}
               onClick={syncPostAnalytics}
@@ -831,7 +838,8 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
               <RefreshCw size={16} className={syncingAnalytics ? 'spinning' : ''} />
               {syncingAnalytics ? 'Syncing...' : 'Sync'}
             </button>
-          )}
+          )} */}
+
         </div>
 
         {/* Modal Content */}
@@ -844,14 +852,14 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                   <div className="main-image-container">
                     {post.images.length > 1 && (
                       <div className="image-navigation">
-                        <button 
+                        <button
                           className="nav-btn nav-prev"
                           onClick={() => setImgIndex(prev => Math.max(0, prev - 1))}
                           disabled={imgIndex === 0}
                         >
                           <ChevronLeftCircle size={24} />
                         </button>
-                        <button 
+                        <button
                           className="nav-btn nav-next"
                           onClick={() => setImgIndex(prev => Math.min(post.images.length - 1, prev + 1))}
                           disabled={imgIndex === post.images.length - 1}
@@ -860,7 +868,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                         </button>
                       </div>
                     )}
-                    
+
                     {/* Conditionally render video or image */}
                     {isVideoFile(post.images[imgIndex]) ? (
                       <video
@@ -888,19 +896,19 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                         }}
                       />
                     )}
-                    
+
                     {post.images.length > 1 && (
                       <div className="image-counter">
                         {imgIndex + 1} / {post.images.length}
                       </div>
                     )}
-                    
+
                     {/* Video type indicator */}
                     {isVideoFile(post.images[imgIndex]) && (
                       <div className="media-type-indicator">
                         <div className="video-badge">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                            <path d="M8 5v14l11-7z"/>
+                            <path d="M8 5v14l11-7z" />
                           </svg>
                           VIDEO
                         </div>
@@ -925,8 +933,8 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                   {post.hashtags && post.hashtags.length > 0 && (
                     <div className="hashtags">
                       {post.hashtags.map((tag, index) => (
-                        <span 
-                          key={index} 
+                        <span
+                          key={index}
                           className="hashtag"
                           style={{ color: platformStyle.hashtag }}
                         >
@@ -1002,7 +1010,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                               </span>
                               <span className="platform-status published">Published</span>
                             </div>
-                            
+
                             <div className="analytics-grid">
                               <div className="analytics-card">
                                 <div className="card-icon likes">
@@ -1013,7 +1021,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                                   <p>Likes</p>
                                 </div>
                               </div>
-                              
+
                               <div className="analytics-card">
                                 <div className="card-icon comments">
                                   <MessageCircle size={24} />
@@ -1023,7 +1031,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                                   <p>Comments</p>
                                 </div>
                               </div>
-                              
+
                               <div className="analytics-card">
                                 <div className="card-icon shares">
                                   <Share size={24} />
@@ -1033,7 +1041,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                                   <p>Shares</p>
                                 </div>
                               </div>
-                              
+
                               <div className="analytics-card">
                                 <div className="card-icon reach">
                                   <Users size={24} />
@@ -1043,7 +1051,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                                   <p>Reach</p>
                                 </div>
                               </div>
-                              
+
                               <div className="analytics-card">
                                 <div className="card-icon impressions">
                                   <Eye size={24} />
@@ -1053,7 +1061,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                                   <p>Impressions</p>
                                 </div>
                               </div>
-                              
+
                               <div className="analytics-card">
                                 <div className="card-icon engagement">
                                   <TrendingUp size={24} />
@@ -1064,7 +1072,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                                 </div>
                               </div>
                             </div>
-                            
+
                             {/* Platform-specific metrics */}
                             {platformName === 'instagram' && (
                               <div className="platform-specific-metrics">
@@ -1078,7 +1086,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                                 </div>
                               </div>
                             )}
-                            
+
                             {platformName === 'facebook' && (
                               <div className="platform-specific-metrics">
                                 <div className="metric-row">
@@ -1133,7 +1141,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
               )}
             </div>
           )}
-          
+
           {activeTab === 'comments' && (
             <div className="comments-tab">
               <div className="comments-list">
@@ -1160,11 +1168,11 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                   </div>
                 ))}
               </div>
-              
+
               <div className="add-comment">
-                <input 
-                  type="text" 
-                  placeholder="Add a comment..." 
+                <input
+                  type="text"
+                  placeholder="Add a comment..."
                   className="comment-input"
                 />
                 <button className="comment-submit">Post</button>

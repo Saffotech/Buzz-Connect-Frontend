@@ -759,7 +759,7 @@ const PostsSubPage = ({
         </div>
 
         <div className="control-actions">
-          <div className="view-controls">
+          {/* <div className="view-controls">
             <button
               className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
               onClick={() => setViewMode('grid')}
@@ -772,7 +772,7 @@ const PostsSubPage = ({
             >
               <List size={16} />
             </button>
-          </div>
+          </div> */}
 
           {/* Use the CreatePostButton component instead of a simple button */}
           {createPostButton || (

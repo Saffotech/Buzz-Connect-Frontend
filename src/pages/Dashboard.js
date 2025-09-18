@@ -7,6 +7,7 @@ import {
   Instagram,
   Facebook,
   Twitter,
+  Youtube,
   Plus,
   Calendar,
   BarChart3,
@@ -71,7 +72,7 @@ const Dashboard = () => {
   //     setSlicePosts(1)
   //   }
   // }, [upcomingPosts]);
-  
+
   const navigate = useNavigate();
 
   const handleMediaUpload = async (files) => {
@@ -212,6 +213,7 @@ const Dashboard = () => {
   // Initial data fetch
   useEffect(() => {
     if (user) {
+      console.log('User accounts from API:', user.connectedAccounts);
       fetchPosts();
     }
   }, [user]);
@@ -491,7 +493,7 @@ const Dashboard = () => {
                   // Helper function to get all media items
                   const getAllMedia = () => {
                     const allMedia = [];
-                    
+
                     // Check post.images array
                     if (post.images && Array.isArray(post.images)) {
                       post.images.forEach(item => {
@@ -567,6 +569,8 @@ const Dashboard = () => {
                       instagram: '#E4405F',
                       twitter: '#1DA1F2',
                       facebook: '#1877F2',
+                      linkedin: '#0A66C2',
+                      youtube: '#FF0000'
                     };
                     const style = {
                       '--platform-color': colorMap[primary] || colorMap['instagram'],
@@ -593,8 +597,16 @@ const Dashboard = () => {
                               minute: '2-digit',
                             })}
                           </span>
-                          <span className="platform-name platform-name-db">{primary}</span>
+                          <span className="platform-name  platform-name-db">
+                            {primary === 'instagram' && <Instagram size={16} />}
+                            {primary === 'facebook' && <Facebook size={16} />}
+                            {primary === 'twitter' && <Twitter size={16} />}
+                            {primary === 'linkedin' && <Linkedin size={16} />}
+                            {primary === 'youtube' && <Youtube size={16} />}
+                            {primary}
+                          </span>
                         </div>
+
 
                         {/* Media Section */}
                         {mediaItems.length > 0 && (
@@ -603,9 +615,9 @@ const Dashboard = () => {
                               <div key={i} className="media-item">
                                 {media.type === 'video' ? (
                                   <>
-                                    <video 
-                                      src={media.url} 
-                                      muted 
+                                    <video
+                                      src={media.url}
+                                      muted
                                       loop
                                       playsInline
                                       onMouseEnter={(e) => {
@@ -619,17 +631,17 @@ const Dashboard = () => {
                                     />
                                     <div className="video-indicator">
                                       <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                                        <path d="M8 5v14l11-7z"/>
+                                        <path d="M8 5v14l11-7z" />
                                       </svg>
                                     </div>
                                   </>
                                 ) : (
-                                  <img 
-                                    src={media.url} 
+                                  <img
+                                    src={media.url}
                                     alt={media.alt}
-                                    style={{ 
-                                      width: '100%', 
-                                      height: '100%', 
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
                                       objectFit: 'cover',
                                       borderRadius: '4px'
                                     }}
@@ -789,10 +801,10 @@ const Dashboard = () => {
           </div>
 
           {/* Connected Accounts */}
+          {/* Connected Accounts */}
           <div className="connected-accounts-sidebar">
             <h3>Connected Accounts</h3>
-            <div className="accounts-list" onClick={() => navigate('/settings?tab=accounts')} style={{ cursor: "pointer" }}
-            >
+            <div className="accounts-list" onClick={() => navigate('/settings?tab=accounts')} style={{ cursor: "pointer" }}>
               {(() => {
                 let accounts = user?.connectedAccounts ? [...user.connectedAccounts] : [];
 
@@ -805,6 +817,7 @@ const Dashboard = () => {
                     connected: true,
                   });
                 }
+
                 return accounts.length > 0 ? (
                   accounts.map((account, index) => (
                     <div key={index} className={`account-item ${account.platform}`}>
@@ -814,6 +827,8 @@ const Dashboard = () => {
                         {account.platform === 'instagram' && <Instagram size={20} />}
                         {account.platform === 'twitter' && <Twitter size={20} />}
                         {account.platform === 'facebook' && <Facebook size={20} />}
+                        {account.platform === 'linkedin' && <Linkedin size={20} />}
+                        {account.platform === 'youtube' && <Youtube size={20} />}
                       </div>
                       <div className="account-details">
                         <span className="platform-name">
@@ -843,6 +858,8 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
+
+
 
           {/* Recent Activity */}
           <div className="recent-activity-sidebar" onClick={() => navigate("/content")} style={{ cursor: "pointer" }}>
