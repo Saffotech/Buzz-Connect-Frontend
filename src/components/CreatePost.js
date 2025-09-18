@@ -1027,6 +1027,54 @@ const convertTo24Hour = (hour12, minute, period) => {
     }
   };
 
+  const generateMentions = async () => {
+    // Check if platforms are selected
+    if (postData.platforms.length === 0) {
+      showToast('Please select at least one social media platform first', 'error');
+      return;
+    }
+
+    if (!postData.content.trim()) {
+      showToast('Please enter some content first to generate mentions', 'error');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    showToast('Generating mentions...', 'info');
+
+    try {
+      const selectedPlatform = postData.platforms[0];
+
+      const response = await apiClient.suggestMentions({
+        content: postData.content,
+        platform: selectedPlatform,
+        count: 5,
+        mentionTypes: ['influencers', 'brands'],
+        verifiedOnly: false
+      });
+
+      console.log('Mentions Response:', response);
+
+      if (response.success && response.data.mentions) {
+        const newMentions = response.data.mentions.join(' ');
+        setPostData(prev => ({
+          ...prev,
+          mentions: prev.mentions ? `${prev.mentions} ${newMentions}` : newMentions
+        }));
+        showToast(`Added ${response.data.mentions.length} mentions`, 'success');
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Mentions generation failed:', error);
+      setError('Failed to generate mentions. Please try again.');
+      showToast('Failed to generate mentions', 'error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   // ✅ UPDATED: Apply AI suggestion with hashtag extraction
   const applyAISuggestion = (suggestion) => {
     console.log('Applying AI suggestion:', suggestion);
@@ -1588,6 +1636,16 @@ const convertTo24Hour = (hour12, minute, period) => {
                     <label className="section-label">
                       <AtSign size={16} />
                       Mentions
+                      <button
+                        type="button"
+                        className="ai-hashtag-btn" // reuse the same styling as hashtags
+                        onClick={generateMentions}
+                        disabled={isGenerating || !postData.content.trim()}
+                        title="Generate mentions with AI"
+                      >
+                        {isGenerating ? <></> : <Sparkles size={14} />}
+                        AI
+                      </button>
                     </label>
                     <input
                       type="text"

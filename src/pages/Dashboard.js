@@ -593,7 +593,7 @@ const Dashboard = () => {
                               minute: '2-digit',
                             })}
                           </span>
-                          <span className="platform-name">{primary}</span>
+                          <span className="platform-name platform-name-db">{primary}</span>
                         </div>
 
                         {/* Media Section */}
