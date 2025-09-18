@@ -597,7 +597,7 @@ const Dashboard = () => {
                               minute: '2-digit',
                             })}
                           </span>
-                          <span className="platform-name">
+                          <span className="platform-name  platform-name-db">
                             {primary === 'instagram' && <Instagram size={16} />}
                             {primary === 'facebook' && <Facebook size={16} />}
                             {primary === 'twitter' && <Twitter size={16} />}
