@@ -879,9 +879,9 @@
 }
 
 
-.platform-name {
+.platform-name-db {
   font-weight: 500;
-  color: #1e293b;
+  color: white !important;
   font-size: 0.875rem;
   text-transform: capitalize;
 }

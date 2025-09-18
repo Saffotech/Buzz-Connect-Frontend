@@ -239,6 +239,12 @@ class ApiClient {
       body: JSON.stringify(options)
     });
   }
+  async suggestMentions(options = {}) {
+    return this.request('/api/ai/suggest-mentions', {
+      method: 'POST',
+      body: JSON.stringify(options)
+    });
+  }
   async optimizeContent(options = {}) {
     return this.request('/api/ai/optimize-content', {
       method: 'POST',
