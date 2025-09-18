@@ -858,7 +858,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, youtubeFn,
             </div>
           </button>
 
-          <button
+          {/* <button
             onClick={onSelectTwitter}
             style={{
               display: 'flex',
@@ -909,10 +909,10 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, youtubeFn,
                   }}
                 >
                   (Note: Requires Twitter login for authentication)
-                </span> */}
+                </span> 
               </div>
             </div>
-          </button>
+          </button> */}
 
 
 
