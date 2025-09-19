@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Loader from './components/common/Loader'
+import Loader from './components/common/Loader';
 import Layout from './components/Layout';
 import AuthPage from './components/AuthPage';
 import Dashboard from './pages/Dashboard';
@@ -14,6 +14,10 @@ import AIAssistant from './pages/AIAssistant';
 import SettingsPage from './pages/Settings';
 import { trackPageView } from "./utils/analytics-helpers";
 import PageNotFound from './components/common/pagenotfound/PageNotFound';
+import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
+import TermsOfService from "./pages/Legal/TermsOfService";
+import DataDeletionPolicy from "./pages/Legal/DataDeletionPolicy";
+import TestingInstructions from "./pages/Legal/TestingInstructions";
 
 // Meta tags configuration for different routes
 const getMetaTags = (pathname) => {
@@ -68,27 +72,36 @@ const getMetaTags = (pathname) => {
         ogUrl: "https://mgabrandbuzz.com/ai-assistant",
         ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
       };
-      case '/content':
-  return {
-    title: "Content Management | MGA Buzz Connect",
-    description: "Plan, create, and organize all your social media posts and media assets in one place. Access your content drafts and media library.",
-    keywords: "social media content, content planner, media library, content management, social media posts",
-    ogTitle: "Content Management - MGA Buzz Connect",
-    ogDescription: "Plan, create, and organize your social media posts and media assets.",
-    ogUrl: "https://mgabrandbuzz.com/content",
+    case '/content':
+      return {
+        title: "Content Management | MGA Buzz Connect",
+        description: "Plan, create, and organize all your social media posts and media assets in one place. Access your content drafts and media library.",
+        keywords: "social media content, content planner, media library, content management, social media posts",
+        ogTitle: "Content Management - MGA Buzz Connect",
+        ogDescription: "Plan, create, and organize your social media posts and media assets.",
+        ogUrl: "https://mgabrandbuzz.com/content",
     ogImage: "https://mgabrandbuzz.com/assets/img/og-image-content.jpg" // A specific image for this page is best
-  };
-case '/settings':
-  return {
-    title: "Account Settings | MGA Buzz Connect",
-    description: "Manage your MGA Buzz Connect account settings, connected social profiles, team members, and subscription details.",
-    keywords: "account settings, social media profiles, manage subscription, team management",
-    ogTitle: "Account Settings - MGA Buzz Connect",
-    ogDescription: "Manage your account, profiles, and subscription settings.",
-    ogUrl: "https://mgabrandbuzz.com/settings",
-    ogImage: "https://mgabrandbuzz.com/assets/img/og-image-settings.jpg" // A specific image for this page is best
-  };
-
+      };
+    case '/settings':
+      return {
+        title: "Account Settings | MGA Buzz Connect",
+        description: "Manage your MGA Buzz Connect account settings, connected social profiles, team members, and subscription details.",
+        keywords: "account settings, social media profiles, manage subscription, team management",
+        ogTitle: "Account Settings - MGA Buzz Connect",
+        ogDescription: "Manage your account, profiles, and subscription settings.",
+        ogUrl: "https://mgabrandbuzz.com/settings",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image-settings.jpg" // A specific image for this page is best
+      };
+    case '/privacy-policy':
+      return {
+        title: "Privacy Policy | MGA Buzz Connect",
+        description: "Learn how MGA Buzz Connect collects, uses, and protects your data while managing your social media accounts.",
+        keywords: "privacy policy, MGA Buzz Connect, data protection, social media data",
+        ogTitle: "Privacy Policy - MGA Buzz Connect",
+        ogDescription: "Read the Privacy Policy of MGA Buzz Connect.",
+        ogUrl: "https://mgabrandbuzz.com/privacy-policy",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+      };
     default:
       return {
         title: "MGA Buzz Connect - AI-Powered Social Media Management",
@@ -255,6 +268,11 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        {/* ✅ Privacy Policy Route */}
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/data-deletion-policy" element={<DataDeletionPolicy />} />
+        <Route path="/testing-instructions" element={<TestingInstructions />} />
         <Route
           path="/"
           element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />}
