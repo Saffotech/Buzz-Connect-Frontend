@@ -1,7 +1,14 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./LegalPages.css";
 
 const DataDeletionPolicy = () => {
+  const navigate = useNavigate(); // initialize navigation
+
+  const goToDashboard = () => {
+    navigate("/dashboard"); // replace with your dashboard route
+  };
+
   return (
     <div className="legal-container">
       <h1>Data Deletion Instructions</h1>
@@ -39,6 +46,9 @@ const DataDeletionPolicy = () => {
       </p>
 
       <p className="effective-date">Effective Date: July 14, 2025</p>
+      <button className="back-dashboard-btn" onClick={goToDashboard}>
+        ← Back to Dashboard
+      </button>
     </div>
   );
 };
