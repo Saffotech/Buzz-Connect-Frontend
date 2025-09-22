@@ -5,9 +5,9 @@ import SettingsCard from '../SettingsCard';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// import { faSquareThreads } from '@fortawesome/free-brands-svg-icons';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSquareThreads, faSquareXTwitter  } from '@fortawesome/free-brands-svg-icons';
+ 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platform }) => {
   if (!isOpen) return null;
@@ -2073,7 +2073,6 @@ useEffect(() => {
         View Only
       </div>
     )}
-
     {/* YouTube badge */}
     {account.platform === 'youtube' && (
       <div
@@ -2090,12 +2089,9 @@ useEffect(() => {
           fontWeight: '500'
         }}
       >
-        Channel
-      </div>
-    )}
-  </div>
-);
-
+       Channel
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -2148,7 +2144,7 @@ useEffect(() => {
         onClose={handleCloseLinkedInTerms}
         onConfirm={handleLinkedInTermsConfirm}
       />
-
+      
       {/* YouTube Terms Modal */}
       <YouTubeTermsModal
         isOpen={youtubeTermsModal.isOpen}
