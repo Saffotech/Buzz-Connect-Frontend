@@ -4,9 +4,8 @@ import { CheckCircle, Info, AlertCircle, Plus, Trash2, Check, Link2, Instagram, 
 import SettingsCard from '../SettingsCard';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSquareXTwitter, faSquareThreads } from '@fortawesome/free-brands-svg-icons';
-
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import { faSquareThreads } from '@fortawesome/free-brands-svg-icons';
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platform }) => {
   if (!isOpen) return null;
@@ -819,7 +818,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
                 border: '1px solid #BAE6FD',
               }}
             >
-              <FontAwesomeIcon icon={faSquareThreads} size="xl" />
+              {/* <FontAwesomeIcon icon={faSquareThreads} size="xl" /> */}
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
@@ -1274,37 +1273,44 @@ const AccountsSettings = ({ onNotify }) => {
 
   const authToken = token || localStorage.getItem('token');
 
-  useEffect(() => {
-    if (!authToken || isLoading) return;
+useEffect(() => {
+  if (!authToken || isLoading) return;
 
-    const fetchAccounts = async () => {
-      try {
-        setLoading(true);
-
-        // Fetch Instagram/Facebook accounts first
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      
+      // First, get the current user profile which contains all connected accounts
+      const userRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      
+      if (userRes.data.success && userRes.data.data) {
+        // Extract all connected accounts from the user profile
+        const allAccounts = userRes.data.data.connectedAccounts || [];
+        setConnectedAccounts(allAccounts);
+      } else {
+        // Fallback to the existing approach if /api/auth/me doesn't return accounts
         const instaRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`, {
           headers: { Authorization: `Bearer ${authToken}` }
         });
-
+        
         let accounts = instaRes.data.accounts || [];
-
-        // Now fetch YouTube accounts
+        
+        // Fetch YouTube accounts
         try {
           const youtubeRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/youtube/status`, {
             headers: { Authorization: `Bearer ${authToken}` }
           });
-
-          // If YouTube is connected, get channel details
+          
           if (youtubeRes.data.connected) {
             const channelRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/youtube/channel`, {
               headers: { Authorization: `Bearer ${authToken}` }
             });
-
+            
             if (channelRes.data.success && channelRes.data.data) {
-              // Find if this account already exists in the list
               const ytData = channelRes.data.data;
-
-              // Only add if not already in the accounts list
+              
               if (!accounts.some(acc => acc.platform === 'youtube' && acc.platformUserId === ytData.id)) {
                 accounts.push({
                   _id: `youtube-${ytData.id}`,
@@ -1326,40 +1332,21 @@ const AccountsSettings = ({ onNotify }) => {
           }
         } catch (ytErr) {
           console.error('Error fetching YouTube account:', ytErr);
-          // Continue even if YouTube fetch fails
         }
-
-        // Process accounts (existing Facebook logic)
-        const instaAccount = accounts.find((acc) => acc.platform === 'instagram');
-        if (instaAccount && !accounts.some((acc) => acc.platform === 'facebook')) {
-          const fbPic = instaAccount.fbProfilePicture || instaAccount.profilePicture || null;
-          accounts.push({
-            _id: `${instaAccount._id}-fb`,
-            username: instaAccount.fbUsername || 'Facebook (linked via Instagram)',
-            platform: 'facebook',
-            profilePicture: fbPic,
-            noProfilePicture: !fbPic,
-            followerCount: instaAccount.fbFollowerCount ?? '-',
-            accountName: instaAccount.accountName || instaAccount.username,
-            metadata: {
-              viewOnly: true,
-              linkedViaInstagram: true,
-              sourceAccountId: instaAccount._id
-            }
-          });
-        }
-
+        
         setConnectedAccounts(accounts);
-      } catch (err) {
-        console.error('Failed to fetch connected accounts', err);
-        toast.error('Failed to load accounts');
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch connected accounts', err);
+      toast.error('Failed to load accounts');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchAccounts();
-  }, [authToken, isLoading]);
+  fetchAccounts();
+}, [authToken, isLoading]);
+
 
   // Updated grouping logic based on shared access tokens
   const groupAccountsByOwner = (accounts) => {
@@ -1417,8 +1404,8 @@ const AccountsSettings = ({ onNotify }) => {
     // Check for direct connections
     const areDirectlyConnected = (acc1, acc2) => {
       // Check ID patterns
-      const baseId1 = acc1._id.replace('-fb', '');
-      const baseId2 = acc2._id.replace('-fb', '');
+      const baseId1 = acc1?._id ? acc1._id.replace('-fb', '') : '';
+      const baseId2 = acc2?._id ? acc2._id.replace('-fb', '') : '';
       if (baseId1 === baseId2) return true;
 
       // Check explicit connection fields
@@ -1453,18 +1440,28 @@ const AccountsSettings = ({ onNotify }) => {
       // Case: Personal name (e.g., "neal kumar") + Business page (e.g., "frontend developer")
       if (personalNamePattern.test(name1)) {
         const [firstName, lastName] = name1.split(' ');
-        const hasBusinessKeyword = businessKeywords.some(keyword => name2.includes(keyword));
+        const hasBusinessKeyword = businessKeywords.some(
+          keyword => (name2 || '').includes(keyword)
+        );
 
-        if (hasBusinessKeyword && (name2.includes(firstName) || name2.includes(lastName))) {
+        if (
+          hasBusinessKeyword &&
+          ((name2 || '').includes(firstName) || (name2 || '').includes(lastName))
+        ) {
           return true;
         }
       }
 
       if (personalNamePattern.test(name2)) {
         const [firstName, lastName] = name2.split(' ');
-        const hasBusinessKeyword = businessKeywords.some(keyword => name1.includes(keyword));
+        const hasBusinessKeyword = businessKeywords.some(
+          keyword => (name1 || '').includes(keyword)
+        );
 
-        if (hasBusinessKeyword && (name1.includes(firstName) || name1.includes(lastName))) {
+        if (
+          hasBusinessKeyword &&
+          ((name1 || '').includes(firstName) || (name1 || '').includes(lastName))
+        ) {
           return true;
         }
       }
@@ -1480,8 +1477,8 @@ const AccountsSettings = ({ onNotify }) => {
       const clean1 = cleanName(name1);
       const clean2 = cleanName(name2);
 
-      if (clean1.length >= 3 && clean2.length >= 3) {
-        if (clean1.includes(clean2) || clean2.includes(clean1)) {
+      if ((clean1?.length ?? 0) >= 3 && (clean2?.length ?? 0) >= 3) {
+        if ((clean1 || '').includes(clean2) || (clean2 || '').includes(clean1)) {
           return true;
         }
       }
@@ -1510,7 +1507,7 @@ const AccountsSettings = ({ onNotify }) => {
         const bestName = best;
 
         // Skip generic names
-        if (currentName.includes('linked via') || currentName.includes('(')) {
+        if ((currentName || '').includes('linked via') || (currentName || '').includes('(')) {
           return bestName;
         }
 
@@ -1722,7 +1719,9 @@ const AccountsSettings = ({ onNotify }) => {
       isOpen: true,
       accountId: actualAccountId,
       accountUsername: displayAccount.username,
-      platform: account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
+      platform: account?.platform
+        ? account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
+        : ''
     });
   };
 
@@ -1829,7 +1828,6 @@ const AccountsSettings = ({ onNotify }) => {
                       <div className="accounts-grid">
                         {group.accounts.map((account, index) => {
                           const PlatformIcon = platformIcons[account.platform];
-
                           // Determine connection type from metadata and connection properties
                           const isDirectConnection =
                             account.connectionType === 'direct' ||
@@ -1890,9 +1888,9 @@ const AccountsSettings = ({ onNotify }) => {
                                   ) : (
                                     <User size={32} strokeWidth={1.5} />
                                   )}
-                                  <div className={`platform-badge platform-${account.platform}`}>
-                                    <PlatformIcon size={12} />
-                                  </div>
+<div className={`platform-badge platform-${account.platform}`}>
+  {PlatformIcon ? <PlatformIcon size={12} /> : null}
+</div>
                                 </div>
 
                                 {/* Show delete button for ALL accounts, including view-only */}
@@ -1908,7 +1906,9 @@ const AccountsSettings = ({ onNotify }) => {
                               <div className="account-card-content">
                                 <h4 className="account-username">{account.username}</h4>
                                 <p className="platform-name">
-                                  {account.platform.charAt(0).toUpperCase() + account.platform.slice(1)}
+                                  {account?.platform
+                                    ? account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
+                                    : ''}
                                   {account.platform === 'instagram' && (
                                     isDirectConnection ? (
                                       <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
