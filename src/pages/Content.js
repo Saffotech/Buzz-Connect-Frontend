@@ -5,6 +5,8 @@ import {
   Instagram,
   Twitter,
   Facebook,
+  Youtube,
+  Linkedin,
   Heart,
   MessageCircle,
   Share,
@@ -147,6 +149,8 @@ const Content = () => {
   // Delete confirmation state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
+  const [deleteFromInsta, setDeleteFromInsta] = useState(false);
+  const [deleteFromYouTube, setDeleteFromYouTube] = useState(false); // Add this
 
   // Enhanced Media state
   const [mediaList, setMediaList] = useState([]);
@@ -166,7 +170,6 @@ const Content = () => {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showMediaPreview, setShowMediaPreview] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [deleteFromInsta, setDeleteFromInsta] = useState(false);
 
   const [allPosts, setAllPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -247,23 +250,133 @@ const Content = () => {
   };
 
   // ✅ Delete post with confirmation
-  const handleDeletePost = async (postId) => {
-    try {
-      await apiClient.request(`/api/posts/${postId}`, { method: 'DELETE' });
-      setNotification({ type: 'success', message: 'Post deleted successfully' });
-      setShowDeleteConfirm(false);
-      setPostToDelete(null);
-      await fetchAllPosts();
-    } catch (error) {
-      setNotification({ type: 'error', message: error.message || 'Failed to delete post' });
+ const handleDeletePost = async (postId) => {
+  try {
+    console.log('🗑️ Starting post deletion process for ID:', postId);
+    console.log('📊 Post to delete details:', {
+      id: postToDelete?._id || postToDelete?.id,
+      platforms: postToDelete?.platforms,
+      platformPosts: postToDelete?.platformPosts?.map(p => ({
+        platform: p.platform,
+        status: p.status,
+        id: p.platformPostId,
+        accountId: p.accountId
+      }))
+    });
+
+    // First delete from database
+    console.log('🗑️ Deleting post from database...');
+    await apiClient.request(`/api/posts/${postId}`, { method: 'DELETE' });
+    console.log('✅ Post deleted from database successfully');
+    
+    // Handle Instagram deletion if checked
+    if (deleteFromInsta) {
+      const instagramPosts = postToDelete?.platformPosts?.filter(
+        post => post.platform === 'instagram' && post.status === 'published'
+      );
+      
+      console.log(`📸 Found ${instagramPosts?.length || 0} Instagram posts to delete`);
+      
+      for (const post of instagramPosts || []) {
+        try {
+          console.log(`🗑️ Deleting Instagram post: ${post.platformPostId}`);
+          await apiClient.request(`/api/instagram/posts/${post.platformPostId}`, { method: 'DELETE' });
+          console.log(`✅ Deleted Instagram post: ${post.platformPostId}`);
+        } catch (error) {
+          console.error(`❌ Failed to delete Instagram post ${post.platformPostId}:`, error);
+          console.error('Error details:', error.response?.data);
+        }
+      }
     }
-  };
+    
+    // Handle YouTube deletion if checked
+    if (deleteFromYouTube) {
+      const youtubePosts = postToDelete?.platformPosts?.filter(
+        post => post.platform === 'youtube' && post.status === 'published'
+      );
+      
+      console.log(`📺 Found ${youtubePosts?.length || 0} YouTube videos to delete`);
+      
+      for (const post of youtubePosts || []) {
+        try {
+          console.log(`🗑️ Attempting to delete YouTube video:`, {
+            videoId: post.platformPostId,
+            accountId: post.accountId,
+            url: post?.additionalInfo?.url || 'N/A'
+          });
+          
+          const deleteResponse = await apiClient.request(
+            `/api/auth/youtube/videos/${post.platformPostId}`, 
+            { method: 'DELETE' }
+          );
+          
+          console.log(`✅ YouTube API response:`, deleteResponse?.data);
+          console.log(`✅ Deleted YouTube video: ${post.platformPostId}`);
+        } catch (error) {
+          console.error(`❌ Failed to delete YouTube video ${post.platformPostId}:`, error);
+          console.error('Error response:', error.response?.data);
+          console.error('Error status:', error.response?.status);
+          
+          // Show specific error for YouTube deletion
+          setNotification({ 
+            type: 'warning', 
+            message: `Post deleted, but YouTube video deletion failed: ${error.response?.data?.error || error.message}` 
+          });
+        }
+      }
+    } else {
+      console.log('📺 YouTube deletion not requested (checkbox not checked)');
+    }
+    
+    setNotification({ type: 'success', message: 'Post deleted successfully' });
+    setShowDeleteConfirm(false);
+    setPostToDelete(null);
+    setDeleteFromInsta(false);
+    setDeleteFromYouTube(false);
+    await fetchAllPosts();
+  } catch (error) {
+    console.error('❌ Post deletion error:', error);
+    console.error('Error response:', error.response?.data);
+    setNotification({ type: 'error', message: error.message || 'Failed to delete post' });
+  }
+};
 
   // ✅ Show delete confirmation
-  const showDeleteConfirmation = (post) => {
+const showDeleteConfirmation = async (post) => {
+  try {
+    // Get the complete post data if we don't have platformPosts already
+    if (!post.platformPosts || post.platformPosts.length === 0) {
+      console.log('📊 Fetching complete post data for deletion...');
+      const postId = post._id || post.id;
+      const response = await apiClient.request(`/api/posts/${postId}`);
+      
+      if (response && (response.data || response._id)) {
+        // Use the complete post data
+        const completePost = response.data || response;
+        console.log('📊 Complete post data fetched:', {
+          id: completePost._id || completePost.id,
+          platforms: completePost.platforms,
+          hasPlatformPosts: Boolean(completePost.platformPosts),
+          platformPostsCount: completePost.platformPosts?.length || 0
+        });
+        
+        setPostToDelete(completePost);
+      } else {
+        console.warn('⚠️ Could not fetch complete post data, using partial data');
+        setPostToDelete(post);
+      }
+    } else {
+      setPostToDelete(post);
+    }
+    
+    setShowDeleteConfirm(true);
+  } catch (error) {
+    console.error('❌ Error preparing post for deletion:', error);
+    // Fallback to using the existing post data
     setPostToDelete(post);
     setShowDeleteConfirm(true);
-  };
+  }
+};
 
   // ✅ Handle post click
   const handlePostClick = (post) => {
@@ -551,25 +664,33 @@ const Content = () => {
 
       {/* Post Detail Modal */}
       <PostDetailModal
-        post={selectedPost}
-        isOpen={showPostDetail}
-        onClose={() => setShowPostDetail(false)}
-        onEdit={handleEditPost}
-        onDelete={showDeleteConfirmation}
-      />
+  post={selectedPost}
+  isOpen={showPostDetail}
+  onClose={() => setShowPostDetail(false)}
+  onEdit={handleEditPost}
+  onDelete={() => {
+    setShowPostDetail(false);
+    showDeleteConfirmation(selectedPost);
+  }}
+/>
 
       {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
-        deleteFromInsta={deleteFromInsta}
-        setDeleteFromInsta={setDeleteFromInsta}
-        isOpen={showDeleteConfirm}
-        onClose={() => {
-          setShowDeleteConfirm(false);
-          setPostToDelete(null);
-        }}
-        onConfirm={() => handleDeletePost(postToDelete?._id || postToDelete?.id)}
-        postTitle={postToDelete?.content?.substring(0, 50) || 'this post'}
-      />
+     <DeleteConfirmationModal
+  deleteFromInsta={deleteFromInsta}
+  setDeleteFromInsta={setDeleteFromInsta}
+  deleteFromYouTube={deleteFromYouTube}
+  setDeleteFromYouTube={setDeleteFromYouTube}
+  isOpen={showDeleteConfirm}
+  post={postToDelete}
+  onClose={() => {
+    setShowDeleteConfirm(false);
+    setPostToDelete(null);
+    setDeleteFromInsta(false);
+    setDeleteFromYouTube(false);
+  }}
+  onConfirm={() => handleDeletePost(postToDelete?._id || postToDelete?.id)}
+  postTitle={postToDelete?.content?.substring(0, 50) || 'this post'}
+/>
 
       <MediaUploadModal
         isOpen={showUploadModal}
@@ -906,19 +1027,26 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
   };
 
 
-  const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
-    ? post.platforms
-    : ['instagram']; // Default fallback
+
+const platforms = Array.isArray(post.platforms) && post.platforms.length > 0 
+  ? post.platforms 
+  : (post.platformPosts?.map(p => p.platform) || ['instagram']); // Include platformPosts check
+
+  const uniquePlatforms = [...new Set(platforms)];
+
 
   // Platform icon mapping
   const getPlatformIcon = (platform) => {
-    switch (platform?.toLowerCase()) {
-      case 'instagram': return Instagram;
-      case 'facebook': return Facebook;
-      case 'twitter': return Twitter;
-      default: return FileText;
-    }
-  };
+  switch (platform?.toLowerCase()) {
+    case 'instagram': return Instagram;
+    case 'facebook': return Facebook;
+    case 'twitter': return Twitter;
+    case 'youtube': return Youtube;  // ⬅️ updated
+    case 'linkedin': return Linkedin;
+    default: return FileText;
+  }
+};
+
 
   const getDisplayDate = () => {
     if (post.status === 'scheduled' && post.scheduledDate) {
@@ -1097,20 +1225,21 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
         </div>
 
         {/* Platform Icons */}
-        <div className="post-platforms">
-          {platforms.map((platform, index) => {
-            const PlatformIcon = getPlatformIcon(platform);
-            return (
-              <div
-                key={index}
-                className={`platform-icon `}
-                title={platform}
-              >
-                <PlatformIcon size={20} />
-              </div>
-            );
-          })}
-        </div>
+
+       <div className="post-platforms">
+  {uniquePlatforms.map((platform, index) => {
+    const PlatformIcon = getPlatformIcon(platform);
+    return (
+      <div 
+        key={index} 
+        className={`platform-icon ${platform.toLowerCase()}`}
+        title={platform}
+      >
+        <PlatformIcon size={20} />
+      </div>
+    );
+  })}
+</div>
       </div>
 
       {/* Media Section */}
@@ -1265,8 +1394,46 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
 };
 
 // Delete Confirmation Modal Component
-const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDeleteEverywhere, deleteFromInsta, setDeleteFromInsta }) => {
+const DeleteConfirmationModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  postTitle, 
+  post, 
+  deleteFromInsta, 
+  setDeleteFromInsta,
+  deleteFromYouTube,
+  setDeleteFromYouTube 
+}) => {
   if (!isOpen) return null;
+
+  // Check if this post has YouTube videos (with detailed logging)
+  const youtubeVideos = post?.platformPosts?.filter(
+    platformPost => platformPost.platform === 'youtube' && platformPost.status === 'published'
+  ) || [];
+  
+  const hasYouTubePost = youtubeVideos.length > 0;
+  
+  // Log YouTube videos found for deletion
+  if (hasYouTubePost) {
+    console.log('📺 YouTube videos found in post:', youtubeVideos.map(video => ({
+      id: video.platformPostId,
+      accountId: video.accountId,
+      status: video.status
+    })));
+  }
+  
+  // Check if this post has Instagram posts
+  const instagramPosts = post?.platformPosts?.filter(
+    platformPost => platformPost.platform === 'instagram' && platformPost.status === 'published'
+  ) || [];
+  
+  const hasInstagramPost = instagramPosts.length > 0;
+  
+  // Log if no platform posts were found
+  if (!post?.platformPosts || post.platformPosts.length === 0) {
+    console.log('⚠️ No platform posts found in this post object:', post);
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -1288,15 +1455,28 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, postTitle, onDele
             Are you sure you want to delete this post?
           </p>
 
-          <div className="delete-extra-option">
-            <label id='ctinst'>
-              <input
-                type="checkbox"
-                checked={deleteFromInsta}
-                onChange={(e) => setDeleteFromInsta(e.target.checked)}
-              />
-              &nbsp; Delete from Instagram also
-            </label>
+          <div className="delete-extra-options">
+            {hasInstagramPost && (
+              <label id='ctinst'>
+                <input
+                  type="checkbox"
+                  checked={deleteFromInsta}
+                  onChange={(e) => setDeleteFromInsta(e.target.checked)}
+                />
+                &nbsp; Delete from Instagram also
+              </label>
+            )}
+            
+            {hasYouTubePost && (
+              <label id='ctyoutube'>
+                <input
+                  type="checkbox"
+                  checked={deleteFromYouTube}
+                  onChange={(e) => setDeleteFromYouTube(e.target.checked)}
+                />
+                &nbsp; Delete from YouTube also {youtubeVideos.length > 1 ? `(${youtubeVideos.length} videos)` : ''}
+              </label>
+            )}
           </div>
         </div>
 
