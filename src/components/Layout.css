@@ -483,3 +483,65 @@ layout.css
 
 
 }
+
+.nested-dropdown {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.nested-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  /* padding: 8px 12px; */
+  font: inherit;
+}
+
+.nested-menu {
+  margin-left: 4px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-left: 2px solid #eee;
+}
+
+.nested-dropdown .dropdown-item {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 0.25rem;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.app-footer {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  padding: 16px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.app-footer .footer-links {
+  margin-top: 4px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.app-footer .footer-links a {
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.app-footer .footer-links a:hover {
+  color: #1d4ed8;
+}
