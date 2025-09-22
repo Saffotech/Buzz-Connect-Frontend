@@ -309,6 +309,10 @@
   transition: all 0.2s ease;
 }
 
+.arrow-btnx{
+padding: .5rem !important; 
+}
+
 .image-counter {
   position: absolute;
   bottom: 8px;

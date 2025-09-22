@@ -52,7 +52,16 @@ const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [notification, setNotification] = useState(null);
-  
+
+  const connectedPlatforms = ["instagram", "facebook", "linkedin"];
+  const platformLabels = {
+    instagram: "Instagram",
+    facebook: "Facebook",
+    linkedin: "LinkedIn",
+    twitter: "Twitter",
+    youtube: "YouTube",
+  };
+
   const {
     createPost: apiCreatePost,
   } = useDashboardData();
@@ -63,15 +72,15 @@ const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
       const response = await apiCreatePost(postData);
       setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
       setShowCreatePost(false);
-      
+
       if (refreshPosts) {
         await refreshPosts();
       }
-      
+
       if (onPostCreated) {
         onPostCreated(response);
       }
-      
+
       return response;
     } catch (error) {
       console.error('Post creation failed:', error);
@@ -95,7 +104,7 @@ const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
         <Plus size={18} />
         Create Post
       </button>
-      
+
       <CreatePost
         isOpen={showCreatePost}
         onClose={() => {
@@ -105,7 +114,7 @@ const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
         onPostCreated={handleCreatePost}
         initialData={selectedPost}
       />
-      
+
       {notification && (
         <div className={`notification ${notification.type}`}>
           <span>{notification.message}</span>
@@ -190,6 +199,7 @@ const Content = () => {
     }
   }, []);
 
+
   // ✅ Create post function using apiCreatePost from dashboard hook
   const handleCreatePost = async (postData) => {
     try {
@@ -207,33 +217,33 @@ const Content = () => {
 
   // ✅ Update post function for editing
   const handleUpdatePost = async (postId, postData) => {
-    try {    
-     
-      
+    try {
+
+
       const response = await apiClient.request(`/api/posts/${postId}`, {
         method: 'PUT',
         data: postData  // Use data instead of body
-      });    
-      
+      });
+
       if (response && (response.success || response.data || response._id)) {
-        setNotification({ 
-          type: 'success', 
-          message: response.message || 'Post updated successfully' 
+        setNotification({
+          type: 'success',
+          message: response.message || 'Post updated successfully'
         });
-        
+
         setShowCreatePost(false);
         setSelectedPost(null);
-        
+
         await fetchAllPosts();
-        
+
         return response.data || response;
       } else {
         throw new Error('Update response indicated failure');
       }
     } catch (error) {
-      setNotification({ 
-        type: 'error', 
-        message: error.message || 'Failed to update post' 
+      setNotification({
+        type: 'error',
+        message: error.message || 'Failed to update post'
       });
       throw error;
     }
@@ -378,12 +388,12 @@ const showDeleteConfirmation = async (post) => {
     try {
       const postId = post._id || post.id;
       const response = await apiClient.request(`/api/posts/${postId}`);
-      
+
       if (response && response.data) {
         setSelectedPost(response.data);
         setShowPostDetail(false);
         setShowCreatePost(true);
-      } 
+      }
       else if (response && response._id) {
         setSelectedPost(response);
         setShowPostDetail(false);
@@ -645,7 +655,7 @@ const showDeleteConfirmation = async (post) => {
           setShowCreatePost(false);
           setSelectedPost(null);
         }}
-        onPostCreated={selectedPost 
+        onPostCreated={selectedPost
           ? (postData) => handleUpdatePost(selectedPost._id || selectedPost.id, postData)
           : handleCreatePost
         }
@@ -734,6 +744,39 @@ const PostsSubPage = ({
     scheduled: allPosts.filter(p => (p?.status || 'draft') === 'scheduled').length,
     published: allPosts.filter(p => (p?.status || 'draft') === 'published').length,
     failed: allPosts.filter(p => (p?.status || 'draft') === 'failed').length
+  };
+
+  const { user } = useDashboardData();
+
+
+  const getPlatformOptions = () => {
+    const baseOptions = [
+      { value: 'all', label: 'All Platforms', icon: '' }
+    ];
+
+    if (!user?.connectedAccounts) return baseOptions;
+
+    const connectedPlatforms = user.connectedAccounts.map(account => account.platform);
+
+    if (connectedPlatforms.includes('instagram')) {
+      baseOptions.push({ value: 'instagram', label: 'Instagram', icon: '' });
+    }
+    if (connectedPlatforms.includes('facebook')) {
+      baseOptions.push({ value: 'facebook', label: 'Facebook', icon: '' });
+    }
+    if (connectedPlatforms.includes('twitter')) {
+      baseOptions.push({ value: 'twitter', label: 'Twitter', icon: '' });
+    }
+
+    if (connectedPlatforms.includes('youtube')) {
+      baseOptions.push({ value: 'youtube', label: 'YouTube', icon: '' });
+    }
+
+    if (connectedPlatforms.includes('linkedin')) {
+      baseOptions.push({ value: 'linkedin', label: 'LinkedIn', icon: '' });
+    }
+
+    return baseOptions;
   };
 
   const filteredPosts = allPosts.filter(post => {
@@ -840,13 +883,30 @@ const PostsSubPage = ({
             <option value="failed">Failed</option>
           </select>
 
+          {/* <select
+            value={filters.platform}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, platform: e.target.value }))
+            }
+          >
+            <option value="all">All Platforms</option>
+            {connectedPlatforms.map((platform) => (
+              <option key={platform} value={platform}>
+                {platformLabels[platform]}
+              </option>
+            ))}
+          </select> */}
+
+
           <select
             value={filters.platform}
             onChange={(e) => setFilters(prev => ({ ...prev, platform: e.target.value }))}
           >
-            <option value="all">All Platforms</option>
-            <option value="instagram">Instagram</option>
-            <option value="facebook">Facebook</option>
+            {getPlatformOptions().map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
 
           <div className="date-range-dropdown">
@@ -967,6 +1027,7 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
   };
 
 
+
 const platforms = Array.isArray(post.platforms) && post.platforms.length > 0 
   ? post.platforms 
   : (post.platformPosts?.map(p => p.platform) || ['instagram']); // Include platformPosts check
@@ -1014,7 +1075,7 @@ const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
   // Get all media items
   const getAllMedia = () => {
     const allMedia = [];
-    
+
     if (post.images && Array.isArray(post.images)) {
       post.images.forEach(item => {
         const url = typeof item === 'string' ? item : item.url || item.src;
@@ -1141,7 +1202,7 @@ const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
           </button>
         </div>
       )}
-      
+
       {showActions && (
         <div className="shw-exp-icon">
           <Maximize2 size={16} />
@@ -1162,8 +1223,9 @@ const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
             })}
           </span>
         </div>
-        
+
         {/* Platform Icons */}
+
        <div className="post-platforms">
   {uniquePlatforms.map((platform, index) => {
     const PlatformIcon = getPlatformIcon(platform);
@@ -1183,20 +1245,23 @@ const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
       {/* Media Section */}
       {displayMedia.length > 0 && (
         <div className={`preview-images ${layoutClass}`}>
-          {displayMedia.map((media, index) => {
-            if (media.type === 'image' && imageLoadErrors.has(index)) {
+          {(() => {
+            const media = displayMedia[0];
+            if (!media) return null; // handle empty array
+
+            if (media.type === 'image' && imageLoadErrors.has(0)) {
               return null;
             }
 
-            const aspectClass = imageAspectRatios.get(index) || '';
+            const aspectClass = imageAspectRatios.get(0) || '';
 
             return (
-              <div key={index} className={`media-item ${aspectClass}`}>
+              <div className={`media-item ${aspectClass}`}>
                 {media.type === 'video' ? (
                   <>
-                    <video 
-                      src={media.url} 
-                      muted 
+                    <video
+                      src={media.url}
+                      muted
                       loop
                       playsInline
                       onMouseEnter={(e) => {
@@ -1211,7 +1276,53 @@ const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
                     />
                     <div className="video-indicator">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                        <path d="M8 5v14l11-7z"/>
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </>
+                ) : (
+                  <img
+                    src={media.url}
+                    alt={media.alt}
+                    loading="lazy"
+                    onError={() => handleImageError(0)}
+                    onLoad={(e) => handleImageLoad(e, 0)}
+                    data-aspect={aspectClass}
+                  />
+                )}
+              </div>
+            );
+          })()}
+
+          {/* {displayMedia.map((media, index) => {
+            if (media.type === 'image' && imageLoadErrors.has(index)) {
+              return null;
+            }
+
+            const aspectClass = imageAspectRatios.get(index) || '';
+
+            return (
+              <div key={index} className={`media-item ${aspectClass}`}>
+                {media.type === 'video' ? (
+                  <>
+                    <video
+                      src={media.url}
+                      muted
+                      loop
+                      playsInline
+                      onMouseEnter={(e) => {
+                        e.target.currentTime = 0;
+                        e.target.play().catch(console.error);
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.pause();
+                        e.target.currentTime = 0;
+                      }}
+                      onError={() => console.error('Video failed to load:', media.url)}
+                    />
+                    <div className="video-indicator">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                        <path d="M8 5v14l11-7z" />
                       </svg>
                     </div>
                   </>
@@ -1227,7 +1338,7 @@ const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
                 )}
               </div>
             );
-          }).filter(Boolean)}
+          }).filter(Boolean)} */}
 
           {mediaItems.length > 4 && (
             <div className="image-count">
@@ -1687,7 +1798,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
     files.forEach(file => {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
-      
+
       console.log(`📁 File: ${file.name}`);
       console.log(`   Type: ${file.type}`);
       console.log(`   Size: ${formatFileSize(file.size)} (${file.size} bytes)`);
@@ -1705,7 +1816,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
       // ✅ UPDATED: Use backend limits
       const limits = isVideo ? FILE_SIZE_LIMITS.video : FILE_SIZE_LIMITS.image;
       const fileTypeLabel = isVideo ? 'Video' : 'Image';
-      
+
       console.log(`   Max allowed size: ${limits.maxSizeMB}MB (${limits.maxSize} bytes)`);
       console.log(`   File size check: ${file.size} > ${limits.maxSize} = ${file.size > limits.maxSize}`);
 
@@ -1724,7 +1835,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
 
     setValidationErrors(errors);
     setSelectedFiles(validFiles);
-    
+
     console.log(`✅ Valid files: ${validFiles.length}`);
     console.log(`❌ Invalid files: ${errors.length}`);
   };
@@ -1744,17 +1855,17 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
 
     try {
       console.log('🚀 Starting upload for', selectedFiles.length, 'files');
-      
+
       // Create FormData
       const formData = new FormData();
       selectedFiles.forEach((file, index) => {
         console.log(`📤 Adding file ${index + 1}: ${file.name} (${formatFileSize(file.size)})`);
         formData.append('files', file);
       });
-      
+
       // Add any additional data
       formData.append('folder', 'general');
-      
+
       // Log FormData contents
       console.log('📋 FormData entries:');
       for (let pair of formData.entries()) {
@@ -1806,7 +1917,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
     } catch (error) {
       console.error('❌ Upload failed:', error);
       console.error('Error details:', error.response?.data || error.message);
-      
+
       setIsUploading(false);
 
       // Mark all as failed
@@ -1817,7 +1928,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
         });
         return updated;
       });
-      
+
       // Show error to user
       alert(`Upload failed: ${error.response?.data?.message || error.message}`);
     }
@@ -1927,7 +2038,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
                       const limits = isVideo ? FILE_SIZE_LIMITS.video : FILE_SIZE_LIMITS.image;
                       const sizePercent = (file.size / limits.maxSize) * 100;
                       const sizeWarning = sizePercent > 80;
-                      
+
                       return (
                         <div key={index} className={`file-item ${sizeWarning ? 'size-warning' : ''}`}>
                           <div className="file-info">
@@ -1939,7 +2050,7 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
                               {formatFileSize(file.size)}
                               {sizeWarning && ` (${Math.round(sizePercent)}% of limit)`}
                             </span>
-                            <button 
+                            <button
                               className="remove-file"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2124,4 +2235,3 @@ const MediaPreviewModal = ({ media, isOpen, onClose, onDelete }) => {
 };
 
 export default Content;
-        

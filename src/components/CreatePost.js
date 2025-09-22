@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  X,
   Image,
   Calendar,
   Instagram,
   Twitter,
   Facebook,
   Linkedin, // Added LinkedIn icon
+  X,
   Youtube,
   Upload,
   Eye,
@@ -43,6 +43,8 @@ import Loader from '../components/common/Loader';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXTwitter } from "@fortawesome/free-brands-svg-icons"; 
 
 const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData }) => {
   const { uploadMedia } = useMedia();
@@ -64,7 +66,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     hashtags: '',
     mentions: '',
     metadata: {
-      category: 'other'
+    category: 'other'
     }
   });
   const [publishMode, setPublishMode] = useState('now'); // 'now' or 'later'
@@ -83,6 +85,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
+
 
   useEffect(() => {
     if (initialData) {
@@ -496,7 +499,9 @@ const getAvailablePlatforms = () => {
     { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
     { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
     { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
-    { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' }
+    { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
+    { id: 'twitter', name: 'Twitter', icon:() => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{marginBottom: '4px'}} />, color: "#0A66C2"} ,
+
   ];
 
   return allPlatforms.map(platform => {
@@ -535,7 +540,7 @@ const getAvailablePlatforms = () => {
       instagram: 2200,
       facebook: 63206,
       linkedin: 3000,
-          youtube: 5000 // YouTube description limit
+      youtube: 5000 // YouTube description limit
     };
 
     const selectedPlatforms = postData.platforms;
@@ -2031,10 +2036,9 @@ if (postData.platforms.includes('youtube')) {
                           checked={isScheduled}
                           onChange={() => {
                             setIsScheduled(true);
-                            // Default: 1 hour later if no date set
                             if (!postData.scheduledDate) {
                               const defaultDate = new Date();
-                              defaultDate.setHours(defaultDate.getHours() + 1);
+                              defaultDate.setHours(defaultDate.getHours());
                               setPostData(prev => ({
                                 ...prev,
                                 scheduledDate: defaultDate.toISOString().split("T")[0],

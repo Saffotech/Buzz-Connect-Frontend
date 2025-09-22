@@ -4,8 +4,10 @@ import { CheckCircle, Info, AlertCircle, Plus, Trash2, Check, Link2, Instagram, 
 import SettingsCard from '../SettingsCard';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
+
 // import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { faSquareThreads } from '@fortawesome/free-brands-svg-icons';
+
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platform }) => {
   if (!isOpen) return null;
@@ -553,9 +555,9 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
 };
 
 // Connection Options Modal Component
-const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedIn, onSelectYouTube, onSelectTwitter, onSelectThreads }) => {
+const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedIn, onSelectYouTube, onSelectTwitter, onSelectThread }) => {
   if (!isOpen) return null;
-  
+
   return (
     <div className="modal-overlay" onClick={onClose} style={{
       position: 'fixed',
@@ -739,6 +741,54 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
             </div>
           </button>
 
+          <button
+            onClick={onSelectTwitter}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                backgroundColor: '#E8F5FD',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #BCE0F5',
+              }}
+            >
+
+              <FontAwesomeIcon icon={faSquareXTwitter} size="xl" color="#000000" />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                Twitter
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your Twitter (X) account
+              </div>
+            </div>
+          </button>
+
+          
           {/* YouTube Connection Option */}
           <button
             onClick={onSelectYouTube}
@@ -785,7 +835,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
           </button>
 
           <button
-            onClick={onSelectTwitter}
+            onClick={onSelectThread}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -916,7 +966,7 @@ const LinkedInTermsModal = ({ isOpen, onClose, onConfirm }) => {
 
           <div
             style={{
-              maxHeight: '70vh',
+              maxHeight: '58vh',
               overflowY: 'auto',
               fontFamily: 'Inter, Arial, sans-serif',
               lineHeight: '1.7',
@@ -1096,7 +1146,7 @@ const YouTubeTermsModal = ({ isOpen, onClose, onConfirm }) => {
 
           <div
             style={{
-              maxHeight: '70vh',
+              maxHeight: '58vh',
               overflowY: 'auto',
               fontFamily: 'Inter, Arial, sans-serif',
               lineHeight: '1.7',
@@ -1120,7 +1170,7 @@ const YouTubeTermsModal = ({ isOpen, onClose, onConfirm }) => {
             </ul>
 
             <p>
-                          We prioritize your privacy and data security. Your authorization helps us provide seamless YouTube publishing
+              We prioritize your privacy and data security. Your authorization helps us provide seamless YouTube publishing
               and analytics services. You can revoke this access at any time by disconnecting your YouTube account from
               our platform.
             </p>
@@ -1750,20 +1800,20 @@ useEffect(() => {
         // Handle both direct removal and related FB account removal
         const updatedAccounts = prev.filter(acc => {
           const isMainAccount = acc._id !== baseId;
-          const isRelatedFBAccount = !(acc.platform === 'facebook' && 
-                                      (acc._id === `${baseId}-fb` || 
-                                       acc.metadata?.sourceAccountId === baseId));
+          const isRelatedFBAccount = !(acc.platform === 'facebook' &&
+            (acc._id === `${baseId}-fb` ||
+              acc.metadata?.sourceAccountId === baseId));
           return isMainAccount && isRelatedFBAccount;
         });
-        
+
         return updatedAccounts;
       });
 
       toast.success('Account disconnected successfully');
-      
+
       // Close the modal
       setConfirmationModal({ isOpen: false, accountId: null, accountUsername: '', platform: '' });
-      
+
     } catch (err) {
       console.error('Failed to disconnect account', err);
       toast.error('Failed to disconnect account');
@@ -1857,188 +1907,195 @@ useEffect(() => {
                             return null;
                           }
 
-                          return (
-                            <div
-                              key={index}
-                              className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''} ${account.platform === 'youtube' ? 'youtube-channel' : ''}`}
-                              style={{
-                                position: 'relative',
-                                border: isDirectConnection && account.platform === 'instagram'
-                                  ? '1px solid rgba(219, 39, 119, 0.3)'
-                                  : isFullAccess && account.platform === 'instagram'
-                                    ? '1px solid rgba(37, 99, 235, 0.3)'
-                                    : isViewOnlyFacebook
-                                      ? '1px dashed rgba(100, 116, 139, 0.5)'
-                                      : account.platform === 'linkedin'
-                                        ? '1px solid rgba(10, 102, 194, 0.3)'
-                                        : account.platform === 'youtube'
-                                          ? '1px solid rgba(255, 0, 0, 0.3)'
-                                          : '1px solid #e5e7eb',
-                                opacity: isViewOnlyFacebook ? 0.85 : 1
-                              }}
-                            >
-                              <div className="account-card-header">
-                                <div className="account-avatar">
-                                  {account.profilePicture ? (
-                                    <img
-                                      src={account.profilePicture}
-                                      alt={account.username}
-                                      className="avatar-img"
-                                    />
-                                  ) : (
-                                    <User size={32} strokeWidth={1.5} />
-                                  )}
-<div className={`platform-badge platform-${account.platform}`}>
-  {PlatformIcon ? <PlatformIcon size={12} /> : null}
-</div>
-                                </div>
+                       return (
+  <div
+    key={index}
+    className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''} ${account.platform === 'youtube' ? 'youtube-channel' : ''}`}
+    style={{
+      position: 'relative',
+      border: isDirectConnection && account.platform === 'instagram'
+        ? '1px solid rgba(219, 39, 119, 0.3)'
+        : isFullAccess && account.platform === 'instagram'
+          ? '1px solid rgba(37, 99, 235, 0.3)'
+          : isViewOnlyFacebook
+            ? '1px dashed rgba(100, 116, 139, 0.5)'
+            : account.platform === 'linkedin'
+              ? '1px solid rgba(10, 102, 194, 0.3)'
+              : account.platform === 'youtube'
+                ? '1px solid rgba(255, 0, 0, 0.3)'
+                : '1px solid #e5e7eb',
+      opacity: isViewOnlyFacebook ? 0.85 : 1
+    }}
+  >
+    <div className="account-card-header">
+      <div className="account-avatar">
+        {account.profilePicture ? (
+          <img
+            src={account.profilePicture}
+            alt={account.username}
+            className="avatar-img"
+          />
+        ) : (
+          <div className="avatar-fallback">
+            {(account.username || 'U').charAt(0).toUpperCase()}
+          </div>
+        )}
 
-                                {/* Show delete button for ALL accounts, including view-only */}
-                                <button
-                                  onClick={() => handleDisconnectClick(account)}
-                                  className="account-delete-btn"
-                                  title="Disconnect account"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
+        <div className={`platform-badge platform-${account.platform}`}>
+          {PlatformIcon ? <PlatformIcon size={12} /> : null}
+        </div>
+      </div>
 
-                              <div className="account-card-content">
-                                <h4 className="account-username">{account.username}</h4>
-                                <p className="platform-name">
-                                  {account?.platform
-                                    ? account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
-                                    : ''}
-                                  {account.platform === 'instagram' && (
-                                    isDirectConnection ? (
-                                      <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
-                                    ) : (
-                                      <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
-                                    )
-                                  )}
-                                  {account.platform === 'facebook' && (
-                                    isViewOnlyFacebook ? (
-                                      <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
-                                    ) : (
-                                      <span className="connection-badge"> • Business Page</span>
-                                    )
-                                  )}
-                                  {account.platform === 'linkedin' && (
-                                    isLinkedInCompany ? (
-                                      <span className="connection-badge" style={{ color: '#0A66C2' }}> • Company Page</span>
-                                    ) : (
-                                      <span className="connection-badge" style={{ color: '#0A66C2' }}> • Personal Profile</span>
-                                    )
-                                  )}
-                                  {account.platform === 'youtube' && (
-                                    <span className="connection-badge" style={{ color: '#FF0000' }}> • Channel</span>
-                                  )}
-                                </p>
-                                <span className="followers-count">
-                                  {account.platform === 'youtube'
-                                    ? `${account.followerCount || 0} subscribers`
-                                    : account.followerCount
-                                      ? `${account.followerCount} followers`
-                                      : '-'}
-                                </span>
-                              </div>
+      {/* Show delete button for ALL accounts, including view-only */}
+      <button
+        onClick={() => handleDisconnectClick(account)}
+        className="account-delete-btn"
+        title="Disconnect account"
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
 
-                              <div className="account-actions">
-                                <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
-                                  style={{
-                                    backgroundColor: isViewOnlyFacebook ? '#f1f5f9' :
-                                      account.platform === 'linkedin' ? '#EEF2FF' :
-                                        account.platform === 'youtube' ? '#FEF2F2' : '',
-                                    color: isViewOnlyFacebook ? '#64748b' :
-                                      account.platform === 'linkedin' ? '#0A66C2' :
-                                        account.platform === 'youtube' ? '#FF0000' : ''
-                                  }}
-                                >
-                                  <Check size={14} />
-                                  {isViewOnlyFacebook ? 'View Only' : 'Connected'}
-                                </div>
-                              </div>
+    <div className="account-card-content">
+      <h4 className="account-username">{account.username}</h4>
+      <p className="platform-name">
+        {account?.platform
+          ? account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
+          : ''}
+        {account.platform === 'instagram' && (
+          isDirectConnection ? (
+            <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
+          ) : (
+            <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
+          )
+        )}
+        {account.platform === 'facebook' && (
+          isViewOnlyFacebook ? (
+            <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
+          ) : (
+            <span className="connection-badge"> • Business Page</span>
+          )
+        )}
+        {account.platform === 'linkedin' && (
+          isLinkedInCompany ? (
+            <span className="connection-badge" style={{ color: '#0A66C2' }}> • Company Page</span>
+          ) : (
+            <span className="connection-badge" style={{ color: '#0A66C2' }}> • Personal Profile</span>
+          )
+        )}
+        {account.platform === 'youtube' && (
+          <span className="connection-badge" style={{ color: '#FF0000' }}> • Channel</span>
+        )}
+      </p>
+      <span className="followers-count">
+        {account.platform === 'youtube'
+          ? `${account.followerCount || 0} subscribers`
+          : account.followerCount
+            ? `${account.followerCount} followers`
+            : '-'}
+      </span>
+    </div>
 
-                              {/* Connection type badge */}
-                              {account.platform === 'instagram' && (
-                                <div
-                                  className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
-                                  style={{
-                                    position: 'absolute',
-                                    top: '8px',
-                                    right: '40px',
-                                    background: isDirectConnection
-                                      ? 'linear-gradient(to right, #e11d48, #db2777)'
-                                      : 'linear-gradient(to right, #1d4ed8, #2563eb)',
-                                    color: 'white',
-                                    fontSize: '10px',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontWeight: '500'
-                                  }}
-                                >
-                                  {isDirectConnection ? 'Instagram Only' : 'Full Access'}
-                                </div>
-                              )}
+    <div className="account-actions">
+      <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
+        style={{
+          backgroundColor: isViewOnlyFacebook ? '#f1f5f9' :
+            account.platform === 'linkedin' ? '#EEF2FF' :
+              account.platform === 'youtube' ? '#FEF2F2' : '',
+          color: isViewOnlyFacebook ? '#64748b' :
+            account.platform === 'linkedin' ? '#0A66C2' :
+              account.platform === 'youtube' ? '#FF0000' : ''
+        }}
+      >
+        <Check size={14} />
+        {isViewOnlyFacebook ? 'View Only' : 'Connected'}
+      </div>
+    </div>
 
-                              {/* LinkedIn badge */}
-                              {account.platform === 'linkedin' && (
-                                <div
-                                  className="linkedin-badge"
-                                  style={{
-                                    position: 'absolute',
-                                    top: '8px',
-                                    right: '40px',
-                                    background: 'linear-gradient(to right, #0A66C2, #0077B5)',
-                                    color: 'white',
-                                    fontSize: '10px',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontWeight: '500'
-                                  }}
-                                >
-                                  {isLinkedInCompany ? 'Company Page' : 'Personal Profile'}
-                                </div>
-                              )}
+    {/* Connection type badge */}
+    {account.platform === 'instagram' && (
+      <div
+        className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '40px',
+          background: isDirectConnection
+            ? 'linear-gradient(to right, #e11d48, #db2777)'
+            : 'linear-gradient(to right, #1d4ed8, #2563eb)',
+          color: 'white',
+          fontSize: '10px',
+          padding: '2px 6px',
+          borderRadius: '4px',
+          fontWeight: '500'
+        }}
+      >
+        {isDirectConnection ? 'Instagram Only' : 'Full Access'}
+      </div>
+    )}
 
-                              {/* View-only badge for Facebook accounts */}
-                              {isViewOnlyFacebook && (
-                                <div
-                                  className="view-only-badge"
-                                  style={{
-                                    position: 'absolute',
-                                    top: '8px',
-                                    right: '40px',
-                                    background: 'linear-gradient(to right, #64748b, #94a3b8)',
-                                    color: 'white',
-                                    fontSize: '10px',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontWeight: '500'
-                                  }}
-                                >
-                                  View Only
-                                </div>
-                              )}
+    {/* LinkedIn badge */}
+    {account.platform === 'linkedin' && (
+      <div
+        className="linkedin-badge"
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '40px',
+          background: 'linear-gradient(to right, #0A66C2, #0077B5)',
+          color: 'white',
+          fontSize: '10px',
+          padding: '2px 6px',
+          borderRadius: '4px',
+          fontWeight: '500'
+        }}
+      >
+        {isLinkedInCompany ? 'Company Page' : 'Personal Profile'}
+      </div>
+    )}
 
-                              {account.platform === 'youtube' && (
-                                <div
-                                  className="youtube-badge"
-                                  style={{
-                                    position: 'absolute',
-                                    top: '8px',
-                                    right: '40px',
-                                    background: 'linear-gradient(to right, #FF0000, #FF5252)',
-                                    color: 'white',
-                                    fontSize: '10px',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontWeight: '500'
-                                  }}
-                                >
-                                  Channel
-                                </div>
-                              )}
+    {/* View-only badge for Facebook accounts */}
+    {isViewOnlyFacebook && (
+      <div
+        className="view-only-badge"
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '40px',
+          background: 'linear-gradient(to right, #64748b, #94a3b8)',
+          color: 'white',
+          fontSize: '10px',
+          padding: '2px 6px',
+          borderRadius: '4px',
+          fontWeight: '500'
+        }}
+      >
+        View Only
+      </div>
+    )}
+
+    {/* YouTube badge */}
+    {account.platform === 'youtube' && (
+      <div
+        className="youtube-badge"
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '40px',
+          background: 'linear-gradient(to right, #FF0000, #FF5252)',
+          color: 'white',
+          fontSize: '10px',
+          padding: '2px 6px',
+          borderRadius: '4px',
+          fontWeight: '500'
+        }}
+      >
+        Channel
+      </div>
+    )}
+  </div>
+);
+
                             </div>
                           );
                         })}
@@ -2091,7 +2148,7 @@ useEffect(() => {
         onClose={handleCloseLinkedInTerms}
         onConfirm={handleLinkedInTermsConfirm}
       />
-      
+
       {/* YouTube Terms Modal */}
       <YouTubeTermsModal
         isOpen={youtubeTermsModal.isOpen}
