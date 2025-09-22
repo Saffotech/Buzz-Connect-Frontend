@@ -13,6 +13,8 @@ import {
   Globe,
   Facebook,
   Twitter,
+  Linkedin,
+  Youtube,
   Eye,
   ChevronDown,
   ArrowUp,
@@ -42,6 +44,80 @@ import { useDashboardData } from '../hooks/useApi';
 import apiClient from '../utils/api';
 import Loader from '../components/common/Loader';
 import './Analytics.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSquareXTwitter, faSquareThreads } from '@fortawesome/free-brands-svg-icons';
+
+const GrowthCard = ({ icon, label, value, subtitle, change, positive, iconClass }) => (
+  <div className="growth-card">
+    <div className="card-header">
+      <div className={`icon-wrapper ${iconClass || ""}`}>{icon}</div>
+      <div>
+        <div className="card-value">{value}</div>
+        {label}
+        {change && (
+          <div className={`card-change ${positive ? "positive" : "negative"}`}>
+            {positive ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+            {change}
+          </div>
+        )}
+        {subtitle && <div className="card-subtitle">{subtitle}</div>}
+      </div>
+    </div>
+
+
+  </div>
+);
+
+const GrowthOverview = ({ analyticsData, formatNumber }) => {
+  const lastIndex = analyticsData.growth.followers.length - 1;
+  const lastFollowers =
+    analyticsData.growth.followers[lastIndex].instagram +
+    analyticsData.growth.followers[lastIndex].facebook;
+  const firstFollowers =
+    analyticsData.growth.followers[0].instagram +
+    analyticsData.growth.followers[0].facebook;
+
+  const cards = [
+    {
+      icon: <Users size={20} />,
+      label: "Total Followers",
+      value: formatNumber(lastFollowers),
+      change: `+${analyticsData.growth.growthRate}% this period`,
+      positive: true,
+      iconClass: "", // default
+    },
+    {
+      icon: <TrendingUp size={20} />,
+      label: "Growth Rate",
+      value: `${analyticsData.growth.growthRate}%`,
+      subtitle: "Weekly average",
+      iconClass: "icon-growth",
+    },
+    {
+      icon: <ArrowDown size={20} />,
+      label: "Unfollow Rate",
+      value: `${analyticsData.growth.unfollowRate}%`,
+      subtitle: "Below average",
+      iconClass: "icon-unfollow",
+    },
+    {
+      icon: <Activity size={20} />,
+      label: "Net Growth",
+      value: `+${formatNumber(lastFollowers - firstFollowers)}`,
+      subtitle: "Last 7 days",
+      iconClass: "icon-net-growth",
+    },
+  ];
+
+  return (
+    <div className="growth-overview-cards">
+      {cards.map((card, i) => (
+        <GrowthCard key={i} {...card} />
+      ))}
+    </div>
+  );
+};
+
 
 const Analytics = () => {
   // Global filter state
@@ -127,6 +203,14 @@ const Analytics = () => {
     }
     if (connectedPlatforms.includes('twitter')) {
       baseOptions.push({ value: 'twitter', label: 'Twitter', icon: <Twitter size={20} /> });
+    }
+
+    if (connectedPlatforms.includes('youtube')) {
+      baseOptions.push({ value: 'youtube', label: 'YouTube', icon: <Youtube size={20} /> });
+    }
+
+    if (connectedPlatforms.includes('linkedin')) {
+      baseOptions.push({ value: 'linkedin', label: 'LinkedIn', icon: <Linkedin size={20} /> });
     }
 
     return baseOptions;
@@ -576,7 +660,7 @@ const Analytics = () => {
       {/* Page Header */}
       <div className="analytics-header">
         <div className="analytics-title-section">
-          <h1>Analytics Dashboard</h1>
+          <h1>Analytics</h1>
           <p>Comprehensive social media performance insights and reporting</p>
         </div>
         <div className="analytics-header-actions">
@@ -971,7 +1055,7 @@ const Analytics = () => {
                     <Grid size={20} />
                   </div>
                   <div className="metric-content">
-                     <div className="metric-value">
+                    <div className="metric-value">
                       Carousel
                     </div>
                     <div className="metric-value">
@@ -981,10 +1065,10 @@ const Analytics = () => {
                     <div className="metric-subtitle">— Best performing post</div>
                   </div>
                 </div>
-                
+
               </div>
 
-                {/* 
+              {/* 
                 <div className="engagement-card">
                   <div className="card-header">
                     <Heart size={20} />
@@ -1011,7 +1095,7 @@ const Analytics = () => {
                   </div>
                 </div> */}
 
-                {/* <div className="engagement-card">
+              {/* <div className="engagement-card">
                   <div className="card-header">
                     <Clock size={20} />
                     <span>Best Time</span>
@@ -1020,7 +1104,7 @@ const Analytics = () => {
                   <div className="card-subtitle">Peak engagement window</div>
                 </div> */}
 
-                {/* <div className="engagement-card">
+              {/* <div className="engagement-card">
                   <div className="card-header">
                     <LayoutGrid size={20} />
                     <span>Top Content</span>
@@ -1239,58 +1323,12 @@ const Analytics = () => {
               <h2>Follower Growth & Trends</h2>
 
               {/* Growth Overview Cards */}
+              {/* // Updated JSX code with colorful background icons */}
               <div className="growth-overview-cards">
-
-                <div className="growth-card">
-                  <div className="card-header">
-                    <Users size={20} />
-                    <span>Total Followers</span>
-                  </div>
-                  <div className="card-value">
-                    {formatNumber(
-                      analyticsData.growth.followers[analyticsData.growth.followers.length - 1].instagram +
-                      analyticsData.growth.followers[analyticsData.growth.followers.length - 1].facebook
-                    )}
-                  </div>
-                  <div className="card-change positive">
-                    <ArrowUp size={14} />
-                    +{analyticsData.growth.growthRate}% this period
-                  </div>
-                </div>
-
-                <div className="growth-card">
-                  <div className="card-header">
-                    <TrendingUp size={20} />
-                    <span>Growth Rate</span>
-                  </div>
-                  <div className="card-value">{analyticsData.growth.growthRate}%</div>
-                  <div className="card-subtitle">Weekly average</div>
-                </div>
-
-                <div className="growth-card">
-                  <div className="card-header">
-                    <ArrowDown size={20} />
-                    <span>Unfollow Rate</span>
-                  </div>
-                  <div className="card-value">{analyticsData.growth.unfollowRate}%</div>
-                  <div className="card-subtitle">Below average</div>
-                </div>
-
-                <div className="growth-card">
-                  <div className="card-header">
-                    <Activity size={20} />
-                    <span>Net Growth</span>
-                  </div>
-                  <div className="card-value">
-                    +{formatNumber(
-                      (analyticsData.growth.followers[analyticsData.growth.followers.length - 1].instagram +
-                        analyticsData.growth.followers[analyticsData.growth.followers.length - 1].facebook) -
-                      (analyticsData.growth.followers[0].instagram + analyticsData.growth.followers[0].facebook)
-                    )}
-                  </div>
-                  <div className="card-subtitle">Last 7 days</div>
-                </div>
-
+                <GrowthOverview
+                  analyticsData={analyticsData}
+                  formatNumber={formatNumber}
+                />
               </div>
 
               {/* Growth Chart Placeholder */}
@@ -1737,5 +1775,6 @@ const Analytics = () => {
     </div>
   );
 };
+
 
 export default Analytics;

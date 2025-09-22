@@ -250,6 +250,8 @@ const Layout = ({ children }) => {
               <div className="user-avatar">
                 {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
               </div>
+
+              
               <ChevronDown size={16} />
             </button>
             {showUserDropdown && (
