@@ -587,7 +587,7 @@ const Dashboard = () => {
                         style={style}
                       >
                         <div className="platform-header">
-                          <Clock size={35} />
+                          <Clock size={38} />
                           <span className="schedule-time">
                             {new Date(post.scheduledDate).toLocaleDateString('en-US', {
                               weekday: 'short',

@@ -6,6 +6,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquareXTwitter, faSquareThreads } from '@fortawesome/free-brands-svg-icons';
+import { faTwitter } from "@fortawesome/free-brands-svg-icons"; // ✅ add this
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platform }) => {
@@ -554,9 +555,9 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
 };
 
 // Connection Options Modal Component
-const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedIn, onSelectYouTube, onSelectTwitter, onSelectThreads }) => {
+const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedIn, onSelectYouTube, onSelectTwitter, onSelectThread }) => {
   if (!isOpen) return null;
-  
+
   return (
     <div className="modal-overlay" onClick={onClose} style={{
       position: 'fixed',
@@ -740,6 +741,54 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
             </div>
           </button>
 
+          <button
+            onClick={onSelectTwitter}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                backgroundColor: '#E8F5FD',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid #BCE0F5',
+              }}
+            >
+
+              <FontAwesomeIcon icon={faSquareXTwitter} size="xl" color="#000000" />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                Twitter
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your Twitter (X) account
+              </div>
+            </div>
+          </button>
+
+          
           {/* YouTube Connection Option */}
           <button
             onClick={onSelectYouTube}
@@ -786,7 +835,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
           </button>
 
           <button
-            onClick={onSelectTwitter}
+            onClick={onSelectThread}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -917,7 +966,7 @@ const LinkedInTermsModal = ({ isOpen, onClose, onConfirm }) => {
 
           <div
             style={{
-              maxHeight: '70vh',
+              maxHeight: '58vh',
               overflowY: 'auto',
               fontFamily: 'Inter, Arial, sans-serif',
               lineHeight: '1.7',
@@ -1097,7 +1146,7 @@ const YouTubeTermsModal = ({ isOpen, onClose, onConfirm }) => {
 
           <div
             style={{
-              maxHeight: '70vh',
+              maxHeight: '58vh',
               overflowY: 'auto',
               fontFamily: 'Inter, Arial, sans-serif',
               lineHeight: '1.7',
@@ -1121,7 +1170,7 @@ const YouTubeTermsModal = ({ isOpen, onClose, onConfirm }) => {
             </ul>
 
             <p>
-                          We prioritize your privacy and data security. Your authorization helps us provide seamless YouTube publishing
+              We prioritize your privacy and data security. Your authorization helps us provide seamless YouTube publishing
               and analytics services. You can revoke this access at any time by disconnecting your YouTube account from
               our platform.
             </p>
@@ -1751,20 +1800,20 @@ const AccountsSettings = ({ onNotify }) => {
         // Handle both direct removal and related FB account removal
         const updatedAccounts = prev.filter(acc => {
           const isMainAccount = acc._id !== baseId;
-          const isRelatedFBAccount = !(acc.platform === 'facebook' && 
-                                      (acc._id === `${baseId}-fb` || 
-                                       acc.metadata?.sourceAccountId === baseId));
+          const isRelatedFBAccount = !(acc.platform === 'facebook' &&
+            (acc._id === `${baseId}-fb` ||
+              acc.metadata?.sourceAccountId === baseId));
           return isMainAccount && isRelatedFBAccount;
         });
-        
+
         return updatedAccounts;
       });
 
       toast.success('Account disconnected successfully');
-      
+
       // Close the modal
       setConfirmationModal({ isOpen: false, accountId: null, accountUsername: '', platform: '' });
-      
+
     } catch (err) {
       console.error('Failed to disconnect account', err);
       toast.error('Failed to disconnect account');
@@ -1879,7 +1928,7 @@ const AccountsSettings = ({ onNotify }) => {
                                 opacity: isViewOnlyFacebook ? 0.85 : 1
                               }}
                             >
-                              <div className="account-card-header">
+                              {/* <div className="account-card-header">
                                 <div className="account-avatar">
                                   {account.profilePicture ? (
                                     <img
@@ -1890,6 +1939,35 @@ const AccountsSettings = ({ onNotify }) => {
                                   ) : (
                                     <User size={32} strokeWidth={1.5} />
                                   )}
+                                  <div className={`platform-badge platform-${account.platform}`}>
+                                    <PlatformIcon size={12} />
+                                  </div>
+                                </div> */}
+
+                              {/* Show delete button for ALL accounts, including view-only */}
+                              {/* <button
+                                  onClick={() => handleDisconnectClick(account)}
+                                  className="account-delete-btn"
+                                  title="Disconnect account"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div> */}
+
+                              <div className="account-card-header">
+                                <div className="account-avatar">
+                                  {account.profilePicture ? (
+                                    <img
+                                      src={account.profilePicture}
+                                      alt={account.username}
+                                      className="avatar-img"
+                                    />
+                                  ) : (
+                                    <div className="avatar-fallback">
+                                      {(account.username || 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+
                                   <div className={`platform-badge platform-${account.platform}`}>
                                     <PlatformIcon size={12} />
                                   </div>
@@ -1904,6 +1982,8 @@ const AccountsSettings = ({ onNotify }) => {
                                   <Trash2 size={14} />
                                 </button>
                               </div>
+
+
 
                               <div className="account-card-content">
                                 <h4 className="account-username">{account.username}</h4>
@@ -1960,7 +2040,7 @@ const AccountsSettings = ({ onNotify }) => {
                               </div>
 
                               {/* Connection type badge */}
-                              {account.platform === 'instagram' && (
+                              * {account.platform === 'instagram' && (
                                 <div
                                   className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
                                   style={{
@@ -2091,7 +2171,7 @@ const AccountsSettings = ({ onNotify }) => {
         onClose={handleCloseLinkedInTerms}
         onConfirm={handleLinkedInTermsConfirm}
       />
-      
+
       {/* YouTube Terms Modal */}
       <YouTubeTermsModal
         isOpen={youtubeTermsModal.isOpen}
