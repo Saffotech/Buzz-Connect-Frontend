@@ -1,0 +1,30 @@
+{
+  "settings": {
+    "notifications": {
+      "email": true,
+      "push": true,
+      "postReminders": true
+    },
+    "defaultPostSettings": {
+      "platforms": [],
+      "autoHashtags": false
+    },
+    "timezone": "UTC"
+  },
+  "subscription": {
+    "plan": "free",
+    "status": "active"
+  },
+  "_id": "68cd3fd735fa6461b93d5c68",
+  "email": "ajai@gmail.com",
+  "displayName": "Ajai",
+  "profilePicture": null,
+  "isActive": true,
+  "connectedAccounts": [],
+  "createdAt": "2025-09-19T11:34:47.253Z",
+  "updatedAt": "2025-09-20T06:37:06.285Z",
+  "__v": 0,
+  "lastLoginAt": "2025-09-20T06:37:06.269Z",
+  "connectedPlatforms": [],
+  "id": "68cd3fd735fa6461b93d5c68"
+}
