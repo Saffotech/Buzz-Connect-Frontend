@@ -853,14 +853,14 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                     {post.images.length > 1 && (
                       <div className="image-navigation">
                         <button
-                          className="nav-btn nav-prev"
+                          className="nav-btn nav-prev arrow-btnx"
                           onClick={() => setImgIndex(prev => Math.max(0, prev - 1))}
                           disabled={imgIndex === 0}
                         >
                           <ChevronLeftCircle size={24} />
                         </button>
                         <button
-                          className="nav-btn nav-next"
+                          className="nav-btn nav-next arrow-btnx"
                           onClick={() => setImgIndex(prev => Math.min(post.images.length - 1, prev + 1))}
                           disabled={imgIndex === post.images.length - 1}
                         >

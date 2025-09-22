@@ -1616,7 +1616,7 @@
 
 .input-group {
   display: flex;
-  flex-direction: column;
+  /* flex-direction: column; */
   gap: 0.5rem;
 }
 
@@ -1919,7 +1919,7 @@
 @media (min-width: 768px) {
   .platforms-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    /* grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); */
     gap: 16px;
   }
 }
@@ -3166,6 +3166,7 @@
 .carousel-nav-next {
   right: 20px;
 }
+
 
 .carousel-thumbnails {
   padding: 16px 24px;
