@@ -1,7 +1,14 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./LegalPages.css";
 
 const TermsOfService = () => {
+  const navigate = useNavigate(); // initialize navigation
+
+  const goToDashboard = () => {
+    navigate("/dashboard"); // replace with your dashboard route
+  };
+
   return (
     <div className="legal-container">
       <h1>Terms of Service</h1>
@@ -79,6 +86,9 @@ const TermsOfService = () => {
       </p>
 
       <p className="thank-you">Thank you for using MGA Buzz Connect.</p>
+      <button className="back-dashboard-btn" onClick={goToDashboard}>
+        ← Back to Dashboard
+      </button>
     </div>
   );
 };
