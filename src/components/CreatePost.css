@@ -3975,7 +3975,7 @@
   
   .time-input-container,
   .form-input[type="date"] {
-    height: 44px;
+    /* height: 44px; */
     padding: 0.75rem;
     font-size: 0.8rem;
     padding-top: 22px;

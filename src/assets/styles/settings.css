@@ -181,7 +181,7 @@
   padding: 1.5rem;
   /* border-bottom: 1px solid #e2e8f0; */
   display: flex;
-  /* justify-content: space-between; */
+  justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
 }
