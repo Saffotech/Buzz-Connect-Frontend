@@ -626,3 +626,28 @@
     margin-bottom: 1rem;
   }
 } */
+
+.app-footer {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  padding: 16px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.app-footer .footer-links {
+  margin-top: 4px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.app-footer .footer-links a {
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.app-footer .footer-links a:hover {
+  color: #1d4ed8;
+}

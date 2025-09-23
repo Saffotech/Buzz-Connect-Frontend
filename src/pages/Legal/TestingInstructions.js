@@ -1,7 +1,14 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./LegalPages.css";
 
 const TestingInstructions = () => {
+  const navigate = useNavigate(); // initialize navigation
+
+  const goToDashboard = () => {
+    navigate("/dashboard"); // replace with your dashboard route
+  };
+
   return (
     <div className="legal-container">
       <h1>MGA Buzz Connect</h1>
@@ -62,6 +69,9 @@ const TestingInstructions = () => {
         <br />
         MGA Buzz Connect Team
       </p>
+      <button className="back-dashboard-btn" onClick={goToDashboard}>
+        ← Back to Dashboard
+      </button>
     </div>
   );
 };
