@@ -834,7 +834,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
             </div>
           </button>
 
-          <button
+          {/* <button
             onClick={onSelectThread}
             style={{
               display: 'flex',
@@ -868,7 +868,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
                 border: '1px solid #BAE6FD',
               }}
             >
-              {/* <FontAwesomeIcon icon={faSquareThreads} size="xl" /> */}
+              <FontAwesomeIcon icon={faSquareThreads} size="xl" />
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
@@ -878,7 +878,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
                 Connect your Threads (@) account
               </div>
             </div>
-          </button>
+          </button> */}
         </div>
 
         <div style={{ marginTop: '24px', fontSize: '14px', color: '#6B7280', textAlign: 'center' }}>

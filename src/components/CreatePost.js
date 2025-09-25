@@ -30,7 +30,9 @@ import {
   FileText,
   GalleryHorizontal,
   ChevronLeft,
+  ChevronLeftCircle,
   ChevronRight,
+  ChevronRightCircle,
   MoreHorizontal,
   Grid3X3,
   Maximize2,
@@ -47,6 +49,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
 
 const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData }) => {
+  const [imgIndex, setImgIndex] = useState(0);
   const [hoveredPlatform, setHoveredPlatform] = useState(null);
   const { uploadMedia } = useMedia();
   const { user, token } = useAuth();
@@ -71,6 +74,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   });
   const [publishMode, setPublishMode] = useState('now'); // 'now' or 'later'
+
 
   const [activeTab, setActiveTab] = useState('compose');
   const [isScheduled, setIsScheduled] = useState(false);
@@ -501,7 +505,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
       { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
       { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
-      { id: 'twitter', name: 'Twitter', icon: () => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{ marginBottom: '4px' }} />, color: "#0A66C2" },
+      { id: 'twitter', name: 'Twitter', icon: () => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{ marginBottom: '4px' }} />, color: "#000" },
 
     ];
 
@@ -1566,11 +1570,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                       const selectedAccountsCount = getSelectedAccountsCount(platform.id);
 
                       return (
-                        <div key={platform.id} className="platform-container" onMouseEnter={() => setHoveredPlatform(platform.id)}
-                          onMouseLeave={() => setHoveredPlatform(null)} >
+                        <div key={platform.id} className="platform-container" >
                           <button
                             type="button"
-                            className={`platform-btn ${isSelected ? 'selected' : ''} ${!platform.connected ? 'not-connected-btn' : ''}`}
+                            onMouseEnter={() => setHoveredPlatform(platform.id)}
+                            onMouseLeave={() => setHoveredPlatform(null)}
+                            className={`platform-btn
+                               ${!platform.connected ? 'not-connected-btn' : ''}`}
                             onClick={(e) =>
                               platform.connected
                                 ? handlePlatformToggle(platform.id)
@@ -1580,13 +1586,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           >
                             <Icon
                               size={20}
-                              color={hoveredPlatform === platform.id ? platform.color : "#666"} // default gray, hover = platform color
+                              color={hoveredPlatform === platform.id ? platform.color : "#000"} // default gray, hover = platform color
                               style={{
                                 transition: "transform 0.2s ease, color 0.2s ease",
                                 transform: hoveredPlatform === platform.id ? "scale(1.1)" : "scale(1)"
                               }}
                             />
-                            <span>{platform.name}</span>
+                            <span style={{ color: hoveredPlatform === platform.id ? platform.color : "#000" }} >{platform.name}</span>
                             <span className="connect-status">
                               {platform.connected ?
                                 (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')
@@ -1988,7 +1994,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           );
                         })}
                       </div>
-
                       {/* Carousel Quick Navigation */}
                       {postData.images.length > 3 && (
                         <div className="carousel-quick-nav">
@@ -2191,74 +2196,99 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                           <span>{platform.name}</span>
                         </div>
                         <div className="preview-post">
-                          {postData.images.length > 0 && (
-                            <div className={`preview-images ${platformId === 'youtube' ? 'youtube-video' :
-                              postData.images.length === 1 ? 'single-image' :
-                                postData.images.length === 2 ? 'two-images' :
-                                  postData.images.length === 3 ? 'three-images' :
-                                    postData.images.length === 4 ? 'four-images' : ''
-                              }`}>
-                              {/* For YouTube, only show the first video */}
+                          {postData?.images?.length > 0 && (
+                            <div
+                              className={`preview-images ${platformId === 'youtube' ? 'youtube-video' :
+                                postData.images.length === 1 ? 'single-image' :
+                                  postData.images.length === 2 ? 'two-images' :
+                                    postData.images.length === 3 ? 'three-images' :
+                                      postData.images.length === 4 ? 'four-images' : ''
+                                }`}
+                            >
+                              {/* YouTube: just show first video-like item */}
                               {platformId === 'youtube' ? (
-                                postData.images.filter(img => img.fileType === 'video' ||
-                                  img.url?.includes('video') ||
-                                  img.url?.includes('.mp4'))
+                                postData.images
+                                  .filter(img => img.fileType === 'video' || img.url?.includes('video') || img.url?.includes('.mp4'))
                                   .slice(0, 1)
-                                  .map((videoItem, index) => (
-                                    <div key={index} className="youtube-preview-container">
+                                  .map((videoItem, i) => (
+                                    <div key={i} className="youtube-preview-container">
                                       <video
                                         src={videoItem.url}
                                         className="preview-video youtube-preview"
                                         controls
                                         muted
                                         playsInline
-                                        onError={(e) => {
-                                          console.error('Preview video failed to load');
-                                          e.target.style.display = 'none';
-                                        }}
+                                        onError={(e) => { console.error('Preview video failed to load'); e.target.style.display = 'none'; }}
                                       />
-                                      <div className="youtube-title">
-                                        {postData.content.substring(0, 100)}
-                                      </div>
+                                      <div className="youtube-title">{postData.content?.substring(0, 100)}</div>
                                     </div>
                                   ))
                               ) : (
-                                // Normal media display for other platforms
-                                postData.images.map((mediaItem, index) => {
-                                  const isVideo = mediaItem.fileType === 'video' ||
-                                    mediaItem.url?.includes('video') ||
-                                    mediaItem.url?.includes('.mp4') ||
-                                    mediaItem.url?.includes('.mov') ||
-                                    mediaItem.url?.includes('.avi');
+                                <div className="carousel-container">
+                                  {/* nav buttons */}
+                                  {postData.images.length > 1 && (
+                                    <div className="carousel-navigation">
+                                      <button
+                                        type="button"
+                                        className="nav-btn nav-prev arrow-btnx"
+                                        onClick={() => setImgIndex(prev => Math.max(0, prev - 1))}
+                                        disabled={imgIndex === 0}
+                                      >
+                                        <ChevronLeftCircle size={24} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="nav-btn nav-next arrow-btnx"
+                                        onClick={() => setImgIndex(prev => Math.min(postData.images.length - 1, prev + 1))}
+                                        disabled={imgIndex === postData.images.length - 1}
+                                      >
+                                        <ChevronRightCircle size={24} />
+                                      </button>
+                                    </div>
+                                  )}
 
-                                  return isVideo ? (
-                                    <video
-                                      key={index}
-                                      src={mediaItem.url}
-                                      className="preview-video"
-                                      controls
-                                      muted
-                                      playsInline
-                                      onError={(e) => {
-                                        console.error('Preview video failed to load');
-                                        e.target.style.display = 'none';
-                                      }}
-                                    />
-                                  ) : (
-                                    <img
-                                      key={index}
-                                      src={mediaItem.url}
-                                      alt={mediaItem.altText || "Post preview"}
-                                      onError={(e) => {
-                                        console.error('Preview image failed to load');
-                                        e.target.style.display = 'none';
-                                      }}
-                                    />
-                                  );
-                                })
+                                  {/* current media */}
+                                  {(() => {
+                                    const media = postData.images[imgIndex];
+                                    if (!media) return null;
+                                    const isVideo = media.fileType === 'video' ||
+                                      media.url?.includes('video') ||
+                                      media.url?.includes('.mp4') ||
+                                      media.url?.includes('.mov') ||
+                                      media.url?.includes('.avi');
+
+                                    return isVideo ? (
+                                      <video
+                                        key={imgIndex}
+                                        src={media.url}
+                                        className="preview-video"
+                                        controls
+                                        muted
+                                        playsInline
+                                        onError={(e) => { console.error('Preview video failed to load'); e.target.style.display = 'none'; }}
+                                      />
+                                    ) : (
+                                      <img
+                                        key={imgIndex}
+                                        src={media.url}
+                                        alt={media.altText || 'Post preview'}
+                                        className="preview-image"
+                                        onError={(e) => { console.error('Preview image failed to load'); e.target.style.display = 'none'; }}
+                                      />
+                                    );
+                                  })()}
+
+                                  {/* counter */}
+                                  {postData.images.length > 1 && (
+                                    <div className="image-counter">
+                                      {imgIndex + 1} / {postData.images.length}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                           )}
+
                           <div className={`preview-text ${platformId === 'youtube' ? 'youtube-description' : ''}`}>
                             <p>{postData.content}</p>
                             {postData.hashtags && (

@@ -522,7 +522,16 @@ layout.css
 }
 
 .app-footer {
-  text-align: center;
+  /* text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  padding: 16px 0;
+  border-top: 1px solid #e5e7eb;
+ */
+  display: flex;
+  justify-content: center; /* centers everything horizontally */
+  align-items: center;     /* aligns vertically */
+  gap: 16px;               /* space between text and links */
   font-size: 14px;
   color: #6b7280;
   padding: 16px 0;
