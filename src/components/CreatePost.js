@@ -463,62 +463,89 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     navigate('/settings?tab=accounts');
   };
 
-  const fetchUserProfile = async () => {
-    setLoadingProfile(true);
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.data.success) {
-        // Ensure YouTube is added to connectedPlatforms if a YouTube account exists
-        const userData = response.data.data;
-
-        // Check if YouTube account exists but is not in connectedPlatforms
-        const hasYouTubeAccount = userData.connectedAccounts?.some(acc => acc.platform === 'youtube');
-        if (hasYouTubeAccount && !userData.connectedPlatforms?.includes('youtube')) {
-          userData.connectedPlatforms = [...(userData.connectedPlatforms || []), 'youtube'];
-        }
-
-        setUserProfile(userData);
+const fetchUserProfile = async () => {
+  setLoadingProfile(true);
+  try {
+    const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    if (response.data.success) {
+      // Get the raw data from API
+      const userData = response.data.data;
+      console.log('Raw API response data:', userData);
+      
+      // Ensure connectedPlatforms includes all platforms from connectedAccounts
+      let connectedPlatforms = userData.connectedPlatforms || [];
+      
+      // Check if there are connected accounts for each platform type
+      if (Array.isArray(userData.connectedAccounts)) {
+        // Extract unique platform types from connectedAccounts
+        const platformsFromAccounts = [
+          ...new Set(userData.connectedAccounts.map(acc => acc.platform))
+        ];
+        
+        // Ensure each platform from accounts exists in connectedPlatforms
+        platformsFromAccounts.forEach(platform => {
+          if (!connectedPlatforms.includes(platform)) {
+            connectedPlatforms.push(platform);
+          }
+        });
       }
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-      showToast('Failed to load user profile', 'error');
-    } finally {
-      setLoadingProfile(false);
+      
+      // Update the userData with the enhanced connectedPlatforms
+      userData.connectedPlatforms = connectedPlatforms;
+      console.log('Enhanced user data:', userData);
+      
+      setUserProfile(userData);
     }
-  };
-  console.log('User profile data:', {
-    connectedPlatforms: userProfile?.connectedPlatforms,
-    connectedAccounts: userProfile?.connectedAccounts
-  });
+  } catch (error) {
+    console.error('Failed to fetch user profile:', error);
+    showToast('Failed to load user profile', 'error');
+  } finally {
+    setLoadingProfile(false);
+  }
+};
+
+console.log('User profile data:', {
+  connectedPlatforms: userProfile?.connectedPlatforms,
+  connectedAccounts: userProfile?.connectedAccounts
+});
 
   // Generate platforms array based on connected accounts
-  const getAvailablePlatforms = () => {
-    const allPlatforms = [
-      { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
-      { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
-      { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
-      { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
-      { id: 'twitter', name: 'Twitter', icon: () => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{ marginBottom: '4px' }} />, color: "#0A66C2" },
+const getAvailablePlatforms = () => {
+  const allPlatforms = [
+    { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
+    { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
+    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
+    { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
+    { id: 'twitter', name: 'Twitter', icon:() => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{marginBottom: '4px'}} />, color: "#0A66C2"} ,
+  ];
 
-    ];
+  return allPlatforms.map(platform => {
+    // First check if there are platform-specific accounts (most reliable)
+    const hasAccountsForPlatform = userProfile?.connectedAccounts?.some(acc => 
+      acc.platform === platform.id && acc.connected !== false
+    );
+    console.log('Platform:', platform.id, 'hasAccountsForPlatform:', hasAccountsForPlatform);
+    // Then check if the platform is in the connectedPlatforms array
+    const isInConnectedPlatforms = userProfile?.connectedPlatforms?.includes(platform.id);
+    console.log('Platform:', platform.id, 'hasAccountsForPlatform:', hasAccountsForPlatform, 'isInConnectedPlatforms:', isInConnectedPlatforms);
+    
+    // A platform is connected if either condition is true
+    const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
+    console.log('Platform:', platform.id, 'isConnected:', isConnected);
+    return {
+      ...platform,
+      connected: isConnected,
+      accounts: userProfile?.connectedAccounts?.filter(acc => acc.platform === platform.id) || []
+    };
+  });
+};
 
-    return allPlatforms.map(platform => {
-      // Specific check for YouTube account
-      const isYouTubeConnected =
-        platform.id === 'youtube' &&
-        userProfile?.connectedAccounts?.some(acc => acc.platform === 'youtube');
+// console.log('Generated platforms:', platforms);
 
-      return {
-        ...platform,
-        connected: isYouTubeConnected || userProfile?.connectedPlatforms?.includes(platform.id) || false,
-        accounts: userProfile?.connectedAccounts?.filter(acc => acc.platform === platform.id) || []
-      };
-    });
-  };
-  // console.log('Generated platforms:', platforms);
+  
 
 
   const platforms = userProfile ? getAvailablePlatforms() : [];
