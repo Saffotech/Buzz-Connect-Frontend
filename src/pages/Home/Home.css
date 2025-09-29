@@ -76,7 +76,7 @@ h2 { font-size: clamp(2rem, 4vw, 2.5rem); }
 h3 { font-size: 1.5rem; }
 h4 { font-size: 1.25rem; }
 
-p { margin-bottom: 1em; }
+/* p { margin-bottom: 1em; } */
 
 .mga-gradient-text {
   background: linear-gradient(135deg, var(--mga-primary) 0%, var(--mga-accent-purple) 100%);
@@ -218,10 +218,14 @@ p { margin-bottom: 1em; }
   justify-content: space-between;
 }
 
-.mga-nav-brand h3 {
+/* .top-head h3 {
   color: var(--mga-primary);
   margin: 0;
   font-size: 1.5rem;
+} */
+
+.mga-nav-brand img{
+max-width: 135px;
 }
 
 .mga-nav-links {
@@ -1457,7 +1461,7 @@ section {
 .mga-modal-close:focus,
 .mga-form-group input:focus,
 .mga-form-group textarea:focus {
-  outline: 2px solid var(--mga-primary);
+  /* outline: 2px solid var(--mga-primary); */
   outline-offset: 2px;
 }
 

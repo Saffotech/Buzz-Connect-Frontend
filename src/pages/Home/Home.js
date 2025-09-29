@@ -7,7 +7,7 @@ import {
   Play, Loader2
 } from 'lucide-react';
 import './Home.css';
-
+import Logo from "../../assets/img/Logo.png";
 const Home = () => {
 
   const navigate = useNavigate();
@@ -27,12 +27,12 @@ const Home = () => {
     {
       icon: Edit3,
       title: 'Unified Composer',
-      description: 'Single editor to craft posts for Instagram, Facebook, X, LinkedIn and TikTok. Platform previews, character counters, and platform-specific edits in one place.'
+      description: 'Single editor to craft posts for Instagram, Facebook, X, LinkedIn and Youtube. Platform previews, character counters, and platform-specific edits in one place.'
     },
     {
       icon: Calendar,
       title: 'Scheduling & Calendar',
-      description: 'Month & Week Views, recurring posts, plan up to 1 year ahead. Drag & drop calendar, bulk CSV import, timezone aware scheduling.'
+      description: 'Month & Week Views, recurring posts, plan up to 1 year ahead. Drag & drop calendar, timezone aware scheduling.'
     },
     {
       icon: Bot,
@@ -47,7 +47,7 @@ const Home = () => {
     {
       icon: BarChart3,
       title: 'Analytics Snapshot',
-      description: 'Engagement per post, best posting times, hashtag performance & growth trends. Exportable CSV & scheduled reports.'
+      description: 'Engagement per post, best posting times, hashtag performance & growth trends.'
     },
     {
       icon: Users,
@@ -65,8 +65,8 @@ const Home = () => {
     },
     {
       icon: PenTool,
-      title: 'Create or import content',
-      description: 'AI captions, images/videos, hashtags, mentions. Bulk upload or create from scratch.',
+      title: 'Create content',
+      description: 'AI captions, images/videos, hashtags, mentions. Create from scratch.',
       number: '02'
     },
     {
@@ -152,12 +152,12 @@ const Home = () => {
   const faqs = [
     {
       question: "Which platforms are supported?",
-      answer: "We support Instagram, Facebook, X (Twitter), LinkedIn, TikTok. You can also export to CSV and connect via Zapier to 5000+ other apps."
+      answer: "We support Instagram, Facebook, X (Twitter), LinkedIn, Youtube."
     },
-    {
-      question: "Can I import posts in bulk?",
-      answer: "Yes! Upload via CSV files and media zip folders. Perfect for migrating from other tools or planning campaigns in spreadsheets."
-    },
+    // {
+    //   question: "Can I import posts in bulk?",
+    //   answer: "Yes! Perfect for migrating from other tools or planning campaigns in spreadsheets."
+    // },
     {
       question: "How accurate are AI suggestions?",
       answer: "Our AI uses platform-specific algorithms and real-time trends. We recommend reviewing suggestions before publishing, but most users find 85%+ accuracy."
@@ -451,8 +451,12 @@ const Home = () => {
       <nav className="mga-navbar">
         <div className="mga-nav-container">
           <div className="mga-nav-brand">
-            <h3>MGA Buzz Connect</h3>
+          <img src={Logo} alt="BuzzConnect Logo" className='mga-nav-brand img' style={{ cursor: "pointer" }} />
           </div>
+          {/* <div class="top-head">
+            <h3>MGA Buzz Connect</h3>
+          </div> */}
+    
           <div className={`mga-nav-links ${isMobileMenuOpen ? 'mga-nav-open' : ''}`}>
             <a href="#mga-features" onClick={(e) => { e.preventDefault(); scrollToSection('mga-features'); }}>
               Features
@@ -510,7 +514,7 @@ const Home = () => {
                 </div>
                 
                 <p className="mga-hero-microcopy">
-                  No credit card required • Connect Instagram, Facebook, X, LinkedIn & TikTok
+                  No credit card required • Connect Instagram, Facebook, X, LinkedIn & Youtube
                 </p>
 
                 {/* Value Bullets */}
@@ -520,7 +524,7 @@ const Home = () => {
                       <Calendar size={20} />
                     </div>
                     <div>
-                      <strong>Save time at scale:</strong> Bulk upload and schedule posts for multiple platforms in a single workflow.
+                      <strong>Save time at scale:</strong> Schedule posts for multiple platforms in a single workflow.
                     </div>
                   </div>
                   <div className="mga-bullet-item">
@@ -670,7 +674,7 @@ const Home = () => {
                   </div>
                   <blockquote>"{testimonial.quote}"</blockquote>
                   <div className="mga-author">
-                    <div className="mga-author-avatar"></div>
+                   
                     <div className="mga-author-info">
                       <div className="mga-author-name">{testimonial.author}</div>
                       <div className="mga-author-role">{testimonial.role}</div>
@@ -683,7 +687,7 @@ const Home = () => {
         </section>
 
         {/* Pricing Section */}
-        <section id="mga-pricing" className="mga-pricing">
+        {/* <section id="mga-pricing" className="mga-pricing">
           <div className="mga-pricing-container">
             <div className="mga-section-header">
               <h2>Simple, transparent pricing</h2>
@@ -736,7 +740,7 @@ const Home = () => {
               Transparent billing • Switch plans anytime • 30-day money-back guarantee
             </p>
           </div>
-        </section>
+        </section> */}
 
         {/* FAQ Section */}
         <section className="mga-faq">
@@ -782,7 +786,10 @@ const Home = () => {
         <div className="mga-footer-container">
           <div className="mga-footer-content">
             <div className="mga-footer-brand">
-              <h3>MGA Buzz Connect</h3>
+          <div className="mga-nav-brand">
+          <img src={Logo} alt="BuzzConnect Logo" className='mga-nav-brand img' style={{ cursor: "pointer" }} />
+          </div>
+              {/* <h3>MGA Buzz Connect</h3> */}
               <p>Social media scheduling that's smart, fast, and human.</p>
             </div>
 
@@ -825,7 +832,7 @@ const Home = () => {
           </div>
 
           <div className="mga-footer-bottom">
-            <p>&copy; 2024 MGA Buzz Connect — Built for creators and teams.</p>
+            <p>&copy; 2025 MGA Buzz Connect — Built for creators and teams.</p>
           </div>
         </div>
       </footer>
