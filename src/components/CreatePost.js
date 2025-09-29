@@ -615,10 +615,10 @@ const getAvailablePlatforms = () => {
     }
 
     // Check if images are required but not provided
-    if (areImagesRequired() && postData.images.length === 0) {
-      showToast('Images are required for all posts', 'error');
-      return false;
-    }
+    // if (areImagesRequired() && postData.images.length === 0) {
+    //   showToast('Images are required for all posts', 'error');
+    //   return false;
+    // }
 
     // Check if accounts are selected for platforms that require it
     const platformsRequiringAccounts = ['instagram', 'facebook', 'linkedin', 'youtube'];
@@ -1633,7 +1633,7 @@ const getAvailablePlatforms = () => {
                           {isSelected && platform.connected && platform.accounts && platform.accounts.length > 0 && (
                             <div className="account-multi-selector">
                               <label className="account-label">
-                                Select {platform.name} Account{platform.accounts.length > 1 ? 's' : ''}:
+                                Choose Profile{platform.accounts.length > 1 ? 's' : ''}:
                                 <span className="account-count">
                                   ({selectedAccountsCount} of {platform.accounts.length} selected)
                                 </span>
@@ -2248,7 +2248,7 @@ const getAvailablePlatforms = () => {
                                         playsInline
                                         onError={(e) => { console.error('Preview video failed to load'); e.target.style.display = 'none'; }}
                                       />
-                                      <div className="youtube-title">{postData.content?.substring(0, 100)}</div>
+                                      {/* <div className="youtube-title">{postData.content?.substring(0, 100)}</div> */}
                                     </div>
                                   ))
                               ) : (
@@ -2347,14 +2347,14 @@ const getAvailablePlatforms = () => {
 
             <div className="footer-actions">
               {/* Save as Draft Button */}
-              <button
+              {/* <button
                 type="button"
                 className="btn-secondary-draft"
                 onClick={onSaveDraft}
                 disabled={isSubmitting}
               >
                 Save as Draft
-              </button>
+              </button> */}
 
               {/* Publish / Schedule Button Footer */}
               <button

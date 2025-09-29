@@ -5,6 +5,8 @@ import { useConnectedPlatforms } from "../hooks/useApi";
 import { usePlatformGridTracking } from "../hooks/useAnalytics";
 import { getPlatformIcon } from "../utils/platform-helpers";
 import "./PlatformGrid.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 
 /**
  * Memoized PlatformButton - Sub-component for individual platform selection
@@ -29,13 +31,12 @@ const PlatformButton = memo(({
     }
   }, [platform.connected, platform.id, disabled, onSelect, navigate]);
 
-  const title = platform.connected 
-    ? platform.name 
+  const title = platform.connected
+    ? platform.name
     : `${platform.name} - Not Connected`;
 
-  const buttonClass = `platform-btn ${isSelected ? "selected" : ""} ${
-    !platform.connected ? "not-connected" : ""
-  } ${disabled ? "disabled" : ""}`;
+  const buttonClass = `platform-btn ${isSelected ? "selected" : ""} ${!platform.connected ? "not-connected" : ""
+    } ${disabled ? "disabled" : ""}`;
 
   return (
     <button
@@ -47,7 +48,9 @@ const PlatformButton = memo(({
     >
       <div className="platform-btn-content">
         <div className="platform-icon">
-          {Icon ? (
+          {platform.id === "twitter" ? (
+            <FontAwesomeIcon icon={faXTwitter} size="lg" color="#000000" />
+          ) : Icon ? (
             <Icon size={20} />
           ) : (
             <span className="platform-emoji">{platform.emoji}</span>
@@ -154,7 +157,7 @@ const useFilteredPlatforms = (platforms, showOnlyConnected, allowedPlatforms) =>
 
     // Sort by priority and then alphabetically
     const priorityOrder = ["instagram", "facebook", "twitter"];
-    
+
     filtered.sort((a, b) => {
       const aPriority = priorityOrder.indexOf(a.id);
       const bPriority = priorityOrder.indexOf(b.id);
@@ -190,12 +193,13 @@ const PlatformGrid = memo(({
   context = "unknown",
 }) => {
   const { platforms, loading, error } = useConnectedPlatforms();
+  console.log("All platforms from API:", platforms);
   const { trackGridUsage, trackSelection } = usePlatformGridTracking();
 
   // Filter and sort platforms
   const filteredPlatforms = useFilteredPlatforms(
-    platforms, 
-    showOnlyConnected, 
+    platforms,
+    showOnlyConnected,
     allowedPlatforms
   );
 
@@ -226,7 +230,7 @@ const PlatformGrid = memo(({
     if (disabled) return;
 
     const platformData = platforms.find((p) => p.id === platformId);
-    
+
     // Early return if platform not connected
     if (!platformData?.connected) {
       return; // Navigation handled in PlatformButton
@@ -245,7 +249,7 @@ const PlatformGrid = memo(({
 
     // Track the selection
     trackSelection(platformId, !wasSelected, context);
-    
+
     // Call the change handler
     onPlatformChange(newSelection);
   }, [
@@ -262,7 +266,7 @@ const PlatformGrid = memo(({
   const platformButtons = useMemo(() => {
     return filteredPlatforms.map((platform) => {
       const isSelected = platform.connected && selectedPlatforms.includes(platform.id);
-      
+
       return (
         <PlatformButton
           key={platform.id}
