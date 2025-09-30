@@ -539,7 +539,7 @@ const getAvailablePlatforms = () => {
 
   // Images are now required for all platforms
   const areImagesRequired = () => {
-    return postData.platforms.length > 0;
+    return postData.platforms.includes('instagram' , 'facebook' , 'youtube' , 'linkedin');
   };
 
   // Toast notification function
