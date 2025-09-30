@@ -19,12 +19,26 @@ import TermsOfService from "./pages/Legal/TermsOfService";
 import DataDeletionPolicy from "./pages/Legal/DataDeletionPolicy";
 import TestingInstructions from "./pages/Legal/TestingInstructions";
 
+// Import your homepage component
+import MGABuzzConnect from './pages/Home/Home';
+
 // Meta tags configuration for different routes
 const getMetaTags = (pathname) => {
   switch (pathname) {
+    case '/':
+    case '/home':
+      return {
+        title: "MGA Buzz Connect — Multi-Platform Social Media Scheduler with AI",
+        description: "Schedule posts, reels and video across multiple platforms, plan up to 1 year ahead, and create better content faster with AI content generation, hashtag & mention suggestions, and content optimization.",
+        keywords: "social media scheduler, AI content generation, multi-platform posting, Instagram scheduler, Facebook scheduler, LinkedIn scheduler, Twitter scheduler, TikTok scheduler, social media management, content planning, hashtag suggestions, social media analytics",
+        ogTitle: "MGA Buzz Connect — Multi-Platform Social Media Scheduler with AI",
+        ogDescription: "Schedule once. Be everywhere. Manage, schedule, and optimize posts across all major platforms with built-in AI assistance.",
+        ogUrl: "https://mgabrandbuzz.com/",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image-home.jpg"
+      };
     case '/auth':
       return {
-        title: "Login & Sign Up |MGA Buzz Connect ",
+        title: "Login & Sign Up | MGA Buzz Connect",
         description: "Log in or create a new account with MGA Buzz Connect - the AI-powered social media management tool for businesses and agencies.",
         keywords: "MGA Buzz Connect login, MGA Buzz Connect sign up, social media tool login, create MGA Buzz Connect account, marketing software signup",
         ogTitle: "MGA Buzz Connect - Login & Sign Up",
@@ -44,7 +58,7 @@ const getMetaTags = (pathname) => {
       };
     case '/planner':
       return {
-        title: " Planner | MGA Buzz Connect",
+        title: "Content Planner | MGA Buzz Connect",
         description: "Plan and schedule your social media content with MGA Buzz Connect's intelligent content planner.",
         keywords: "content planning, social media scheduler, content calendar",
         ogTitle: "Content Planner - MGA Buzz Connect",
@@ -80,7 +94,7 @@ const getMetaTags = (pathname) => {
         ogTitle: "Content Management - MGA Buzz Connect",
         ogDescription: "Plan, create, and organize your social media posts and media assets.",
         ogUrl: "https://mgabrandbuzz.com/content",
-    ogImage: "https://mgabrandbuzz.com/assets/img/og-image-content.jpg" // A specific image for this page is best
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image-content.jpg"
       };
     case '/settings':
       return {
@@ -90,7 +104,7 @@ const getMetaTags = (pathname) => {
         ogTitle: "Account Settings - MGA Buzz Connect",
         ogDescription: "Manage your account, profiles, and subscription settings.",
         ogUrl: "https://mgabrandbuzz.com/settings",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image-settings.jpg" // A specific image for this page is best
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image-settings.jpg"
       };
     case '/privacy-policy':
       return {
@@ -100,6 +114,26 @@ const getMetaTags = (pathname) => {
         ogTitle: "Privacy Policy - MGA Buzz Connect",
         ogDescription: "Read the Privacy Policy of MGA Buzz Connect.",
         ogUrl: "https://mgabrandbuzz.com/privacy-policy",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+      };
+    case '/terms-of-service':
+      return {
+        title: "Terms of Service | MGA Buzz Connect",
+        description: "Read the Terms of Service for MGA Buzz Connect social media management platform.",
+        keywords: "terms of service, MGA Buzz Connect, user agreement, terms and conditions",
+        ogTitle: "Terms of Service - MGA Buzz Connect",
+        ogDescription: "Terms of Service for MGA Buzz Connect platform.",
+        ogUrl: "https://mgabrandbuzz.com/terms-of-service",
+        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+      };
+    case '/data-deletion-policy':
+      return {
+        title: "Data Deletion Policy | MGA Buzz Connect",
+        description: "Learn about MGA Buzz Connect's data deletion policies and how to request data removal.",
+        keywords: "data deletion, GDPR compliance, data removal, MGA Buzz Connect",
+        ogTitle: "Data Deletion Policy - MGA Buzz Connect",
+        ogDescription: "Data deletion and privacy policies for MGA Buzz Connect.",
+        ogUrl: "https://mgabrandbuzz.com/data-deletion-policy",
         ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
       };
     default:
@@ -135,8 +169,8 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/auth" replace />;
 };
 
-// Public Route Component
-const PublicRoute = ({ children }) => {
+// Public Route Component (Updated to allow homepage access)
+const PublicRoute = ({ children, redirectIfAuthenticated = true }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -152,7 +186,17 @@ const PublicRoute = ({ children }) => {
     );
   }
 
+  // If redirectIfAuthenticated is false, always show the component
+  if (!redirectIfAuthenticated) {
+    return children;
+  }
+
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : children;
+};
+
+// Home Route Component (can be accessed by anyone)
+const HomeRoute = ({ children }) => {
+  return <PublicRoute redirectIfAuthenticated={false}>{children}</PublicRoute>;
 };
 
 // Dynamic Meta Tags Component
@@ -174,12 +218,18 @@ const DynamicMetaTags = () => {
       <meta property="og:type" content="website" />
       <meta property="og:url" content={metaTags.ogUrl} />
       <meta property="og:image" content={metaTags.ogImage} />
+      <meta property="og:site_name" content="MGA Buzz Connect" />
       
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={metaTags.ogTitle} />
       <meta name="twitter:description" content={metaTags.ogDescription} />
       <meta name="twitter:image" content={metaTags.ogImage} />
+      <meta name="twitter:site" content="@MGABuzzConnect" />
+      
+      {/* Additional SEO tags */}
+      <link rel="canonical" href={metaTags.ogUrl} />
+      <meta name="theme-color" content="#2563eb" />
     </Helmet>
   );
 };
@@ -200,6 +250,27 @@ const AppRoutes = () => {
       <DynamicMetaTags />
       
       <Routes>
+        {/* Homepage Route - accessible to everyone */}
+        <Route
+          path="/"
+          element={
+            <HomeRoute>
+              <MGABuzzConnect />
+            </HomeRoute>
+          }
+        />
+        
+        {/* Alternative homepage route */}
+        <Route
+          path="/home"
+          element={
+            <HomeRoute>
+              <MGABuzzConnect />
+            </HomeRoute>
+          }
+        />
+
+        {/* Auth Route - redirects to dashboard if already authenticated */}
         <Route
           path="/auth"
           element={
@@ -208,6 +279,8 @@ const AppRoutes = () => {
             </PublicRoute>
           }
         />
+
+        {/* Protected Routes - require authentication */}
         <Route
           path="/dashboard"
           element={
@@ -268,15 +341,14 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        {/* ✅ Privacy Policy Route */}
+
+        {/* Public Legal Pages */}
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/data-deletion-policy" element={<DataDeletionPolicy />} />
         <Route path="/testing-instructions" element={<TestingInstructions />} />
-        <Route
-          path="/"
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/auth"} replace />}
-        />
+
+        {/* 404 Page */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </div>
