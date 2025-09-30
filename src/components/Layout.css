@@ -1,4 +1,8 @@
-layout.css
+/* layout.css */
+
+a {
+  text-decoration: none !important;
+}
 
 /* Layout.css */
 .app-layout {
@@ -10,7 +14,6 @@ layout.css
 
 .bxd {
   display: flex;
- 
 }
 
 /* Mobile Header */
@@ -52,9 +55,10 @@ layout.css
 
 .app-sidebar {
   position: fixed;
-  left: 0; top: 0; 
+  left: 0;
+  top: 0;
   /* height: 100vh; */
-  width: 260px;                  
+  width: 260px;
   background: #fff;
   border-right: 1px solid #e2e8f0;
   transform: scaleX(0);
@@ -66,7 +70,6 @@ layout.css
 .app-sidebar.open {
   transform: scaleX(1);
 }
-
 
 .sidebar-header {
   padding: 1.5rem;
@@ -90,7 +93,7 @@ layout.css
   transition: all 0.3s ease;
 }
 
-.logo-img{
+.logo-img {
   max-width: 135px;
 }
 
@@ -203,7 +206,6 @@ layout.css
   /* transition: transform 0.3s ease; */
 }
 
-
 /* Sidebar Footer */
 .sidebar-footer {
   padding: 1rem;
@@ -297,7 +299,7 @@ layout.css
   padding: 0;
 }
 
-.notification.success{
+.notification.success {
   z-index: 1000000000;
 }
 
@@ -342,7 +344,7 @@ layout.css
 
 @media (min-width: 769px) {
   .bxd {
-     margin-top: 12vh;
+    margin-top: 12vh;
   }
   .app-sidebar {
     /* position: static; */
@@ -351,23 +353,23 @@ layout.css
     transition: width 0.1s ease;
     top: 12vh;
     height: 88vh;
-     overflow-y: auto;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none; 
-  display: flex;
-  flex-direction: column;
+    overflow-y: auto;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
   }
 
- .app-sidebar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
+  .app-sidebar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
 
   .app-main.sidebar-open {
-  margin-left: 260px;
+    margin-left: 260px;
   }
 
-.app-main.sidebar-collapsed {
-  margin-left: 80px;
+  .app-main.sidebar-collapsed {
+    margin-left: 80px;
   }
 
   .app-sidebar:not(.open) {
@@ -426,7 +428,7 @@ layout.css
   }
 
   .app-sidebar:not(.open) .nav-item:hover::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 100%;
     top: 50%;
@@ -478,10 +480,8 @@ layout.css
   }
 
   .mobile-header {
-    display: flex;  /* visible only on mobile */
+    display: flex; /* visible only on mobile */
   }
-
-
 }
 
 .nested-dropdown {
@@ -522,7 +522,16 @@ layout.css
 }
 
 .app-footer {
-  text-align: center;
+  /* text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+  padding: 16px 0;
+  border-top: 1px solid #e5e7eb;
+ */
+  display: flex;
+  justify-content: center; /* centers everything horizontally */
+  align-items: center; /* aligns vertically */
+  gap: 16px; /* space between text and links */
   font-size: 14px;
   color: #6b7280;
   padding: 16px 0;
@@ -530,7 +539,7 @@ layout.css
 }
 
 .app-footer .footer-links {
-  margin-top: 4px;
+  /* margin-top: 4px; */
   display: flex;
   justify-content: center;
   gap: 12px;

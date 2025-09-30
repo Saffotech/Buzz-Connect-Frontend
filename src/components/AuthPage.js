@@ -49,26 +49,7 @@ const AuthPage = () => {
           </div>
         </div>
       </div>
-      {/* Footer */}
-      <footer className="app-footer">
-        <p>© {new Date().getFullYear()}, MGA Buzz Connect.</p>
-        <div className="footer-links">
-          <a
-            href="https://mgabuzzconnect.com/privacy-policy"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Privacy
-          </a>
-          <a
-            href="https://mgabuzzconnect.com/terms-of-service"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Terms
-          </a>
-        </div>
-      </footer>
+
     </div>
   );
 };

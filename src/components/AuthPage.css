@@ -636,7 +636,7 @@
 }
 
 .app-footer .footer-links {
-  margin-top: 4px;
+  /* margin-top: 4px; */
   display: flex;
   justify-content: center;
   gap: 12px;
