@@ -33,7 +33,8 @@ import {
   XCircle,
   AlertTriangle,
   Maximize2,
-  ExpandIcon
+  ExpandIcon,
+  InfoIcon
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -151,6 +152,7 @@ const Content = () => {
   const [postToDelete, setPostToDelete] = useState(null);
   const [deleteFromInsta, setDeleteFromInsta] = useState(false);
   const [deleteFromYouTube, setDeleteFromYouTube] = useState(false); // Add this
+const [deleteFromFacebook, setDeleteFromFacebook] = useState(false);
 
   // Enhanced Media state
   const [mediaList, setMediaList] = useState([]);
@@ -250,7 +252,7 @@ const Content = () => {
   };
 
   // ✅ Delete post with confirmation
- const handleDeletePost = async (postId) => {
+const handleDeletePost = async (postId) => {
   try {
     console.log('🗑️ Starting post deletion process for ID:', postId);
     console.log('📊 Post to delete details:', {
@@ -269,27 +271,57 @@ const Content = () => {
     await apiClient.request(`/api/posts/${postId}`, { method: 'DELETE' });
     console.log('✅ Post deleted from database successfully');
     
-    // Handle Instagram deletion if checked
-    if (deleteFromInsta) {
-      const instagramPosts = postToDelete?.platformPosts?.filter(
-        post => post.platform === 'instagram' && post.status === 'published'
+// Handle Instagram deletion if checked
+if (deleteFromInsta) {
+  const instagramPosts = postToDelete?.platformPosts?.filter(
+    post => post.platform === 'instagram' && post.status === 'published'
+  );
+  
+  console.log(`📸 Found ${instagramPosts?.length || 0} Instagram posts to delete`);
+  let instagramDeletionFailed = false;
+  
+  for (const post of instagramPosts || []) {
+    try {
+      console.log(`🗑️ Attempting to delete Instagram post: ${post.platformPostId}`);
+      await apiClient.request(`/api/auth/instagram/posts/instagram/${post.platformPostId}`, { method: 'DELETE' });
+      console.log(`✅ Deleted Instagram post: ${post.platformPostId}`);
+    } catch (error) {
+      console.error(`❌ Failed to delete Instagram post ${post.platformPostId}:`, error);
+      instagramDeletionFailed = true;
+    }
+  }
+  
+  // Always show this notification for Instagram posts since deletion usually fails
+  if (instagramDeletionFailed) {
+    setNotification({ 
+      type: 'warning', 
+      message: 'Post deleted from the app, but Instagram posts need to be deleted manually from the Instagram app'
+    });
+  }
+}
+    
+    // Handle Facebook deletion if checked
+    if (deleteFromFacebook) {
+      const facebookPosts = postToDelete?.platformPosts?.filter(
+        post => post.platform === 'facebook' && post.status === 'published'
       );
       
-      console.log(`📸 Found ${instagramPosts?.length || 0} Instagram posts to delete`);
+      console.log(`📘 Found ${facebookPosts?.length || 0} Facebook posts to delete`);
       
-      for (const post of instagramPosts || []) {
+      for (const post of facebookPosts || []) {
         try {
-          console.log(`🗑️ Deleting Instagram post: ${post.platformPostId}`);
-          await apiClient.request(`/api/instagram/posts/${post.platformPostId}`, { method: 'DELETE' });
-          console.log(`✅ Deleted Instagram post: ${post.platformPostId}`);
+          console.log(`🗑️ Deleting Facebook post: ${post.platformPostId}`);
+          // FIXED: Correct endpoint path based on router configuration
+          await apiClient.request(`/api/auth/instagram/posts/facebook/${post.platformPostId}`, { method: 'DELETE' });
+          console.log(`✅ Deleted Facebook post: ${post.platformPostId}`);
         } catch (error) {
-          console.error(`❌ Failed to delete Instagram post ${post.platformPostId}:`, error);
+          console.error(`❌ Failed to delete Facebook post ${post.platformPostId}:`, error);
           console.error('Error details:', error.response?.data);
         }
       }
     }
     
-    // Handle YouTube deletion if checked
+    // Handle YouTube deletion if checked (unchanged)
     if (deleteFromYouTube) {
       const youtubePosts = postToDelete?.platformPosts?.filter(
         post => post.platform === 'youtube' && post.status === 'published'
@@ -332,6 +364,7 @@ const Content = () => {
     setShowDeleteConfirm(false);
     setPostToDelete(null);
     setDeleteFromInsta(false);
+    setDeleteFromFacebook(false);
     setDeleteFromYouTube(false);
     await fetchAllPosts();
   } catch (error) {
@@ -675,9 +708,11 @@ const showDeleteConfirmation = async (post) => {
 />
 
       {/* Delete Confirmation Modal */}
-     <DeleteConfirmationModal
+    <DeleteConfirmationModal
   deleteFromInsta={deleteFromInsta}
   setDeleteFromInsta={setDeleteFromInsta}
+  deleteFromFacebook={deleteFromFacebook}
+  setDeleteFromFacebook={setDeleteFromFacebook}
   deleteFromYouTube={deleteFromYouTube}
   setDeleteFromYouTube={setDeleteFromYouTube}
   isOpen={showDeleteConfirm}
@@ -686,11 +721,13 @@ const showDeleteConfirmation = async (post) => {
     setShowDeleteConfirm(false);
     setPostToDelete(null);
     setDeleteFromInsta(false);
+    setDeleteFromFacebook(false);
     setDeleteFromYouTube(false);
   }}
   onConfirm={() => handleDeletePost(postToDelete?._id || postToDelete?.id)}
   postTitle={postToDelete?.content?.substring(0, 50) || 'this post'}
 />
+
 
       <MediaUploadModal
         isOpen={showUploadModal}
@@ -1403,25 +1440,18 @@ const DeleteConfirmationModal = ({
   deleteFromInsta, 
   setDeleteFromInsta,
   deleteFromYouTube,
-  setDeleteFromYouTube 
+  setDeleteFromYouTube,
+  deleteFromFacebook,    // Add this new prop
+  setDeleteFromFacebook  // Add this new prop
 }) => {
   if (!isOpen) return null;
 
-  // Check if this post has YouTube videos (with detailed logging)
+  // Check if this post has YouTube videos
   const youtubeVideos = post?.platformPosts?.filter(
     platformPost => platformPost.platform === 'youtube' && platformPost.status === 'published'
   ) || [];
   
   const hasYouTubePost = youtubeVideos.length > 0;
-  
-  // Log YouTube videos found for deletion
-  if (hasYouTubePost) {
-    console.log('📺 YouTube videos found in post:', youtubeVideos.map(video => ({
-      id: video.platformPostId,
-      accountId: video.accountId,
-      status: video.status
-    })));
-  }
   
   // Check if this post has Instagram posts
   const instagramPosts = post?.platformPosts?.filter(
@@ -1429,6 +1459,13 @@ const DeleteConfirmationModal = ({
   ) || [];
   
   const hasInstagramPost = instagramPosts.length > 0;
+  
+  // Check if this post has Facebook posts
+  const facebookPosts = post?.platformPosts?.filter(
+    platformPost => platformPost.platform === 'facebook' && platformPost.status === 'published'
+  ) || [];
+  
+  const hasFacebookPost = facebookPosts.length > 0;
   
   // Log if no platform posts were found
   if (!post?.platformPosts || post.platformPosts.length === 0) {
@@ -1456,14 +1493,31 @@ const DeleteConfirmationModal = ({
           </p>
 
           <div className="delete-extra-options">
-            {hasInstagramPost && (
-              <label id='ctinst'>
+     {hasInstagramPost && (
+  <div className="platform-deletion-option">
+    <div className="deletion-option instagram disabled">
+      <span className="deletion-label">
+        <Instagram size={16} />
+        Instagram
+      </span>
+      <div className="deletion-note">
+        <InfoIcon size={14} />
+        <small>
+          Instagram posts must be deleted manually through the Instagram app due to API limitations.
+        </small>
+      </div>
+    </div>
+  </div>
+)}
+            
+            {hasFacebookPost && (
+              <label id='ctfb'>
                 <input
                   type="checkbox"
-                  checked={deleteFromInsta}
-                  onChange={(e) => setDeleteFromInsta(e.target.checked)}
+                  checked={deleteFromFacebook}
+                  onChange={(e) => setDeleteFromFacebook(e.target.checked)}
                 />
-                &nbsp; Delete from Instagram also
+                &nbsp; Delete from Facebook also
               </label>
             )}
             
