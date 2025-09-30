@@ -12,122 +12,106 @@ const PrivacyPolicy = () => {
   return (
     <div className="legal-container">
       <h1>Privacy Policy</h1>
-      <p className="effective-date">Effective Date: July 14, 2025</p>
+       
 
       <p>
-        <strong>MGA Buzz Connect</strong> ("we", "our", or "us") is committed to
-        protecting your privacy. This Privacy Policy explains how we collect,
-        use, disclose, and safeguard your information when you use our platform
-        to manage and schedule content across social media platforms. By using
-        our services, you agree to the practices described in this policy.
+       MGA Buzz Connect values your privacy. This Privacy Policy explains what data we collect, how we use it, and your choices. By using our services, you agree to this Policy.
       </p>
 
       <h2>1. Information We Collect</h2>
+
+      <p>We collect information in the following categories:</p>
       <ul>
         <li>
-          <strong>Account Information:</strong> Your name, email address, and
-          contact details.
+          <strong>Account Information:</strong> name, email, phone (optional), billing details.
         </li>
         <li>
-          <strong>Social Media Data:</strong> With your permission, we collect
-          data from your connected social media accounts (e.g., Instagram,
-          Facebook) such as profile information, posts, analytics, and
-          scheduling data.
+          <strong>Authentication Data:</strong> social media tokens, account IDs, encrypted credentials.
         </li>
         <li>
-          <strong>Usage Data:</strong> Information about how you interact with
-          our platform, including pages visited and actions taken.
+          <strong>Usage Data:</strong> social media tokens, account IDs, encrypted credentials.
         </li>
         <li>
-          <strong>Device Data:</strong> IP address, browser type, and operating
-          system.
+          <strong>Content Data:</strong> posts, images, videos, captions you upload for scheduling. 
         </li>
-        <li>
-          <strong>Cookies & Tracking:</strong> We use cookies and similar
-          technologies to improve your experience and analyze usage.
-        </li>
+     
       </ul>
 
-      <h2>2. How We Use Your Information</h2>
+      <h2>2. How We Use Your Data</h2>
+
+      <p>We use your data to:</p>
       <ul>
-        <li>Provide and maintain our services</li>
-        <li>Allow you to schedule and manage social media posts</li>
-        <li>Authenticate you via third-party platforms (Meta, Instagram, etc.)</li>
-        <li>Send notifications and updates</li>
-        <li>Analyze usage to improve our platform</li>
-        <li>Comply with legal and regulatory obligations</li>
+        <li>Provide, improve, and secure our services.</li>
+        <li>Authenticate with social media APIs (Instagram, Facebook, LinkedIn, Twitter/X, YouTube).</li>
+        <li>Publish and schedule your content on your behalf.</li>
+        <li>Send service updates and important notifications.</li>
+        <li>Process payments and manage subscriptions.</li>
+        <li>Comply with legal obligations.</li>
       </ul>
 
-      <h2>3. Sharing Your Information</h2>
+      <p>We <strong>do not sell your personal data</strong> to advertisers or third parties.</p>
+
+
+      <h2>3. Sharing of Data</h2>
       <p>
-        We do <strong>not sell</strong> or rent your personal data. We only
-        share your information with:
+        We only share data with:
       </p>
       <ul>
         <li>
-          Social media platforms (e.g., Instagram Graph API, Facebook Graph API)
-          to publish and retrieve your content with your explicit permission.
+          <strong>Service Providers:</strong> payment gateways, hosting providers, analytics tools.
         </li>
         <li>
-          Service providers who help operate our platform (e.g., cloud hosting,
-          analytics, customer support).
+          <strong>Social Media Platforms:</strong> via official APIs, to enable publishing and analytics.
         </li>
-        <li>Legal authorities when required by law.</li>
+        <li>
+          <strong>Legal Authorities:</strong> if required by law or to protect against misuse.
+        </li>
       </ul>
 
-      <h2>4. Data Retention</h2>
-      <p>
-        We retain your personal data only as long as necessary to provide our
-        services, comply with legal obligations, resolve disputes, and enforce
-        agreements. You may request deletion of your data at any time by
-        contacting us.
-      </p>
-
-      <h2>5. Data Security</h2>
-      <p>
-        We use industry-standard security practices, including encryption and
-        access control, to protect your data. However, no method of transmission
-        or storage is 100% secure, and we cannot guarantee absolute security.
-      </p>
-
-      <h2>6. Your Rights</h2>
+      <h2>4. Data Security</h2>
       <ul>
-        <li>Access and update your personal information</li>
-        <li>Disconnect your social media accounts at any time</li>
-        <li>
-          Request deletion of your data by contacting us at{" "}
+        <li>Social media tokens and credentials are stored using encryption.</li>
+        <li>Access is restricted to authorized systems and staff.</li>
+        <li>We use industry-standard security practices, but no system is 100% secure.</li>
+      </ul>
+
+
+      <h2>5. Data Retention</h2>
+      <ul>
+      <li>We keep your account data as long as you have an active subscription.</li>
+      <li>Upon account deletion, we remove your data in line with our Data Deletion Policy.</li>
+      <li>Billing and compliance records may be retained as required by law.</li>
+      </ul>
+
+       <h2>6. Your Rights</h2>
+       <p>Depending on your location, you may have rights to:</p>
+      <ul>
+      <li>Access the personal data we hold about you.</li>
+      <li>Request correction or deletion of your data.</li>
+      <li>Revoke consent for connecting social media accounts.</li>
+      <li>Request a copy of your data (data portability).</li>
+      </ul>
+
+       <p>
+         You can exercise these rights by contacting {" "}
           <a href="mailto:mgabrandbuzz@gmail.com">
             mgabrandbuzz@gmail.com
           </a>
-        </li>
-        <li>
-          If you are located in the EU/EEA, you have additional rights under
-          GDPR, including data portability and the right to object to
-          processing.
-        </li>
-        <li>
-          If you are a California resident, you may exercise rights under CCPA,
-          including opting out of data sharing.
-        </li>
-      </ul>
+        </p>
 
-      <h2>7. Children's Privacy</h2>
-      <p>
-        Our services are not directed to children under the age of 13. We do not
-        knowingly collect personal information from children. If we become aware
-        that a child has provided us with personal data, we will delete it
-        immediately.
-      </p>
+         <h2>7. Children’s Privacy</h2>
+         <p>Our services are not intended for individuals under 18. We do not knowingly collect their data.</p>
 
-      <h2>8. Changes to This Policy</h2>
-      <p>
-        We may update this Privacy Policy periodically. Changes will be posted
-        on this page with an updated effective date.
-      </p>
 
-      <h2>9. Contact Us</h2>
+         <h2>8. International Transfers</h2>
+         <p>Your data may be stored or processed outside India. By using our services, you consent to such transfers, subject to applicable data protection laws.</p>
+
+        <h2>9. Changes to This Policy</h2>
+          <p>We may update this Privacy Policy from time to time. If changes are significant, we will notify you via email or in-app notifications.</p>
+
+        <h2>10. Contact Us</h2>
       <p>
-        If you have questions about this policy, please contact us at:
+       For questions about this Privacy Policy or to make a privacy request, contact us:
         <br />
         <strong>Email:</strong>{" "}
         <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
