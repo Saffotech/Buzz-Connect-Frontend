@@ -2493,7 +2493,7 @@ const AccountsSettings = ({ onNotify }) => {
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
         // Construct the Twitter auth URL
-        const twitterAuthUrl = `${apiUrl}/api/auth/twitter?userId=${freshUser._id}&token=${storedToken}`;
+        const twitterAuthUrl = `${apiUrl}/api/auth/x?userId=${freshUser._id}&token=${storedToken}`;
 
         console.log('Redirecting to Twitter auth:', twitterAuthUrl);
 
@@ -2510,7 +2510,7 @@ const AccountsSettings = ({ onNotify }) => {
     // Close the modal
     setTwitterTermsModal({ isOpen: false });
   };
-  
+
   // Connect YouTube
   const handleConnectYouTube = async () => {
     setConnectionOptionsModal({ isOpen: false });
