@@ -271,128 +271,110 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   }, [isOpen]);
 
-  const handleFileUpload = async (files) => {
-    if (!files || files.length === 0) return;
+const handleFileUpload = async (files) => {
+  if (!files || files.length === 0) return;
 
-    // Enhanced file validation for Instagram
-    const validFiles = [];
-    const invalidFiles = [];
+  const validFiles = [];
+  const invalidFiles = [];
 
-    Array.from(files).forEach(file => {
-      // Check file type
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
+  Array.from(files).forEach(file => {
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
 
-      if (!isImage && !isVideo) {
-        invalidFiles.push({ file, reason: 'Unsupported file type' });
-        return;
+    if (!isImage && !isVideo) {
+      invalidFiles.push({ file, reason: 'Unsupported file type' });
+      return;
+    }
+
+    if (isVideo && file.size > 250 * 1024 * 1024) {
+      invalidFiles.push({ file, reason: 'Video too large (max 250MB)' });
+      return;
+    }
+    if (isImage && file.size > 50 * 1024 * 1024) {
+      invalidFiles.push({ file, reason: 'Image too large (max 50MB)' });
+      return;
+    }
+
+    validFiles.push(file);
+  });
+
+  if (invalidFiles.length > 0) {
+    const errorMessages = invalidFiles.map(({ file, reason }) =>
+      `${file.name}: ${reason}`
+    ).join('\n');
+    showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
+  }
+
+  if (validFiles.length === 0) return;
+
+  setUploadingFiles(true);
+  setError(null);
+
+  try {
+    console.log('✅ Uploading files:', validFiles);
+
+    const response = await uploadMedia(validFiles);
+    console.log('✅ Upload response:', response);
+
+    if (!response.data || !Array.isArray(response.data)) {
+      throw new Error('Invalid upload response format');
+    }
+
+    const uploadedMedia = response.data.map((media, index) => {
+      const originalFile = validFiles[index];
+
+      // ✅ Always ensure url is present
+      let mediaUrl = media.url || media.secure_url;
+      if (!mediaUrl) {
+        // fallback - use preview blob if server didn’t return URL
+        mediaUrl = URL.createObjectURL(originalFile);
       }
 
-      // ✅ Instagram-specific validations
-      if (isVideo) {
-        // Check video size for Instagram (250MB limit)
-        if (file.size > 250 * 1024 * 1024) {
-          invalidFiles.push({
-            file,
-            reason: 'Video too large for Instagram (max 250MB)'
-          });
-          return;
-        }
-
-        console.log('Video file accepted:', file.name, 'Size:', file.size);
-      } else {
-        // Image size limit
-        if (file.size > 50 * 1024 * 1024) {
-          invalidFiles.push({
-            file,
-            reason: 'Image too large (max 50MB)'
-          });
-          return;
-        }
-      }
-
-      validFiles.push(file);
+      return {
+        url: mediaUrl, // REQUIRED for Joi validation
+        altText: media.originalName || originalFile?.name || 'Post media',
+        originalName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
+        displayName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
+        filename: media.filename || originalFile?.name,
+        publicId: media.publicId,
+        fileType: media.fileType || (originalFile?.type.startsWith('video/') ? 'video' : 'image'),
+        size: media.size || originalFile?.size,
+        dimensions: media.dimensions,
+        duration: media.duration || null,
+        fps: media.fps || null,
+        hasAudio: media.hasAudio || null,
+        thumbnails: media.thumbnails || null,
+        videoQualities: media.videoQualities || null,
+        platformOptimized: media.platformOptimized || null,
+        format: originalFile?.type || 'application/octet-stream',
+        createdAt: new Date().toISOString()
+      };
     });
 
-    // Show warnings for invalid files
-    if (invalidFiles.length > 0) {
-      const errorMessages = invalidFiles.map(({ file, reason }) =>
-        `${file.name}: ${reason}`
-      ).join('\n');
-      showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
-    }
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
+    }));
 
-    if (validFiles.length === 0) return;
+    const fileTypeText = validFiles.length === 1
+      ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
+      : 'files';
 
-    setUploadingFiles(true);
-    setError(null);
+    showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
 
-    try {
-      console.log('✅ Uploading files:', validFiles.map(f => ({ name: f.name, type: f.type, size: f.size })));
+  } catch (error) {
+    console.error('❌ Upload failed:', error);
+    setError(error.message || 'Failed to upload media');
+    showToast('Failed to upload media', 'error');
 
-      const response = await uploadMedia(validFiles);
-      console.log('✅ Upload response:', response);
-
-      if (!response.data || !Array.isArray(response.data)) {
-        throw new Error('Invalid upload response format');
-      }
-
-      const uploadedMedia = response.data.map((media, index) => {
-        const originalFile = validFiles[index];
-
-        // ✅ CRITICAL: Ensure all required fields are present
-        const processedMedia = {
-          url: media.url || media.secure_url,
-          altText: media.originalName || originalFile?.name || 'Post media',
-          // ✅ FIX: Ensure originalName is always present
-          originalName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
-          displayName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
-          filename: media.filename || originalFile?.name,
-          publicId: media.publicId,
-          fileType: media.fileType || (originalFile?.type.startsWith('video/') ? 'video' : 'image'),
-          size: media.size || originalFile?.size,
-          dimensions: media.dimensions,
-          // Video-specific fields
-          duration: media.duration || null,
-          fps: media.fps || null,
-          hasAudio: media.hasAudio || null,
-          // Enhanced fields
-          thumbnails: media.thumbnails || null,
-          videoQualities: media.videoQualities || null,
-          platformOptimized: media.platformOptimized || null,
-          // ✅ Add metadata for better compatibility
-          format: originalFile?.type || 'video/mp4',
-          createdAt: new Date().toISOString()
-        };
-
-        console.log('✅ Processed media:', processedMedia);
-        return processedMedia;
-      });
-
-      setPostData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
-      }));
-
-      const fileTypeText = validFiles.length === 1
-        ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
-        : 'files';
-
-      showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
-
-    } catch (error) {
-      console.error('❌ Upload failed:', error);
-      setError(error.message || 'Failed to upload media');
-      showToast('Failed to upload media', 'error');
-
-      setPostData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => !img.isLocal)
-      }));
-    } finally {
-      setUploadingFiles(false);
-    }
-  };
+    setPostData(prev => ({
+      ...prev,
+      images: prev.images.filter(img => !img.isLocal)
+    }));
+  } finally {
+    setUploadingFiles(false);
+  }
+};
 
   // ✅ Handle file input change
   const handleFileInputChange = (e) => {

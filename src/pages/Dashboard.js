@@ -8,6 +8,7 @@ import {
   Facebook,
   Twitter,
   Youtube,
+  Linkedin,
   Plus,
   Calendar,
   BarChart3,
