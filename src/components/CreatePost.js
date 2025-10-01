@@ -190,6 +190,56 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     };
   };
 
+  const isValidInstagramAspectRatio = (width, height) => {
+    if (!width || !height) return false;
+
+    const ratio = width / height;
+    const allowedRatios = [1, 4 / 5, 3 / 4, 1.91]; // exact ratios
+
+    // allow small rounding errors (±0.01)
+    return allowedRatios.some((r) => Math.abs(ratio - r) < 0.01);
+  };
+
+  const loadImageDimensions = (url) => {
+    return new Promise((resolve) => {
+      if (!url || url.match(/\.(mp4|mov|webm|avi|mkv)(\?|$)/i) || url.includes('video')) {
+        return resolve(null);
+      }
+
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = () => resolve(null);
+      img.src = url;
+    });
+  };
+
+  const ensureInstagramImagesValid = async (images) => {
+    if (!images || images.length === 0) return true;
+
+    for (let i = 0; i < images.length; i++) {
+      const media = images[i];
+      const isVideo = media.fileType === 'video' || (media.url && media.url.match(/\.(mp4|mov|webm|avi|mkv)(\?|$)/i)) || media.url?.includes('video');
+      if (isVideo) continue;
+
+      let dims = media.dimensions || (media.width && media.height ? { width: media.width, height: media.height } : null);
+      if (!dims) dims = await loadImageDimensions(media.url);
+
+      if (!dims || !dims.width || !dims.height) {
+        showToast(`Couldn't determine dimensions for "${media.displayName || media.originalName || 'an image'}".`, 'error', 6000);
+        return false;
+      }
+
+      if (!isValidInstagramAspectRatio(dims.width, dims.height)) {
+        showToast(`"${media.displayName || media.originalName || 'An image'}" has unsupported aspect ratio (${(dims.width/dims.height).toFixed(2)}). Instagram feed accepts 0.8–1.91.`, 'error', 6000);
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+
   // Convert 24-hour time to 12-hour format
   const convertTo12Hour = (time24) => {
     if (!time24) return { hour: '12', minute: '00', period: 'PM' };
@@ -843,6 +893,15 @@ const getAvailablePlatforms = () => {
     if (!validateForm()) {
       setIsSubmitting(false);
       return;
+    }
+
+    // Only validate Instagram images if Instagram account is selected
+    if (postData.platforms.includes('instagram')) {
+      const ok = await ensureInstagramImagesValid(postData.images);
+      if (!ok) {
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     try {
