@@ -743,18 +743,18 @@ const Analytics = () => {
       </div>
 
       {/* Analytics Navigation */}
-      <div className="analytics-navigation">
-        {analyticsSections.map(section => (
-          <button
-            key={section.id}
-            className={`nav-btn ${activeSection === section.id ? 'active' : ''}`}
-            onClick={() => setActiveSection(section.id)}
-          >
-            {section.icon}
-            {section.label}
-          </button>
-        ))}
-      </div>
+      // <div className="analytics-navigation">
+      //   {analyticsSections.map(section => (
+      //     <button
+      //       key={section.id}
+      //       className={`nav-btn ${activeSection === section.id ? 'active' : ''}`}
+      //       onClick={() => setActiveSection(section.id)}
+      //     >
+      //       {section.icon}
+      //       {section.label}
+      //     </button>
+      //   ))}
+      // </div>
 
       {/* Error State */}
       {error && (
