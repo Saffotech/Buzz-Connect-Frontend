@@ -742,7 +742,7 @@ const Analytics = () => {
         </div>
       </div>
 
-      {/* Analytics Navigation */}
+      //{/* Analytics Navigation */}
       // <div className="analytics-navigation">
       //   {analyticsSections.map(section => (
       //     <button
@@ -756,16 +756,16 @@ const Analytics = () => {
       //   ))}
       // </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="analytics-error">
-          <AlertCircle size={24} />
-          <p>{error}</p>
-          <button onClick={fetchAnalyticsOverview} className="btn-secondary">
-            Try Again
-          </button>
-        </div>
-      )}
+      // {/* Error State */}
+      // {error && (
+      //   <div className="analytics-error">
+      //     <AlertCircle size={24} />
+      //     <p>{error}</p>
+      //     <button onClick={fetchAnalyticsOverview} className="btn-secondary">
+      //       Try Again
+      //     </button>
+      //   </div>
+      // )}
 
       {/* Analytics Content */}
       {!loading && !error && analyticsData.overview && (
