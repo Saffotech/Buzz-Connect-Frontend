@@ -742,30 +742,30 @@ const Analytics = () => {
         </div>
       </div>
 
-      //{/* Analytics Navigation */}
-      // <div className="analytics-navigation">
-      //   {analyticsSections.map(section => (
-      //     <button
-      //       key={section.id}
-      //       className={`nav-btn ${activeSection === section.id ? 'active' : ''}`}
-      //       onClick={() => setActiveSection(section.id)}
-      //     >
-      //       {section.icon}
-      //       {section.label}
-      //     </button>
-      //   ))}
-      // </div>
+      {/* Analytics Navigation */}
+      {/* <div className="analytics-navigation">
+        {analyticsSections.map(section => (
+          <button
+            key={section.id}
+            className={`nav-btn ${activeSection === section.id ? 'active' : ''}`}
+            onClick={() => setActiveSection(section.id)}
+          >
+            {section.icon}
+            {section.label}
+          </button>
+        ))}
+      </div> */}
 
-      // {/* Error State */}
-      // {error && (
-      //   <div className="analytics-error">
-      //     <AlertCircle size={24} />
-      //     <p>{error}</p>
-      //     <button onClick={fetchAnalyticsOverview} className="btn-secondary">
-      //       Try Again
-      //     </button>
-      //   </div>
-      // )}
+      {/* Error State */}
+      {error && (
+        <div className="analytics-error">
+          <AlertCircle size={24} />
+          <p>{error}</p>
+          <button onClick={fetchAnalyticsOverview} className="btn-secondary">
+            Try Again
+          </button>
+        </div>
+      )}
 
       {/* Analytics Content */}
       {!loading && !error && analyticsData.overview && (
