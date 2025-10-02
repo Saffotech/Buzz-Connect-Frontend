@@ -1058,121 +1058,120 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
           </h1>
 
 
-            <h4
-              style={{
-                marginTop: '24px',
-                marginBottom: '12px',
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#111827',
-              }}
-            >
-              9. Limitation of Liability
-            </h4>
-
-
-            <p>
-              By connecting your LinkedIn personal profile to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
-            </p>
-
-            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li>Access your basic profile information</li>
-              <li>Post content on your behalf to your personal profile</li>
-              <li>Schedule and publish content to your LinkedIn profile</li>
-
-          
-
-            </ul>
-
-            <h4
-              style={{
-                marginTop: '24px',
-                marginBottom: '12px',
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#111827',
-              }}
-            >
-              10. Termination
-            </h4>
-
-            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li>You may cancel your subscription at any time via your account dashboard.</li>
-              <li>We may terminate or suspend accounts that violate these Terms or for non-payment.</li>
-              <li>Upon termination, we will delete your stored credentials and content in accordance with our Data Deletion Policy.</li>
-
-            </ul>
-
-
-            <h4
-              style={{
-                marginTop: '24px',
-                marginBottom: '12px',
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#111827',
-              }}
-            >
-              11.  Governing Law & Dispute Resolution
-            </h4>
-
-            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li>These Terms are governed by the laws of India.</li>
-              <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
-
-            </ul>
-
-            <h4
-              style={{
-                marginTop: '24px',
-                marginBottom: '12px',
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#111827',
-              }}
-            >
-              12. Contact
-            </h4>
-            <p>
-              For questions, please contact us at: {' '}
-              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
-            </p>
-          </div>
-        </div>
-
-        {/* Footer Buttons */}
-        <div
-          style={{
-            padding: '0.65rem',
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'flex-end'
-          }}
-        >
-          <button
-            onClick={onConfirm}
+          <h4
             style={{
-              padding: '12px 24px',
-              border: 'none',
-              color: 'white',
-              background: '#000',
-              borderRadius: '10px',
-              cursor: 'pointer',
-              fontSize: '15px',
+              marginTop: '24px',
+              marginBottom: '12px',
+              fontSize: '20px',
               fontWeight: '600',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-              minWidth: '180px'
+              color: '#111827',
             }}
           >
-            <User size={16} />
-            Connect Personal Profile
-          </button>
+            9. Limitation of Liability
+          </h4>
+
+
+          <p>
+            By connecting your LinkedIn personal profile to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
+          </p>
+
+          <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+            <li>Access your basic profile information</li>
+            <li>Post content on your behalf to your personal profile</li>
+            <li>Schedule and publish content to your LinkedIn profile</li>
+
+
+
+          </ul>
+
+          <h4
+            style={{
+              marginTop: '24px',
+              marginBottom: '12px',
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#111827',
+            }}
+          >
+            10. Termination
+          </h4>
+
+          <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+            <li>You may cancel your subscription at any time via your account dashboard.</li>
+            <li>We may terminate or suspend accounts that violate these Terms or for non-payment.</li>
+            <li>Upon termination, we will delete your stored credentials and content in accordance with our Data Deletion Policy.</li>
+
+          </ul>
+
+
+          <h4
+            style={{
+              marginTop: '24px',
+              marginBottom: '12px',
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#111827',
+            }}
+          >
+            11.  Governing Law & Dispute Resolution
+          </h4>
+
+          <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+            <li>These Terms are governed by the laws of India.</li>
+            <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
+
+          </ul>
+
+          <h4
+            style={{
+              marginTop: '24px',
+              marginBottom: '12px',
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#111827',
+            }}
+          >
+            12. Contact
+          </h4>
+          <p>
+            For questions, please contact us at: {' '}
+            <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+          </p>
         </div>
+      </div>
+
+      {/* Footer Buttons */}
+      <div
+        style={{
+          padding: '0.65rem',
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'flex-end'
+        }}
+      >
+        <button
+          onClick={onConfirm}
+          style={{
+            padding: '12px 24px',
+            border: 'none',
+            color: 'white',
+            background: '#000',
+            borderRadius: '10px',
+            cursor: 'pointer',
+            fontSize: '15px',
+            fontWeight: '600',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+            minWidth: '180px'
+          }}
+        >
+          <User size={16} />
+          Connect Personal Profile
+        </button>
       </div>
     </div>
   );
@@ -1722,6 +1721,213 @@ const YouTubeTermsModal = ({ isOpen, onClose, onConfirm }) => {
   );
 };
 
+const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease-out'
+      }}
+    >
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          height: '90vh',
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          maxWidth: '1000px',
+          width: '90%',
+          position: 'relative',
+          overflow: 'hidden',
+          animation: 'slideUp 0.3s ease-out'
+        }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            color: '#6B7280',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1
+          }}
+        >
+          <X size={30} />
+        </button>
+
+        {/* Content */}
+        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
+          <h1
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#111827',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            Twitter Integration Terms
+          </h1>
+
+          <div
+            style={{
+              maxHeight: '60vh',
+              overflowY: 'auto',
+              fontFamily: 'Inter, Arial, sans-serif',
+              lineHeight: '1.7',
+              fontSize: '16px',
+              color: '#374151',
+            }}
+          >
+            <p>
+              By connecting your Twitter account to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
+            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Access your Twitter profile information</li>
+              <li>Post tweets on your behalf</li>
+              <li>Schedule and publish content to your Twitter account</li>
+              <li>View your timeline, followers, and engagement metrics</li>
+            </ul>
+
+            <p>
+              We prioritize your privacy and data security. Your authorization helps us provide seamless Twitter publishing
+              and analytics services. You can revoke this access at any time by disconnecting your Twitter account from
+              our platform.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Permission Scope
+            </h4>
+            <p>We request the following permissions:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li><strong>Read and Write</strong>: To read your profile information and post tweets</li>
+              <li><strong>Read followers</strong>: To provide analytics about your audience</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Data Storage
+            </h4>
+            <p>
+              We securely store your Twitter access tokens to facilitate content publishing.
+              Your tokens are encrypted and never shared with third parties.
+            </p>
+            
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Twitter Platform Guidelines
+            </h4>
+            <p>
+              We comply with all Twitter Developer Policies and ensure our integration follows 
+              Twitter's terms of service. Our platform is designed to enhance your Twitter 
+              experience while respecting platform guidelines.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Contact
+            </h4>
+            <p>
+              For questions, please contact us at: {' '}
+              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+            </p>
+          </div>
+        </div>
+
+        {/* Footer Buttons */}
+        <div
+          style={{
+            padding: '0.65rem',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end'
+          }}
+        >
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              color: 'white',
+              background: '#000000',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              minWidth: '180px'
+            }}
+          >
+            <FontAwesomeIcon icon={faSquareXTwitter} size="lg" style={{ marginRight: '5px' }} />
+            Connect with Twitter
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AccountsSettings = ({ onNotify }) => {
   const { user, token, isLoading } = useAuth();
   const [connectedAccounts, setConnectedAccounts] = useState([]);
@@ -1837,7 +2043,7 @@ const AccountsSettings = ({ onNotify }) => {
           } catch (linkedInErr) {
             console.error('Error fetching LinkedIn accounts:', linkedInErr);
           }
-          
+
           // Fetch LinkedIn Business accounts
           try {
             const linkedInBusinessRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/linkedin-business/status`, {
@@ -2251,6 +2457,41 @@ const AccountsSettings = ({ onNotify }) => {
     // Close the modal
     setLinkedInPersonalTermsModal({ isOpen: false });
   };
+// Handle Twitter Terms acceptance
+const handleTwitterTermsConfirm = async () => {
+  const storedToken = authToken;
+  if (!storedToken) {
+    toast.error('User not logged in');
+    return;
+  }
+
+  try {
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${storedToken}` }
+    });
+
+    if (res.data.success && res.data.data) {
+      const freshUser = res.data.data;
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+      // Construct the Twitter auth URL
+      const twitterAuthUrl = `${apiUrl}/api/auth/twitter?userId=${freshUser._id}&token=${storedToken}`;
+
+      console.log('Redirecting to Twitter auth:', twitterAuthUrl);
+
+      // Open in the same window
+      window.location.href = twitterAuthUrl;
+    } else {
+      toast.error('Failed to get user data');
+    }
+  } catch (err) {
+    console.error('Error starting Twitter auth:', err);
+    toast.error('Failed to start Twitter authentication');
+  }
+
+  // Close the modal
+  setTwitterTermsModal({ isOpen: false });
+};
 
   // Handle LinkedIn Business Terms acceptance
   const handleLinkedInBusinessTermsConfirm = async () => {
