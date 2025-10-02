@@ -743,7 +743,7 @@ const Analytics = () => {
       </div>
 
       {/* Analytics Navigation */}
-      <div className="analytics-navigation">
+      {/* <div className="analytics-navigation">
         {analyticsSections.map(section => (
           <button
             key={section.id}
@@ -754,7 +754,7 @@ const Analytics = () => {
             {section.label}
           </button>
         ))}
-      </div>
+      </div> */}
 
       {/* Error State */}
       {error && (
