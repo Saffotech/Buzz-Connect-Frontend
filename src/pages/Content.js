@@ -1501,7 +1501,7 @@ const DeleteConfirmationModal = ({
         Instagram
       </span>
       <div className="deletion-note">
-        <InfoIcon size={14} />
+        <InfoIcon size={16} />
         <small>
           Instagram posts must be deleted manually through the Instagram app due to API limitations.
         </small>
