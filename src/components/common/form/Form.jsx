@@ -838,8 +838,8 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
               letterSpacing: '-0.025em',
             }}
           >
-            Terms and Conditions
-          </h1>
+            Privacy Policy
+            </h1>
 
           <div
             style={{
@@ -867,14 +867,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
             </h3> */}
 
             <p>
-              <strong>Effective Date:</strong> July 14, 2025
-            </p>
-
-            <p>
-              <strong>MGA Buzz Connect</strong> ("we", "our", or "us") is committed to
-              protecting your privacy. This Privacy Policy explains how we collect, use,
-              disclose, and safeguard your information when you use our platform to
-              manage and schedule content across social media platforms.
+             MGA Buzz Connect values your privacy. This Privacy Policy explains what data we collect, how we use it, and your choices. By using our services, you agree to this Policy.
             </p>
 
             <h4
@@ -888,23 +881,19 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
             >
               1. Information We Collect
             </h4>
+            <p>We collect information in the following categories:</p>
             <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
               <li>
-                <strong>Account Information:</strong> Your name, email address, and
-                contact details.
+                <strong>Account Information:</strong> name, email, phone (optional), billing details.
               </li>
               <li>
-                <strong>Social Media Data:</strong> With your permission, we collect data
-                from your connected social media accounts (e.g., Instagram, Facebook)
-                such as profile information, posts, analytics, and scheduling data.
+                <strong>Authentication Data:</strong> social media tokens, account IDs, encrypted credentials.
               </li>
               <li>
-                <strong>Usage Data:</strong> Information about how you interact with our
-                platform, including pages visited and actions taken.
+                <strong>Usage Data:</strong> IP address, browser type, device info, activity logs.
               </li>
               <li>
-                <strong>Device Data:</strong> IP address, browser type, and operating
-                system.
+                <strong>Content Data:</strong> posts, images, videos, captions you upload for scheduling.
               </li>
             </ul>
 
@@ -917,16 +906,19 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              2. How We Use Your Information
+              2. How We Use Your Data
             </h4>
             <p>We use your data to:</p>
             <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li>Provide and maintain our service</li>
-              <li>Allow you to schedule and manage social media posts</li>
-              <li>Send notifications and updates</li>
-              <li>Analyze usage to improve our platform</li>
-              <li>Comply with legal obligations</li>
+              <li>Provide, improve, and secure our services.</li>
+              <li>Authenticate with social media APIs (Instagram, Facebook, LinkedIn, Twitter/X, YouTube).</li>
+              <li>Publish and schedule your content on your behalf.</li>
+              <li>Send service updates and important notifications.</li>
+              <li>Process payments and manage subscriptions.</li>
+              <li>Comply with legal obligations.</li>
             </ul>
+
+            We <strong>do not sell your personal data </strong> to advertisers or third parties.
 
             <h4
               style={{
@@ -937,22 +929,21 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              3. Sharing Your Information
+              3. Sharing of Data
             </h4>
             <p>
-              We do <strong>not</strong> sell or rent your personal data. We only share
-              your information with:
+             We only share data with:
             </p>
             <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
               <li>
-                Social media platforms (e.g., Instagram Graph API) to publish and
-                retrieve your content
+                <strong>Service Providers: </strong> payment gateways, hosting providers, analytics tools.
               </li>
               <li>
-                Service providers who help operate our platform (e.g., cloud hosting,
-                analytics)
+                <strong>Social Media Platforms: </strong> via official APIs, to enable publishing and analytics.
               </li>
-              <li>Legal authorities when required by law</li>
+              <li>
+                <strong>Legal Authorities: </strong> if required by law or to protect against misuse.
+              </li>
             </ul>
 
             <h4
@@ -966,11 +957,13 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
             >
               4. Data Security
             </h4>
-            <p>
-              We use industry-standard security practices, including encryption and
-              access control, to protect your data. However, no method is 100% secure,
-              and we cannot guarantee absolute security.
-            </p>
+              <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+             <li>Social media tokens and credentials are stored using encryption.</li>
+             <li>Access is restricted to authorized systems and staff.</li>
+             <li>We use industry-standard security practices, but no system is 100% secure.</li>
+             </ul>
+
+            
 
             <h4
               style={{
@@ -981,16 +974,13 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              5. Your Rights
+              5. Data Retention
             </h4>
-            <p>You may:</p>
+           
             <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li>Access and update your personal information</li>
-              <li>Disconnect your social media accounts at any time</li>
-              <li>
-                Request deletion of your data by contacting us at{' '}
-                <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
-              </li>
+              <li>We keep your account data as long as you have an active subscription.</li>
+              <li>Upon account deletion, we remove your data in line with our Data Deletion Policy.</li>
+              <li>Billing and compliance records may be retained as required by law.</li>
             </ul>
 
             <h4
@@ -1002,11 +992,34 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              6. Cookies
+              6. Your Rights
             </h4>
             <p>
-              We use cookies and similar technologies to improve your experience. You can
-              disable cookies through your browser settings.
+             Depending on your location, you may have rights to:
+            </p>
+
+              <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Access the personal data we hold about you.</li>
+              <li>Request correction or deletion of your data.</li>
+              <li>Revoke consent for connecting social media accounts.</li>
+              <li>Request a copy of your data (data portability).</li>
+            </ul>
+
+            <p>You can exercise these rights by contacting <strong><a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a></strong> </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              7. Children’s Privacy
+            </h4>
+            <p>
+             Our services are not intended for individuals under 18. We do not knowingly collect their data.
             </p>
 
             <h4
@@ -1018,11 +1031,10 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              7. Third-Party Links
+              8. International Transfers
             </h4>
             <p>
-              Our platform may contain links to third-party websites. We are not
-              responsible for their privacy practices.
+             Your data may be stored or processed outside India. By using our services, you consent to such transfers, subject to applicable data protection laws.
             </p>
 
             <h4
@@ -1034,11 +1046,11 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              8. Changes to This Policy
+
+               9. Changes to This Policy
             </h4>
             <p>
-              We may update this Privacy Policy periodically. Changes will be posted on
-              this page with an updated effective date.
+              We may update this Privacy Policy from time to time. If changes are significant, we will notify you via email or in-app notifications.
             </p>
 
             <h4
@@ -1050,11 +1062,12 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              9. Contact Us
+              10. Contact Us
             </h4>
             <p>
-              If you have questions about this policy, please contact us at:{' '}
-              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+             For questions about this Privacy Policy or to make a privacy request, contact us:
+             {' '}<a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+              <p>📍 MGA Buzz Connect, Mumbai, Maharashtra, India</p>
             </p>
           </div>
 

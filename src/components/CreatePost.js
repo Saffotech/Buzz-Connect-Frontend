@@ -493,10 +493,7 @@ const fetchUserProfile = async () => {
   }
 };
 
-console.log('User profile data:', {
-  connectedPlatforms: userProfile?.connectedPlatforms,
-  connectedAccounts: userProfile?.connectedAccounts
-});
+
 
   // Generate platforms array based on connected accounts
 
@@ -514,14 +511,11 @@ const getAvailablePlatforms = () => {
     const hasAccountsForPlatform = userProfile?.connectedAccounts?.some(acc => 
       acc.platform === platform.id && acc.connected !== false
     );
-    console.log('Platform:', platform.id, 'hasAccountsForPlatform:', hasAccountsForPlatform);
     // Then check if the platform is in the connectedPlatforms array
     const isInConnectedPlatforms = userProfile?.connectedPlatforms?.includes(platform.id);
-    console.log('Platform:', platform.id, 'hasAccountsForPlatform:', hasAccountsForPlatform, 'isInConnectedPlatforms:', isInConnectedPlatforms);
     
     // A platform is connected if either condition is true
     const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
-    console.log('Platform:', platform.id, 'isConnected:', isConnected);
     return {
       ...platform,
       connected: isConnected,
@@ -539,10 +533,11 @@ const getAvailablePlatforms = () => {
 
   // Images are now required for all platforms
   const areImagesRequired = () => {
-    return postData.platforms.length > 0;
+    return postData.platforms.includes('instagram' , 'youtube' , 'linkedin');
   };
 
-  // Toast notification function
+
+// Toast notification function
   const showToast = (message, type = 'info', duration = 3000) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), duration);

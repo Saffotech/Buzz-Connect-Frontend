@@ -12,75 +12,97 @@ const TermsOfService = () => {
   return (
     <div className="legal-container">
       <h1>Terms of Service</h1>
-      <p className="effective-date">Effective Date: July 14, 2025</p>
+     
+       <p>
+       Welcome to <strong>MGA Buzz Connect</strong> , a subscription-based social media scheduling and publishing platform operated by <strong>MGA Buzz Connect, Mumbai, Maharashtra, India.</strong>
+       </p>
+       <p>
+        By using our services, you agree to these Terms of Service. If you do not agree, you may not use the platform.
+       </p>
 
-      <p>
-        Welcome to <strong>MGA Buzz Connect</strong> ("we", "our", or "us").
-        These Terms of Service ("Terms") govern your use of our website,
-        application, and services ("Platform"). By using MGA Buzz Connect, you
-        agree to be bound by these Terms.
-      </p>
+      <h2>1. Services</h2>
 
-      <h2>1. Use of Our Service</h2>
+      <p>MGA Buzz Connect allows users to schedule, publish, and manage content across social media platforms (Instagram, Facebook, LinkedIn, Twitter/X, YouTube).</p>
       <ul>
-        <li>You must be at least 18 years old or have legal parental/guardian consent to use this platform.</li>
-        <li>You are responsible for the security of your account credentials.</li>
-        <li>You agree to use the platform only for lawful purposes and in accordance with all applicable laws.</li>
+        <li>The exact features available depend on your subscription plan.</li>
+        <li>Services are provided through official APIs (Meta, LinkedIn, Twitter/X, YouTube).</li>
       </ul>
 
-      <h2>2. Account and Social Media Access</h2>
-      <p>
-        When you connect your social media accounts, you authorize us to access
-        your account through the APIs (e.g., Instagram Graph API) for the
-        purpose of scheduling, posting, and managing content on your behalf. We
-        do not post or retrieve data without your consent.
-      </p>
-
-      <h2>3. User Content</h2>
+      <h2>2. Eligibility</h2>
       <ul>
-        <li>You retain ownership of the content you upload or schedule using our platform.</li>
-        <li>You grant MGA Buzz Connect a limited license to process, display, and distribute your content solely to provide the services.</li>
+       <li>You must be at least 18 years old to use our services.</li>
+       <li>You are responsible for ensuring that your use of the platform complies with the terms and policies of each connected social media platform.</li>
       </ul>
 
-      <h2>4. Subscription and Billing</h2>
-      <p>
-        Some features may be offered under paid subscriptions. All payments are
-        non-refundable unless otherwise stated. We reserve the right to change
-        pricing with reasonable notice.
-      </p>
+      <h2>3. Accounts</h2>
+      <ul>
+        <li>You must provide accurate registration details.</li>
+        <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
+        <li>You must notify us immediately if you suspect unauthorized use of your account.</li>
+      </ul>
 
-      <h2>5. Termination</h2>
-      <p>
-        We reserve the right to suspend or terminate your access if you violate
-        these Terms or misuse the service.
-      </p>
+      <h2>4. Subscriptions & Payments</h2>
+      <ul>
+       <li>Our services are billed on a recurring subscription basis.</li>
+       <li>Fees are due in advance and are <strong>non-refundable</strong> unless required by law.</li>
+       <li>We may suspend or terminate service for non-payment.</li>
+       <li>We may change pricing with prior notice.</li>
+      </ul>
 
-      <h2>6. Limitation of Liability</h2>
-      <p>
-        We are not liable for any indirect, incidental, or consequential damages
-        resulting from your use of the platform. The platform is provided "as is" without warranties of any kind.
-      </p>
+      <h2>5. Use of APIs and Credentials</h2>
+      <ul>
+      <li>We use secure tokens to connect with third-party platforms.</li>
+      <li>You grant us permission to publish and manage content on your behalf.</li>
+      <li>If you revoke access or if a platform limits your account, our service may not function properly.</li>
+      </ul>
 
-      <h2>7. Third-Party Services</h2>
-      <p>
-        Our platform integrates with third-party services such as Instagram and
-        Facebook. Your use of those services is subject to their respective
-        terms and policies.
-      </p>
+      <h2>6. Acceptable Use</h2>
 
-      <h2>8. Modifications</h2>
-      <p>
-        We may update these Terms at any time. We will notify users of
-        significant changes via email or in-app notifications. Continued use of
-        the platform indicates your acceptance of the updated Terms.
-      </p>
+      <p>You agree not to:</p>
+      <ul>
+     <li>Post unlawful, harmful, or misleading content.</li>
+     <li>Use the service to spam or harass others.</li>
+     <li>Attempt to bypass or misuse our systems.</li>
+     <li>Violate the terms of Instagram, Facebook, LinkedIn, Twitter/X, or YouTube.</li>
+      </ul>
 
-      <h2>9. Governing Law</h2>
-      <p>These Terms are governed by and construed in accordance with the laws of India.</p>
+     <p>We may suspend or terminate your account if you breach these rules.</p>
 
-      <h2>10. Contact Us</h2>
+      <h2>7. Intellectual Property</h2>
+      <ul>
+      <li>All rights in the MGA Buzz Connect platform (software, design, branding) belong to MGA Buzz Connect.</li>
+      <li>You retain rights to the content you upload but grant us a license to process, store, and publish it on your behalf.</li>
+      </ul>
+
+      <h2>8. Disclaimers</h2>
+      <ul>
+       <li>Our services are provided as available.</li>
+       <li>We do not guarantee uninterrupted or error-free operation.</li>
+       <li>Social media platforms may change their APIs or policies, which may affect service availability.</li>
+      </ul>
+
+      <h2>9. Limitation of Liability</h2>
+      <ul>
+        <li>MGA Buzz Connect is not liable for loss of data, account suspensions, or actions taken by social media platforms.</li>
+        <li>Our total liability under these Terms is limited to the fees you paid in the last 30 days.</li>
+        </ul>
+
+        <h2>10. Termination</h2>
+      <ul>
+        <li>You may cancel your subscription at any time via your account dashboard.</li>
+        <li>We may terminate or suspend accounts that violate these Terms or for non-payment.</li>
+        <li>Upon termination, we will delete your stored credentials and content in accordance with our Data Deletion Policy.</li>
+        </ul>
+
+          <h2>11. Governing Law & Dispute Resolution</h2>
+      <ul>
+        <li>These Terms are governed by the laws of India.</li>
+        <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
+        </ul>
+
+      <h2>12. Contact Us</h2>
       <p>
-        If you have any questions about these Terms, please contact us at:
+       For questions, please contact us at:
         <br />
         <strong>Email:</strong> <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
       </p>
