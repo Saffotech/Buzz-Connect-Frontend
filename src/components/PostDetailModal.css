@@ -1221,3 +1221,50 @@ padding: .5rem !important;
 .video-badge svg {
   flex-shrink: 0;
 }
+/* Add to your CSS file */
+.post-username {
+  margin: 6px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.post-username .username {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a5568;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 8px;
+  border-radius: 4px;
+  gap: 4px;
+}
+
+.post-username .username svg {
+  margin-right: 2px;
+}
+
+/* Platform-specific colors */
+.username svg[color="#E1306C"],
+.username .instagram svg {
+  color: #E1306C;
+}
+
+.username svg[color="#1877f2"],
+.username .facebook svg {
+  color: #1877f2;
+}
+
+.username svg[color="#1da1f2"],
+.username .twitter svg {
+  color: #1da1f2;
+}
+
+.username .linkedin svg {
+  color: #0077B5;
+}
+
+.username .youtube svg {
+  color: #FF0000;
+}
