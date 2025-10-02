@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { CheckCircle, Info, AlertCircle, Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User, X, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Info, AlertCircle, Plus, Trash2, Check, Link2, Instagram, Twitter, Facebook, Linkedin, Youtube, User, X, AlertTriangle, Building, Briefcase } from 'lucide-react';
 import SettingsCard from '../SettingsCard';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
@@ -555,7 +555,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
 };
 
 // Connection Options Modal Component
-const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedIn, onSelectYouTube, onSelectTwitter, onSelectThread }) => {
+const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedInPersonal, onSelectLinkedInBusiness, onSelectYouTube, onSelectTwitter, onSelectThread }) => {
   if (!isOpen) return null;
 
   return (
@@ -696,9 +696,9 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
             </div>
           </button>
 
-          {/* LinkedIn Connection Option */}
+          {/* LinkedIn Personal Profile Connection Option */}
           <button
-            onClick={onSelectLinkedIn}
+            onClick={onSelectLinkedInPersonal}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -729,14 +729,59 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
               justifyContent: 'center',
               border: '1px solid #E0E7FF'
             }}>
-              <Linkedin size={24} style={{ color: '#0A66C2' }} />
+              <User size={24} style={{ color: '#0A66C2' }} />
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
-                LinkedIn
+                LinkedIn Personal Profile
               </div>
               <div style={{ color: '#6B7280', fontSize: '14px' }}>
-                Connect your LinkedIn profile or company pages
+                Connect your personal LinkedIn profile
+              </div>
+            </div>
+          </button>
+
+          {/* LinkedIn Business Profile Connection Option */}
+          <button
+            onClick={onSelectLinkedInBusiness}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: '#f9fafb',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              gap: '16px',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.borderColor = '#d1d5db';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f9fafb';
+              e.currentTarget.style.borderColor = '#e5e7eb';
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '10px',
+              backgroundColor: '#EEF2FF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #E0E7FF'
+            }}>
+              <Building size={24} style={{ color: '#0A66C2' }} />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
+                LinkedIn Business/Company Page
+              </div>
+              <div style={{ color: '#6B7280', fontSize: '14px' }}>
+                Connect your LinkedIn business or company page
               </div>
             </div>
           </button>
@@ -889,8 +934,8 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
   );
 };
 
-// LinkedIn Terms Modal Component
-const LinkedInTermsModal = ({ isOpen, onClose, onConfirm }) => {
+// LinkedIn Personal Terms Modal Component
+const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
 
   return (
@@ -961,7 +1006,7 @@ const LinkedInTermsModal = ({ isOpen, onClose, onConfirm }) => {
               letterSpacing: '-0.025em',
             }}
           >
-            LinkedIn Terms and Conditions
+            LinkedIn Personal Profile Terms
           </h1>
 
           <div
@@ -979,14 +1024,13 @@ const LinkedInTermsModal = ({ isOpen, onClose, onConfirm }) => {
             </p>
 
             <p>
-              By connecting your LinkedIn account to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
+              By connecting your LinkedIn personal profile to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
             </p>
 
             <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
               <li>Access your basic profile information</li>
-              <li>Post content on your behalf</li>
-              <li>Access your company pages (if applicable)</li>
-              <li>Schedule and publish content to your LinkedIn profile and company pages</li>
+              <li>Post content on your behalf to your personal profile</li>
+              <li>Schedule and publish content to your LinkedIn profile</li>
             </ul>
 
             <p>
@@ -1060,8 +1104,188 @@ const LinkedInTermsModal = ({ isOpen, onClose, onConfirm }) => {
               minWidth: '180px'
             }}
           >
-            <Linkedin size={16} />
-            Connect with LinkedIn
+            <User size={16} />
+            Connect Personal Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// LinkedIn Business Terms Modal Component
+const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease-out'
+      }}
+    >
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          height: '90vh',
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          maxWidth: '1000px',
+          width: '90%',
+          position: 'relative',
+          overflow: 'hidden',
+          animation: 'slideUp 0.3s ease-out'
+        }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            color: '#6B7280',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1
+          }}
+        >
+          <X size={30} />
+        </button>
+
+        {/* Content */}
+        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
+          <h1
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#111827',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            LinkedIn Business/Company Page Terms
+          </h1>
+
+          <div
+            style={{
+              maxHeight: '58vh',
+              overflowY: 'auto',
+              fontFamily: 'Inter, Arial, sans-serif',
+              lineHeight: '1.7',
+              fontSize: '16px',
+              color: '#374151',
+            }}
+          >
+            <p>
+              <strong>LinkedIn Business Integration Terms:</strong> July 14, 2025
+            </p>
+
+            <p>
+              By connecting your LinkedIn business/company page to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
+            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Access your LinkedIn organization information</li>
+              <li>Post content on behalf of your business/company page</li>
+              <li>Schedule and publish content to your LinkedIn organization</li>
+              <li>View analytics and engagement metrics for your posts</li>
+            </ul>
+
+            <p>
+              We prioritize your privacy and data security. Your authorization helps us provide seamless LinkedIn business publishing
+              and analytics services. You can revoke this access at any time by disconnecting your LinkedIn business account from
+              our platform.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Permission Scope
+            </h4>
+            <p>We request the following permissions:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li><strong>r_organization_social</strong>: To access your organization's social media assets</li>
+              <li><strong>w_organization_social</strong>: To post and manage content on behalf of your organization</li>
+              <li><strong>r_liteprofile</strong>: To verify your admin status for the organization</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Data Storage
+            </h4>
+            <p>
+              We securely store your LinkedIn business access tokens to facilitate content publishing.
+              Your tokens are encrypted and never shared with third parties.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer Buttons */}
+        <div
+          style={{
+            padding: '0.65rem',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end'
+          }}
+        >
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              color: 'white',
+              background: '#0A66C2',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              minWidth: '180px'
+            }}
+          >
+            <Building size={16} />
+            Connect Business Page
           </button>
         </div>
       </div>
@@ -1282,7 +1506,11 @@ const AccountsSettings = ({ onNotify }) => {
     connectionType: null
   });
 
-  const [linkedInTermsModal, setLinkedInTermsModal] = useState({
+  const [linkedInPersonalTermsModal, setLinkedInPersonalTermsModal] = useState({
+    isOpen: false
+  });
+
+  const [linkedInBusinessTermsModal, setLinkedInBusinessTermsModal] = useState({
     isOpen: false
   });
 
@@ -1301,8 +1529,14 @@ const AccountsSettings = ({ onNotify }) => {
     });
   };
 
-  const handleCloseLinkedInTerms = () => {
-    setLinkedInTermsModal({
+  const handleCloseLinkedInPersonalTerms = () => {
+    setLinkedInPersonalTermsModal({
+      isOpen: false
+    });
+  };
+
+  const handleCloseLinkedInBusinessTerms = () => {
+    setLinkedInBusinessTermsModal({
       isOpen: false
     });
   };
@@ -1346,6 +1580,32 @@ const AccountsSettings = ({ onNotify }) => {
           });
 
           let accounts = instaRes.data.accounts || [];
+
+          // Fetch LinkedIn accounts
+          try {
+            const linkedInRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/linkedin/status`, {
+              headers: { Authorization: `Bearer ${authToken}` }
+            });
+
+            if (linkedInRes.data.connected && linkedInRes.data.accounts) {
+              accounts = [...accounts, ...linkedInRes.data.accounts];
+            }
+          } catch (linkedInErr) {
+            console.error('Error fetching LinkedIn accounts:', linkedInErr);
+          }
+          
+          // Fetch LinkedIn Business accounts
+          try {
+            const linkedInBusinessRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/linkedin-business/status`, {
+              headers: { Authorization: `Bearer ${authToken}` }
+            });
+
+            if (linkedInBusinessRes.data.connected && linkedInBusinessRes.data.accounts) {
+              accounts = [...accounts, ...linkedInBusinessRes.data.accounts];
+            }
+          } catch (linkedInBusinessErr) {
+            console.error('Error fetching LinkedIn Business accounts:', linkedInBusinessErr);
+          }
 
           // Fetch YouTube accounts
           try {
@@ -1613,10 +1873,18 @@ const AccountsSettings = ({ onNotify }) => {
     });
   };
 
-  // Connect LinkedIn
-  const handleConnectLinkedIn = async () => {
+  // Connect LinkedIn Personal Profile
+  const handleConnectLinkedInPersonal = async () => {
     setConnectionOptionsModal({ isOpen: false });
-    setLinkedInTermsModal({
+    setLinkedInPersonalTermsModal({
+      isOpen: true
+    });
+  };
+
+  // Connect LinkedIn Business Profile
+  const handleConnectLinkedInBusiness = async () => {
+    setConnectionOptionsModal({ isOpen: false });
+    setLinkedInBusinessTermsModal({
       isOpen: true
     });
   };
@@ -1657,8 +1925,8 @@ const AccountsSettings = ({ onNotify }) => {
   };
 
 
-  // Handle LinkedIn Terms acceptance
-  const handleLinkedInTermsConfirm = async () => {
+  // Handle LinkedIn Personal Terms acceptance
+  const handleLinkedInPersonalTermsConfirm = async () => {
     const storedToken = authToken;
     if (!storedToken) {
       toast.error('User not logged in');
@@ -1674,10 +1942,10 @@ const AccountsSettings = ({ onNotify }) => {
         const freshUser = res.data.data;
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-        // Construct the LinkedIn auth URL
+        // Construct the LinkedIn Personal auth URL
         const linkedInAuthUrl = `${apiUrl}/api/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
 
-        console.log('Redirecting to LinkedIn auth:', linkedInAuthUrl);
+        console.log('Redirecting to LinkedIn Personal auth:', linkedInAuthUrl);
 
         // Open in the same window
         window.location.href = linkedInAuthUrl;
@@ -1685,12 +1953,48 @@ const AccountsSettings = ({ onNotify }) => {
         toast.error('Failed to get user data');
       }
     } catch (err) {
-      console.error('Error starting LinkedIn auth:', err);
-      toast.error('Failed to start LinkedIn authentication');
+      console.error('Error starting LinkedIn Personal auth:', err);
+      toast.error('Failed to start LinkedIn Personal authentication');
     }
 
     // Close the modal
-    setLinkedInTermsModal({ isOpen: false });
+    setLinkedInPersonalTermsModal({ isOpen: false });
+  };
+
+  // Handle LinkedIn Business Terms acceptance
+  const handleLinkedInBusinessTermsConfirm = async () => {
+    const storedToken = authToken;
+    if (!storedToken) {
+      toast.error('User not logged in');
+      return;
+    }
+
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${storedToken}` }
+      });
+
+      if (res.data.success && res.data.data) {
+        const freshUser = res.data.data;
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+        // Construct the LinkedIn Business auth URL
+        const linkedInBusinessAuthUrl = `${apiUrl}/api/auth/linkedin-business?userId=${freshUser._id}&token=${storedToken}`;
+
+        console.log('Redirecting to LinkedIn Business auth:', linkedInBusinessAuthUrl);
+
+        // Open in the same window
+        window.location.href = linkedInBusinessAuthUrl;
+      } else {
+        toast.error('Failed to get user data');
+      }
+    } catch (err) {
+      console.error('Error starting LinkedIn Business auth:', err);
+      toast.error('Failed to start LinkedIn Business authentication');
+    }
+
+    // Close the modal
+    setLinkedInBusinessTermsModal({ isOpen: false });
   };
 
   // Connect YouTube
@@ -1818,11 +2122,16 @@ const AccountsSettings = ({ onNotify }) => {
 
       // Determine the API endpoint based on the account platform
       const platform = connectedAccounts.find(acc => acc._id === baseId)?.platform || 'instagram';
+      const accountType = connectedAccounts.find(acc => acc._id === baseId)?.accountType || 'personal';
 
       let endpoint = `${process.env.REACT_APP_API_URL}/api/auth/instagram/disconnect/${baseId}`;
 
       if (platform === 'linkedin') {
-        endpoint = `${process.env.REACT_APP_API_URL}/api/auth/linkedin/accounts/${baseId}`;
+        if (accountType === 'business') {
+          endpoint = `${process.env.REACT_APP_API_URL}/api/auth/linkedin-business/accounts/${baseId}`;
+        } else {
+          endpoint = `${process.env.REACT_APP_API_URL}/api/auth/linkedin/accounts/${baseId}`;
+        }
       } else if (platform === 'youtube') {
         endpoint = `${process.env.REACT_APP_API_URL}/api/auth/youtube/disconnect/${baseId}`;
       }
@@ -1932,10 +2241,15 @@ const AccountsSettings = ({ onNotify }) => {
                               account.metadata?.linkedViaInstagram === true ||
                               account.username.includes('linked via Instagram'));
 
-                          const isLinkedInCompany =
+                          const isLinkedInPersonal =
                             account.platform === 'linkedin' &&
-                            (account.accountType === 'company' ||
-                              account.isCompanyPage === true);
+                            (account.accountType === 'personal' ||
+                              account.metadata?.accountType === 'personal');
+
+                          const isLinkedInBusiness =
+                            account.platform === 'linkedin' &&
+                            (account.accountType === 'business' ||
+                              account.metadata?.accountType === 'business');
 
                           // Skip Facebook accounts that should be hidden
                           if (account.platform === 'facebook' &&
@@ -1946,7 +2260,7 @@ const AccountsSettings = ({ onNotify }) => {
                           return (
                             <div
                               key={index}
-                              className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''} ${account.platform === 'youtube' ? 'youtube-channel' : ''}`}
+                              className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''} ${account.platform === 'youtube' ? 'youtube-channel' : ''} ${isLinkedInBusiness ? 'linkedin-business' : isLinkedInPersonal ? 'linkedin-personal' : ''}`}
                               style={{
                                 position: 'relative',
                                 border: isDirectConnection && account.platform === 'instagram'
@@ -1955,11 +2269,13 @@ const AccountsSettings = ({ onNotify }) => {
                                     ? '1px solid rgba(37, 99, 235, 0.3)'
                                     : isViewOnlyFacebook
                                       ? '1px dashed rgba(100, 116, 139, 0.5)'
-                                      : account.platform === 'linkedin'
+                                      : isLinkedInPersonal
                                         ? '1px solid rgba(10, 102, 194, 0.3)'
-                                        : account.platform === 'youtube'
-                                          ? '1px solid rgba(255, 0, 0, 0.3)'
-                                          : '1px solid #e5e7eb',
+                                        : isLinkedInBusiness
+                                          ? '1px solid rgba(10, 102, 194, 0.5)'
+                                          : account.platform === 'youtube'
+                                            ? '1px solid rgba(255, 0, 0, 0.3)'
+                                            : '1px solid #e5e7eb',
                                 opacity: isViewOnlyFacebook ? 0.85 : 1
                               }}
                             >
@@ -2013,8 +2329,8 @@ const AccountsSettings = ({ onNotify }) => {
                                     )
                                   )}
                                   {account.platform === 'linkedin' && (
-                                    isLinkedInCompany ? (
-                                      <span className="connection-badge" style={{ color: '#0A66C2' }}> • Company Page</span>
+                                    isLinkedInBusiness ? (
+                                      <span className="connection-badge" style={{ color: '#0A66C2' }}> • Business Page</span>
                                     ) : (
                                       <span className="connection-badge" style={{ color: '#0A66C2' }}> • Personal Profile</span>
                                     )
@@ -2036,11 +2352,13 @@ const AccountsSettings = ({ onNotify }) => {
                                 <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
                                   style={{
                                     backgroundColor: isViewOnlyFacebook ? '#f1f5f9' :
-                                      account.platform === 'linkedin' ? '#EEF2FF' :
-                                        account.platform === 'youtube' ? '#FEF2F2' : '',
+                                      isLinkedInPersonal ? '#EEF2FF' :
+                                        isLinkedInBusiness ? '#DBEAFE' :
+                                          account.platform === 'youtube' ? '#FEF2F2' : '',
                                     color: isViewOnlyFacebook ? '#64748b' :
-                                      account.platform === 'linkedin' ? '#0A66C2' :
-                                        account.platform === 'youtube' ? '#FF0000' : ''
+                                      isLinkedInPersonal ? '#0A66C2' :
+                                        isLinkedInBusiness ? '#0A66C2' :
+                                          account.platform === 'youtube' ? '#FF0000' : ''
                                   }}
                                 >
                                   <Check size={14} />
@@ -2078,7 +2396,9 @@ const AccountsSettings = ({ onNotify }) => {
                                     position: 'absolute',
                                     top: '8px',
                                     right: '40px',
-                                    background: 'linear-gradient(to right, #0A66C2, #0077B5)',
+                                    background: isLinkedInBusiness
+                                      ? 'linear-gradient(to right, #1E40AF, #2563EB)'
+                                      : 'linear-gradient(to right, #0A66C2, #0077B5)',
                                     color: 'white',
                                     fontSize: '10px',
                                     padding: '2px 6px',
@@ -2086,7 +2406,7 @@ const AccountsSettings = ({ onNotify }) => {
                                     fontWeight: '500'
                                   }}
                                 >
-                                  {isLinkedInCompany ? 'Company Page' : 'Personal Profile'}
+                                  {isLinkedInBusiness ? 'Business Page' : 'Personal Profile'}
                                 </div>
                               )}
 
@@ -2153,11 +2473,11 @@ const AccountsSettings = ({ onNotify }) => {
         onClose={() => setConnectionOptionsModal({ isOpen: false })}
         onSelectInstagram={handleConnectInstagramDirect}
         onSelectFacebookInstagram={handleConnectMetaWithFacebook}
-        onSelectLinkedIn={handleConnectLinkedIn}
+        onSelectLinkedInPersonal={handleConnectLinkedInPersonal}
+        onSelectLinkedInBusiness={handleConnectLinkedInBusiness}
         onSelectYouTube={handleConnectYouTube}
         onSelectTwitter={handleConnectTwitter}
       />
-
 
       {/* Disconnect Confirmation Modal */}
       <ConfirmationModal
@@ -2176,11 +2496,18 @@ const AccountsSettings = ({ onNotify }) => {
         connectionType={termsConditionModal.connectionType}
       />
 
-      {/* LinkedIn Terms Modal */}
-      <LinkedInTermsModal
-        isOpen={linkedInTermsModal.isOpen}
-        onClose={handleCloseLinkedInTerms}
-        onConfirm={handleLinkedInTermsConfirm}
+      {/* LinkedIn Personal Terms Modal */}
+      <LinkedInPersonalTermsModal
+        isOpen={linkedInPersonalTermsModal.isOpen}
+        onClose={handleCloseLinkedInPersonalTerms}
+        onConfirm={handleLinkedInPersonalTermsConfirm}
+      />
+
+      {/* LinkedIn Business Terms Modal */}
+      <LinkedInBusinessTermsModal
+        isOpen={linkedInBusinessTermsModal.isOpen}
+        onClose={handleCloseLinkedInBusinessTerms}
+        onConfirm={handleLinkedInBusinessTermsConfirm}
       />
 
       {/* YouTube Terms Modal */}

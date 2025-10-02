@@ -1084,7 +1084,72 @@ const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
   }
 };
 
+ // New function to get account usernames
+  const getAccountDetails = () => {
+    if (post.platformPosts && post.platformPosts.length > 0) {
+      // Return array of account details from platformPosts
+      return post.platformPosts.map(pp => ({
+        platform: pp.platform,
+        username: pp.accountName || 'Unknown',
+        id: pp.accountId
+      }));
+    }
+    
+    return [];
+  };
+  
+  const accountDetails = getAccountDetails();
 
+  const getAccountUsernames = () => {
+    // Check different storage locations for account information
+    
+    // 1. Check selectedAccountsWithNames (from our enhanced structure)
+    if (post.selectedAccountsWithNames) {
+      const allAccounts = [];
+      Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+        accounts.forEach(acc => {
+          allAccounts.push({
+            platform,
+            username: acc.username || 'Unknown',
+            id: acc.id
+          });
+        });
+      });
+      return allAccounts;
+    }
+    
+    // 2. Check platformPosts (may contain accountName)
+    if (post.platformPosts && post.platformPosts.length > 0) {
+      return post.platformPosts
+        .filter(pp => pp.accountName || pp.accountId)
+        .map(pp => ({
+          platform: pp.platform,
+          username: pp.accountName || 'Account ID: ' + pp.accountId,
+          id: pp.accountId
+        }));
+    }
+    
+    // 3. Try to find account info from selectedAccounts IDs
+    if (post.selectedAccounts) {
+      const allAccounts = [];
+      Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
+        if (Array.isArray(accountIds) && accountIds.length > 0) {
+          accountIds.forEach(id => {
+            allAccounts.push({
+              platform,
+              username: 'Account ID: ' + id,
+              id
+            });
+          });
+        }
+      });
+      return allAccounts;
+    }
+    
+    return [];
+  };
+  
+  const accountUsernames = getAccountUsernames();
   const getDisplayDate = () => {
     if (post.status === 'scheduled' && post.scheduledDate) {
       return new Date(post.scheduledDate);
@@ -1221,213 +1286,191 @@ const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
   const displayMedia = mediaItems.slice(0, 4); // Show max 4 media items
   const layoutClass = getMediaLayoutClass(displayMedia.length);
 
-  return (
-    <div
-      className="unified-post-card"
-      onClick={onClick}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
-      {/* Hover Actions */}
-      {showActions && (
-        <div className="post-actions">
-          <button className="action-btn edit" onClick={handleEdit} title="Edit Post">
-            <Edit size={16} />
-          </button>
-          <button className="action-btn delete" onClick={handleDelete} title="Delete Post">
-            <Trash2 size={16} />
-          </button>
-        </div>
-      )}
-
-      {showActions && (
-        <div className="shw-exp-icon">
-          <Maximize2 size={16} />
-        </div>
-      )}
-
-      {/* Post Header with Multiple Platforms */}
-      <div className="post-header">
-        <div className="post-schedule">
-          <Clock size={16} />
-          <span className="schedule-time">
-            {displayDate.toLocaleDateString('en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        </div>
-
-        {/* Platform Icons */}
-
-       <div className="post-platforms">
-  {uniquePlatforms.map((platform, index) => {
-    const PlatformIcon = getPlatformIcon(platform);
-    return (
-      <div 
-        key={index} 
-        className={`platform-icon ${platform.toLowerCase()}`}
-        title={platform}
-      >
-        <PlatformIcon size={20} />
+ return (
+  <div 
+    className="unified-post-card" 
+    onClick={onClick} 
+    onMouseEnter={() => setShowActions(true)} 
+    onMouseLeave={() => setShowActions(false)}
+  >
+    {/* Hover Actions */}
+    {showActions && (
+      <div className="post-actions">
+        <button className="action-btn edit" onClick={handleEdit} title="Edit Post">
+          <Edit size={16} />
+        </button>
+        <button className="action-btn delete" onClick={handleDelete} title="Delete Post">
+          <Trash2 size={16} />
+        </button>
       </div>
-    );
-  })}
-</div>
+    )}
+
+    {showActions && (
+      <div className="shw-exp-icon">
+        <Maximize2 size={16} />
+      </div>
+    )}
+
+    {/* Post Header */}
+    <div className="post-header">
+      <div className="post-schedule">
+        <Clock size={16} />
+        <span className="schedule-time">
+          {displayDate.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </span>
       </div>
 
-      {/* Media Section */}
-      {displayMedia.length > 0 && (
-        <div className={`preview-images ${layoutClass}`}>
-          {(() => {
-            const media = displayMedia[0];
-            if (!media) return null; // handle empty array
-
-            if (media.type === 'image' && imageLoadErrors.has(0)) {
-              return null;
-            }
-
-            const aspectClass = imageAspectRatios.get(0) || '';
-
-            return (
-              <div className={`media-item ${aspectClass}`}>
-                {media.type === 'video' ? (
-                  <>
-                    <video
-                      src={media.url}
-                      muted
-                      loop
-                      playsInline
-                      onMouseEnter={(e) => {
-                        e.target.currentTime = 0;
-                        e.target.play().catch(console.error);
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.pause();
-                        e.target.currentTime = 0;
-                      }}
-                      onError={() => console.error('Video failed to load:', media.url)}
-                    />
-                    <div className="video-indicator">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </div>
-                  </>
-                ) : (
-                  <img
-                    src={media.url}
-                    alt={media.alt}
-                    loading="lazy"
-                    onError={() => handleImageError(0)}
-                    onLoad={(e) => handleImageLoad(e, 0)}
-                    data-aspect={aspectClass}
-                  />
-                )}
-              </div>
-            );
-          })()}
-
-          {/* {displayMedia.map((media, index) => {
-            if (media.type === 'image' && imageLoadErrors.has(index)) {
-              return null;
-            }
-
-            const aspectClass = imageAspectRatios.get(index) || '';
-
-            return (
-              <div key={index} className={`media-item ${aspectClass}`}>
-                {media.type === 'video' ? (
-                  <>
-                    <video
-                      src={media.url}
-                      muted
-                      loop
-                      playsInline
-                      onMouseEnter={(e) => {
-                        e.target.currentTime = 0;
-                        e.target.play().catch(console.error);
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.pause();
-                        e.target.currentTime = 0;
-                      }}
-                      onError={() => console.error('Video failed to load:', media.url)}
-                    />
-                    <div className="video-indicator">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </div>
-                  </>
-                ) : (
-                  <img
-                    src={media.url}
-                    alt={media.alt}
-                    loading="lazy"
-                    onError={() => handleImageError(index)}
-                    onLoad={(e) => handleImageLoad(e, index)}
-                    data-aspect={aspectClass}
-                  />
-                )}
-              </div>
-            );
-          }).filter(Boolean)} */}
-
-          {mediaItems.length > 4 && (
-            <div className="image-count">
-              +{mediaItems.length - 4}
+      {/* Platform Icons */}
+      <div className="post-platforms">
+        {uniquePlatforms.map((platform, index) => {
+          const PlatformIcon = getPlatformIcon(platform);
+          return (
+            <div 
+              key={index} 
+              className={`platform-icon ${platform.toLowerCase()}`}
+              title={platform}
+            >
+              <PlatformIcon size={20} />
             </div>
-          )}
+          );
+        })}
+      </div>
+    </div>
 
-          {displayMedia.length === 0 && (post.images?.length > 0 || post.videos?.length > 0 || post.media?.length > 0) && (
-            <div className="preview-image-container">
-              <div className="image-error">
-                <FileText size={20} color="#999" />
-                <span style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-                  Media unavailable
-                </span>
-              </div>
+  
+
+    {/* Media Section */}
+    {displayMedia.length > 0 && (
+      <div className={`preview-images ${layoutClass}`}>
+        {(() => {
+          const media = displayMedia[0];
+          if (!media) return null;
+
+          if (media.type === 'image' && imageLoadErrors.has(0)) {
+            return null;
+          }
+
+          const aspectClass = imageAspectRatios.get(0) || '';
+
+          return (
+            <div className={`media-item ${aspectClass}`}>
+              {media.type === 'video' ? (
+                <>
+                  <video
+                    src={media.url}
+                    muted
+                    loop
+                    playsInline
+                    onMouseEnter={(e) => {
+                      e.target.currentTime = 0;
+                      e.target.play().catch(console.error);
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.pause();
+                      e.target.currentTime = 0;
+                    }}
+                    onError={() => console.error('Video failed to load:', media.url)}
+                  />
+                  <div className="video-indicator">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </>
+              ) : (
+                <img
+                  src={media.url}
+                  alt={media.alt}
+                  loading="lazy"
+                  onError={() => handleImageError(0)}
+                  onLoad={(e) => handleImageLoad(e, 0)}
+                  data-aspect={aspectClass}
+                />
+              )}
             </div>
-          )}
-        </div>
-      )}
+          );
+        })()}
 
-      <div className='postdesc'>
+        {mediaItems.length > 4 && (
+          <div className="image-count">
+            +{mediaItems.length - 4}
+          </div>
+        )}
+
+        {displayMedia.length === 0 && (post.images?.length > 0 || post.videos?.length > 0 || post.media?.length > 0) && (
+          <div className="preview-image-container">
+            <div className="image-error">
+              <FileText size={20} color="#999" />
+              <span style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
+                Media unavailable
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+
+  <div className='postdesc'>
         {/* Post Content */}
         <div className="preview-text">
           <p>{postContent.substring(0, 80)}{postContent.length > 80 ? '…' : ''}</p>
         </div>
+        
+        {/* Account Names Display */}
+        {accountDetails.length > 0 && (
+          <div className="post-account-details">
+            {accountDetails.map((account, idx) => {
+              // Define icon components for each platform
+              let PlatformIcon;
+              if (account.platform === 'instagram') PlatformIcon = Instagram;
+              else if (account.platform === 'facebook') PlatformIcon = Facebook;
+              else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
+              else if (account.platform === 'youtube') PlatformIcon = Youtube;
+              else if (account.platform === 'twitter') PlatformIcon = Twitter;
+              else PlatformIcon = null;
+              
+              return (
+                <span key={idx} className={`account-badge ${account.platform}`}>
+                  {PlatformIcon && <PlatformIcon size={12} />}
+                  {account.username}
+                </span>
+              );
+            })}
+          </div>
+        )}
 
-        {/* Hashtags */}
+       {/* Existing hashtags section */}
         <div className="preview-hashtags">
           {post.hashtags?.slice(0, 3).map((hashtag, i) => (
             <span key={i} className="hashtag">{hashtag}</span>
           ))}
         </div>
 
-        {/* Post Stats */}
-        <div className="post-stats">
-          <span><Heart size={14} /> {post.totalEngagement || 0}</span>
-          <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
-          <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
-        </div>
+      {/* Post Stats */}
+      <div className="post-stats">
+        <span><Heart size={14} /> {post.totalEngagement || 0}</span>
+        <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
+        <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
+      </div>
 
-        {/* Status Badge */}
-        <div className="post-status">
-          <span className={`status-badge ${postStatus}`}>
-            {postStatus === 'published' && <CheckCircle size={12} />}
-            {postStatus === 'failed' && <XCircle size={12} />}
-            {postStatus === 'scheduled' && <Clock size={12} />}
-            &nbsp; &nbsp;{postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
-          </span>
-        </div>
+      {/* Status Badge */}
+      <div className="post-status">
+        <span className={`status-badge ${postStatus}`}>
+          {postStatus === 'published' && <CheckCircle size={12} />}
+          {postStatus === 'failed' && <XCircle size={12} />}
+          {postStatus === 'scheduled' && <Clock size={12} />}
+          &nbsp; &nbsp;{postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
+        </span>
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 // Delete Confirmation Modal Component

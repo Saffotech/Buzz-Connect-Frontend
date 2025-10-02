@@ -835,49 +835,54 @@ const getAvailablePlatforms = () => {
   };
 
   // ✅ FIXED: Updated handleSubmit with markdown stripping
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setError(null);
 
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
+  if (!validateForm()) {
+    setIsSubmitting(false);
+    return;
+  }
 
-    try {
-      // ✅ Enhanced debugging
-      console.log('=== POST SUBMISSION DEBUG ===');
-      console.log('Post data:', JSON.stringify(postData, null, 2));
-      console.log('Images count:', postData.images?.length);
-      console.log('Platforms:', postData.platforms);
-      console.log('Selected accounts:', postData.selectedAccounts);
+  try {
+    // Clean up selectedAccounts to remove null values and empty arrays
+    const cleanedSelectedAccounts = {};
+    const selectedAccountsWithNames = {};
 
-      postData.images?.forEach((item, index) => {
-        console.log(`Media ${index}:`, {
-          url: item.url ? '✅ HAS URL' : '❌ NO URL',
-          fileType: item.fileType,
-          originalName: item.originalName,
-          size: item.size
+    // Extract connected accounts from user profile
+    const accountsMap = {};
+    userProfile?.connectedAccounts?.forEach(account => {
+      accountsMap[account._id.toString()] = account;
+    });
+
+    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+      const validAccounts = accounts.filter(account => account != null && account !== '');
+      
+      if (validAccounts.length > 0) {
+        cleanedSelectedAccounts[platform] = validAccounts;
+        
+        // Get the real usernames from userProfile.connectedAccounts
+        selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
+          const account = accountsMap[accountId];
+          return {
+            id: accountId,
+            username: account ? account.username : 'Unknown Account'
+          };
         });
-      });
+      }
+    });
 
-      // Clean up selectedAccounts to remove null values and empty arrays
-      const cleanedSelectedAccounts = {};
-      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-        const validAccounts = accounts.filter(account => account != null && account !== '');
-        if (validAccounts.length > 0) {
-          cleanedSelectedAccounts[platform] = validAccounts;
-        }
-      });
+    // Log the actual account names being sent
+    console.log('Sending account usernames:', selectedAccountsWithNames);
 
-
-      // ✅ Enhanced post data preparation with better media handling
-      const apiPostData = {
-        content: postData.content,
-        platforms: postData.platforms,
-        selectedAccounts: cleanedSelectedAccounts,
-        images: postData.images.map((img, index) => ({
+    // Enhanced post data preparation with account information
+    const apiPostData = {
+      content: postData.content,
+      platforms: postData.platforms,
+      selectedAccounts: cleanedSelectedAccounts,
+      selectedAccountsWithNames: selectedAccountsWithNames,
+      images: postData.images.map((img, index) => ({
           url: img.url,
           altText: img.altText || img.originalName || 'Post media',
           originalName: img.originalName || img.filename || `Media ${index + 1}`,

@@ -58,9 +58,10 @@ export const APP_CONFIG = {
 // Social Media Platforms
 export const PLATFORMS = {
   INSTAGRAM: 'instagram',
-  FACEBOOK: 'facebook',
+  FACEBOOK: 'facebook', 
   TWITTER: 'twitter',
-  LINKEDIN: 'linkedin', // Added LinkedIn
+  LINKEDIN: 'linkedin',
+  YOUTUBE: 'youtube' // Make sure this matches the ID used in the platform grid
 };
 
 export const PLATFORM_CONFIGS = {
@@ -81,13 +82,13 @@ export const PLATFORM_CONFIGS = {
     hasMentions: true
   },
   [PLATFORMS.TWITTER]: {
-    name: 'Twitter',
-    color: '#1DA1F2',
-    contentLimit: 280,
-    supportedMedia: ['image', 'video', 'gif'],
-    hasHashtags: true,
-    hasMentions: true
-  },
+  name: 'Twitter',
+  color: '#000000', // X (Twitter) black
+  contentLimit: 280,
+  supportedMedia: ['image', 'video', 'gif'],
+  hasHashtags: true,
+  hasMentions: true
+},
   [PLATFORMS.LINKEDIN]: {
     name: 'LinkedIn',
     color: '#0A66C2',
@@ -96,6 +97,15 @@ export const PLATFORM_CONFIGS = {
     hasHashtags: true,
     hasMentions: false, // LinkedIn doesn't use @ mentions the same way
     imageLimit: 1 // LinkedIn only supports one image per post via API
+  },
+  [PLATFORMS.YOUTUBE]: {
+    name: 'YouTube',
+    color: '#FF0000',
+    contentLimit: 5000, // YouTube video description limit
+    supportedMedia: ['video', 'thumbnail'],
+    hasHashtags: true,  // YouTube supports hashtags in title/description
+    hasMentions: false, // No real @mention support via API yet
+    videoLimit: 1 // YouTube posts are single-video based
   }
 };
 
