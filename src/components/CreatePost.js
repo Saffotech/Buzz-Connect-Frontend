@@ -260,7 +260,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       message: 'Draft saved successfully!',
     });
     // Auto-hide toast after 3 seconds
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 6000);
   };
 
 
@@ -538,7 +538,7 @@ const getAvailablePlatforms = () => {
 
 
 // Toast notification function
-  const showToast = (message, type = 'info', duration = 3000) => {
+  const showToast = (message, type = 'info', duration = 5000) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), duration);
   };

@@ -308,9 +308,9 @@
 @media (max-width: 768px) {
 .platform-grid.horizontal {
   display: flex;
-  flex-direction: column;
-  gap: 12px; /* space between buttons */
-  flex-wrap: nowrap; /* all in one line */
+  /* flex-direction: column; */
+  gap: 12px; 
+  flex-wrap: wrap;
   align-items: flex-start; /* vertically center icons/buttons */
   margin-top: 1rem;
 }
@@ -322,3 +322,4 @@
 .platform-btn:hover:not(.disabled):not(.selected) {
   border-color: var(--platform-color);
 }
+
