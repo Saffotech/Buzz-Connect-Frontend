@@ -2389,7 +2389,7 @@ background: linear-gradient(135deg, #fde047, #facc15);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding-bottom: 1.5rem;
+  /* padding-bottom: 1.5rem; */
 }
 
 .status-badge.active {
