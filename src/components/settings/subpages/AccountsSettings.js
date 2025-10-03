@@ -6,7 +6,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSquareThreads, faSquareXTwitter } from '@fortawesome/free-brands-svg-icons';
+import { faSquareXTwitter } from '@fortawesome/free-brands-svg-icons';
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platform }) => {
@@ -603,7 +603,7 @@ const TermsConditionModal = ({ isOpen, onClose, onConfirm, connectionType }) => 
 };
 
 // Connection Options Modal Component
-const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFacebookInstagram, onSelectLinkedInPersonal, onSelectLinkedInBusiness, onSelectYouTube, onSelectTwitter, onSelectThread }) => {
+const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, onSelectLinkedInPersonal, onSelectLinkedInBusiness, onSelectYouTube, onSelectTwitter }) => {
   if (!isOpen) return null;
 
   return (
@@ -651,53 +651,6 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* <button
-            onClick={onSelectInstagram}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '16px 24px',
-              borderRadius: '12px',
-              border: '1px solid #e5e7eb',
-              backgroundColor: '#f9fafb',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              gap: '16px',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f3f4f6';
-              e.currentTarget.style.borderColor = '#d1d5db';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#f9fafb';
-              e.currentTarget.style.borderColor = '#e5e7eb';
-            }}
-          >
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '10px',
-              backgroundColor: '#FDF2F8',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #FCE7F3'
-            }}>
-              <Instagram size={24} style={{ color: '#E91E63' }} />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
-                Instagram Only
-              </div>
-              <div style={{ color: '#6B7280', fontSize: '14px' }}>
-                Connect just your Instagram business account
-                <span style={{ display: 'block', fontStyle: 'italic', fontSize: '12px', marginTop: '4px' }}>
-                  (Note: Requires Facebook login for authentication)
-                </span>
-              </div>
-            </div>
-          </button> */}
-
           <button
             onClick={onSelectFacebookInstagram}
             style={{
@@ -926,52 +879,6 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectInstagram, onSelectFa
               </div>
             </div>
           </button>
-
-          {/* <button
-            onClick={onSelectThread}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '16px 24px',
-              borderRadius: '12px',
-              border: '1px solid #e5e7eb',
-              backgroundColor: '#f9fafb',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              gap: '16px',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f3f4f6';
-              e.currentTarget.style.borderColor = '#d1d5db';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#f9fafb';
-              e.currentTarget.style.borderColor = '#e5e7eb';
-            }}
-          >
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '10px',
-                backgroundColor: '#E6F6FF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid #BAE6FD',
-              }}
-            >
-              <FontAwesomeIcon icon={faSquareThreads} size="xl" />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
-                Threads
-              </div>
-              <div style={{ color: '#6B7280', fontSize: '14px' }}>
-                Connect your Threads (@) account
-              </div>
-            </div>
-          </button> */}
         </div>
 
         <div style={{ marginTop: '24px', fontSize: '14px', color: '#6B7280', textAlign: 'center' }}>
@@ -1213,7 +1120,7 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
           position: 'relative',
           overflow: 'hidden',
           animation: 'slideUp 0.3s ease-out'
-        }}
+                  }}
       >
         {/* Close Button */}
         <button
@@ -1350,7 +1257,6 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
           >
             <Building size={16} />
             Connect Business Page
-
           </button>
         </div>
       </div>
@@ -2314,15 +2220,6 @@ const AccountsSettings = ({ onNotify }) => {
     });
   };
 
-  // Connect Instagram directly
-  const handleConnectInstagramDirect = async () => {
-    setConnectionOptionsModal({ isOpen: false });
-    setTermsConditionModal({
-      isOpen: true,
-      connectionType: 'direct'
-    });
-  };
-
   // Connect LinkedIn Personal Profile
   const handleConnectLinkedInPersonal = async () => {
     setConnectionOptionsModal({ isOpen: false });
@@ -2339,7 +2236,7 @@ const AccountsSettings = ({ onNotify }) => {
     });
   };
 
-  // Connect Twiterr
+  // Connect Twitter
   const handleConnectTwitter = async () => {
     setConnectionOptionsModal({ isOpen: false });
     setTwitterTermsModal({
@@ -2347,83 +2244,8 @@ const AccountsSettings = ({ onNotify }) => {
     });
   };
 
-
-  // Handle LinkedIn Terms acceptance
-  // const handleLinkedInTermsConfirm = async () => {
-  //   const storedToken = authToken;
-  //   if (!storedToken) {
-  //     toast.error('User not logged in');
-  //     return;
-  //   }
-
-  //   try {
-  //     const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-  //       headers: { Authorization: `Bearer ${storedToken}` }
-  //     });
-
-  //     if (res.data.success && res.data.data) {
-  //       const freshUser = res.data.data;
-  //       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-  //       // Construct the LinkedIn auth URL
-  //       const linkedInAuthUrl = `${apiUrl}/api/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
-
-  //       console.log('Redirecting to LinkedIn auth:', linkedInAuthUrl);
-
-  //       // Open in the same window
-  //       window.location.href = linkedInAuthUrl;
-  //     } else {
-  //       toast.error('Failed to get user data');
-  //     }
-  //   } catch (err) {
-  //     console.error('Error starting LinkedIn auth:', err);
-  //     toast.error('Failed to start LinkedIn authentication');
-  //   }
-
-  //   // Close the modal
-  //   setLinkedInTermsModal({ isOpen: false });
-  // };
-
-
-  // Handle LinkedIn Terms acceptance
-  const handleLinkedInTermsConfirm = async () => {
-    const storedToken = authToken;
-    if (!storedToken) {
-      toast.error('User not logged in');
-      return;
-    }
-
-    try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` }
-      });
-
-      if (res.data.success && res.data.data) {
-        const freshUser = res.data.data;
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-        // Construct the LinkedIn auth URL
-        const linkedInAuthUrl = `${apiUrl}/api/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
-
-        console.log('Redirecting to LinkedIn auth:', linkedInAuthUrl);
-
-        // Open in the same window
-        window.location.href = linkedInAuthUrl;
-      } else {
-        toast.error('Failed to get user data');
-      }
-    } catch (err) {
-      console.error('Error starting LinkedIn auth:', err);
-      toast.error('Failed to start LinkedIn authentication');
-    }
-
-    // Close the modal
-    setLinkedInTermsModal({ isOpen: false });
-  };
-
   // Handle LinkedIn Personal Terms acceptance
   const handleLinkedInPersonalTermsConfirm = async () => {
-
     const storedToken = authToken;
     if (!storedToken) {
       toast.error('User not logged in');
@@ -2443,10 +2265,8 @@ const AccountsSettings = ({ onNotify }) => {
         const linkedInAuthUrl = `${apiUrl}/api/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
 
         console.log('Redirecting to LinkedIn Personal auth:', linkedInAuthUrl);
-
-
-        // Open in the same window
-        window.location.href = twitterAuthUrl;
+                // Open in the same window
+        window.location.href = linkedInAuthUrl;
       } else {
         toast.error('Failed to get user data');
       }
@@ -2457,41 +2277,42 @@ const AccountsSettings = ({ onNotify }) => {
     // Close the modal
     setLinkedInPersonalTermsModal({ isOpen: false });
   };
-// Handle Twitter Terms acceptance
-const handleTwitterTermsConfirm = async () => {
-  const storedToken = authToken;
-  if (!storedToken) {
-    toast.error('User not logged in');
-    return;
-  }
 
-  try {
-    const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${storedToken}` }
-    });
-
-    if (res.data.success && res.data.data) {
-      const freshUser = res.data.data;
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-      // Construct the Twitter auth URL
-      const twitterAuthUrl = `${apiUrl}/api/auth/twitter?userId=${freshUser._id}&token=${storedToken}`;
-
-      console.log('Redirecting to Twitter auth:', twitterAuthUrl);
-
-      // Open in the same window
-      window.location.href = twitterAuthUrl;
-    } else {
-      toast.error('Failed to get user data');
+  // Handle Twitter Terms acceptance
+  const handleTwitterTermsConfirm = async () => {
+    const storedToken = authToken;
+    if (!storedToken) {
+      toast.error('User not logged in');
+      return;
     }
-  } catch (err) {
-    console.error('Error starting Twitter auth:', err);
-    toast.error('Failed to start Twitter authentication');
-  }
 
-  // Close the modal
-  setTwitterTermsModal({ isOpen: false });
-};
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${storedToken}` }
+      });
+
+      if (res.data.success && res.data.data) {
+        const freshUser = res.data.data;
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+        // Construct the Twitter auth URL
+        const twitterAuthUrl = `${apiUrl}/api/auth/x?userId=${freshUser._id}&token=${storedToken}`;
+
+        console.log('Redirecting to Twitter auth:', twitterAuthUrl);
+
+        // Open in the same window
+        window.location.href = twitterAuthUrl;
+      } else {
+        toast.error('Failed to get user data');
+      }
+    } catch (err) {
+      console.error('Error starting Twitter auth:', err);
+      toast.error('Failed to start Twitter authentication');
+    }
+
+    // Close the modal
+    setTwitterTermsModal({ isOpen: false });
+  };
 
   // Handle LinkedIn Business Terms acceptance
   const handleLinkedInBusinessTermsConfirm = async () => {
@@ -2527,7 +2348,6 @@ const handleTwitterTermsConfirm = async () => {
 
     // Close the modal
     setLinkedInBusinessTermsModal({ isOpen: false });
-
   };
 
   // Connect YouTube
@@ -2574,7 +2394,6 @@ const handleTwitterTermsConfirm = async () => {
     setYoutubeTermsModal({ isOpen: false });
   };
 
-
   // Handle Terms & Conditions acceptance
   const handleTermsConfirm = async (connectionType) => {
     const storedToken = authToken;
@@ -2592,14 +2411,8 @@ const handleTwitterTermsConfirm = async () => {
         const freshUser = res.data.data;
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-        // Check which connection flow to use
-        if (connectionType === 'direct') {
-          // Instagram-only connection
-          window.location.href = `${apiUrl}/api/auth/instagram/instagram-only?userId=${freshUser._id}&token=${storedToken}`;
-        } else {
-          // Standard Instagram+Facebook connection
-          window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
-        }
+        // Standard Instagram+Facebook connection
+        window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
       } else {
         toast.error('Failed to get user data');
       }
@@ -2848,20 +2661,20 @@ const handleTwitterTermsConfirm = async () => {
                                   {account?.platform
                                     ? account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
                                     : ''}
-                                  {account.platform === 'instagram' && (
+                                  {/* {account.platform === 'instagram' && (
                                     isDirectConnection ? (
                                       <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
                                     ) : (
                                       <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
                                     )
-                                  )}
-                                  {account.platform === 'facebook' && (
+                                  )} */}
+                                  {/* {account.platform === 'facebook' && (
                                     isViewOnlyFacebook ? (
                                       <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
                                     ) : (
                                       <span className="connection-badge"> • Business Page</span>
                                     )
-                                  )}
+                                  )} */}
                                   {account.platform === 'linkedin' && (
                                     isLinkedInBusiness ? (
                                       <span className="connection-badge" style={{ color: '#0A66C2' }}> • Business Page</span>
@@ -2869,9 +2682,9 @@ const handleTwitterTermsConfirm = async () => {
                                       <span className="connection-badge" style={{ color: '#0A66C2' }}> • Personal Profile</span>
                                     )
                                   )}
-                                  {account.platform === 'youtube' && (
+                                  {/* {account.platform === 'youtube' && (
                                     <span className="connection-badge" style={{ color: '#FF0000' }}> • Channel</span>
-                                  )}
+                                  )} */}
                                 </p>
                                 <span className="followers-count">
                                   {account.platform === 'youtube'
@@ -2901,7 +2714,7 @@ const handleTwitterTermsConfirm = async () => {
                               </div>
 
                               {/* Connection type badge */}
-                              {account.platform === 'instagram' && (
+                              {/* {account.platform === 'instagram' && (
                                 <div
                                   className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
                                   style={{
@@ -2920,10 +2733,10 @@ const handleTwitterTermsConfirm = async () => {
                                 >
                                   {isDirectConnection ? 'Instagram Only' : 'Full Access'}
                                 </div>
-                              )}
+                              )} */}
 
                               {/* LinkedIn badge */}
-                              {account.platform === 'linkedin' && (
+                              {/* {account.platform === 'linkedin' && (
                                 <div
                                   className="linkedin-badge"
                                   style={{
@@ -2942,7 +2755,7 @@ const handleTwitterTermsConfirm = async () => {
                                 >
                                   {isLinkedInBusiness ? 'Business Page' : 'Personal Profile'}
                                 </div>
-                              )}
+                              )} */}
 
                               {/* View-only badge for Facebook accounts */}
                               {isViewOnlyFacebook && (
@@ -2964,7 +2777,7 @@ const handleTwitterTermsConfirm = async () => {
                                 </div>
                               )}
                               {/* YouTube badge */}
-                              {account.platform === 'youtube' && (
+                              {/* {account.platform === 'youtube' && (
                                 <div
                                   className="youtube-badge"
                                   style={{
@@ -2981,7 +2794,7 @@ const handleTwitterTermsConfirm = async () => {
                                 >
                                   Channel
                                 </div>
-                              )}
+                              )} */}
                             </div>
                           );
                         })}
@@ -3005,7 +2818,6 @@ const handleTwitterTermsConfirm = async () => {
       <ConnectionOptionsModal
         isOpen={connectionOptionsModal.isOpen}
         onClose={() => setConnectionOptionsModal({ isOpen: false })}
-        onSelectInstagram={handleConnectInstagramDirect}
         onSelectFacebookInstagram={handleConnectMetaWithFacebook}
         onSelectLinkedInPersonal={handleConnectLinkedInPersonal}
         onSelectLinkedInBusiness={handleConnectLinkedInBusiness}
@@ -3061,3 +2873,6 @@ const handleTwitterTermsConfirm = async () => {
 };
 
 export default AccountsSettings;
+
+
+

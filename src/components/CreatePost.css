@@ -20,8 +20,8 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  width: 90vw;
-  max-width: 1200px;
+  width: 95vw;
+  /* max-width: 1200px; */
   max-height: 90vh; /* Limit modal height */
   display: flex;
   flex-direction: column;
@@ -1967,7 +1967,7 @@
 /* Multi-Account Selection Styles */
 .account-multi-selector {
   margin-top: 12px;
-  padding: 16px;
+  /* padding: 16px; */
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #e9ecef;
