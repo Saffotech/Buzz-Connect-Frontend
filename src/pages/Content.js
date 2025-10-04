@@ -153,6 +153,8 @@ const Content = () => {
   const [deleteFromInsta, setDeleteFromInsta] = useState(false);
   const [deleteFromYouTube, setDeleteFromYouTube] = useState(false); // Add this
 const [deleteFromFacebook, setDeleteFromFacebook] = useState(false);
+const [deleteFromTwitter, setDeleteFromTwitter] = useState(false);
+const [deleteFromLinkedin, setDeleteFromLinkedin] = useState(false);
 
   // Enhanced Media state
   const [mediaList, setMediaList] = useState([]);
@@ -271,34 +273,34 @@ const handleDeletePost = async (postId) => {
     await apiClient.request(`/api/posts/${postId}`, { method: 'DELETE' });
     console.log('✅ Post deleted from database successfully');
     
-// Handle Instagram deletion if checked
-if (deleteFromInsta) {
-  const instagramPosts = postToDelete?.platformPosts?.filter(
-    post => post.platform === 'instagram' && post.status === 'published'
-  );
-  
-  console.log(`📸 Found ${instagramPosts?.length || 0} Instagram posts to delete`);
-  let instagramDeletionFailed = false;
-  
-  for (const post of instagramPosts || []) {
-    try {
-      console.log(`🗑️ Attempting to delete Instagram post: ${post.platformPostId}`);
-      await apiClient.request(`/api/auth/instagram/posts/instagram/${post.platformPostId}`, { method: 'DELETE' });
-      console.log(`✅ Deleted Instagram post: ${post.platformPostId}`);
-    } catch (error) {
-      console.error(`❌ Failed to delete Instagram post ${post.platformPostId}:`, error);
-      instagramDeletionFailed = true;
+    // Handle Instagram deletion if checked
+    if (deleteFromInsta) {
+      const instagramPosts = postToDelete?.platformPosts?.filter(
+        post => post.platform === 'instagram' && post.status === 'published'
+      );
+      
+      console.log(`📸 Found ${instagramPosts?.length || 0} Instagram posts to delete`);
+      let instagramDeletionFailed = false;
+      
+      for (const post of instagramPosts || []) {
+        try {
+          console.log(`🗑️ Attempting to delete Instagram post: ${post.platformPostId}`);
+          await apiClient.request(`/api/auth/instagram/posts/instagram/${post.platformPostId}`, { method: 'DELETE' });
+          console.log(`✅ Deleted Instagram post: ${post.platformPostId}`);
+        } catch (error) {
+          console.error(`❌ Failed to delete Instagram post ${post.platformPostId}:`, error);
+          instagramDeletionFailed = true;
+        }
+      }
+      
+      // Always show this notification for Instagram posts since deletion usually fails
+      if (instagramDeletionFailed) {
+        setNotification({ 
+          type: 'warning', 
+          message: 'Post deleted from the app, but Instagram posts need to be deleted manually from the Instagram app'
+        });
+      }
     }
-  }
-  
-  // Always show this notification for Instagram posts since deletion usually fails
-  if (instagramDeletionFailed) {
-    setNotification({ 
-      type: 'warning', 
-      message: 'Post deleted from the app, but Instagram posts need to be deleted manually from the Instagram app'
-    });
-  }
-}
     
     // Handle Facebook deletion if checked
     if (deleteFromFacebook) {
@@ -311,12 +313,63 @@ if (deleteFromInsta) {
       for (const post of facebookPosts || []) {
         try {
           console.log(`🗑️ Deleting Facebook post: ${post.platformPostId}`);
-          // FIXED: Correct endpoint path based on router configuration
           await apiClient.request(`/api/auth/instagram/posts/facebook/${post.platformPostId}`, { method: 'DELETE' });
           console.log(`✅ Deleted Facebook post: ${post.platformPostId}`);
         } catch (error) {
           console.error(`❌ Failed to delete Facebook post ${post.platformPostId}:`, error);
           console.error('Error details:', error.response?.data);
+        }
+      }
+    }
+    
+    // Handle Twitter deletion if checked
+    if (deleteFromTwitter) {
+      const twitterPosts = postToDelete?.platformPosts?.filter(
+        post => post.platform === 'twitter' && post.status === 'published'
+      );
+      
+      console.log(`🐦 Found ${twitterPosts?.length || 0} Twitter posts to delete`);
+      
+      for (const post of twitterPosts || []) {
+        try {
+          console.log(`🗑️ Deleting Twitter post: ${post.platformPostId}`);
+          await apiClient.request(`/api/auth/x/tweets/${post.platformPostId}`, { method: 'DELETE' });
+          console.log(`✅ Deleted Twitter post: ${post.platformPostId}`);
+        } catch (error) {
+          console.error(`❌ Failed to delete Twitter post ${post.platformPostId}:`, error);
+          console.error('Error details:', error.response?.data);
+          
+          // Show specific error for Twitter deletion
+          setNotification({ 
+            type: 'warning', 
+            message: `Post deleted, but Twitter deletion failed: ${error.response?.data?.error || error.message}` 
+          });
+        }
+      }
+    }
+    
+    // Handle LinkedIn deletion if checked
+    if (deleteFromLinkedin) {
+      const linkedinPosts = postToDelete?.platformPosts?.filter(
+        post => post.platform === 'linkedin' && post.status === 'published'
+      );
+      
+      console.log(`💼 Found ${linkedinPosts?.length || 0} LinkedIn posts to delete`);
+      
+      for (const post of linkedinPosts || []) {
+        try {
+          console.log(`🗑️ Deleting LinkedIn post: ${post.platformPostId}`);
+          await apiClient.request(`/api/auth/linkedin/posts/${post.platformPostId}`, { method: 'DELETE' });
+          console.log(`✅ Deleted LinkedIn post: ${post.platformPostId}`);
+        } catch (error) {
+          console.error(`❌ Failed to delete LinkedIn post ${post.platformPostId}:`, error);
+          console.error('Error details:', error.response?.data);
+          
+          // Show specific error for LinkedIn deletion
+          setNotification({ 
+            type: 'warning', 
+            message: `Post deleted, but LinkedIn post deletion failed: ${error.response?.data?.error || error.message}` 
+          });
         }
       }
     }
@@ -365,6 +418,8 @@ if (deleteFromInsta) {
     setPostToDelete(null);
     setDeleteFromInsta(false);
     setDeleteFromFacebook(false);
+    setDeleteFromTwitter(false);    // Reset Twitter checkbox
+    setDeleteFromLinkedin(false);   // Reset LinkedIn checkbox
     setDeleteFromYouTube(false);
     await fetchAllPosts();
   } catch (error) {
@@ -373,6 +428,7 @@ if (deleteFromInsta) {
     setNotification({ type: 'error', message: error.message || 'Failed to delete post' });
   }
 };
+
 
   // ✅ Show delete confirmation
 const showDeleteConfirmation = async (post) => {
@@ -708,13 +764,17 @@ const showDeleteConfirmation = async (post) => {
 />
 
       {/* Delete Confirmation Modal */}
-    <DeleteConfirmationModal
+<DeleteConfirmationModal
   deleteFromInsta={deleteFromInsta}
   setDeleteFromInsta={setDeleteFromInsta}
   deleteFromFacebook={deleteFromFacebook}
   setDeleteFromFacebook={setDeleteFromFacebook}
   deleteFromYouTube={deleteFromYouTube}
   setDeleteFromYouTube={setDeleteFromYouTube}
+  deleteFromTwitter={deleteFromTwitter}
+  setDeleteFromTwitter={setDeleteFromTwitter}
+  deleteFromLinkedin={deleteFromLinkedin}
+  setDeleteFromLinkedin={setDeleteFromLinkedin}
   isOpen={showDeleteConfirm}
   post={postToDelete}
   onClose={() => {
@@ -722,6 +782,8 @@ const showDeleteConfirmation = async (post) => {
     setPostToDelete(null);
     setDeleteFromInsta(false);
     setDeleteFromFacebook(false);
+    setDeleteFromTwitter(false);
+    setDeleteFromLinkedin(false);
     setDeleteFromYouTube(false);
   }}
   onConfirm={() => handleDeletePost(postToDelete?._id || postToDelete?.id)}
@@ -1484,31 +1546,42 @@ const DeleteConfirmationModal = ({
   setDeleteFromInsta,
   deleteFromYouTube,
   setDeleteFromYouTube,
-  deleteFromFacebook,    // Add this new prop
-  setDeleteFromFacebook  // Add this new prop
+  deleteFromFacebook,
+  setDeleteFromFacebook,
+  deleteFromTwitter,      // Add Twitter deletion state
+  setDeleteFromTwitter,   // Add Twitter state setter
+  deleteFromLinkedin,     // Add LinkedIn deletion state
+  setDeleteFromLinkedin   // Add LinkedIn state setter
 }) => {
   if (!isOpen) return null;
 
-  // Check if this post has YouTube videos
+  // Check for published posts on each platform
   const youtubeVideos = post?.platformPosts?.filter(
     platformPost => platformPost.platform === 'youtube' && platformPost.status === 'published'
   ) || [];
   
-  const hasYouTubePost = youtubeVideos.length > 0;
-  
-  // Check if this post has Instagram posts
   const instagramPosts = post?.platformPosts?.filter(
     platformPost => platformPost.platform === 'instagram' && platformPost.status === 'published'
   ) || [];
   
-  const hasInstagramPost = instagramPosts.length > 0;
-  
-  // Check if this post has Facebook posts
   const facebookPosts = post?.platformPosts?.filter(
     platformPost => platformPost.platform === 'facebook' && platformPost.status === 'published'
   ) || [];
+
+  // Add Twitter and LinkedIn filters
+  const twitterPosts = post?.platformPosts?.filter(
+    platformPost => platformPost.platform === 'twitter' && platformPost.status === 'published'
+  ) || [];
   
+  const linkedinPosts = post?.platformPosts?.filter(
+    platformPost => platformPost.platform === 'linkedin' && platformPost.status === 'published'
+  ) || [];
+  
+  const hasYouTubePost = youtubeVideos.length > 0;
+  const hasInstagramPost = instagramPosts.length > 0;
   const hasFacebookPost = facebookPosts.length > 0;
+  const hasTwitterPost = twitterPosts.length > 0;
+  const hasLinkedinPost = linkedinPosts.length > 0;
   
   // Log if no platform posts were found
   if (!post?.platformPosts || post.platformPosts.length === 0) {
@@ -1536,22 +1609,22 @@ const DeleteConfirmationModal = ({
           </p>
 
           <div className="delete-extra-options">
-     {hasInstagramPost && (
-  <div className="platform-deletion-option">
-    <div className="deletion-option instagram disabled">
-      <span className="deletion-label">
-        <Instagram size={16} />
-        Instagram
-      </span>
-      <div className="deletion-note">
-        <InfoIcon size={14} />
-        <small>
-          Instagram posts must be deleted manually through the Instagram app due to API limitations.
-        </small>
-      </div>
-    </div>
-  </div>
-)}
+            {hasInstagramPost && (
+              <div className="platform-deletion-option">
+                <div className="deletion-option instagram disabled">
+                  <span className="deletion-label">
+                    <Instagram size={16} />
+                    Instagram
+                  </span>
+                  <div className="deletion-note">
+                    <InfoIcon size={14} />
+                    <small>
+                      Instagram posts must be deleted manually through the Instagram app due to API limitations.
+                    </small>
+                  </div>
+                </div>
+              </div>
+            )}
             
             {hasFacebookPost && (
               <label id='ctfb'>
@@ -1561,6 +1634,28 @@ const DeleteConfirmationModal = ({
                   onChange={(e) => setDeleteFromFacebook(e.target.checked)}
                 />
                 &nbsp; Delete from Facebook also
+              </label>
+            )}
+            
+            {hasTwitterPost && (
+              <label id='cttwitter'>
+                <input
+                  type="checkbox"
+                  checked={deleteFromTwitter}
+                  onChange={(e) => setDeleteFromTwitter(e.target.checked)}
+                />
+                &nbsp; Delete from Twitter also {twitterPosts.length > 1 ? `(${twitterPosts.length} tweets)` : ''}
+              </label>
+            )}
+            
+            {hasLinkedinPost && (
+              <label id='ctlinkedin'>
+                <input
+                  type="checkbox"
+                  checked={deleteFromLinkedin}
+                  onChange={(e) => setDeleteFromLinkedin(e.target.checked)}
+                />
+                &nbsp; Delete from LinkedIn also
               </label>
             )}
             
