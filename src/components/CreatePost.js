@@ -310,7 +310,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       message: 'Draft saved successfully!',
     });
     // Auto-hide toast after 3 seconds
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 6000);
   };
 
 
@@ -543,10 +543,7 @@ const fetchUserProfile = async () => {
   }
 };
 
-console.log('User profile data:', {
-  connectedPlatforms: userProfile?.connectedPlatforms,
-  connectedAccounts: userProfile?.connectedAccounts
-});
+
 
   // Generate platforms array based on connected accounts
 
@@ -564,14 +561,11 @@ const getAvailablePlatforms = () => {
     const hasAccountsForPlatform = userProfile?.connectedAccounts?.some(acc => 
       acc.platform === platform.id && acc.connected !== false
     );
-    console.log('Platform:', platform.id, 'hasAccountsForPlatform:', hasAccountsForPlatform);
     // Then check if the platform is in the connectedPlatforms array
     const isInConnectedPlatforms = userProfile?.connectedPlatforms?.includes(platform.id);
-    console.log('Platform:', platform.id, 'hasAccountsForPlatform:', hasAccountsForPlatform, 'isInConnectedPlatforms:', isInConnectedPlatforms);
     
     // A platform is connected if either condition is true
     const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
-    console.log('Platform:', platform.id, 'isConnected:', isConnected);
     return {
       ...platform,
       connected: isConnected,
@@ -589,11 +583,12 @@ const getAvailablePlatforms = () => {
 
   // Images are now required for all platforms
   const areImagesRequired = () => {
-    return postData.platforms.includes('instagram' , 'facebook' , 'youtube' , 'linkedin');
+    return postData.platforms.includes('instagram' , 'youtube' , 'linkedin');
   };
 
-  // Toast notification function
-  const showToast = (message, type = 'info', duration = 3000) => {
+
+// Toast notification function
+  const showToast = (message, type = 'info', duration = 5000) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), duration);
   };
@@ -885,15 +880,15 @@ const getAvailablePlatforms = () => {
   };
 
   // ✅ FIXED: Updated handleSubmit with markdown stripping
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setError(null);
 
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
+  if (!validateForm()) {
+    setIsSubmitting(false);
+    return;
+  }
 
     // Only validate Instagram images if Instagram account is selected
     if (postData.platforms.includes('instagram')) {
@@ -921,22 +916,34 @@ const getAvailablePlatforms = () => {
         });
       });
 
-      // Clean up selectedAccounts to remove null values and empty arrays
-      const cleanedSelectedAccounts = {};
-      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-        const validAccounts = accounts.filter(account => account != null && account !== '');
-        if (validAccounts.length > 0) {
-          cleanedSelectedAccounts[platform] = validAccounts;
-        }
-      });
 
+    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+      const validAccounts = accounts.filter(account => account != null && account !== '');
+      
+      if (validAccounts.length > 0) {
+        cleanedSelectedAccounts[platform] = validAccounts;
+        
+        // Get the real usernames from userProfile.connectedAccounts
+        selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
+          const account = accountsMap[accountId];
+          return {
+            id: accountId,
+            username: account ? account.username : 'Unknown Account'
+          };
+        });
+      }
+    });
 
-      // ✅ Enhanced post data preparation with better media handling
-      const apiPostData = {
-        content: postData.content,
-        platforms: postData.platforms,
-        selectedAccounts: cleanedSelectedAccounts,
-        images: postData.images.map((img, index) => ({
+    // Log the actual account names being sent
+    console.log('Sending account usernames:', selectedAccountsWithNames);
+
+    // Enhanced post data preparation with account information
+    const apiPostData = {
+      content: postData.content,
+      platforms: postData.platforms,
+      selectedAccounts: cleanedSelectedAccounts,
+      selectedAccountsWithNames: selectedAccountsWithNames,
+      images: postData.images.map((img, index) => ({
           url: img.url,
           altText: img.altText || img.originalName || 'Post media',
           originalName: img.originalName || img.filename || `Media ${index + 1}`,

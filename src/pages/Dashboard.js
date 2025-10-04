@@ -35,6 +35,8 @@ import './Dashboard.css';
 import { platformColors } from '../utils/constants';
 import Loader from '../components/common/Loader';
 import Logo from "../assets/img/Logo.png";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 
 
 const Dashboard = () => {
@@ -826,7 +828,9 @@ const Dashboard = () => {
                         className="account-icon"
                         style={{ backgroundColor: platformColors[account.platform] || '#ccc' }}>
                         {account.platform === 'instagram' && <Instagram size={20} />}
-                        {account.platform === 'twitter' && <Twitter size={20} />}
+                        {account.platform === 'twitter' && (
+                          <FontAwesomeIcon icon={faXTwitter} size="lg" />
+                        )}
                         {account.platform === 'facebook' && <Facebook size={20} />}
                         {account.platform === 'linkedin' && <Linkedin size={20} />}
                         {account.platform === 'youtube' && <Youtube size={20} />}
@@ -837,12 +841,12 @@ const Dashboard = () => {
                         </span>
                         <span className="username">@{account.username}</span>
                       </div>
-                      <div
+                      {/* <div
                         className={`connection-status ${account.connected ? 'connected' : 'disconnected'}`}
                       >
                         <div className="status-dot"></div>
                         <span>{account.connected ? 'Connected' : 'Disconnected'}</span>
-                      </div>
+                      </div> */}
                     </div>
                   ))
                 ) : (

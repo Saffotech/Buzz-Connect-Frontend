@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import "./PostDetailModal.css";
 import {
   X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal,
-  Bookmark, Send, Eye, Instagram, Facebook, Twitter, ChevronRightCircle,
+  Bookmark, Send, Eye, Instagram, Facebook, Twitter,Linkedin, Youtube, ChevronRightCircle,
   ChevronLeftCircle, Edit, Trash2, RefreshCw, TrendingUp, BarChart3,
   Users, ExternalLink, Copy
 } from "lucide-react";
@@ -161,6 +161,91 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         return platformPost?.accountId || null;
     }
   };
+
+  const getAccountUsernames = () => {
+  // Combine all possible username sources
+  let allAccounts = [];
+  
+  // From platformPosts (most reliable source)
+  if (post.platformPosts && post.platformPosts.length > 0) {
+    post.platformPosts.forEach(pp => {
+      if (pp.accountName || pp.accountId) {
+        allAccounts.push({
+          platform: pp.platform,
+          username: pp.accountName || `Account on ${pp.platform}`,
+          id: pp.accountId
+        });
+      }
+    });
+  }
+  
+  // From selectedAccountsWithNames
+  if (post.selectedAccountsWithNames) {
+    Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+      accounts.forEach(acc => {
+        if (acc.username || acc.id) {
+          allAccounts.push({
+            platform,
+            username: acc.username || `Account on ${platform}`,
+            id: acc.id
+          });
+        }
+      });
+    });
+  }
+  
+  // From selectedAccounts
+  if (post.selectedAccounts) {
+    Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
+      if (Array.isArray(accountIds) && accountIds.length > 0) {
+        accountIds.forEach(id => {
+          if (id) {
+            allAccounts.push({
+              platform,
+              username: `Account on ${platform}`,
+              id
+            });
+          }
+        });
+      }
+    });
+  }
+  
+  // Use accountDetails if available
+  if (accountDetails) {
+    const username = accountDetails.username ||
+      accountDetails.name ||
+      accountDetails.displayName ||
+      accountDetails.pageName ||
+      accountDetails.handle ||
+      accountDetails.accountName ||
+      accountDetails.pageUsername ||
+      accountDetails.socialUsername;
+    
+    if (username) {
+      allAccounts.push({
+        platform,
+        username,
+        id: accountDetails.id || getAccountId()
+      });
+    }
+  }
+  
+  // Deduplicate by ID
+  const uniqueAccounts = [];
+  const accountIds = new Set();
+  
+  allAccounts.forEach(account => {
+    if (account.id && !accountIds.has(account.id)) {
+      accountIds.add(account.id);
+      uniqueAccounts.push(account);
+    } else if (!account.id) {
+      uniqueAccounts.push(account);
+    }
+  });
+  
+  return uniqueAccounts;
+};
 
   // Fetch detailed analytics for the post
   const fetchPostAnalytics = async () => {
@@ -827,19 +912,6 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
             Comments ({mockComments.length})
           </button> */}
 
-
-          {/* {post.status === 'published' && (
-            <button 
-              className={`tab-btn sync-btn ${syncingAnalytics ? 'syncing' : ''}`}
-              onClick={syncPostAnalytics}
-              disabled={syncingAnalytics}
-              title="Sync analytics from social platforms"
-            >
-              <RefreshCw size={16} className={syncingAnalytics ? 'spinning' : ''} />
-              {syncingAnalytics ? 'Syncing...' : 'Sync'}
-            </button>
-          )} */}
-
         </div>
 
         {/* Modal Content */}
@@ -921,11 +993,37 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
               {/* Right Side - Content */}
               <div className="preview-right">
                 {/* Username */}
-                <div className="post-username">
-                  <span className="username">
-                    {formatUsername(getSocialMediaUsername())}
-                  </span>
-                </div>
+              <div className="post-username">
+  {getAccountUsernames().length > 0 ? (
+    getAccountUsernames().map((account, idx) => {
+      // Define icon components for each platform
+      let PlatformIcon;
+      if (account.platform === 'instagram') PlatformIcon = Instagram;
+      else if (account.platform === 'facebook') PlatformIcon = Facebook;
+      else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
+      else if (account.platform === 'youtube') PlatformIcon = Youtube;
+      else if (account.platform === 'twitter') PlatformIcon = Twitter;
+      else PlatformIcon = MessageCircle;
+      
+      // Format username with @ if needed
+      const formattedUsername = account.username.startsWith('@') 
+        ? account.username 
+        : `@${account.username}`;
+      
+      return (
+        <span key={idx} className="username">
+          {PlatformIcon && <PlatformIcon size={16} color={getPlatformStyle(account.platform).primary} />}
+          {formattedUsername}
+        </span>
+      );
+    })
+  ) : (
+    // Fallback to old method if no accounts found
+    <span className="username">
+      {formatUsername(getSocialMediaUsername())}
+    </span>
+  )}
+</div>
 
                 {/* Caption */}
                 <div className="post-caption">
