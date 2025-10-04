@@ -5,7 +5,6 @@
   margin: 0;
   min-height: 100vh;
   background-color: #f8fafc;
-  
 }
 
 /* Page Header */
@@ -15,9 +14,9 @@
   padding: 1rem 2rem;
 }
 
-.header-content-left{
+.header-content-left {
   display: flex;
-  flex-direction: column;  
+  flex-direction: column;
   align-items: flex-start !important;
   gap: 0rem !important;
 }
@@ -244,7 +243,7 @@
 }
 
 .filter-checkbox input[type="radio"]:checked + .checkmark::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
@@ -422,8 +421,9 @@
 
 .unified-post-card .post-platforms {
   display: flex;
-  gap: 8px;
+  gap: 0 !important ;
   align-items: center;
+  flex-shrink: 0; /* don’t let icons shrink */
 }
 
 .unified-post-card .platform-icon {
@@ -757,26 +757,26 @@
   }
 
   .posts-subpage {
-  height: max-content !important;
+    height: max-content !important;
   }
-  
+
   .posts-container.list .unified-post-card {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .posts-container.list .unified-post-card .post-header {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     min-width: auto;
   }
-  
+
   .posts-container.list .unified-post-card .preview-images {
     width: 100%;
     height: 150px;
   }
-  
+
   .posts-container.list .unified-post-card .post-stats {
     flex-direction: row;
     min-width: auto;
@@ -822,7 +822,14 @@
 }
 
 .platform-icon.instagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
 }
 
 .platform-icon.facebook {
@@ -1061,10 +1068,8 @@
   flex-direction: column;
   gap: 0.75rem;
 }
-
-/* Media Card */
 .media-card {
-  background: white;
+  position: relative;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
@@ -1075,8 +1080,42 @@
 
 .media-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #3b82f6;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+/* Overlay layer */
+.media-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4); /* translucent black */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1; /* below icons/text but above thumbnail */
+}
+
+.media-card:hover::before {
+  opacity: 1;
+}
+
+/* Ensure icon appears above overlay */
+.media-card .shw-exp-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  padding: 12px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.media-card:hover .shw-exp-icon {
+  opacity: 1;
 }
 
 .media-thumbnail {
@@ -1653,7 +1692,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.content-hub .modal-overlay .modal-content{
+.content-hub .modal-overlay .modal-content {
   padding: 0;
   /* flex: none; */
   /* height: 60%; */
@@ -1892,12 +1931,12 @@
 .platform-header {
   display: flex;
   align-items: center;
-  gap: .75rem;
-  padding: .75rem 1.25rem;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
   background: color-mix(in srgb, var(--platform-color, #3b82f6) 8%, white);
   color: var(--platform-color, #3b82f6);
   font-weight: 600;
-  font-size: .9rem;
+  font-size: 0.9rem;
   border-bottom: 1px solid #f1f5f9;
   text-align: end;
   margin: 0px !important;
@@ -1949,15 +1988,15 @@
 
 /* Platform-specific styles */
 .platform-post-card.instagram {
-  border-color: #E4405F;
+  border-color: #e4405f;
 }
 
 .platform-post-card.facebook {
-  border-color: #1877F2;
+  border-color: #1877f2;
 }
 
 .platform-post-card.twitter {
-  border-color: #1DA1F2;
+  border-color: #1da1f2;
 }
 
 /* Fix for post card images */
@@ -2147,8 +2186,12 @@
 
 /* Animations */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive Design */
@@ -2292,15 +2335,15 @@
   }
 
   .date-range-dropdown {
-    align-items: flex-start;   /* left align content */
-    width: 100%;               /* take full width */
-    height: auto;              /* auto height for stacked inputs */
-    margin: 8px 0 0 0;         /* move below filters */
-    padding: 8px;              /* more padding for touch UI */
+    align-items: flex-start; /* left align content */
+    width: 100%; /* take full width */
+    height: auto; /* auto height for stacked inputs */
+    margin: 8px 0 0 0; /* move below filters */
+    padding: 8px; /* more padding for touch UI */
   }
 
   .date-range-dropdown input {
-    width: 100%;               /* make inputs full width */
+    width: 100%; /* make inputs full width */
     margin-top: 4px;
   }
 
@@ -2427,7 +2470,7 @@
   gap: 2px;
 }
 
-.xyz{
+.xyz {
   height: 85% !important;
 }
 
@@ -2440,7 +2483,7 @@
 
 .delete-confirm-modal .modal-header-simple {
   padding: 16px 20px;
-  border-bottom: 1px solid #eee;
+  /* border-bottom: 1px solid #eee; */
   display: flex;
   justify-content: flex-end;
 }
@@ -2488,7 +2531,7 @@
   border-radius: 8px;
   padding: 16px;
   margin: 20px 0;
-  text-align: left;
+  text-align: center;
 }
 
 .delete-option-label {
@@ -2619,7 +2662,8 @@
 }
 
 /* Legacy selectors for backward compatibility */
-#ctinst, #ctyoutube {
+#ctinst,
+#ctyoutube {
   /* These IDs are kept for backward compatibility */
 }
 
@@ -2676,27 +2720,27 @@
 
 .post-account.instagram .account-badge {
   background-color: rgba(225, 48, 108, 0.1);
-  color: #E1306C;
+  color: #e1306c;
 }
 
 .post-account.facebook .account-badge {
   background-color: rgba(24, 119, 242, 0.1);
-  color: #1877F2;
+  color: #1877f2;
 }
 
 .post-account.linkedin .account-badge {
   background-color: rgba(10, 102, 194, 0.1);
-  color: #0A66C2;
+  color: #0a66c2;
 }
 
 .post-account.twitter .account-badge {
   background-color: rgba(29, 161, 242, 0.1);
-  color: #1DA1F2;
+  color: #1da1f2;
 }
 
 .post-account.youtube .account-badge {
   background-color: rgba(255, 0, 0, 0.1);
-  color: #FF0000;
+  color: #ff0000;
 }
 .post-account-details {
   display: flex;
@@ -2731,27 +2775,46 @@
 
 .account-badge.instagram {
   background-color: rgba(225, 48, 108, 0.1);
-  color: #E1306C;
+  color: #e1306c;
 }
 
 .account-badge.facebook {
   background-color: rgba(24, 119, 242, 0.1);
-  color: #1877F2;
+  color: #1877f2;
 }
 
 .account-badge.linkedin {
   background-color: rgba(10, 102, 194, 0.1);
-  color: #0A66C2;
+  color: #0a66c2;
 }
 
 .account-badge.twitter {
   background-color: rgba(29, 161, 242, 0.1);
-  color: #1DA1F2;
+  color: #1da1f2;
 }
 
 .account-badge.youtube {
   background-color: rgba(255, 0, 0, 0.1);
-  color: #FF0000;
+  color: #ff0000;
+}
+
+.deletion-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px; /* or use margin-right on the icon */
+}
+
+.note-delete {
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+
+  .note-delete span {
+    width: 95%;
+  }
 }
 .platform-deletion-option .deletion-option.twitter {
   color: #1da1f2;

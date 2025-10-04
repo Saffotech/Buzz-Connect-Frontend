@@ -49,7 +49,11 @@ const PlatformButton = memo(({
       <div className="platform-btn-content">
         <div className="platform-icon">
           {platform.id === "twitter" ? (
-            <FontAwesomeIcon icon={faXTwitter} size="lg" color="#000000" />
+            <FontAwesomeIcon
+              icon={faXTwitter}
+              size="lg"
+              color={isSelected ? "#ffffff" : "#000000"}   // 👈 change here
+            />
           ) : Icon ? (
             <Icon size={20} />
           ) : (

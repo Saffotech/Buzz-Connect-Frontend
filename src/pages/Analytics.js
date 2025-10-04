@@ -891,11 +891,13 @@ const Analytics = () => {
               </div>
 
               {/* Individual Account Performance */}
-              <div className="platform-performance-section">
+              {/* <div className="platform-performance-section">
                 <h3 className='pfbtn'>Individual Account Performance</h3>
                 <div className="platform-performance-grid">
                   {user?.connectedAccounts?.map((account, index) => {
-                    // Get individual account data
+
+              
+                    
                     const accountData = individualAccountsData[account.id] || {
                       posts: 0,
                       likes: 0,
@@ -945,10 +947,10 @@ const Analytics = () => {
                         </div>
                       </div>
                     );
-                  })}
+                  })} */}
 
                   {/* Show message if no accounts connected */}
-                  {(!user?.connectedAccounts || user.connectedAccounts.length === 0) && (
+                  {/* {(!user?.connectedAccounts || user.connectedAccounts.length === 0) && (
                     <div className="platform-performance-card">
                       <div className="platform-header">
                         <div className="platform-info">
@@ -984,8 +986,10 @@ const Analytics = () => {
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
+                </div> */}
+              {/* </div> */}
+
+
             </div>
           )}
 

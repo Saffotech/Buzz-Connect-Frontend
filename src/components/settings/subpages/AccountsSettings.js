@@ -890,7 +890,6 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
   );
 };
 
-// LinkedIn Personal Terms Modal Component
 const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
 
@@ -925,7 +924,9 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
           width: '90%',
           position: 'relative',
           overflow: 'hidden',
-          animation: 'slideUp 0.3s ease-out'
+          animation: 'slideUp 0.3s ease-out',
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
         {/* Close Button */}
@@ -952,42 +953,210 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
         </button>
 
         {/* Content */}
-        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
-          <h1
-            style={{
-              margin: '0 0 12px 0',
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#111827',
-              letterSpacing: '-0.025em',
-            }}
-          >
-            LinkedIn Personal Profile Terms
+        <div
+          style={{
+            padding: '32px 40px 24px 40px',
+            textAlign: 'left',
+            flex: 1,                 // <-- pushes footer to bottom
+           
+          }}
+        >
+          <h1 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: '700', color: '#111827' }}>
+            LinkedIn Personal Profile
           </h1>
 
-
-          <h4
+           <div
             style={{
-              marginTop: '24px',
-              marginBottom: '12px',
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#111827',
+              maxHeight: '60vh',
+              overflowY: 'auto',
+              fontFamily: 'Inter, Arial, sans-serif',
+              lineHeight: '1.7',
+              fontSize: '16px',
+              color: '#374151',
             }}
           >
-            9. Limitation of Liability
-          </h4>
+            <p>
+              Welcome to <strong>MGA Buzz Connect</strong> , a subscription-based social media scheduling and publishing platform operated by <strong>MGA Buzz Connect, Mumbai, Maharashtra, India.</strong>
+            </p>
 
+            <p>
+              By using our services, you agree to these Terms of Service. If you do not agree, you may not use the platform.
+            </p>
 
-          <p>
-            By connecting your LinkedIn personal profile to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
-          </p>
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              1. Services
+            </h4>
+            <p>MGA Buzz Connect allows users to schedule, publish, and manage content across social media platforms (Instagram, Facebook, LinkedIn, Twitter/X, YouTube).</p>
 
-          <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-            <li>Access your basic profile information</li>
-            <li>Post content on your behalf to your personal profile</li>
-            <li>Schedule and publish content to your LinkedIn profile</li>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                The exact features available depend on your subscription plan.
+              </li>
+              <li>
+                Services are provided through official APIs (Meta, LinkedIn, Twitter/X, YouTube).
+              </li>
+            </ul>
 
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              2. Eligibility
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>You must be at least 18 years old to use our services.</li>
+              <li>You are responsible for ensuring that your use of the platform complies with the terms and policies of each connected social media platform.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              3. Accounts
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                You must provide accurate registration details.
+              </li>
+              <li>
+                You are responsible for maintaining the confidentiality of your account credentials.
+              </li>
+              <li>
+                You must notify us immediately if you suspect unauthorized use of your account.
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              4. Subscriptions & Payments
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Our services are billed on a recurring subscription basis.</li>
+              <li>Fees are due in advance and are non-refundable unless required by law.</li>
+              <li> We may suspend or terminate service for non-payment.</li>
+              <li> We may change pricing with prior notice.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              5. Use of APIs and Credentials
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>We use secure tokens to connect with third-party platforms.</li>
+              <li>You grant us permission to publish and manage content on your behalf.</li>
+              <li>If you revoke access or if a platform limits your account, our service may not function properly.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              6. Acceptable Use
+            </h4>
+            <p>
+              You agree not to:
+            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Post unlawful, harmful, or misleading content.</li>
+              <li>Use the service to spam or harass others.</li>
+              <li>Attempt to bypass or misuse our systems.</li>
+              <li>Violate the terms of Instagram, Facebook, LinkedIn, Twitter/X, or YouTube.</li>
+            </ul>
+
+            <p>We may suspend or terminate your account if you breach these rules.</p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              7. Intellectual Property
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>All rights in the MGA Buzz Connect platform (software, design, branding) belong to MGA Buzz Connect.</li>
+              <li>You retain rights to the content you upload but grant us a license to process, store, and publish it on your behalf.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              8. Disclaimers
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Our services are provided <strong>as available.</strong></li>
+              <li>We do not guarantee uninterrupted or error-free operation.</li>
+              <li>Social media platforms may change their APIs or policies, which may affect service availability.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              9. Limitation of Liability
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>MGA Buzz Connect is not liable for loss of data, account suspensions, or actions taken by social media platforms.</li>
+              <li>Our total liability under these Terms is limited to the fees you paid in the last 30 days.</li>
 
 
           </ul>
@@ -1028,23 +1197,54 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
             <li>These Terms are governed by the laws of India.</li>
             <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
 
-          </ul>
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              12. Contact
+            </h4>
+            <p>
+              For questions, please contact us at: {' '}
+              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+            </p>
+          </div>
 
-          <h4
+          
+        </div>
+
+        {/* Footer Buttons - INSIDE modal */}
+        <div
+          style={{
+            padding: '0.65rem',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            // borderTop: '1px solid #E5E7EB',
+            backgroundColor: '#fff'
+          }}
+        >
+          <button
+            onClick={onConfirm}
             style={{
-              marginTop: '24px',
-              marginBottom: '12px',
-              fontSize: '20px',
+              padding: '12px 24px',
+              border: 'none',
+              color: 'white',
+              background: '#0A66C2',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
               fontWeight: '600',
               color: '#111827',
             }}
           >
-            12. Contact
-          </h4>
-          <p>
-            For questions, please contact us at: {' '}
-            <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
-          </p>
+            <Building size={16} />
+            Connect Business Page
+          </button>
         </div>
       </div>
 
@@ -1085,6 +1285,7 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
   );
 };
 
+
 // LinkedIn Business Terms Modal Component
 const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
@@ -1120,8 +1321,10 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
           width: '90%',
           position: 'relative',
           overflow: 'hidden',
-          animation: 'slideUp 0.3s ease-out'
-                  }}
+          animation: 'slideUp 0.3s ease-out',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
       >
         {/* Close Button */}
         <button
@@ -1147,22 +1350,21 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
         </button>
 
         {/* Content */}
-        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
-          <h1
-            style={{
-              margin: '0 0 12px 0',
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#111827',
-              letterSpacing: '-0.025em',
-            }}
-          >
-            LinkedIn Business/Company Page Terms
+        <div
+          style={{
+            padding: '32px 40px 24px 40px',
+            textAlign: 'left',
+            flex: 1,                 // <-- pushes footer to bottom
+           
+          }}
+        >
+          <h1 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: '700', color: '#111827' }}>
+            LinkedIn Business/Company Page
           </h1>
 
-          <div
+           <div
             style={{
-              maxHeight: '58vh',
+              maxHeight: '60vh',
               overflowY: 'auto',
               fontFamily: 'Inter, Arial, sans-serif',
               lineHeight: '1.7',
@@ -1171,24 +1373,11 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
             }}
           >
             <p>
-              <strong>LinkedIn Business Integration Terms:</strong> July 14, 2025
+              Welcome to <strong>MGA Buzz Connect</strong> , a subscription-based social media scheduling and publishing platform operated by <strong>MGA Buzz Connect, Mumbai, Maharashtra, India.</strong>
             </p>
 
             <p>
-              By connecting your LinkedIn business/company page to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
-            </p>
-
-            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li>Access your LinkedIn organization information</li>
-              <li>Post content on behalf of your business/company page</li>
-              <li>Schedule and publish content to your LinkedIn organization</li>
-              <li>View analytics and engagement metrics for your posts</li>
-            </ul>
-
-            <p>
-              We prioritize your privacy and data security. Your authorization helps us provide seamless LinkedIn business publishing
-              and analytics services. You can revoke this access at any time by disconnecting your LinkedIn business account from
-              our platform.
+              By using our services, you agree to these Terms of Service. If you do not agree, you may not use the platform.
             </p>
 
             <h4
@@ -1200,13 +1389,17 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              Permission Scope
+              1. Services
             </h4>
-            <p>We request the following permissions:</p>
+            <p>MGA Buzz Connect allows users to schedule, publish, and manage content across social media platforms (Instagram, Facebook, LinkedIn, Twitter/X, YouTube).</p>
+
             <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li><strong>r_organization_social</strong>: To access your organization's social media assets</li>
-              <li><strong>w_organization_social</strong>: To post and manage content on behalf of your organization</li>
-              <li><strong>r_liteprofile</strong>: To verify your admin status for the organization</li>
+              <li>
+                The exact features available depend on your subscription plan.
+              </li>
+              <li>
+                Services are provided through official APIs (Meta, LinkedIn, Twitter/X, YouTube).
+              </li>
             </ul>
 
             <h4
@@ -1218,22 +1411,219 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              Data Storage
+              2. Eligibility
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>You must be at least 18 years old to use our services.</li>
+              <li>You are responsible for ensuring that your use of the platform complies with the terms and policies of each connected social media platform.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              3. Accounts
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                You must provide accurate registration details.
+              </li>
+              <li>
+                You are responsible for maintaining the confidentiality of your account credentials.
+              </li>
+              <li>
+                You must notify us immediately if you suspect unauthorized use of your account.
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              4. Subscriptions & Payments
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Our services are billed on a recurring subscription basis.</li>
+              <li>Fees are due in advance and are non-refundable unless required by law.</li>
+              <li> We may suspend or terminate service for non-payment.</li>
+              <li> We may change pricing with prior notice.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              5. Use of APIs and Credentials
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>We use secure tokens to connect with third-party platforms.</li>
+              <li>You grant us permission to publish and manage content on your behalf.</li>
+              <li>If you revoke access or if a platform limits your account, our service may not function properly.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              6. Acceptable Use
             </h4>
             <p>
-              We securely store your LinkedIn business access tokens to facilitate content publishing.
-              Your tokens are encrypted and never shared with third parties.
+              You agree not to:
+            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Post unlawful, harmful, or misleading content.</li>
+              <li>Use the service to spam or harass others.</li>
+              <li>Attempt to bypass or misuse our systems.</li>
+              <li>Violate the terms of Instagram, Facebook, LinkedIn, Twitter/X, or YouTube.</li>
+            </ul>
+
+            <p>We may suspend or terminate your account if you breach these rules.</p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              7. Intellectual Property
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>All rights in the MGA Buzz Connect platform (software, design, branding) belong to MGA Buzz Connect.</li>
+              <li>You retain rights to the content you upload but grant us a license to process, store, and publish it on your behalf.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              8. Disclaimers
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Our services are provided <strong>as available.</strong></li>
+              <li>We do not guarantee uninterrupted or error-free operation.</li>
+              <li>Social media platforms may change their APIs or policies, which may affect service availability.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              9. Limitation of Liability
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>MGA Buzz Connect is not liable for loss of data, account suspensions, or actions taken by social media platforms.</li>
+              <li>Our total liability under these Terms is limited to the fees you paid in the last 30 days.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              10. Termination
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>You may cancel your subscription at any time via your account dashboard.</li>
+              <li>We may terminate or suspend accounts that violate these Terms or for non-payment.</li>
+              <li>Upon termination, we will delete your stored credentials and content in accordance with our Data Deletion Policy.</li>
+
+            </ul>
+
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              11.  Governing Law & Dispute Resolution
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>These Terms are governed by the laws of India.</li>
+              <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              12. Contact
+            </h4>
+            <p>
+              For questions, please contact us at: {' '}
+              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
             </p>
           </div>
+
+          
         </div>
 
-        {/* Footer Buttons */}
+        {/* Footer Buttons - INSIDE modal */}
         <div
           style={{
             padding: '0.65rem',
             display: 'flex',
             flexDirection: 'row',
-            justifyContent: 'flex-end'
+            justifyContent: 'flex-end',
+            // borderTop: '1px solid #E5E7EB',
+            backgroundColor: '#fff'
           }}
         >
           <button
@@ -1630,6 +2020,261 @@ const YouTubeTermsModal = ({ isOpen, onClose, onConfirm }) => {
 
 const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
+
+  return (
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease-out'
+      }}
+    >
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          height: '90vh',
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+          maxWidth: '1000px',
+          width: '90%',
+          position: 'relative',
+          overflow: 'hidden',
+          animation: 'slideUp 0.3s ease-out'
+        }}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '8px',
+            color: '#6B7280',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1
+          }}
+        >
+          <X size={30} />
+        </button>
+
+        {/* Content */}
+        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
+          <h1
+            style={{
+              margin: '0 0 12px 0',
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#111827',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            Twitter Integration Terms
+          </h1>
+
+          <div
+            style={{
+              maxHeight: '60vh',
+              overflowY: 'auto',
+              fontFamily: 'Inter, Arial, sans-serif',
+              lineHeight: '1.7',
+              fontSize: '16px',
+              color: '#374151',
+            }}
+          >
+            <p>
+              By connecting your Twitter account to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
+            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Access your Twitter profile information</li>
+              <li>Post tweets on your behalf</li>
+              <li>Schedule and publish content to your Twitter account</li>
+              <li>View your timeline, followers, and engagement metrics</li>
+            </ul>
+
+            <p>
+              We prioritize your privacy and data security. Your authorization helps us provide seamless Twitter publishing
+              and analytics services. You can revoke this access at any time by disconnecting your Twitter account from
+              our platform.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Permission Scope
+            </h4>
+            <p>We request the following permissions:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li><strong>Read and Write</strong>: To read your profile information and post tweets</li>
+              <li><strong>Read followers</strong>: To provide analytics about your audience</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Data Storage
+            </h4>
+            <p>
+              We securely store your Twitter access tokens to facilitate content publishing.
+              Your tokens are encrypted and never shared with third parties.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Twitter Platform Guidelines
+            </h4>
+            <p>
+              We comply with all Twitter Developer Policies and ensure our integration follows
+              Twitter's terms of service. Our platform is designed to enhance your Twitter
+              experience while respecting platform guidelines.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              Contact
+            </h4>
+            <p>
+              For questions, please contact us at: {' '}
+              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+            </p>
+          </div>
+        </div>
+
+        {/* Footer Buttons */}
+        <div
+          style={{
+            padding: '0.65rem',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end'
+          }}
+        >
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              color: 'white',
+              background: '#000000',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              minWidth: '180px'
+            }}
+          >
+            <FontAwesomeIcon icon={faSquareXTwitter} size="lg" style={{ marginRight: '5px' }} />
+            Connect with Twitter
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AccountsSettings = ({ onNotify }) => {
+  const { user, token, isLoading } = useAuth();
+  const [connectedAccounts, setConnectedAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showConnectionOptions, setShowConnectionOptions] = useState(false);
+
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    accountId: null,
+    accountUsername: '',
+    platform: ''
+  });
+
+  const [termsConditionModal, setTermsConditionModal] = useState({
+    isOpen: false,
+    connectionType: null
+  });
+
+  const [linkedInPersonalTermsModal, setLinkedInPersonalTermsModal] = useState({
+    isOpen: false
+  });
+
+  const [linkedInBusinessTermsModal, setLinkedInBusinessTermsModal] = useState({
+    isOpen: false
+  });
+
+  const [twitterTermsModal, setTwitterTermsModal] = useState({
+    isOpen: false
+  });
+
+  const [youtubeTermsModal, setYoutubeTermsModal] = useState({
+    isOpen: false
+  });
+
+  const [connectionOptionsModal, setConnectionOptionsModal] = useState({
+    isOpen: false
+  });
+
+  const handleCloseTerms = () => {
+    setTermsConditionModal({
+      isOpen: false,
+      connectionType: null
+    });
+  };
+
+  const handleCloseLinkedInPersonalTerms = () => {
+    setLinkedInPersonalTermsModal({
+      isOpen: false
+    });
+  };
 
   return (
     <div
@@ -2274,7 +2919,7 @@ const AccountsSettings = ({ onNotify }) => {
         const linkedInAuthUrl = `${apiUrl}/api/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
 
         console.log('Redirecting to LinkedIn Personal auth:', linkedInAuthUrl);
-                // Open in the same window
+        // Open in the same window
         window.location.href = linkedInAuthUrl;
       } else {
         toast.error('Failed to get user data');
@@ -2915,230 +3560,241 @@ const AccountsSettings = ({ onNotify }) => {
             </div>
           ) : (
             <>
-             {accountGroups.length > 0 ? (
-                <div className="accounts-container" style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '24px'
-                }}>
-                  {/* Group accounts by user/owner */}
-                  {/* {accountGroups.map((group, groupIndex) => renderAccountGroup(group, groupIndex))} */}
-                  
-                  {/* Alternate view: Group accounts by platform */}
-                  <div className="platform-groups" >
-                    {/* <h3 style={{
-                      fontSize: '18px',
-                      fontWeight: '600',
-                      marginBottom: '16px',
-                      color: '#111827',
-                      paddingBottom: '8px',
-                      borderBottom: '1px solid #E5E7EB'
-                    }}>
-                      Accounts by Platform
-                    </h3> */}
+              {accountGroups.length > 0 ? (
+                <div className="accounts-container">
+                  {accountGroups.map((group, groupIndex) => (
+                    <div key={groupIndex} className="account-group">
+                      <div className="accounts-grid">
+                        {group.accounts.map((account, index) => {
+                          const PlatformIcon = platformIcons[account.platform];
+                          // Determine connection type from metadata and connection properties
+                          const isDirectConnection =
+                            account.connectionType === 'direct' ||
+                            account.metadata?.connectionType === 'direct' ||
+                            account.metadata?.directConnection === true ||
+                            account.metadata?.instagramOnly === true;
 
-                    {/* Instagram Accounts */}
-                    {connectedAccounts.some(acc => acc.platform === 'instagram') && (
-                      <div className="platform-group" style={{
-                        marginBottom: '24px'
-                      }}>
-                        <div className="platform-header" style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '12px'
-                        }}>
-                          <div style={{
-                            width: '32px',
-                            height: '20px',
-                            borderRadius: '8px',
-                            backgroundColor: '#FCE7F3',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                            <Instagram size={18} color="#DB2777" />
-                          </div>
-                          <h4 style={{
-                            margin: 0,
-                            fontSize: '16px',
-                            fontWeight: '600'
-                          }}>Instagram</h4>
-                        </div>
+                          const isFullAccess =
+                            account.connectionType === 'standard' ||
+                            account.metadata?.connectionType === 'standard' ||
+                            account.metadata?.fullAccess === true;
 
-                        <div className="platform-accounts" style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
-                          gap: '16px',
-                        }}>
-                          {connectedAccounts
-                            .filter(acc => acc.platform === 'instagram')
-                            .map((account, index) => renderAccountCard(account, `ig-${index}`))}
-                        </div>
-                      </div>
-                    )}
+                          const isViewOnlyFacebook =
+                            account.platform === 'facebook' &&
+                            (account.metadata?.viewOnly === true ||
+                              account.metadata?.linkedViaInstagram === true ||
+                              account.username.includes('linked via Instagram'));
 
-                    {/* Facebook Accounts */}
-                    {connectedAccounts.some(acc => acc.platform === 'facebook' && !acc.metadata?.hideFacebookLink) && (
-                      <div className="platform-group" style={{
-                        marginBottom: '24px'
-                      }}>
-                        <div className="platform-header" style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '12px'
-                        }}>
-                          <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '8px',
-                            backgroundColor: '#DBEAFE',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                            <Facebook size={18} color="#1D4ED8" />
-                          </div>
-                          <h4 style={{
-                            margin: 0,
-                            fontSize: '16px',
-                            fontWeight: '600'
-                          }}>Facebook</h4>
-                        </div>
+                          const isLinkedInPersonal =
+                            account.platform === 'linkedin' &&
+                            (account.accountType === 'personal' ||
+                              account.metadata?.accountType === 'personal');
 
-                        <div className="platform-accounts" style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
-                          gap: '16px',
-                        }}>
-                          {connectedAccounts
-                            .filter(acc => acc.platform === 'facebook' && !acc.metadata?.hideFacebookLink)
-                            .map((account, index) => renderAccountCard(account, `fb-${index}`))}
-                        </div>
-                      </div>
-                    )}
+                          const isLinkedInBusiness =
+                            account.platform === 'linkedin' &&
+                            (account.accountType === 'business' ||
+                              account.metadata?.accountType === 'business');
 
-                    {/* LinkedIn Accounts */}
-                    {connectedAccounts.some(acc => acc.platform === 'linkedin') && (
-                      <div className="platform-group" style={{
-                        marginBottom: '24px'
-                      }}>
-                        <div className="platform-header" style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '12px'
-                        }}>
-                          <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '8px',
-                            backgroundColor: '#EEF2FF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                            <Linkedin size={18} color="#0A66C2" />
-                          </div>
-                          <h4 style={{
-                            margin: 0,
-                            fontSize: '16px',
-                            fontWeight: '600'
-                          }}>LinkedIn</h4>
-                        </div>
+                          // Skip Facebook accounts that should be hidden
+                          if (account.platform === 'facebook' &&
+                            account.metadata?.hideFacebookLink === true) {
+                            return null;
+                          }
 
-                        <div className="platform-accounts" style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
-                          gap: '16px',
-                        }}>
-                          {connectedAccounts
-                            .filter(acc => acc.platform === 'linkedin')
-                            .map((account, index) => renderAccountCard(account, `li-${index}`))}
-                        </div>
-                      </div>
-                    )}
+                          return (
+                            <div
+                              key={index}
+                              className={`account-card ${isDirectConnection ? 'instagram-only' : isFullAccess ? 'full-access' : ''} ${isViewOnlyFacebook ? 'view-only' : ''} ${account.platform === 'youtube' ? 'youtube-channel' : ''} ${isLinkedInBusiness ? 'linkedin-business' : isLinkedInPersonal ? 'linkedin-personal' : ''}`}
+                              style={{
+                                position: 'relative',
+                                border: isDirectConnection && account.platform === 'instagram'
+                                  ? '1px solid rgba(219, 39, 119, 0.3)'
+                                  : isFullAccess && account.platform === 'instagram'
+                                    ? '1px solid rgba(37, 99, 235, 0.3)'
+                                    : isViewOnlyFacebook
+                                      ? '1px dashed rgba(100, 116, 139, 0.5)'
+                                      : isLinkedInPersonal
+                                        ? '1px solid rgba(10, 102, 194, 0.3)'
+                                        : isLinkedInBusiness
+                                          ? '1px solid rgba(10, 102, 194, 0.5)'
+                                          : account.platform === 'youtube'
+                                            ? '1px solid rgba(255, 0, 0, 0.3)'
+                                            : '1px solid #e5e7eb',
+                                opacity: isViewOnlyFacebook ? 0.85 : 1
+                              }}
+                            >
+                              <div className="account-card-header">
+                                <div className="account-avatar">
+                                  {account.profilePicture ? (
+                                    <img
+                                      src={account.profilePicture}
+                                      alt={account.username}
+                                      className="avatar-img"
+                                    />
+                                  ) : (
+                                    <div className="avatar-fallback">
+                                      {(account.username || 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
 
-                    {/* Twitter Accounts */}
-                    {connectedAccounts.some(acc => acc.platform === 'twitter') && (
-                      <div className="platform-group" style={{
-                        marginBottom: '24px'
-                      }}>
-                        <div className="platform-header" style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '12px'
-                        }}>
-                          <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '8px',
-                            backgroundColor: '#E0F2FE',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                            <Twitter size={18} color="#0284C7" />
-                          </div>
-                          <h4 style={{
-                            margin: 0,
-                            fontSize: '16px',
-                            fontWeight: '600'
-                          }}>Twitter</h4>
-                        </div>
+                                  <div className={`platform-badge platform-${account.platform}`}>
+                                    {PlatformIcon ? <PlatformIcon size={12} /> : null}
+                                  </div>
+                                </div>
 
-                        <div className="platform-accounts" style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
-                          gap: '16px',
-                        }}>
-                          {connectedAccounts
-                            .filter(acc => acc.platform === 'twitter')
-                            .map((account, index) => renderAccountCard(account, `tw-${index}`))}
-                        </div>
-                      </div>
-                    )}
+                                {/* Show delete button for ALL accounts, including view-only */}
+                                <button
+                                  onClick={() => handleDisconnectClick(account)}
+                                  className="account-delete-btn"
+                                  title="Disconnect account"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
 
-                    {/* YouTube Accounts */}
-                    {connectedAccounts.some(acc => acc.platform === 'youtube') && (
-                      <div className="platform-group" style={{
-                        marginBottom: '24px'
-                      }}>
-                        <div className="platform-header" style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '12px'
-                        }}>
-                          <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '8px',
-                            backgroundColor: '#FEF2F2',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                            <Youtube size={18} color="#DC2626" />
-                          </div>
-                          <h4 style={{
-                            margin: 0,
-                            fontSize: '16px',
-                            fontWeight: '600'
-                          }}>YouTube</h4>
-                        </div>
+                              <div className="account-card-content">
+                                <h4 className="account-username">{account.username}</h4>
+                                <p className="platform-name">
+                                  {account?.platform
+                                    ? account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
+                                    : ''}
+                                  {/* {account.platform === 'instagram' && (
+                                    isDirectConnection ? (
+                                      <span className="connection-badge" style={{ color: '#db2777' }}> • Instagram Only</span>
+                                    ) : (
+                                      <span className="connection-badge" style={{ color: '#2563eb' }}> • Full Access</span>
+                                    )
+                                  )} */}
+                                  {/* {account.platform === 'facebook' && (
+                                    isViewOnlyFacebook ? (
+                                      <span className="connection-badge" style={{ color: '#64748b' }}> • View Only</span>
+                                    ) : (
+                                      <span className="connection-badge"> • Business Page</span>
+                                    )
+                                  )} */}
+                                  {account.platform === 'linkedin' && (
+                                    isLinkedInBusiness ? (
+                                      <span className="connection-badge" style={{ color: '#0A66C2' }}> • Business Page</span>
+                                    ) : (
+                                      <span className="connection-badge" style={{ color: '#0A66C2' }}> • Personal Profile</span>
+                                    )
+                                  )}
+                                  {/* {account.platform === 'youtube' && (
+                                    <span className="connection-badge" style={{ color: '#FF0000' }}> • Channel</span>
+                                  )} */}
+                                </p>
+                                <span className="followers-count">
+                                  {account.platform === 'youtube'
+                                    ? `${account.followerCount || 0} subscribers`
+                                    : account.followerCount
+                                      ? `${account.followerCount} followers`
+                                      : '-'}
+                                </span>
+                              </div>
 
-                        <div className="platform-accounts" style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
-                          gap: '16px',
-                        }}>
-                          {connectedAccounts
-                            .filter(acc => acc.platform === 'youtube')
-                            .map((account, index) => renderAccountCard(account, `yt-${index}`))}
-                        </div>
+                              <div className="account-actions">
+                                <div className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
+                                  style={{
+                                    backgroundColor: isViewOnlyFacebook ? '#f1f5f9' :
+                                      isLinkedInPersonal ? '#EEF2FF' :
+                                        isLinkedInBusiness ? '#DBEAFE' :
+                                          account.platform === 'youtube' ? '#FEF2F2' : '',
+                                    color: isViewOnlyFacebook ? '#64748b' :
+                                      isLinkedInPersonal ? '#0A66C2' :
+                                        isLinkedInBusiness ? '#0A66C2' :
+                                          account.platform === 'youtube' ? '#FF0000' : ''
+                                  }}
+                                >
+                                  <Check size={14} />
+                                  {isViewOnlyFacebook ? 'View Only' : 'Connected'}
+                                </div>
+                              </div>
+
+                              {/* Connection type badge */}
+                              {/* {account.platform === 'instagram' && (
+                                <div
+                                  className={`connection-type-badge ${isDirectConnection ? 'instagram-only' : 'full-access'}`}
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '40px',
+                                    background: isDirectConnection
+                                      ? 'linear-gradient(to right, #e11d48, #db2777)'
+                                      : 'linear-gradient(to right, #1d4ed8, #2563eb)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontWeight: '500'
+                                  }}
+                                >
+                                  {isDirectConnection ? 'Instagram Only' : 'Full Access'}
+                                </div>
+                              )} */}
+
+                              {/* LinkedIn badge */}
+                              {/* {account.platform === 'linkedin' && (
+                                <div
+                                  className="linkedin-badge"
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '40px',
+                                    background: isLinkedInBusiness
+                                      ? 'linear-gradient(to right, #1E40AF, #2563EB)'
+                                      : 'linear-gradient(to right, #0A66C2, #0077B5)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontWeight: '500'
+                                  }}
+                                >
+                                  {isLinkedInBusiness ? 'Business Page' : 'Personal Profile'}
+                                </div>
+                              )} */}
+
+                              {/* View-only badge for Facebook accounts */}
+                              {isViewOnlyFacebook && (
+                                <div
+                                  className="view-only-badge"
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '40px',
+                                    background: 'linear-gradient(to right, #64748b, #94a3b8)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontWeight: '500'
+                                  }}
+                                >
+                                  View Only
+                                </div>
+                              )}
+                              {/* YouTube badge */}
+                              {/* {account.platform === 'youtube' && (
+                                <div
+                                  className="youtube-badge"
+                                  style={{
+                                    position: 'absolute',
+                                    top: '8px',
+                                    right: '40px',
+                                    background: 'linear-gradient(to right, #FF0000, #FF5252)',
+                                    color: 'white',
+                                    fontSize: '10px',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontWeight: '500'
+                                  }}
+                                >
+                                  Channel
+                                </div>
+                              )} */}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -3257,3 +3913,6 @@ const AccountsSettings = ({ onNotify }) => {
 };
 
 export default AccountsSettings;
+
+
+
