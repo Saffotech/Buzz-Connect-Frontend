@@ -374,6 +374,7 @@ const Content = () => {
     }
   };
 
+
   // ✅ Show delete confirmation
   const showDeleteConfirmation = async (post) => {
     try {
@@ -1484,12 +1485,16 @@ const DeleteConfirmationModal = ({
   setDeleteFromInsta,
   deleteFromYouTube,
   setDeleteFromYouTube,
-  deleteFromFacebook,    // Add this new prop
-  setDeleteFromFacebook  // Add this new prop
+  deleteFromFacebook,
+  setDeleteFromFacebook,
+  deleteFromTwitter,      // Add Twitter deletion state
+  setDeleteFromTwitter,   // Add Twitter state setter
+  deleteFromLinkedin,     // Add LinkedIn deletion state
+  setDeleteFromLinkedin   // Add LinkedIn state setter
 }) => {
   if (!isOpen) return null;
 
-  // Check if this post has YouTube videos
+  // Check for published posts on each platform
   const youtubeVideos = post?.platformPosts?.filter(
     platformPost => platformPost.platform === 'youtube' && platformPost.status === 'published'
   ) || [];
