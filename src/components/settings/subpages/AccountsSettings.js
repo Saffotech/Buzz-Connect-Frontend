@@ -889,7 +889,6 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
   );
 };
 
-// LinkedIn Personal Terms Modal Component
 const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
 
@@ -924,7 +923,9 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
           width: '90%',
           position: 'relative',
           overflow: 'hidden',
-          animation: 'slideUp 0.3s ease-out'
+          animation: 'slideUp 0.3s ease-out',
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
         {/* Close Button */}
@@ -951,138 +952,311 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
         </button>
 
         {/* Content */}
-        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
-          <h1
-            style={{
-              margin: '0 0 12px 0',
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#111827',
-              letterSpacing: '-0.025em',
-            }}
-          >
-            LinkedIn Personal Profile Terms
-          </h1>
-
-
-          <h4
-            style={{
-              marginTop: '24px',
-              marginBottom: '12px',
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#111827',
-            }}
-          >
-            9. Limitation of Liability
-          </h4>
-
-
-          <p>
-            By connecting your LinkedIn personal profile to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
-          </p>
-
-          <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-            <li>Access your basic profile information</li>
-            <li>Post content on your behalf to your personal profile</li>
-            <li>Schedule and publish content to your LinkedIn profile</li>
-
-
-
-          </ul>
-
-          <h4
-            style={{
-              marginTop: '24px',
-              marginBottom: '12px',
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#111827',
-            }}
-          >
-            10. Termination
-          </h4>
-
-          <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-            <li>You may cancel your subscription at any time via your account dashboard.</li>
-            <li>We may terminate or suspend accounts that violate these Terms or for non-payment.</li>
-            <li>Upon termination, we will delete your stored credentials and content in accordance with our Data Deletion Policy.</li>
-
-          </ul>
-
-
-          <h4
-            style={{
-              marginTop: '24px',
-              marginBottom: '12px',
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#111827',
-            }}
-          >
-            11.  Governing Law & Dispute Resolution
-          </h4>
-
-          <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-            <li>These Terms are governed by the laws of India.</li>
-            <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
-
-          </ul>
-
-          <h4
-            style={{
-              marginTop: '24px',
-              marginBottom: '12px',
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#111827',
-            }}
-          >
-            12. Contact
-          </h4>
-          <p>
-            For questions, please contact us at: {' '}
-            <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
-          </p>
-        </div>
-      </div>
-
-      {/* Footer Buttons */}
-      <div
-        style={{
-          padding: '0.65rem',
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end'
-        }}
-      >
-        <button
-          onClick={onConfirm}
+        <div
           style={{
-            padding: '12px 24px',
-            border: 'none',
-            color: 'white',
-            background: '#000',
-            borderRadius: '10px',
-            cursor: 'pointer',
-            fontSize: '15px',
-            fontWeight: '600',
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-            minWidth: '180px'
+            padding: '32px 40px 24px 40px',
+            textAlign: 'left',
+            flex: 1,                 // <-- pushes footer to bottom
+           
           }}
         >
-          <User size={16} />
-          Connect Personal Profile
-        </button>
+          <h1 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: '700', color: '#111827' }}>
+            LinkedIn Personal Profile
+          </h1>
+
+           <div
+            style={{
+              maxHeight: '60vh',
+              overflowY: 'auto',
+              fontFamily: 'Inter, Arial, sans-serif',
+              lineHeight: '1.7',
+              fontSize: '16px',
+              color: '#374151',
+            }}
+          >
+            <p>
+              Welcome to <strong>MGA Buzz Connect</strong> , a subscription-based social media scheduling and publishing platform operated by <strong>MGA Buzz Connect, Mumbai, Maharashtra, India.</strong>
+            </p>
+
+            <p>
+              By using our services, you agree to these Terms of Service. If you do not agree, you may not use the platform.
+            </p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              1. Services
+            </h4>
+            <p>MGA Buzz Connect allows users to schedule, publish, and manage content across social media platforms (Instagram, Facebook, LinkedIn, Twitter/X, YouTube).</p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                The exact features available depend on your subscription plan.
+              </li>
+              <li>
+                Services are provided through official APIs (Meta, LinkedIn, Twitter/X, YouTube).
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              2. Eligibility
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>You must be at least 18 years old to use our services.</li>
+              <li>You are responsible for ensuring that your use of the platform complies with the terms and policies of each connected social media platform.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              3. Accounts
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                You must provide accurate registration details.
+              </li>
+              <li>
+                You are responsible for maintaining the confidentiality of your account credentials.
+              </li>
+              <li>
+                You must notify us immediately if you suspect unauthorized use of your account.
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              4. Subscriptions & Payments
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Our services are billed on a recurring subscription basis.</li>
+              <li>Fees are due in advance and are non-refundable unless required by law.</li>
+              <li> We may suspend or terminate service for non-payment.</li>
+              <li> We may change pricing with prior notice.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              5. Use of APIs and Credentials
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>We use secure tokens to connect with third-party platforms.</li>
+              <li>You grant us permission to publish and manage content on your behalf.</li>
+              <li>If you revoke access or if a platform limits your account, our service may not function properly.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              6. Acceptable Use
+            </h4>
+            <p>
+              You agree not to:
+            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Post unlawful, harmful, or misleading content.</li>
+              <li>Use the service to spam or harass others.</li>
+              <li>Attempt to bypass or misuse our systems.</li>
+              <li>Violate the terms of Instagram, Facebook, LinkedIn, Twitter/X, or YouTube.</li>
+            </ul>
+
+            <p>We may suspend or terminate your account if you breach these rules.</p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              7. Intellectual Property
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>All rights in the MGA Buzz Connect platform (software, design, branding) belong to MGA Buzz Connect.</li>
+              <li>You retain rights to the content you upload but grant us a license to process, store, and publish it on your behalf.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              8. Disclaimers
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Our services are provided <strong>as available.</strong></li>
+              <li>We do not guarantee uninterrupted or error-free operation.</li>
+              <li>Social media platforms may change their APIs or policies, which may affect service availability.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              9. Limitation of Liability
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>MGA Buzz Connect is not liable for loss of data, account suspensions, or actions taken by social media platforms.</li>
+              <li>Our total liability under these Terms is limited to the fees you paid in the last 30 days.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              10. Termination
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>You may cancel your subscription at any time via your account dashboard.</li>
+              <li>We may terminate or suspend accounts that violate these Terms or for non-payment.</li>
+              <li>Upon termination, we will delete your stored credentials and content in accordance with our Data Deletion Policy.</li>
+
+            </ul>
+
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              11.  Governing Law & Dispute Resolution
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>These Terms are governed by the laws of India.</li>
+              <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              12. Contact
+            </h4>
+            <p>
+              For questions, please contact us at: {' '}
+              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+            </p>
+          </div>
+
+          
+        </div>
+
+        {/* Footer Buttons - INSIDE modal */}
+        <div
+          style={{
+            padding: '0.65rem',
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            // borderTop: '1px solid #E5E7EB',
+            backgroundColor: '#fff'
+          }}
+        >
+          <button
+            onClick={onConfirm}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              color: 'white',
+              background: '#0A66C2',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontSize: '15px',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              minWidth: '180px'
+            }}
+          >
+            <Building size={16} />
+            Connect Business Page
+          </button>
+        </div>
       </div>
     </div>
   );
 };
+
 
 // LinkedIn Business Terms Modal Component
 const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
@@ -1119,8 +1293,10 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
           width: '90%',
           position: 'relative',
           overflow: 'hidden',
-          animation: 'slideUp 0.3s ease-out'
-                  }}
+          animation: 'slideUp 0.3s ease-out',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
       >
         {/* Close Button */}
         <button
@@ -1146,22 +1322,21 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
         </button>
 
         {/* Content */}
-        <div style={{ padding: '32px 40px 24px 40px', textAlign: 'left' }}>
-          <h1
-            style={{
-              margin: '0 0 12px 0',
-              fontSize: '24px',
-              fontWeight: '700',
-              color: '#111827',
-              letterSpacing: '-0.025em',
-            }}
-          >
-            LinkedIn Business/Company Page Terms
+        <div
+          style={{
+            padding: '32px 40px 24px 40px',
+            textAlign: 'left',
+            flex: 1,                 // <-- pushes footer to bottom
+           
+          }}
+        >
+          <h1 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: '700', color: '#111827' }}>
+            LinkedIn Business/Company Page
           </h1>
 
-          <div
+           <div
             style={{
-              maxHeight: '58vh',
+              maxHeight: '60vh',
               overflowY: 'auto',
               fontFamily: 'Inter, Arial, sans-serif',
               lineHeight: '1.7',
@@ -1170,24 +1345,11 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
             }}
           >
             <p>
-              <strong>LinkedIn Business Integration Terms:</strong> July 14, 2025
+              Welcome to <strong>MGA Buzz Connect</strong> , a subscription-based social media scheduling and publishing platform operated by <strong>MGA Buzz Connect, Mumbai, Maharashtra, India.</strong>
             </p>
 
             <p>
-              By connecting your LinkedIn business/company page to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
-            </p>
-
-            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li>Access your LinkedIn organization information</li>
-              <li>Post content on behalf of your business/company page</li>
-              <li>Schedule and publish content to your LinkedIn organization</li>
-              <li>View analytics and engagement metrics for your posts</li>
-            </ul>
-
-            <p>
-              We prioritize your privacy and data security. Your authorization helps us provide seamless LinkedIn business publishing
-              and analytics services. You can revoke this access at any time by disconnecting your LinkedIn business account from
-              our platform.
+              By using our services, you agree to these Terms of Service. If you do not agree, you may not use the platform.
             </p>
 
             <h4
@@ -1199,13 +1361,17 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              Permission Scope
+              1. Services
             </h4>
-            <p>We request the following permissions:</p>
+            <p>MGA Buzz Connect allows users to schedule, publish, and manage content across social media platforms (Instagram, Facebook, LinkedIn, Twitter/X, YouTube).</p>
+
             <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li><strong>r_organization_social</strong>: To access your organization's social media assets</li>
-              <li><strong>w_organization_social</strong>: To post and manage content on behalf of your organization</li>
-              <li><strong>r_liteprofile</strong>: To verify your admin status for the organization</li>
+              <li>
+                The exact features available depend on your subscription plan.
+              </li>
+              <li>
+                Services are provided through official APIs (Meta, LinkedIn, Twitter/X, YouTube).
+              </li>
             </ul>
 
             <h4
@@ -1217,22 +1383,219 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              Data Storage
+              2. Eligibility
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>You must be at least 18 years old to use our services.</li>
+              <li>You are responsible for ensuring that your use of the platform complies with the terms and policies of each connected social media platform.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              3. Accounts
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>
+                You must provide accurate registration details.
+              </li>
+              <li>
+                You are responsible for maintaining the confidentiality of your account credentials.
+              </li>
+              <li>
+                You must notify us immediately if you suspect unauthorized use of your account.
+              </li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              4. Subscriptions & Payments
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Our services are billed on a recurring subscription basis.</li>
+              <li>Fees are due in advance and are non-refundable unless required by law.</li>
+              <li> We may suspend or terminate service for non-payment.</li>
+              <li> We may change pricing with prior notice.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              5. Use of APIs and Credentials
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>We use secure tokens to connect with third-party platforms.</li>
+              <li>You grant us permission to publish and manage content on your behalf.</li>
+              <li>If you revoke access or if a platform limits your account, our service may not function properly.</li>
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              6. Acceptable Use
             </h4>
             <p>
-              We securely store your LinkedIn business access tokens to facilitate content publishing.
-              Your tokens are encrypted and never shared with third parties.
+              You agree not to:
+            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Post unlawful, harmful, or misleading content.</li>
+              <li>Use the service to spam or harass others.</li>
+              <li>Attempt to bypass or misuse our systems.</li>
+              <li>Violate the terms of Instagram, Facebook, LinkedIn, Twitter/X, or YouTube.</li>
+            </ul>
+
+            <p>We may suspend or terminate your account if you breach these rules.</p>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              7. Intellectual Property
+            </h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>All rights in the MGA Buzz Connect platform (software, design, branding) belong to MGA Buzz Connect.</li>
+              <li>You retain rights to the content you upload but grant us a license to process, store, and publish it on your behalf.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              8. Disclaimers
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>Our services are provided <strong>as available.</strong></li>
+              <li>We do not guarantee uninterrupted or error-free operation.</li>
+              <li>Social media platforms may change their APIs or policies, which may affect service availability.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              9. Limitation of Liability
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>MGA Buzz Connect is not liable for loss of data, account suspensions, or actions taken by social media platforms.</li>
+              <li>Our total liability under these Terms is limited to the fees you paid in the last 30 days.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              10. Termination
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>You may cancel your subscription at any time via your account dashboard.</li>
+              <li>We may terminate or suspend accounts that violate these Terms or for non-payment.</li>
+              <li>Upon termination, we will delete your stored credentials and content in accordance with our Data Deletion Policy.</li>
+
+            </ul>
+
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              11.  Governing Law & Dispute Resolution
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>These Terms are governed by the laws of India.</li>
+              <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
+
+            </ul>
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              12. Contact
+            </h4>
+            <p>
+              For questions, please contact us at: {' '}
+              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
             </p>
           </div>
+
+          
         </div>
 
-        {/* Footer Buttons */}
+        {/* Footer Buttons - INSIDE modal */}
         <div
           style={{
             padding: '0.65rem',
             display: 'flex',
             flexDirection: 'row',
-            justifyContent: 'flex-end'
+            justifyContent: 'flex-end',
+            // borderTop: '1px solid #E5E7EB',
+            backgroundColor: '#fff'
           }}
         >
           <button
@@ -1760,7 +2123,7 @@ const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
               We securely store your Twitter access tokens to facilitate content publishing.
               Your tokens are encrypted and never shared with third parties.
             </p>
-            
+
             <h4
               style={{
                 marginTop: '24px',
@@ -1773,8 +2136,8 @@ const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
               Twitter Platform Guidelines
             </h4>
             <p>
-              We comply with all Twitter Developer Policies and ensure our integration follows 
-              Twitter's terms of service. Our platform is designed to enhance your Twitter 
+              We comply with all Twitter Developer Policies and ensure our integration follows
+              Twitter's terms of service. Our platform is designed to enhance your Twitter
               experience while respecting platform guidelines.
             </p>
 
@@ -2265,7 +2628,7 @@ const AccountsSettings = ({ onNotify }) => {
         const linkedInAuthUrl = `${apiUrl}/api/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
 
         console.log('Redirecting to LinkedIn Personal auth:', linkedInAuthUrl);
-                // Open in the same window
+        // Open in the same window
         window.location.href = linkedInAuthUrl;
       } else {
         toast.error('Failed to get user data');
