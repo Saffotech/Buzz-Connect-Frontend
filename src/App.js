@@ -33,8 +33,8 @@ const getMetaTags = (pathname) => {
         keywords: "social media scheduler, AI content generation, multi-platform posting, Instagram scheduler, Facebook scheduler, LinkedIn scheduler, Twitter scheduler, TikTok scheduler, social media management, content planning, hashtag suggestions, social media analytics",
         ogTitle: "MGA Buzz Connect — Multi-Platform Social Media Scheduler with AI",
         ogDescription: "Schedule once. Be everywhere. Manage, schedule, and optimize posts across all major platforms with built-in AI assistance.",
-        ogUrl: "https://mgabrandbuzz.com/",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image-home.jpg"
+        ogUrl: "https://mgabuzzconnect.com/",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image-home.jpg"
       };
     case '/auth':
       return {
@@ -43,8 +43,8 @@ const getMetaTags = (pathname) => {
         keywords: "MGA Buzz Connect login, MGA Buzz Connect sign up, social media tool login, create MGA Buzz Connect account, marketing software signup",
         ogTitle: "MGA Buzz Connect - Login & Sign Up",
         ogDescription: "Access MGA Buzz Connect to manage, schedule, and analyze your social media from one place. Log in or sign up to get started.",
-        ogUrl: "https://mgabrandbuzz.com/auth",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+        ogUrl: "https://mgabuzzconnect.com/auth",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image.jpg"
       };
     case '/dashboard':
       return {
@@ -53,8 +53,8 @@ const getMetaTags = (pathname) => {
         keywords: "social media dashboard, analytics, post scheduling",
         ogTitle: "Dashboard - MGA Buzz Connect",
         ogDescription: "Manage your social media accounts from one centralized dashboard.",
-        ogUrl: "https://mgabrandbuzz.com/dashboard",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+        ogUrl: "https://mgabuzzconnect.com/dashboard",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image.jpg"
       };
     case '/planner':
       return {
@@ -63,8 +63,8 @@ const getMetaTags = (pathname) => {
         keywords: "content planning, social media scheduler, content calendar",
         ogTitle: "Content Planner - MGA Buzz Connect",
         ogDescription: "Plan and schedule your social media content efficiently.",
-        ogUrl: "https://mgabrandbuzz.com/planner",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+        ogUrl: "https://mgabuzzconnect.com/planner",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image.jpg"
       };
     case '/analytics':
       return {
@@ -73,8 +73,8 @@ const getMetaTags = (pathname) => {
         keywords: "social media analytics, performance metrics, insights",
         ogTitle: "Analytics - MGA Buzz Connect",
         ogDescription: "Get detailed insights into your social media performance.",
-        ogUrl: "https://mgabrandbuzz.com/analytics",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+        ogUrl: "https://mgabuzzconnect.com/analytics",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image.jpg"
       };
     case '/ai-assistant':
       return {
@@ -83,8 +83,8 @@ const getMetaTags = (pathname) => {
         keywords: "AI assistant, content creation, social media AI",
         ogTitle: "AI Assistant - MGA Buzz Connect",
         ogDescription: "AI-powered assistance for social media management.",
-        ogUrl: "https://mgabrandbuzz.com/ai-assistant",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+        ogUrl: "https://mgabuzzconnect.com/ai-assistant",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image.jpg"
       };
     case '/content':
       return {
@@ -93,8 +93,8 @@ const getMetaTags = (pathname) => {
         keywords: "social media content, content planner, media library, content management, social media posts",
         ogTitle: "Content Management - MGA Buzz Connect",
         ogDescription: "Plan, create, and organize your social media posts and media assets.",
-        ogUrl: "https://mgabrandbuzz.com/content",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image-content.jpg"
+        ogUrl: "https://mgabuzzconnect.com/content",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image-content.jpg"
       };
     case '/settings':
       return {
@@ -103,8 +103,8 @@ const getMetaTags = (pathname) => {
         keywords: "account settings, social media profiles, manage subscription, team management",
         ogTitle: "Account Settings - MGA Buzz Connect",
         ogDescription: "Manage your account, profiles, and subscription settings.",
-        ogUrl: "https://mgabrandbuzz.com/settings",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image-settings.jpg"
+        ogUrl: "https://mgabuzzconnect.com/settings",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image-settings.jpg"
       };
     case '/privacy-policy':
       return {
@@ -113,8 +113,8 @@ const getMetaTags = (pathname) => {
         keywords: "privacy policy, MGA Buzz Connect, data protection, social media data",
         ogTitle: "Privacy Policy - MGA Buzz Connect",
         ogDescription: "Read the Privacy Policy of MGA Buzz Connect.",
-        ogUrl: "https://mgabrandbuzz.com/privacy-policy",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+        ogUrl: "https://mgabuzzconnect.com/privacy-policy",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image.jpg"
       };
     case '/terms-of-service':
       return {
@@ -123,8 +123,8 @@ const getMetaTags = (pathname) => {
         keywords: "terms of service, MGA Buzz Connect, user agreement, terms and conditions",
         ogTitle: "Terms of Service - MGA Buzz Connect",
         ogDescription: "Terms of Service for MGA Buzz Connect platform.",
-        ogUrl: "https://mgabrandbuzz.com/terms-of-service",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+        ogUrl: "https://mgabuzzconnect.com/terms-of-service",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image.jpg"
       };
     case '/data-deletion-policy':
       return {
@@ -133,8 +133,8 @@ const getMetaTags = (pathname) => {
         keywords: "data deletion, GDPR compliance, data removal, MGA Buzz Connect",
         ogTitle: "Data Deletion Policy - MGA Buzz Connect",
         ogDescription: "Data deletion and privacy policies for MGA Buzz Connect.",
-        ogUrl: "https://mgabrandbuzz.com/data-deletion-policy",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+        ogUrl: "https://mgabuzzconnect.com/data-deletion-policy",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image.jpg"
       };
     default:
       return {
@@ -143,8 +143,8 @@ const getMetaTags = (pathname) => {
         keywords: "social media management, AI tools, content scheduling",
         ogTitle: "MGA Buzz Connect",
         ogDescription: "AI-powered social media management platform.",
-        ogUrl: "https://mgabrandbuzz.com",
-        ogImage: "https://mgabrandbuzz.com/assets/img/og-image.jpg"
+        ogUrl: "https://mgabuzzconnect.com",
+        ogImage: "https://mgabuzzconnect.com/assets/img/og-image.jpg"
       };
   }
 };
