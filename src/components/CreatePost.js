@@ -503,7 +503,7 @@ const getAvailablePlatforms = () => {
     { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
     { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
     { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
-    { id: 'twitter', name: 'Twitter', icon:() => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{marginBottom: '4px'}} />, color: "#0A66C2"} ,
+    { id: 'twitter', name: 'X', icon:() => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{marginBottom: '4px'}} />, color: "#0A66C2"} ,
   ];
 
   return allPlatforms.map(platform => {
@@ -840,17 +840,18 @@ const handleSubmit = async (e) => {
     return;
   }
 
+  // Define cleanedSelectedAccounts BEFORE the try block
+  const cleanedSelectedAccounts = {};
+  const selectedAccountsWithNames = {};
+  
   try {
-    // Clean up selectedAccounts to remove null values and empty arrays
-    const cleanedSelectedAccounts = {};
-    const selectedAccountsWithNames = {};
-
     // Extract connected accounts from user profile
     const accountsMap = {};
     userProfile?.connectedAccounts?.forEach(account => {
       accountsMap[account._id.toString()] = account;
     });
 
+    // Clean up selectedAccounts to remove null values and empty arrays
     Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
       const validAccounts = accounts.filter(account => account != null && account !== '');
       
@@ -878,114 +879,116 @@ const handleSubmit = async (e) => {
       selectedAccounts: cleanedSelectedAccounts,
       selectedAccountsWithNames: selectedAccountsWithNames,
       images: postData.images.map((img, index) => ({
-          url: img.url,
-          altText: img.altText || img.originalName || 'Post media',
-          originalName: img.originalName || img.filename || `Media ${index + 1}`,
-          displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-          filename: img.filename,
-          publicId: img.publicId || null,
-          fileType: img.fileType || 'image',
-          size: img.size,
-          dimensions: img.dimensions,
-          duration: img.duration,
-          order: index,
-          format: img.format,
-          humanSize: img.size ? formatFileSize(img.size) : null
-        })),
-        hashtags: Array.isArray(postData.hashtags)
-          ? postData.hashtags
-          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-        mentions: Array.isArray(postData.mentions)
-          ? postData.mentions
-          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-        metadata: {
-          category: postData.metadata?.category || 'other',
-          source: 'web'
-        }
-      };
-      if (postData.platforms.includes('youtube')) {
-        // For YouTube, we use content as the video title
-        apiPostData.title = postData.content.substring(0, 100);
+        url: img.url,
+        altText: img.altText || img.originalName || 'Post media',
+        originalName: img.originalName || img.filename || `Media ${index + 1}`,
+        displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+        filename: img.filename,
+        publicId: img.publicId || null,
+        fileType: img.fileType || 'image',
+        size: img.size,
+        dimensions: img.dimensions,
+        duration: img.duration,
+        order: index,
+        format: img.format,
+        humanSize: img.size ? formatFileSize(img.size) : null
+      })),
+      hashtags: Array.isArray(postData.hashtags)
+        ? postData.hashtags
+        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+      mentions: Array.isArray(postData.mentions)
+        ? postData.mentions
+        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+      metadata: {
+        category: postData.metadata?.category || 'other',
+        source: 'web'
+      }
+    };
 
-        // For YouTube, we should prioritize video files
-        const videoFiles = postData.images.filter(img =>
-          img.fileType === 'video' ||
-          img.url?.includes('video') ||
-          img.url?.includes('.mp4')
-        );
+    if (postData.platforms.includes('youtube')) {
+      // For YouTube, we use content as the video title
+      apiPostData.title = postData.content.substring(0, 100);
 
-        if (videoFiles.length > 0) {
-          // Use only the first video for YouTube
-          apiPostData.youtubeVideo = videoFiles[0];
-          console.log('YouTube video selected:', apiPostData.youtubeVideo.url);
+      // For YouTube, we should prioritize video files
+      const videoFiles = postData.images.filter(img =>
+        img.fileType === 'video' ||
+        img.url?.includes('video') ||
+        img.url?.includes('.mp4')
+      );
 
-          // If YouTube is the only platform, we might want to remove other images
-          if (postData.platforms.length === 1) {
-            apiPostData.images = [videoFiles[0]];
-          }
+      if (videoFiles.length > 0) {
+        // Use only the first video for YouTube
+        apiPostData.youtubeVideo = videoFiles[0];
+        console.log('YouTube video selected:', apiPostData.youtubeVideo.url);
+
+        // If YouTube is the only platform, we might want to remove other images
+        if (postData.platforms.length === 1) {
+          apiPostData.images = [videoFiles[0]];
         }
       }
-      // ✅ Handle scheduling vs immediate publishing
-      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-        // SCHEDULED POST
-        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-        apiPostData.scheduledDate = scheduledDateTime.toISOString();
-
-        console.log('📅 Creating scheduled post for:', scheduledDateTime.toISOString());
-        showToast('Scheduling post...', 'info');
-
-        const response = await onPostCreated(apiPostData);
-        console.log('✅ Scheduled post created:', response);
-
-        showToast('Post scheduled successfully!', 'success');
-
-      } else {
-        // PUBLISH NOW
-        console.log('🚀 Creating and publishing post immediately...');
-        showToast('Creating and publishing post...', 'info');
-
-        // Step 1: Create the post as draft
-        const createResponse = await onPostCreated(apiPostData);
-        console.log('✅ Post created:', createResponse);
-
-        if (!createResponse?.data?._id) {
-          throw new Error('Failed to create post - no ID returned');
-        }
-
-        // Step 2: Immediately publish the created post
-        const postId = createResponse.data._id;
-        console.log('📤 Publishing post with ID:', postId);
-
-        const publishResponse = await axios.post(
-          `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
-
-        console.log('✅ Publish response:', publishResponse);
-
-        if (publishResponse.data.success) {
-          showToast('Post published successfully!', 'success');
-        } else {
-          throw new Error(publishResponse.data.message || 'Publishing failed');
-        }
-      }
-
-      // Reset form on success
-      resetForm();
-      onClose();
-
-    } catch (error) {
-      console.error('❌ Failed to create/publish post:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-      setError(errorMessage);
-      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+
+    // ✅ Handle scheduling vs immediate publishing
+    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+      // SCHEDULED POST
+      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+      apiPostData.scheduledDate = scheduledDateTime.toISOString();
+
+      console.log('📅 Creating scheduled post for:', scheduledDateTime.toISOString());
+      showToast('Scheduling post...', 'info');
+
+      const response = await onPostCreated(apiPostData);
+      console.log('✅ Scheduled post created:', response);
+
+      showToast('Post scheduled successfully!', 'success');
+
+    } else {
+      // PUBLISH NOW
+      console.log('🚀 Creating and publishing post immediately...');
+      showToast('Creating and publishing post...', 'info');
+
+      // Step 1: Create the post as draft
+      const createResponse = await onPostCreated(apiPostData);
+      console.log('✅ Post created:', createResponse);
+
+      if (!createResponse?.data?._id) {
+        throw new Error('Failed to create post - no ID returned');
+      }
+
+      // Step 2: Immediately publish the created post
+      const postId = createResponse.data._id;
+      console.log('📤 Publishing post with ID:', postId);
+
+      const publishResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      console.log('✅ Publish response:', publishResponse);
+
+      if (publishResponse.data.success) {
+        showToast('Post published successfully!', 'success');
+      } else {
+        throw new Error(publishResponse.data.message || 'Publishing failed');
+      }
+    }
+
+    // Reset form on success
+    resetForm();
+    onClose();
+
+  } catch (error) {
+    console.error('❌ Failed to create/publish post:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+    setError(errorMessage);
+    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const resetForm = () => {
     setPostData({
@@ -1525,7 +1528,7 @@ const handleSubmit = async (e) => {
                               <div className="suggestion-platforms">
                                 {suggestion.platforms.map(platform => {
                                   const Icon = platform === 'instagram' ? Instagram :
-                                    platform === 'twitter' ? Twitter :
+                                    platform === 'twitter' ? X :
                                       platform === 'linkedin' ? Linkedin : Facebook;
                                   return <Icon key={platform} size={14} />;
                                 })}

@@ -827,10 +827,10 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
-                Twitter
+                X
               </div>
               <div style={{ color: '#6B7280', fontSize: '14px' }}>
-                Connect your Twitter (X) account
+                Connect your Twitter/X account
               </div>
             </div>
           </button>
@@ -2091,7 +2091,7 @@ const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
               letterSpacing: '-0.025em',
             }}
           >
-            Twitter Integration Terms
+            X Integration Terms
           </h1>
 
           <div
@@ -2105,19 +2105,19 @@ const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
             }}
           >
             <p>
-              By connecting your Twitter account to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
+              By connecting your X account to <strong>MGA Buzz Connect</strong>, you authorize our platform to:
             </p>
 
             <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-              <li>Access your Twitter profile information</li>
+              <li>Access your X profile information</li>
               <li>Post tweets on your behalf</li>
-              <li>Schedule and publish content to your Twitter account</li>
+              <li>Schedule and publish content to your X account</li>
               <li>View your timeline, followers, and engagement metrics</li>
             </ul>
 
             <p>
-              We prioritize your privacy and data security. Your authorization helps us provide seamless Twitter publishing
-              and analytics services. You can revoke this access at any time by disconnecting your Twitter account from
+              We prioritize your privacy and data security. Your authorization helps us provide seamless X publishing
+              and analytics services. You can revoke this access at any time by disconnecting your X account from
               our platform.
             </p>
 
@@ -2150,7 +2150,7 @@ const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
               Data Storage
             </h4>
             <p>
-              We securely store your Twitter access tokens to facilitate content publishing.
+              We securely store your Twitter/X access tokens to facilitate content publishing.
               Your tokens are encrypted and never shared with third parties.
             </p>
 
@@ -2163,11 +2163,11 @@ const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              Twitter Platform Guidelines
+              X Platform Guidelines
             </h4>
             <p>
-              We comply with all Twitter Developer Policies and ensure our integration follows
-              Twitter's terms of service. Our platform is designed to enhance your Twitter
+              We comply with all Twitter/X Developer Policies and ensure our integration follows
+              Twitter's terms of service. Our platform is designed to enhance your Twitter/X
               experience while respecting platform guidelines.
             </p>
 
@@ -2219,7 +2219,7 @@ const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
             }}
           >
             <FontAwesomeIcon icon={faSquareXTwitter} size="lg" style={{ marginRight: '5px' }} />
-            Connect with Twitter
+            Connect with X
           </button>
         </div>
       </div>
@@ -2732,7 +2732,7 @@ const AccountsSettings = ({ onNotify }) => {
         // Construct the Twitter auth URL
         const twitterAuthUrl = `${apiUrl}/api/auth/x?userId=${freshUser._id}&token=${storedToken}`;
 
-        console.log('Redirecting to Twitter auth:', twitterAuthUrl);
+        // console.log('Redirecting to Twitter auth:', twitterAuthUrl);
 
         // Open in the same window
         window.location.href = twitterAuthUrl;
@@ -2740,7 +2740,7 @@ const AccountsSettings = ({ onNotify }) => {
         toast.error('Failed to get user data');
       }
     } catch (err) {
-      console.error('Error starting Twitter auth:', err);
+      // console.error('Error starting Twitter auth:', err);
       toast.error('Failed to start Twitter authentication');
     }
 
