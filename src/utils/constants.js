@@ -111,7 +111,7 @@ export const PLATFORM_CONFIGS = {
 
  export const platformColors = {
   instagram: '#E1306C',
-  twitter: '#1DA1F2',
+  twitter: '#000',
   facebook: '#1877F2',
   linkedin: '#0A66C2',
   youtube: '#FF0000'

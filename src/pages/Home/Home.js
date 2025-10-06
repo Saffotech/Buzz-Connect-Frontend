@@ -282,7 +282,7 @@ const Home = () => {
     setModalContent({ title: '', content: null });
   };
 
-  const showToast = (message, type = 'info') => {
+  const showToast = (message, type = 'info' , duration = 3000) => {
     const id = Date.now();
     const toast = { id, message, type };
     
@@ -824,9 +824,10 @@ const Home = () => {
 
               <div className="mga-link-group">
                 <h4>Legal</h4>
-                <a href="#mga-privacy">Privacy</a>
-                <a href="#mga-terms">Terms</a>
-                <a href="#mga-security">Security</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/terms-of-service">Terms of Service</a>
+                <a href="/testing-instructions">Testing Instructions</a>
+                <a href="/data-deletion-policy">Data Deletion</a>
               </div>
             </div>
           </div>
