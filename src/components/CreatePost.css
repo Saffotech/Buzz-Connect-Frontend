@@ -1457,7 +1457,7 @@
   z-index: 2147483647 !important; /* Maximum possible z-index */
   min-width: 300px;
   max-width: 400px;
-  animation: toastSlideIn 0.6s ease-out;
+  animation: toastSlideIn 0.6s ease forwards, toastSlideOut 1s ease forwards 5s;
   font-weight: 500;
   pointer-events: auto;
 }
@@ -1516,6 +1516,17 @@
   to {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+@keyframes toastSlideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
   }
 }
 
