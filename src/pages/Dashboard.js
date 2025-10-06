@@ -39,6 +39,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 
 
+
 const Dashboard = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [notification, setNotification] = useState(null);
@@ -603,7 +604,7 @@ const Dashboard = () => {
                           <span className="platform-name  platform-name-db">
                             {primary === 'instagram' && <Instagram size={16} />}
                             {primary === 'facebook' && <Facebook size={16} />}
-                            {primary === 'twitter' && <Twitter size={16} />}
+                            {primary === 'twitter' &&  <FontAwesomeIcon icon={faXTwitter} size="lg" />}
                             {primary === 'linkedin' && <Linkedin size={16} />}
                             {primary === 'youtube' && <Youtube size={16} />}
                             {primary}
