@@ -924,37 +924,41 @@ const handleSubmit = async (e) => {
     console.log('Sending account usernames:', selectedAccountsWithNames);
 
     // Enhanced post data preparation with account information
-    const apiPostData = {
-      content: postData.content,
-      platforms: postData.platforms,
-      selectedAccounts: cleanedSelectedAccounts,
-      selectedAccountsWithNames: selectedAccountsWithNames,
-      images: postData.images.map((img, index) => ({
-        url: img.url,
-        altText: img.altText || img.originalName || 'Post media',
-        originalName: img.originalName || img.filename || `Media ${index + 1}`,
-        displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-        filename: img.filename,
-        publicId: img.publicId || null,
-        fileType: img.fileType || 'image',
-        size: img.size,
-        dimensions: img.dimensions,
-        duration: img.duration,
-        order: index,
-        format: img.format,
-        humanSize: img.size ? formatFileSize(img.size) : null
-      })),
-      hashtags: Array.isArray(postData.hashtags)
-        ? postData.hashtags
-        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-      mentions: Array.isArray(postData.mentions)
-        ? postData.mentions
-        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-      metadata: {
-        category: postData.metadata?.category || 'other',
-        source: 'web'
-      }
-    };
+   const apiPostData = {
+  content: postData.content,
+  platforms: postData.platforms,
+  selectedAccounts: cleanedSelectedAccounts,
+  // Remove selectedAccountsWithNames from the API request
+  // We'll log it for debugging but not send it to avoid validation errors
+  images: postData.images.map((img, index) => ({
+    url: img.url,
+    altText: img.altText || img.originalName || 'Post media',
+    originalName: img.originalName || img.filename || `Media ${index + 1}`,
+    displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+    filename: img.filename,
+    publicId: img.publicId || null,
+    fileType: img.fileType || 'image',
+    size: img.size,
+    dimensions: img.dimensions,
+    duration: img.duration,
+    order: index,
+    format: img.format,
+    humanSize: img.size ? formatFileSize(img.size) : null
+  })),
+  hashtags: Array.isArray(postData.hashtags)
+    ? postData.hashtags
+    : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+  mentions: Array.isArray(postData.mentions)
+    ? postData.mentions
+    : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+  metadata: {
+    category: postData.metadata?.category || 'other',
+    source: 'web'
+  }
+};
+
+// Log the account usernames for debugging, but don't send in API request
+console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
 
     if (postData.platforms.includes('youtube')) {
       // For YouTube, we use content as the video title

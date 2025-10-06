@@ -1149,18 +1149,66 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
   };
 
   // New function to get account usernames
-  const getAccountDetails = () => {
-    if (post.platformPosts && post.platformPosts.length > 0) {
-      // Return array of account details from platformPosts
-      return post.platformPosts.map(pp => ({
-        platform: pp.platform,
-        username: pp.accountName || 'Unknown',
-        id: pp.accountId
-      }));
-    }
+const getAccountDetails = () => {
+  const details = [];
 
-    return [];
-  };
+  // 1. First try to get data from platformPosts (most reliable source)
+  if (post.platformPosts && post.platformPosts.length > 0) {
+    post.platformPosts.forEach(pp => {
+      if (pp.accountName || pp.accountId) {
+        details.push({
+          platform: pp.platform,
+          username: pp.accountName || `Account on ${pp.platform}`,
+          id: pp.accountId
+        });
+      }
+    });
+
+    // Return early if we found details here
+    if (details.length > 0) {
+      return details;
+    }
+  }
+
+  // 2. Try to get from selectedAccountsWithNames (next best source)
+  if (post.selectedAccountsWithNames) {
+    Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+      accounts.forEach(acc => {
+        if (acc && acc.username) {
+          details.push({
+            platform,
+            username: acc.username,
+            id: acc.id
+          });
+        }
+      });
+    });
+
+    // Return early if we found details here
+    if (details.length > 0) {
+      return details;
+    }
+  }
+
+  // 3. Last resort: try to extract from selectedAccounts
+  if (post.selectedAccounts) {
+    Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
+      if (Array.isArray(accountIds)) {
+        accountIds.forEach(id => {
+          if (id) {
+            details.push({
+              platform,
+              username: `Account on ${platform}`,
+              id
+            });
+          }
+        });
+      }
+    });
+  }
+
+  return details;
+};
 
   const accountDetails = getAccountDetails();
 
@@ -1487,27 +1535,27 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
         </div>
 
         {/* Account Names Display */}
-        {accountDetails.length > 0 && (
-          <div className="post-account-details">
-            {accountDetails.map((account, idx) => {
-              // Define icon components for each platform
-              let PlatformIcon;
-              if (account.platform === 'instagram') PlatformIcon = Instagram;
-              else if (account.platform === 'facebook') PlatformIcon = Facebook;
-              else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
-              else if (account.platform === 'youtube') PlatformIcon = Youtube;
-              else if (account.platform === 'twitter') PlatformIcon = Twitter;
-              else PlatformIcon = null;
+       {accountDetails.length > 0 && (
+  <div className="post-account-details">
+    {accountDetails.map((account, idx) => {
+      // Define icon components for each platform
+      let PlatformIcon;
+      if (account.platform === 'instagram') PlatformIcon = Instagram;
+      else if (account.platform === 'facebook') PlatformIcon = Facebook;
+      else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
+      else if (account.platform === 'youtube') PlatformIcon = Youtube;
+      else if (account.platform === 'twitter') PlatformIcon = Twitter;
+      else PlatformIcon = null;
 
-              return (
-                <span key={idx} className={`account-badge ${account.platform}`}>
-                  {PlatformIcon && <PlatformIcon size={12} />}
-                  {account.username}
-                </span>
-              );
-            })}
-          </div>
-        )}
+      return (
+        <span key={idx} className={`account-badge ${account.platform}`}>
+          {PlatformIcon && <PlatformIcon size={12} />}
+          {account.username}
+        </span>
+      );
+    })}
+  </div>
+)}
 
         {/* Existing hashtags section */}
         <div className="preview-hashtags">
