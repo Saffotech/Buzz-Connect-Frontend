@@ -373,7 +373,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   };
 
   // Toast notification function
-  const showToast = (message, type = 'info') => {
+  const showToast = (message, type = 'info' ,duration = 5000) => {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `

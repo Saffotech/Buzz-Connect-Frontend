@@ -282,7 +282,7 @@ const Home = () => {
     setModalContent({ title: '', content: null });
   };
 
-  const showToast = (message, type = 'info') => {
+  const showToast = (message, type = 'info' , duration = 3000) => {
     const id = Date.now();
     const toast = { id, message, type };
     
