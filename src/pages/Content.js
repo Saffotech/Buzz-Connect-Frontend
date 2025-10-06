@@ -54,6 +54,7 @@ const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [notification, setNotification] = useState(null);
 
+
   const connectedPlatforms = ["instagram", "facebook", "linkedin"];
   const platformLabels = {
     instagram: "Instagram",
@@ -716,6 +717,7 @@ const Content = () => {
         setDeleteFromFacebook={setDeleteFromFacebook}
         deleteFromYouTube={deleteFromYouTube}
         setDeleteFromYouTube={setDeleteFromYouTube}
+        postStatus={postToDelete?.status || 'draft'}
         isOpen={showDeleteConfirm}
         post={postToDelete}
         onClose={() => {
@@ -773,6 +775,56 @@ const PostsSubPage = ({
     });
     setSearchQuery('');
   };
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [spinning, setSpinning] = useState(false);
+  const [postsError, setPostsError] = useState(null); // 👈 ADD THIS
+
+  const handleRefreshPosts = () => {
+    // Call your API or refresh logic here
+    fetchPosts(true); // optional, triggers actual refetch
+
+    // Trigger spinning animation
+    setSpinning(true);
+
+    // Stop spinning after 3 seconds (or after fetch completes)
+    setTimeout(() => {
+      setSpinning(false);
+    }, 3000);
+  };
+
+  const fetchPosts = async (refresh = false) => {
+    if (!refresh && posts.length > 0) return; // Avoid unnecessary refetches
+
+    setPostsLoading(true);
+    setPostsError(null);
+
+    try {
+      const response = await apiClient.request('/api/posts', {
+        method: 'GET',
+        params: { page: 1, limit: 50 }
+      });
+
+      if (response.success && response.data) {
+        const fetchedPosts = response.data.posts || [];
+        setPosts(fetchedPosts);
+
+        const now = new Date();
+        const upcoming = fetchedPosts.filter(post =>
+          post.status === 'scheduled' && new Date(post.scheduledDate) > now
+        );
+        setUpcomingPosts(upcoming);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
+      setPostsError(error.message || 'Failed to fetch posts');
+    } finally {
+      setPostsLoading(false);
+    }
+  };
+
+
 
   const allPosts = posts;
 
@@ -975,6 +1027,17 @@ const PostsSubPage = ({
           <button className="clear-filters-btn" onClick={clearFilters}>
             Clear All
           </button>
+
+          <button
+            className="refresh-btn"
+            onClick={handleRefreshPosts}
+            disabled={postsLoading}
+          >
+            <RefreshCw size={16} className={spinning ? "spinning" : ""} />
+            <span style={{ marginLeft: "6px" }}></span>
+          </button>
+
+
         </div>
 
         <div className="control-actions">
@@ -1476,6 +1539,7 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
 
 // Delete Confirmation Modal Component
 const DeleteConfirmationModal = ({
+  postStatus,
   isOpen,
   onClose,
   onConfirm,
@@ -1540,49 +1604,59 @@ const DeleteConfirmationModal = ({
             Are you sure you want to delete this post?
           </p>
 
-          <div className="delete-extra-options">
-            {hasInstagramPost && (
-              <div className="platform-deletion-option">
-                <div className="deletion-option instagram disabled">
-                  <span className="deletion-label">
-                    <Instagram size={16} />
-                    Instagram
-                  </span>
-                  <div className="deletion-note">
-                    <small className="note-delete">
-                      <InfoIcon size={22} />
-                      <span>
-                        Instagram posts must be deleted manually through the Instagram
-                        app due to API limitations.
-                      </span>
-                    </small>
+          {(hasFacebookPost || hasInstagramPost || hasYouTubePost) ? 
+
+            <div className="delete-extra-options">
+              {hasInstagramPost && (
+                <div className="platform-deletion-option">
+                  <div className="deletion-option instagram disabled">
+                    <span className="deletion-label">
+                      <Instagram size={16} />
+                      Instagram
+                    </span>
+                    <div className="deletion-note">
+                      <small className="note-delete">
+                        <InfoIcon size={22} />
+                        <span>
+                          Instagram posts must be deleted manually through the Instagram
+                          app due to API limitations.
+                        </span>
+                      </small>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {hasFacebookPost && (
-              <label id='ctfb'>
-                <input
-                  type="checkbox"
-                  checked={deleteFromFacebook}
-                  onChange={(e) => setDeleteFromFacebook(e.target.checked)}
-                />
-                &nbsp; Delete from Facebook also
-              </label>
-            )}
 
-            {hasYouTubePost && (
-              <label id='ctyoutube'>
-                <input
-                  type="checkbox"
-                  checked={deleteFromYouTube}
-                  onChange={(e) => setDeleteFromYouTube(e.target.checked)}
-                />
-                &nbsp; Delete from YouTube also {youtubeVideos.length > 1 ? `(${youtubeVideos.length} videos)` : ''}
-              </label>
-            )}
-          </div>
+              {hasFacebookPost && (
+                <div className="fb button">
+                  <label id='ctfb'>
+                    <input
+                      type="checkbox"
+                      checked={deleteFromFacebook}
+                      onChange={(e) => setDeleteFromFacebook(e.target.checked)}
+                    />
+                    &nbsp; Delete from Facebook also
+                  </label>
+                </div>
+              )}
+
+              {hasYouTubePost && (
+                <div className="yt button">
+                  <label id='ctyoutube'>
+                    <input
+                      type="checkbox"
+                      checked={deleteFromYouTube}
+                      onChange={(e) => setDeleteFromYouTube(e.target.checked)}
+                    />
+                    &nbsp; Delete from YouTube also {youtubeVideos.length > 1 ? `(${youtubeVideos.length} videos)` : ''}
+                  </label>
+                </div>
+              )}
+            </div>
+            : ''
+
+          }
         </div>
 
         <div className="modal-footer">
