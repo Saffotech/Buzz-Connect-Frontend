@@ -420,122 +420,147 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     }, 3000);
   };
 
-  const handlePostAgain = async () => {
-    setShowDropdown(false);
-    setIsPosting(true);
+const handlePostAgain = async () => {
+  setShowDropdown(false);
+  setIsPosting(true);
 
-    try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+  try {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
 
-      if (!token) {
-        throw new Error('Authentication token not found');
-      }
-
-      console.log('=== FIXED POST AGAIN ===');
-      console.log('Original post object:', post);
-
-      const cleanedSelectedAccounts = {};
-      if (post.selectedAccounts) {
-        Object.entries(post.selectedAccounts).forEach(([platform, accounts]) => {
-          if (accounts && Array.isArray(accounts)) {
-            const validAccounts = accounts.filter(account => account != null && account !== '');
-            if (validAccounts.length > 0) {
-              cleanedSelectedAccounts[platform] = validAccounts;
-            }
-          }
-        });
-      }
-
-      const processedImages = (post.images || []).map(img => ({
-        url: img.url,
-        altText: img.altText || 'Post image',
-        publicId: img.publicId || null
-      }));
-
-      const processedHashtags = Array.isArray(post.hashtags)
-        ? post.hashtags
-        : [];
-
-      const processedMentions = Array.isArray(post.mentions)
-        ? post.mentions
-        : [];
-
-      const postData = {
-        content: post.content || '',
-        platforms: post.platforms || [],
-        selectedAccounts: cleanedSelectedAccounts,
-        images: processedImages,
-        hashtags: processedHashtags,
-        mentions: processedMentions,
-        metadata: {
-          category: post.metadata?.category || 'other'
-        }
-      };
-
-      console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
-
-      showToast('Creating new post...', 'info');
-
-      const createResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
-        postData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      console.log('Post created successfully:', createResponse.data);
-
-      if (!createResponse?.data?.data?._id && !createResponse?.data?._id) {
-        throw new Error('Failed to create post - no ID returned');
-      }
-
-      const postId = createResponse.data.data?._id || createResponse.data._id;
-      console.log('Publishing post with ID:', postId);
-
-      showToast('Publishing post...', 'info');
-
-      const publishResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      console.log('Publish response:', publishResponse.data);
-
-      showToast('Post published again successfully!', 'success');
-
-      if (onPostAgain && typeof onPostAgain === 'function') {
-        onPostAgain(post, publishResponse.data);
-      }
-
-      setTimeout(() => {
-        handleClose();
-      }, 1500);
-
-    } catch (error) {
-      console.error('Failed to post again:', error);
-
-      console.error('=== DETAILED ERROR INFO ===');
-      console.error('Status:', error.response?.status);
-      console.error('Error Data:', error.response?.data);
-      console.error('Error Message:', error.message);
-
-      if (error.response?.data?.errors) {
-        console.error('Validation Errors:', error.response.data.errors);
-      }
-
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-      showToast(`Failed to publish post: ${errorMessage}`, 'error');
-    } finally {
-      setIsPosting(false);
+    if (!token) {
+      throw new Error('Authentication token not found');
     }
-  };
+
+    console.log('=== FIXED POST AGAIN ===');
+    console.log('Original post object:', post);
+
+    const cleanedSelectedAccounts = {};
+    if (post.selectedAccounts) {
+      Object.entries(post.selectedAccounts).forEach(([platform, accounts]) => {
+        if (accounts && Array.isArray(accounts)) {
+          const validAccounts = accounts.filter(account => account != null && account !== '');
+          if (validAccounts.length > 0) {
+            cleanedSelectedAccounts[platform] = validAccounts;
+          }
+        }
+      });
+    }
+
+    // Create selectedAccountsWithNames for logging but don't send to API
+    const selectedAccountsWithNames = {};
+    if (post.selectedAccountsWithNames) {
+      // Use existing data if available
+      Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+        if (accounts && Array.isArray(accounts)) {
+          const validAccounts = accounts.filter(account => account && account.id);
+          if (validAccounts.length > 0) {
+            selectedAccountsWithNames[platform] = validAccounts;
+          }
+        }
+      });
+    } else if (cleanedSelectedAccounts) {
+      // Generate basic version if not available
+      Object.entries(cleanedSelectedAccounts).forEach(([platform, accountIds]) => {
+        selectedAccountsWithNames[platform] = accountIds.map(id => ({
+          id: id,
+          username: 'Unknown Account'
+        }));
+      });
+    }
+
+    const processedImages = (post.images || []).map(img => ({
+      url: img.url,
+      altText: img.altText || 'Post image',
+      publicId: img.publicId || null
+    }));
+
+    const processedHashtags = Array.isArray(post.hashtags)
+      ? post.hashtags
+      : [];
+
+    const processedMentions = Array.isArray(post.mentions)
+      ? post.mentions
+      : [];
+
+    const postData = {
+      content: post.content || '',
+      platforms: post.platforms || [],
+      selectedAccounts: cleanedSelectedAccounts,
+      // Don't include selectedAccountsWithNames in the request to avoid validation errors
+      images: processedImages,
+      hashtags: processedHashtags,
+      mentions: processedMentions,
+      metadata: {
+        category: post.metadata?.category || 'other'
+      }
+    };
+
+    // Log the account usernames but don't send in API request
+    console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
+    console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
+
+    showToast('Creating new post...', 'info');
+
+    const createResponse = await axios.post(
+      `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
+      postData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('Post created successfully:', createResponse.data);
+
+    if (!createResponse?.data?.data?._id && !createResponse?.data?._id) {
+      throw new Error('Failed to create post - no ID returned');
+    }
+
+    const postId = createResponse.data.data?._id || createResponse.data._id;
+    console.log('Publishing post with ID:', postId);
+
+    showToast('Publishing post...', 'info');
+
+    const publishResponse = await axios.post(
+      `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    console.log('Publish response:', publishResponse.data);
+
+    showToast('Post published again successfully!', 'success');
+
+    if (onPostAgain && typeof onPostAgain === 'function') {
+      onPostAgain(post, publishResponse.data);
+    }
+
+    setTimeout(() => {
+      handleClose();
+    }, 1500);
+
+  } catch (error) {
+    console.error('Failed to post again:', error);
+
+    console.error('=== DETAILED ERROR INFO ===');
+    console.error('Status:', error.response?.status);
+    console.error('Error Data:', error.response?.data);
+    console.error('Error Message:', error.message);
+
+    if (error.response?.data?.errors) {
+      console.error('Validation Errors:', error.response.data.errors);
+    }
+
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+    showToast(`Failed to publish post: ${errorMessage}`, 'error');
+  } finally {
+    setIsPosting(false);
+  }
+};
 
   // Handle copy link
   const handleCopyLink = () => {
