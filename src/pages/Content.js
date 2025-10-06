@@ -1616,10 +1616,9 @@ const DeleteConfirmationModal = ({
                     </span>
                     <div className="deletion-note">
                       <small className="note-delete">
-                        <InfoIcon size={22} />
+                        <InfoIcon size={16} />
                         <span>
-                          Instagram posts must be deleted manually through the Instagram
-                          app due to API limitations.
+                          Instagram posts must be deleted manually through the Instagram app due to API limitations.
                         </span>
                       </small>
                     </div>
@@ -1629,8 +1628,8 @@ const DeleteConfirmationModal = ({
 
 
               {hasFacebookPost && (
-                <div className="fb button">
-                  <label id='ctfb'>
+                <div className="fb button ctfb">
+                  <label id=''>
                     <input
                       type="checkbox"
                       checked={deleteFromFacebook}
@@ -1642,8 +1641,8 @@ const DeleteConfirmationModal = ({
               )}
 
               {hasYouTubePost && (
-                <div className="yt button">
-                  <label id='ctyoutube'>
+                <div className="yt button ctyoutube">
+                  <label id=''>
                     <input
                       type="checkbox"
                       checked={deleteFromYouTube}

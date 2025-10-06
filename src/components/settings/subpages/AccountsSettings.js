@@ -690,6 +690,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
               <Instagram size={20} style={{ color: '#E91E63', position: 'absolute', right: '3px', top: '15px' }} />
               <Facebook size={20} style={{ color: '#1877F2', position: 'absolute', left: '0', top: '15px' }} />
             </div>
+            
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
                 Instagram + Facebook Pages

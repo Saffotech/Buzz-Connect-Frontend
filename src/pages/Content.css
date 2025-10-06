@@ -2161,8 +2161,8 @@
 }
 
 .warning-description {
-  color: #6b7280;
-  font-size: 0.875rem;
+  color: #000;
+  font-size: 1.075rem;
   line-height: 1.5;
   margin: 0;
   margin-top: 2rem;
@@ -2518,8 +2518,8 @@
 }
 
 .warning-description {
-  color: #64748b;
-  font-size: 14px;
+  /* color: #64748b; */
+  /* font-size: 14px; */
   line-height: 1.6;
   margin-bottom: 24px;
 }
@@ -2801,14 +2801,22 @@
 .deletion-label {
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* justify-content: center; */
   gap: 6px; /* or use margin-right on the icon */
 }
 
 .note-delete {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start !important;
+  border-bottom: 1px solid #ccc; /* grey line */
+  padding-bottom: 8px; /* space between text and line */
+  margin-bottom: 8px; /* space after line */
+  font-size: 12px;
+  color: #000;
+  text-align: start;
+  gap: 6px;
 }
+
 
 @media (max-width: 768px) {
 
@@ -2875,4 +2883,15 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.ctfb {
+ display: flex;
+ justify-self: flex-start !important;
+ gap: 6px; /* or use margin-right on the icon */
+}
+
+.ctyoutube{
+  display: flex;
+ justify-self: flex-start !important;
 }
