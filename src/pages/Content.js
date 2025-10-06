@@ -1149,7 +1149,7 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
   };
 
   // New function to get account usernames
- const getAccountDetails = () => {
+const getAccountDetails = () => {
   const details = [];
 
   // 1. First try to get data from platformPosts (most reliable source)

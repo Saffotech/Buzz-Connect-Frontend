@@ -232,6 +232,69 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     return uniqueAccounts;
   };
 
+  // Updated getAccountDetails function
+  const getAccountDetails = () => {
+    const details = [];
+
+    // 1. First try to get data from platformPosts (most reliable source)
+    if (post.platformPosts && post.platformPosts.length > 0) {
+      post.platformPosts.forEach(pp => {
+        if (pp.accountName || pp.accountId) {
+          details.push({
+            platform: pp.platform,
+            username: pp.accountName || `Account on ${pp.platform}`,
+            id: pp.accountId
+          });
+        }
+      });
+
+      // Return early if we found details here
+      if (details.length > 0) {
+        return details;
+      }
+    }
+
+    // 2. Try to get from selectedAccountsWithNames (next best source)
+    if (post.selectedAccountsWithNames) {
+      Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+        accounts.forEach(acc => {
+          if (acc && acc.username) {
+            details.push({
+              platform,
+              username: acc.username,
+              id: acc.id
+            });
+          }
+        });
+      });
+
+      // Return early if we found details here
+      if (details.length > 0) {
+        return details;
+      }
+    }
+
+    // 3. Last resort: try to extract from selectedAccounts
+    if (post.selectedAccounts) {
+      Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
+        if (Array.isArray(accountIds)) {
+          accountIds.forEach(id => {
+            if (id) {
+              details.push({
+                platform,
+                username: `Account on ${platform}`,
+                id
+              });
+            }
+          });
+        }
+      });
+    }
+
+    return details;
+  };
+
+
   // Fetch detailed analytics for the post
   const fetchPostAnalytics = async () => {
     if (!post?._id && !post?.id) return;
@@ -479,6 +542,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
           category: post.metadata?.category || 'other'
         }
       };
+
 
       // Log the account usernames but don't send in API request
       console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
