@@ -18,7 +18,8 @@ import {
   Sidebar,
   GripVertical,
   MoreHorizontal,
-  Image
+  Image,
+  Globe
 } from 'lucide-react';
 import CreatePost from '../components/CreatePost';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
@@ -693,7 +694,7 @@ const WeekView = ({ currentDate, posts, filters, onDateClick, onPostClick, loadi
   );
 };
 
-// ✅ Updated PostIconsDisplay Component
+// ✅ Updated PostIconsDisplay Component with global icon
 const PostIconsDisplay = ({ posts, onPostClick }) => {
   // Group posts by time slots for better organization
   const groupPostsByTime = (posts) => {
@@ -724,24 +725,6 @@ const PostIconsDisplay = ({ posts, onPostClick }) => {
     return grouped;
   };
 
-  const getPlatformIcon = (platform) => {
-    switch (platform?.toLowerCase()) {
-      case 'instagram': return Instagram;
-      case 'twitter': return Twitter;
-      case 'facebook': return Facebook;
-      default: return Instagram;
-    }
-  };
-
-  const getPlatformColor = (platform) => {
-    const colorMap = {
-      instagram: '#E4405F',
-      twitter: '#1DA1F2',
-      facebook: '#1877F2',
-    };
-    return colorMap[platform?.toLowerCase()] || '#E4405F';
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'scheduled': return '#F59E0B';
@@ -750,18 +733,6 @@ const PostIconsDisplay = ({ posts, onPostClick }) => {
       case 'draft': return '#6B7280';
       default: return '#6B7280';
     }
-  };
-
-  // ✅ Create a platform-specific post object
-  const createPlatformPost = (originalPost, platform) => {
-    return {
-      ...originalPost,
-      selectedPlatform: platform, // Add the selected platform
-      platformSpecificData: {
-        platform: platform,
-        originalPost: originalPost
-      }
-    };
   };
 
   if (!posts || posts.length === 0) {
@@ -774,41 +745,38 @@ const PostIconsDisplay = ({ posts, onPostClick }) => {
     <div className="post-icons-container">
       {Object.entries(groupedPosts).map(([time, timePosts]) => (
         <div key={time} className="time-slot">
-          {/* <div className="time-label">{time}</div> */}
           <div className="post-icons-row">
             {timePosts.map(post => {
+              // Get all platforms for this post
               const platforms = post.platforms && post.platforms.length > 0 
                 ? post.platforms 
                 : ['instagram'];
               
-              return platforms.map(platform => {
-                const PlatformIcon = getPlatformIcon(platform);
-                const platformColor = getPlatformColor(platform);
-                const statusColor = getStatusColor(post.status);
-                
-                // ✅ Create platform-specific post for the click handler
-                const platformPost = createPlatformPost(post, platform);
-                
-                return (
-                  <div
-                    key={`${post._id || post.id}-${platform}`}
-                    className="social-icon-wrapper"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // ✅ Pass the platform-specific post object
-                      onPostClick(platformPost);
-                    }}
-                    style={{
-                      '--platform-color': platformColor,
-                      '--status-color': statusColor
-                    }}
-                    title={`${platform.toUpperCase()} - ${post.status} - ${post.content.substring(0, 50)}...`}
-                  >
-                    <PlatformIcon size={16} />
-                    <div className="status-indicator"></div>
-                  </div>
-                );
-              });
+              const statusColor = getStatusColor(post.status);
+              
+              // Count of platforms to show in the badge
+              const platformCount = platforms.length;
+              
+              return (
+                <div
+                  key={post._id || post.id}
+                  className="unified-social-icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPostClick(post);
+                  }}
+                  style={{
+                    '--status-color': statusColor
+                  }}
+                  title={`${post.status.charAt(0).toUpperCase() + post.status.slice(1)} - ${post.content.substring(0, 50)}...`}
+                >
+                  <Globe size={16} />
+                  {platformCount > 1 && (
+                    <span className="platform-count">{platformCount}</span>
+                  )}
+                  <div className="status-indicator"></div>
+                </div>
+              );
             })}
           </div>
         </div>
@@ -816,5 +784,6 @@ const PostIconsDisplay = ({ posts, onPostClick }) => {
     </div>
   );
 };
+
 
 export default Planner;
