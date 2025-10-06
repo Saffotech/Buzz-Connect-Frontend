@@ -608,8 +608,13 @@
   --platform-background: #1877f2;
 }
 
+.platform-preview.linkedin .platform-header {
+  --platform-background: #0a66c2;
+}
+
+
 .platform-preview.twitter .platform-header {
-  --platform-background: #1da1f2;
+  --platform-background: #000000;
 }
 
 .platform-header {
@@ -1452,7 +1457,7 @@
   z-index: 2147483647 !important; /* Maximum possible z-index */
   min-width: 300px;
   max-width: 400px;
-  animation: toastSlideIn 0.3s ease-out;
+  animation: toastSlideIn 0.6s ease-out;
   font-weight: 500;
   pointer-events: auto;
 }

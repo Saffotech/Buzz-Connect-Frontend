@@ -511,7 +511,7 @@ const Analytics = () => {
   };
 
   // Toast notification function
-  const showToast = (message, type = 'info') => {
+  const showToast = (message, type = 'info' , duration = 3000) => {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `<div class="toast-content"><span>${message}</span></div>`;

@@ -867,7 +867,7 @@
 
 
 .account-item.twitter .account-icon {
-  background: linear-gradient(135deg, #1da1f2, #0d8bd9);
+  background: #000;
 }
 
 
@@ -884,6 +884,7 @@
   color: white !important;
   font-size: 0.875rem;
   text-transform: capitalize;
+  justify-content: end;
 }
 
 

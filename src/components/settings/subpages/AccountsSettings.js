@@ -8,6 +8,8 @@ import '../../../assets/styles/AccountsSettings.css';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquareXTwitter } from '@fortawesome/free-brands-svg-icons';
+import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
+
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platform }) => {
@@ -958,14 +960,14 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
             padding: '32px 40px 24px 40px',
             textAlign: 'left',
             flex: 1,                 // <-- pushes footer to bottom
-           
+
           }}
         >
           <h1 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: '700', color: '#111827' }}>
             LinkedIn Personal Profile
           </h1>
 
-           <div
+          <div
             style={{
               maxHeight: '60vh',
               overflowY: 'auto',
@@ -1159,43 +1161,7 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
               <li>Our total liability under these Terms is limited to the fees you paid in the last 30 days.</li>
 
 
-          </ul>
-
-          <h4
-            style={{
-              marginTop: '24px',
-              marginBottom: '12px',
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#111827',
-            }}
-          >
-            10. Termination
-          </h4>
-
-          <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-            <li>You may cancel your subscription at any time via your account dashboard.</li>
-            <li>We may terminate or suspend accounts that violate these Terms or for non-payment.</li>
-            <li>Upon termination, we will delete your stored credentials and content in accordance with our Data Deletion Policy.</li>
-
-          </ul>
-
-
-          <h4
-            style={{
-              marginTop: '24px',
-              marginBottom: '12px',
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#111827',
-            }}
-          >
-            11.  Governing Law & Dispute Resolution
-          </h4>
-
-          <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
-            <li>These Terms are governed by the laws of India.</li>
-            <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
+            </ul>
 
             <h4
               style={{
@@ -1206,17 +1172,53 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
                 color: '#111827',
               }}
             >
-              12. Contact
+              10. Termination
             </h4>
-            <p>
-              For questions, please contact us at: {' '}
-              <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
-            </p>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>You may cancel your subscription at any time via your account dashboard.</li>
+              <li>We may terminate or suspend accounts that violate these Terms or for non-payment.</li>
+              <li>Upon termination, we will delete your stored credentials and content in accordance with our Data Deletion Policy.</li>
+
+            </ul>
+
+
+            <h4
+              style={{
+                marginTop: '24px',
+                marginBottom: '12px',
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#111827',
+              }}
+            >
+              11.  Governing Law & Dispute Resolution
+            </h4>
+
+            <ul style={{ paddingLeft: '20px', marginBottom: '16px' }}>
+              <li>These Terms are governed by the laws of India.</li>
+              <li>Courts in Mumbai, Maharashtra shall have exclusive jurisdiction over disputes.</li>
+
+              <h4
+                style={{
+                  marginTop: '24px',
+                  marginBottom: '12px',
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  color: '#111827',
+                }}
+              >
+                12. Contact
+              </h4>
+              <p>
+                For questions, please contact us at: {' '}
+                <a href="mailto:mgabrandbuzz@gmail.com">mgabrandbuzz@gmail.com</a>
+              </p>
             </ul>
           </div>
-            
 
-          
+
+
         </div>
 
         {/* Footer Buttons - INSIDE modal */}
@@ -1241,48 +1243,23 @@ const LinkedInPersonalTermsModal = ({ isOpen, onClose, onConfirm }) => {
               cursor: 'pointer',
               fontSize: '15px',
               fontWeight: '600',
-              color: '#111827',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              minWidth: '180px'
             }}
           >
             <Building size={16} />
-            Connect Business Page
+            Connect Personal Profile
           </button>
         </div>
       </div>
 
       {/* Footer Buttons */}
-      <div
-        style={{
-          padding: '0.65rem',
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'flex-end'
-        }}
-      >
-        <button
-          onClick={onConfirm}
-          style={{
-            padding: '12px 24px',
-            border: 'none',
-            color: 'white',
-            background: '#000',
-            borderRadius: '10px',
-            cursor: 'pointer',
-            fontSize: '15px',
-            fontWeight: '600',
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-            minWidth: '180px'
-          }}
-        >
-          <User size={16} />
-          Connect Personal Profile
-        </button>
-      </div>
+
     </div>
   );
 };
@@ -1357,14 +1334,14 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
             padding: '32px 40px 24px 40px',
             textAlign: 'left',
             flex: 1,                 // <-- pushes footer to bottom
-           
+
           }}
         >
           <h1 style={{ margin: '0 0 12px 0', fontSize: '24px', fontWeight: '700', color: '#111827' }}>
             LinkedIn Business/Company Page
           </h1>
 
-           <div
+          <div
             style={{
               maxHeight: '60vh',
               overflowY: 'auto',
@@ -1614,7 +1591,7 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
             </p>
           </div>
 
-          
+
         </div>
 
         {/* Footer Buttons - INSIDE modal */}
@@ -2299,7 +2276,7 @@ const AccountsSettings = ({ onNotify }) => {
 
   const platformIcons = {
     instagram: Instagram,
-    twitter: Twitter,
+    twitter: <FontAwesomeIcon icon={faSquareXTwitter} size="xl" color="#000000" />,
     facebook: Facebook,
     linkedin: Linkedin,
     youtube: Youtube
@@ -2974,10 +2951,10 @@ const AccountsSettings = ({ onNotify }) => {
   // Format follower count with appropriate label
   const formatFollowerCount = (count, platform) => {
     if (!count || count === 0) return "-";
-    
-    const formattedCount = typeof count === 'number' ? 
+
+    const formattedCount = typeof count === 'number' ?
       new Intl.NumberFormat().format(count) : count;
-    
+
     if (platform === 'youtube') {
       return `${formattedCount} subscribers`;
     } else {
@@ -2988,7 +2965,7 @@ const AccountsSettings = ({ onNotify }) => {
   // Render an account card with consistent styling
   const renderAccountCard = (account, index) => {
     const PlatformIcon = platformIcons[account.platform];
-    
+
     // Determine account type and connection properties
     const isDirectConnection =
       account.connectionType === 'direct' ||
@@ -3022,10 +2999,10 @@ const AccountsSettings = ({ onNotify }) => {
       account.metadata?.hideFacebookLink === true) {
       return null;
     }
-    
+
     // Get appropriate accent color for the platform
     const platformColor = platformColors[account.platform] || "#64748B";
-    
+
     // Define account-specific styling
     const cardStyle = {
       position: 'relative',
@@ -3109,7 +3086,7 @@ const AccountsSettings = ({ onNotify }) => {
             )}
 
             <div className={`platform-badge platform-${account.platform}`} style={{
-                          position: 'absolute',
+              position: 'absolute',
               bottom: '-2px',
               right: '-2px',
               backgroundColor: platformColor,
@@ -3121,7 +3098,7 @@ const AccountsSettings = ({ onNotify }) => {
               justifyContent: 'center',
               border: '2px solid white',
             }}>
-              {PlatformIcon ? <PlatformIcon size={12} color="white" /> : null}
+              {account.platform == 'twitter' ? PlatformIcon : PlatformIcon ? <PlatformIcon size={12} color="white" /> : null}
             </div>
           </div>
 
@@ -3166,7 +3143,7 @@ const AccountsSettings = ({ onNotify }) => {
           }}>
             {account.username}
           </h4>
-          
+
           <p className="platform-name" style={{
             margin: '0 0 6px 0',
             fontSize: '14px',
@@ -3178,7 +3155,7 @@ const AccountsSettings = ({ onNotify }) => {
             {account?.platform
               ? account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
               : ''}
-      
+
             {account.platform === 'linkedin' && (
               isLinkedInBusiness ? (
                 <span className="connection-badge" style={{ color: '#0A66C2' }}> • Business Page</span>
@@ -3187,7 +3164,7 @@ const AccountsSettings = ({ onNotify }) => {
               )
             )}
           </p>
-          
+
           <span className="followers-count" style={{
             fontSize: '14px',
             color: '#4B5563',
@@ -3200,7 +3177,7 @@ const AccountsSettings = ({ onNotify }) => {
         <div className="account-actions" style={{
           marginTop: '4px'
         }}>
-          <div 
+          <div
             className={`connection-status ${isViewOnlyFacebook ? 'view-only' : 'connected'}`}
             style={{
               display: 'flex',
@@ -3214,17 +3191,17 @@ const AccountsSettings = ({ onNotify }) => {
               backgroundColor: isViewOnlyFacebook ? '#f1f5f9' :
                 isLinkedInPersonal ? '#EEF2FF' :
                   isLinkedInBusiness ? '#DBEAFE' :
-                    account.platform === 'youtube' ? '#FEF2F2' : 
-                    account.platform === 'instagram' ? '#FCE7F3' :
-                    account.platform === 'facebook' ? '#DBEAFE' :
-                    account.platform === 'twitter' ? '#E0F2FE' : '#F3F4F6',
+                    account.platform === 'youtube' ? '#FEF2F2' :
+                      account.platform === 'instagram' ? '#FCE7F3' :
+                        account.platform === 'facebook' ? '#DBEAFE' :
+                          account.platform === 'twitter' ? '#E0F2FE' : '#F3F4F6',
               color: isViewOnlyFacebook ? '#64748b' :
                 isLinkedInPersonal ? '#0A66C2' :
                   isLinkedInBusiness ? '#0A66C2' :
                     account.platform === 'youtube' ? '#DC2626' :
-                    account.platform === 'instagram' ? '#DB2777' :
-                    account.platform === 'facebook' ? '#1D4ED8' :
-                    account.platform === 'twitter' ? '#0284C7' : '#374151'
+                      account.platform === 'instagram' ? '#DB2777' :
+                        account.platform === 'facebook' ? '#1D4ED8' :
+                          account.platform === 'twitter' ? '#0284C7' : '#374151'
             }}
           >
             <Check size={14} />
@@ -3262,11 +3239,11 @@ const AccountsSettings = ({ onNotify }) => {
         {Object.keys(platformGroups).map(platform => {
           const accounts = platformGroups[platform];
           if (accounts.length === 0) return null;
-          
+
           const platformColor = platformColors[platform];
           const PlatformIcon = platformIcons[platform];
           const platformLabel = platformLabels[platform];
-          
+
           return (
             <div key={platform} className={`platform-group ${platform}`} style={{
               marginBottom: '24px',
@@ -3294,10 +3271,10 @@ const AccountsSettings = ({ onNotify }) => {
                   marginRight: '12px',
                   border: `1px solid ${platformColor}30`
                 }}>
-                  {PlatformIcon && <PlatformIcon size={18} color={platformColor} />}
+                  {platform == 'twitter' ? PlatformIcon : PlatformIcon && <PlatformIcon size={18} color={platformColor} />}
                 </div>
                 <div>
-                  <h3 style={{ 
+                  <h3 style={{
                     margin: '0',
                     fontSize: '18px',
                     fontWeight: '600',
@@ -3307,7 +3284,7 @@ const AccountsSettings = ({ onNotify }) => {
                   }}>
                     {platformLabel}
                     <span style={{
-                      marginLeft: '8px', 
+                      marginLeft: '8px',
                       backgroundColor: `${platformColor}15`,
                       color: platformColor,
                       fontSize: '14px',
@@ -3320,7 +3297,7 @@ const AccountsSettings = ({ onNotify }) => {
                   </h3>
                 </div>
               </div>
-              
+
               <div className="platform-accounts" style={{
                 padding: '16px',
                 display: 'grid',
@@ -3395,13 +3372,13 @@ const AccountsSettings = ({ onNotify }) => {
                   </button>
                 </div>
               )}
-              
+
               <button
                 onClick={handleConnectSocial}
                 className="btn-primary"
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: '8px',
                   backgroundColor: '#3B82F6',
                   color: 'white',
@@ -3469,7 +3446,7 @@ const AccountsSettings = ({ onNotify }) => {
                             <User size={16} style={{ color: '#6B7280' }} />
                             {group.name}
                             <span style={{
-                              marginLeft: '4px', 
+                              marginLeft: '4px',
                               backgroundColor: '#F3F4F6',
                               color: '#6B7280',
                               fontSize: '12px',
@@ -3481,7 +3458,7 @@ const AccountsSettings = ({ onNotify }) => {
                             </span>
                           </h3>
                         </div>
-                        
+
                         <div className="accounts-grid" style={{
                           display: 'grid',
                           gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
@@ -3517,7 +3494,7 @@ const AccountsSettings = ({ onNotify }) => {
                   <p style={{ maxWidth: '400px', margin: '0 auto', color: '#6B7280', fontSize: '15px', lineHeight: '1.5' }}>
                     Connect your social media accounts to start posting and managing your content across platforms
                   </p>
-                  
+
                   <button
                     onClick={handleConnectSocial}
                     style={{

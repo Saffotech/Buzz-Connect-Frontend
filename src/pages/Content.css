@@ -2620,7 +2620,7 @@
 /* Modal Footer */
 .delete-confirm-modal .modal-footer {
   padding: 16px 24px;
-  border-top: 1px solid #eee;
+  /* border-top: 1px solid #eee; */
 }
 
 .delete-confirm-modal .btnflx {
@@ -2838,4 +2838,41 @@
 .account-badge.linkedin {
   background-color: rgba(0, 119, 181, 0.1);
   color: #0077b5;
+}
+
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #3b82f6;
+  border: 1px solid #3b82f6;; /* blue-700 */
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background-color: #1d4ed8; /* darker blue */
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Spinning animation */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
