@@ -738,7 +738,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
           </button>
 
           {/* LinkedIn Business Profile Connection Option */}
-          <button
+          {/* <button
             onClick={onSelectLinkedInBusiness}
             style={{
               display: 'flex',
@@ -780,7 +780,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
                 Connect your LinkedIn business or company page
               </div>
             </div>
-          </button>
+          </button> */}
 
           <button
             onClick={onSelectTwitter}
@@ -3327,8 +3327,25 @@ const AccountsSettings = ({ onNotify }) => {
               gap: '16px'
             }}>
 
+      
               {/* View toggle buttons */}
               {connectedAccounts.length > 0 && (
+                <div className="view-toggle">
+                  <button
+                    className={`toggle-btn ${!groupByUser ? 'active' : ''}`}
+                    onClick={() => setGroupByUser(false)}
+                  >
+                    Group by Platform
+                  </button>
+                  <button
+                    className={`toggle-btn ${groupByUser ? 'active' : ''}`}
+                    onClick={() => setGroupByUser(true)}
+                  >
+                    Group by User
+                  </button>
+                </div>
+              )}
+              {/* {connectedAccounts.length > 0 && (
                 <div className="view-toggle" style={{
                   display: 'flex',
                   borderRadius: '8px',
@@ -3364,7 +3381,7 @@ const AccountsSettings = ({ onNotify }) => {
                     Group by User
                   </button>
                 </div>
-              )}
+              )} */}
 
               <button
                 onClick={handleConnectSocial}

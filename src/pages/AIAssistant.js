@@ -387,13 +387,13 @@ const SuggestionCard = ({ suggestion, onCopy, onUse }) => {
           <Copy size={16} />
           Copy
         </button>
-        <button
+        {/* <button
           onClick={() => onUse(suggestion)}
           className="action-button primary"
         >
           <Send size={16} />
           Use Content
-        </button>
+        </button> */}
       </div>
     </div>
   );
