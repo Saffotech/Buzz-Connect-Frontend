@@ -2,10 +2,6 @@
    ACCOUNTS SETTINGS - PROFESSIONAL UI
    =================================== */
 
-
-
-
-
 /* Platform Groups */
 .platform-groups {
   display: flex;
@@ -16,10 +12,6 @@
 .platform-group {
   animation: slideInUp 0.5s ease-out;
 }
-
-
-
-
 
 .platform-header h4 {
   margin: 0;
@@ -48,13 +40,17 @@
 }
 
 .account-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--platform-color, #64748b), transparent);
+  background: linear-gradient(
+    90deg,
+    var(--platform-color, #64748b),
+    transparent
+  );
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -66,7 +62,7 @@
 .account-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.12),
-              0 8px 16px -4px rgba(0, 0, 0, 0.08);
+    0 8px 16px -4px rgba(0, 0, 0, 0.08);
 }
 
 /* View Only Card Style */
@@ -241,23 +237,23 @@
 
 /* Platform-Specific Styles */
 .account-card.instagram {
-  --platform-color: #E1306C;
+  --platform-color: #e1306c;
 }
 
 .account-card.facebook {
-  --platform-color: #1877F2;
+  --platform-color: #1877f2;
 }
 
 .account-card.linkedin {
-  --platform-color: #0A66C2;
+  --platform-color: #0a66c2;
 }
 
 .account-card.twitter {
-  --platform-color: #1DA1F2;
+  --platform-color: #1da1f2;
 }
 
 .account-card.youtube {
-  --platform-color: #FF0000;
+  --platform-color: #ff0000;
 }
 
 /* Responsive Design */
@@ -356,7 +352,8 @@
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -365,7 +362,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -396,3 +394,16 @@ html {
 .accounts-container::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
 }
+
+.apflx {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background-color: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dbeafe;
+  position: relative;
+}
+

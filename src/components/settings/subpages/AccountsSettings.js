@@ -625,6 +625,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
     }}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
         backgroundColor: 'white',
+        position: 'relative',
         borderRadius: '16px',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         width: '90%',
@@ -676,21 +677,11 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
               e.currentTarget.style.borderColor = '#e5e7eb';
             }}
           >
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '10px',
-              backgroundColor: '#EFF6FF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #DBEAFE',
-              position: 'relative'
-            }}>
-              <Instagram size={20} style={{ color: '#E91E63', position: 'absolute', right: '3px', top: '15px' }} />
-              <Facebook size={20} style={{ color: '#1877F2', position: 'absolute', left: '0', top: '15px' }} />
+            <div className='apflx'>
+              <span> <Instagram size={20} style={{ color: '#E91E63' }} />  </span>
+              <span> <Facebook size={20} style={{ color: '#1877F2' }} /> </span>
             </div>
-            
+
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontWeight: '600', fontSize: '18px', marginBottom: '4px' }}>
                 Instagram + Facebook Pages
@@ -1293,7 +1284,7 @@ const LinkedInBusinessTermsModal = ({ isOpen, onClose, onConfirm }) => {
         className="modal-content"
         onClick={(e) => e.stopPropagation()}
         style={{
-          height: '90vh',
+          height: '95vh',
           backgroundColor: 'white',
           borderRadius: '16px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
@@ -3335,6 +3326,7 @@ const AccountsSettings = ({ onNotify }) => {
               alignItems: 'center',
               gap: '16px'
             }}>
+
               {/* View toggle buttons */}
               {connectedAccounts.length > 0 && (
                 <div className="view-toggle" style={{

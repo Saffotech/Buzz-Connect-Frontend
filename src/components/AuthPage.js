@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Form from "./common/form/Form";
 import "./AuthPage.css";
+import PrivacyPolicy from "../pages/Legal/PrivacyPolicy"; // create this component
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
