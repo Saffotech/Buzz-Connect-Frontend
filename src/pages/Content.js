@@ -1677,8 +1677,8 @@ const DeleteConfirmationModal = ({
 
 
               {hasFacebookPost && (
-                <div className="fb button">
-                  <label id='ctfb'>
+                <div className="fb button ctfb"> 
+                  <label id=''>
                     <input
                       type="checkbox"
                       checked={deleteFromFacebook}
@@ -1690,8 +1690,8 @@ const DeleteConfirmationModal = ({
               )}
 
               {hasYouTubePost && (
-                <div className="yt button">
-                  <label id='ctyoutube'>
+                <div className="yt button ctyoutube">
+                  <label id=''>
                     <input
                       type="checkbox"
                       checked={deleteFromYouTube}

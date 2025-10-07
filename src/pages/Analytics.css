@@ -241,6 +241,8 @@
   padding-bottom: 1rem;
 }
 
+
+
 .analytics-section h2 {
   font-size: 1.25rem;
   font-weight: 600;
@@ -899,7 +901,7 @@ background: linear-gradient(135deg, #fde047, #facc15);
     /* padding: 1rem; */
   }
 
-  .fltr{
+  .fltr, .analytics-section{
     padding: 0;
   }
 

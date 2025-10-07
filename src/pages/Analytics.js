@@ -1722,7 +1722,7 @@ const Analytics = () => {
           )}
 
           {/* Top Performing Post - Show in all sections */}
-          {analyticsData.topPost && (
+          {/* {analyticsData.topPost && (
             <div className="analytics-section">
               <h2>Top Performing Post</h2>
               <div className="top-post-container">
@@ -1773,7 +1773,7 @@ const Analytics = () => {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
         </div>
       )}
     </div>
