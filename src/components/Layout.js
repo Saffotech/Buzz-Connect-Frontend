@@ -997,7 +997,7 @@ const Layout = ({ children }) => {
                   {showLegalDropdown && (
                     <div className="nested-menu">
                       <a
-                        href="https://mgabuzzconnect.com/terms-of-service"
+                        href="terms-of-service"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="dropdown-item"
@@ -1005,7 +1005,7 @@ const Layout = ({ children }) => {
                         Terms of Service
                       </a>
                       <a
-                        href="https://mgabuzzconnect.com/privacy-policy"
+                        href="privacy-policy"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="dropdown-item"
@@ -1013,7 +1013,7 @@ const Layout = ({ children }) => {
                         Privacy Policy
                       </a>
                       <a
-                        href="https://mgabuzzconnect.com/testing-instructions"
+                        href="testing-instructions"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="dropdown-item"
@@ -1021,7 +1021,7 @@ const Layout = ({ children }) => {
                         Testing Instructions
                       </a>
                       <a
-                        href="https://mgabuzzconnect.com/data-deletion-policy"
+                        href="data-deletion-policy"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="dropdown-item"

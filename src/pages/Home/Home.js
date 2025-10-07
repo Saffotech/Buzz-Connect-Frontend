@@ -52,7 +52,7 @@ const Home = () => {
     {
       icon: Users,
       title: 'Team Collaboration',
-      description: 'Invite teammates, role-based access, approval workflows. Perfect for agencies and growing teams managing multiple accounts.'
+      description: 'Coming Soon................'
     }
   ];
 
@@ -61,7 +61,7 @@ const Home = () => {
       icon: Link,
       title: 'Connect your accounts',
       description: 'Secure OAuth connections to all major platforms. Set up once, schedule everywhere.',
-      number: '01'
+number: '01'
     },
     {
       icon: PenTool,
