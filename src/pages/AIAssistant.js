@@ -152,17 +152,16 @@ const generateContent = async () => {
   if (!formData.prompt.trim()) return;
 
   setLoading(true);
-      setError(null); // Clear previous errors
-
+  setError(null); // Clear previous errors
 
   try {
-      const response = await apiClient.generateContent({
-        prompt: formData.prompt,
-        tone: formData.tone,
-        platforms: formData.platforms,
-        includeHashtags: formData.includeHashtags,
-        maxLength: formData.maxLength
-      });
+    const response = await apiClient.generateContent({
+      prompt: formData.prompt,
+      tone: formData.tone,
+      platforms: formData.platforms,
+      includeHashtags: formData.includeHashtags,
+      maxLength: formData.maxLength
+    });
 
     console.log('API Response:', response);
 
@@ -171,15 +170,34 @@ const generateContent = async () => {
       
       // Handle the response structure from your API
       Object.entries(response.data.content).forEach(([platform, data]) => {
-        suggestions.push({
-          id: `${platform}-${Date.now()}`,
-          content: data.content,
-          hashtags: extractHashtagsFromContent(data.content), // Extract hashtags from content
-          tone: response.data.options.tone,
-          characterCount: data.characterCount,
-          platform: platform,
-          withinLimit: data.withinLimit
-        });
+        if (platform === 'youtube') {
+          // Special handling for YouTube content
+          suggestions.push({
+            id: `${platform}-${Date.now()}`,
+            content: data.description || '', // Use description as content
+            title: data.title || '',
+            hashtags: data.tags ? data.tags.map(tag => `#${tag.replace(/\s+/g, '')}`) : [], // Convert tags to hashtags
+            tone: response.data.options.tone,
+            characterCount: data.characterCount || 0,
+            platform: platform,
+            withinLimit: data.withinLimit || true,
+            isYouTube: true, // Flag to identify YouTube content
+            videoIdeas: data.videoIdeas || [],
+            callToAction: data.callToAction || ''
+          });
+        } else {
+          // Regular handling for other platforms
+          suggestions.push({
+            id: `${platform}-${Date.now()}`,
+            content: data.content,
+            hashtags: extractHashtagsFromContent(data.content),
+            tone: response.data.options.tone,
+            characterCount: data.characterCount,
+            platform: platform,
+            withinLimit: data.withinLimit,
+            isYouTube: false
+          });
+        }
       });
 
       setSuggestions(suggestions);
@@ -188,15 +206,34 @@ const generateContent = async () => {
     }
 
   } catch (error) {
-      console.error('Error generating content:', error);
-      setError(error.message || 'Failed to generate content. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    console.error('Error generating content:', error);
+    setError(error.message || 'Failed to generate content. Please try again.');
+  } finally {
+    setLoading(false);
+  }
 };
 
 // Helper function to extract hashtags from content
 const extractHashtagsFromContent = (content) => {
+  // If content is not a string (like in YouTube's case), handle it differently
+  if (typeof content !== 'string') {
+    // For YouTube, return the tags array if available
+    if (content.tags && Array.isArray(content.tags)) {
+      // Return tags with # prefix
+      return content.tags.map(tag => `#${tag.replace(/\s+/g, '')}`);
+    }
+    
+    // If there's a description field, extract hashtags from there
+    if (content.description) {
+      const hashtagRegex = /#\w+/g;
+      const matches = content.description.match(hashtagRegex);
+      return matches || [];
+    }
+    
+    return []; // No hashtags found
+  }
+  
+  // Original behavior for string content
   const hashtagRegex = /#\w+/g;
   const matches = content.match(hashtagRegex);
   return matches || [];
@@ -360,9 +397,78 @@ const extractHashtagsFromContent = (content) => {
 
 // Suggestion Card Component
 const SuggestionCard = ({ suggestion, onCopy, onUse }) => {
+  // Special rendering for YouTube content
+  if (suggestion.isYouTube) {
+    return (
+      <div className="suggestion-card youtube-card">
+        <div className="suggestion-header">
+          <span className="suggestion-platform">YouTube</span>
+          <span className="suggestion-tone">{suggestion.tone}</span>
+          <span className="character-count">{suggestion.characterCount} chars</span>
+        </div>
+        
+        <div className="youtube-title">
+          <h3>{suggestion.title}</h3>
+        </div>
+
+        <div className="suggestion-content">
+          <p>{suggestion.content}</p>
+        </div>
+
+        {suggestion.videoIdeas && suggestion.videoIdeas.length > 0 && (
+          <div className="video-ideas">
+            <h4>Video Ideas:</h4>
+            <ul>
+              {suggestion.videoIdeas.map((idea, index) => (
+                <li key={index}>{idea}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {suggestion.callToAction && (
+          <div className="call-to-action">
+            <h4>Call to Action:</h4>
+            <p>{suggestion.callToAction}</p>
+          </div>
+        )}
+
+        {suggestion.hashtags && suggestion.hashtags.length > 0 && (
+          <div className="suggestion-hashtags">
+            <h4>Recommended Tags:</h4>
+            {suggestion.hashtags.map((hashtag, index) => (
+              <span key={index} className="hashtag">{hashtag}</span>
+            ))}
+          </div>
+        )}
+
+        <div className="suggestion-actions">
+          <button
+            onClick={() => onCopy(
+              `Title: ${suggestion.title}\n\nDescription:\n${suggestion.content}\n\nTags: ${suggestion.hashtags.join(' ')}`
+            )}
+            className="action-button secondary"
+          >
+            <Copy size={16} />
+            Copy
+          </button>
+          <button
+            onClick={() => onUse(suggestion)}
+            className="action-button primary"
+          >
+            <Send size={16} />
+            Use Content
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular rendering for other platforms
   return (
     <div className="suggestion-card">
       <div className="suggestion-header">
+        <span className="suggestion-platform">{suggestion.platform}</span>
         <span className="suggestion-tone">{suggestion.tone}</span>
         <span className="character-count">{suggestion.characterCount} chars</span>
       </div>

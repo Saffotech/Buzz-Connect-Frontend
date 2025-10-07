@@ -2739,3 +2739,44 @@ background: linear-gradient(135deg, #fde047, #facc15);
   margin-bottom: 8px;
 }
 
+.youtube-card {
+  background: linear-gradient(to bottom right, #ffecec, #fff);
+  border-left: 3px solid #ff0000;
+}
+
+.youtube-card .suggestion-platform {
+  background-color: #ff0000;
+  color: white;
+}
+
+.youtube-title {
+  margin-bottom: 12px;
+}
+
+.youtube-title h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f1419;
+}
+
+.video-ideas, .call-to-action {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.video-ideas h4, .call-to-action h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.video-ideas ul {
+  padding-left: 18px;
+  margin-top: 4px;
+}
+
+.video-ideas ul li {
+  margin-bottom: 3px;
+  font-size: 13px;
+}
