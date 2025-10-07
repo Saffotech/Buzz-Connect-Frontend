@@ -75,7 +75,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   });
   const [publishMode, setPublishMode] = useState('now'); // 'now' or 'later'
 
-
   const [activeTab, setActiveTab] = useState('compose');
   const [isScheduled, setIsScheduled] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -91,6 +90,22 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
 
+  // ✅ ADD: Schedule DateTime Validation Function
+  const validateScheduleDateTime = (date, time) => {
+    if (!date || !time) return { isValid: true }; // Skip validation if not scheduling
+
+    const selectedDateTime = new Date(`${date}T${time}`);
+    const now = new Date();
+
+    if (selectedDateTime <= now) {
+      return {
+        isValid: false,
+        message: "Please select a future date and time to schedule your post."
+      };
+    }
+
+    return { isValid: true };
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -121,9 +136,22 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   }, [initialData]);
 
+  // ✅ UPDATED: Enhanced real-time validation for schedule date/time changes
+  useEffect(() => {
+    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+      const validation = validateScheduleDateTime(postData.scheduledDate, postData.scheduledTime);
+      if (!validation.isValid) {
+        setError(validation.message);
+      } else {
+        // Clear error if it was a scheduling error
+        if (error && (error.includes('future date') || error.includes('schedule') || error.includes('time'))) {
+          setError(null);
+        }
+      }
+    }
+  }, [postData.scheduledDate, postData.scheduledTime, isScheduled, error]);
 
   console.log("CreatePost component initialData:", initialData);
-
 
   // ✅ Helper functions for content formatting
   const formatContentForDisplay = (content) => {
@@ -239,7 +267,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     return true;
   };
 
-
   // Convert 24-hour time to 12-hour format
   const convertTo12Hour = (time24) => {
     if (!time24) return { hour: '12', minute: '00', period: 'PM' };
@@ -272,7 +299,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     return `${hour24.toString().padStart(2, '0')}:${minute}`;
   };
-
 
   // Carousel handlers
   const openCarousel = (index = 0) => {
@@ -312,7 +338,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     // Auto-hide toast after 3 seconds
     setTimeout(() => setToast(null), 6000);
   };
-
 
   // Fetch user profile and connected accounts on mount
   useEffect(() => {
@@ -376,7 +401,7 @@ const handleFileUpload = async (files) => {
       // ✅ Always ensure url is present
       let mediaUrl = media.url || media.secure_url;
       if (!mediaUrl) {
-        // fallback - use preview blob if server didn’t return URL
+        // fallback - use preview blob if server didn't return URL
         mediaUrl = URL.createObjectURL(originalFile);
       }
 
@@ -543,10 +568,7 @@ const fetchUserProfile = async () => {
   }
 };
 
-
-
   // Generate platforms array based on connected accounts
-
 const getAvailablePlatforms = () => {
   const allPlatforms = [
     { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
@@ -574,18 +596,12 @@ const getAvailablePlatforms = () => {
   });
 };
 
-// console.log('Generated platforms:', platforms);
-
-  
-
-
   const platforms = userProfile ? getAvailablePlatforms() : [];
 
   // Images are now required for all platforms
   const areImagesRequired = () => {
     return postData.platforms.includes('instagram' , 'youtube' , 'linkedin');
   };
-
 
 // Toast notification function
   const showToast = (message, type = 'info', duration = 5000) => {
@@ -641,12 +657,6 @@ const getAvailablePlatforms = () => {
       return false;
     }
 
-    // Check if images are required but not provided
-    // if (areImagesRequired() && postData.images.length === 0) {
-    //   showToast('Images are required for all posts', 'error');
-    //   return false;
-    // }
-
     // Check if accounts are selected for platforms that require it
     const platformsRequiringAccounts = ['instagram', 'facebook', 'linkedin', 'youtube'];
     for (const platform of postData.platforms) {
@@ -665,7 +675,7 @@ const getAvailablePlatforms = () => {
     return true;
   };
 
-  // Enhanced validation for form submission
+  // ✅ UPDATED: Enhanced validation for form submission with schedule validation
   const validateForm = () => {
     if (!postData.content.trim()) {
       setError('Content is required');
@@ -694,6 +704,16 @@ const getAvailablePlatforms = () => {
       }
     }
 
+    // ✅ ADD: Validate schedule date/time
+    if (isScheduled) {
+      const dateTimeValidation = validateScheduleDateTime(postData.scheduledDate, postData.scheduledTime);
+      if (!dateTimeValidation.isValid) {
+        setError(dateTimeValidation.message);
+        showToast(dateTimeValidation.message, 'error');
+        return false;
+      }
+    }
+
     // Check if images are required but not provided
     if (areImagesRequired() && postData.images.length === 0) {
       setError('Images are required for all posts');
@@ -704,7 +724,6 @@ const getAvailablePlatforms = () => {
     if (postData.platforms.includes('youtube') && !validateYouTubeContent()) {
       return false;
     }
-
 
     // Check if accounts are selected for platforms that require it
     const platformsRequiringAccounts = ['instagram', 'facebook', 'linkedin']; // Added LinkedIn
@@ -723,6 +742,7 @@ const getAvailablePlatforms = () => {
 
     return true;
   };
+
   const validateYouTubeContent = () => {
     if (postData.platforms.includes('youtube')) {
       // Check if we have any video
@@ -746,6 +766,7 @@ const getAvailablePlatforms = () => {
 
     return true;
   };
+
   // Handle preview tab click with validation
   const handlePreviewClick = () => {
     if (validatePreview()) {
@@ -956,6 +977,8 @@ const handleSubmit = async (e) => {
     };
 
     // Log the account usernames for debugging, but don't send in API request
+
+
     console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
 
    if (postData.platforms.includes('youtube')) {
@@ -1338,18 +1361,6 @@ const copySuggestionContent = async (suggestion) => {
 
   return (
     <div className={`create-post-overlay ${showMediaLibrary ? 'media-library-open' : ''}`}>
-      {/* Toast Notification */}
-      {/* {toast && (
-        <div className={`toast toast-${toast.type}`}>
-          <div className="toast-content">
-            {toast.type === 'success' && <CheckCircle size={16} />}
-            {toast.type === 'error' && <AlertCircle size={16} />}
-            {toast.type === 'info' && <Info size={16} />}
-            <span>{toast.message}</span>
-          </div>
-        </div>
-      )} */}
-
       {/* Image Carousel Modal */}
       {showImageCarousel && postData.images.length > 0 && (
         <div className="carousel-overlay" onClick={closeCarousel}>
@@ -1537,21 +1548,12 @@ const copySuggestionContent = async (suggestion) => {
         <form onSubmit={handleSubmit} className="create-post-form">
           {/* Error Display */}
           {error && (
-            <div className="error-message">
+            <div className={`error-message ${error.includes('future date') ? 'schedule-error' : ''}`}>
               <AlertCircle size={16} />
               <span>{error}</span>
               <button type="button" onClick={() => setError(null)}>×</button>
             </div>
           )}
-
-          {/* Loading Profile */}
-
-          {/* {loadingProfile && (
-            <div className="loading-profile">
-              <Loader />
-                            <span>Loading profile...</span>
-            </div>
-          )} */}
 
           {activeTab === 'compose' && (
             <div className={`compose-tab ${showAISuggestions ? 'with-ai' : ''}`}>
@@ -1738,7 +1740,7 @@ const copySuggestionContent = async (suggestion) => {
                           >
                             <Icon
                               size={20}
-                              color={hoveredPlatform === platform.id ? platform.color : "#000"} // default gray, hover = platform color
+                              color={hoveredPlatform === platform.id ? platform.color : "#000"}
                               style={{
                                 transition: "transform 0.2s ease, color 0.2s ease",
                                 transform: hoveredPlatform === platform.id ? "scale(1.1)" : "scale(1)"
@@ -1764,7 +1766,7 @@ const copySuggestionContent = async (suggestion) => {
                               </label>
                               <div className="accounts-checkbox-list">
                                 {platform.accounts.map((account) => {
-                                  const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId; // Added companyId for LinkedIn
+                                  const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId;
 
                                   if (!accountId) {
                                     console.warn('Account missing ID:', account);
@@ -1773,7 +1775,6 @@ const copySuggestionContent = async (suggestion) => {
 
                                   const isChecked = isAccountSelected(platform.id, accountId);
 
-                                  // Special handling for LinkedIn accounts to show company or personal type
                                   const accountName = platform.id === 'linkedin' && account.accountType === 'company'
                                     ? `${account.username || account.companyName || accountId} (Company Page)`
                                     : account.username || account.name || account.displayName || accountId;
@@ -1805,7 +1806,7 @@ const copySuggestionContent = async (suggestion) => {
                                     className="select-all-btn"
                                     onClick={() => {
                                       platform.accounts.forEach(account => {
-                                        const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId; // Added companyId for LinkedIn
+                                        const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId;
                                         if (accountId && !isAccountSelected(platform.id, accountId)) {
                                           handleAccountSelection(platform.id, accountId, true);
                                         }
@@ -1890,7 +1891,7 @@ const copySuggestionContent = async (suggestion) => {
                       Mentions
                       <button
                         type="button"
-                        className="ai-hashtag-btn" // reuse the same styling as hashtags
+                        className="ai-hashtag-btn"
                         onClick={generateMentions}
                         disabled={isGenerating || !postData.content.trim()}
                         title="Generate mentions with AI"
@@ -1911,25 +1912,6 @@ const copySuggestionContent = async (suggestion) => {
 
                 {/* Enhanced Media Upload Section with Carousel Support */}
                 <div className="form-section">
-
-                  {/* <label className="section-label">
-                    <Image size={16} />
-                    Media (Images & Videos)
-                    {postData.images.length > 0 && (
-                      <div className="media-actions">
-                        <button
-                          type="button"
-                          className="view-carousel-btn"
-                          onClick={() => openCarousel(0)}
-                          title="View in carousel"
-                        >
-                          <GalleryHorizontal size={14} />
-                          View All
-                        </button>
-                      </div>
-                    )}
-                  </label> */}
-
                   <div className="headz">
                     <label className="section-label">
                       <Image size={16} />
@@ -1942,12 +1924,9 @@ const copySuggestionContent = async (suggestion) => {
                     </label>
                   </div>
 
-
-
                   {/* Upload Options Grid */}
                   <div className="media-upload-container">
                     <div className="upload-options-grid">
-
                       {/* Upload New Files with Drag & Drop */}
                       <div className="upload-option">
                         <input
@@ -1990,22 +1969,6 @@ const copySuggestionContent = async (suggestion) => {
                           )}
                         </div>
                       </div>
-
-                      {/* Import from Media Library */}
-
-                      {/* <div className="upload-option">
-                        <button
-                          type="button"
-                          className="media-library-btn"
-                          onClick={() => setShowMediaLibrary(true)}
-                          disabled={uploadingFiles}
-                        >
-                          <FolderOpen size={32} />
-                          <span className="upload-title">Import from Media Library</span>
-                          <small className="upload-subtitle">Choose from your existing files</small>
-                        </button>
-                      </div> */}
-
                     </div>
                   </div>
 
@@ -2046,7 +2009,6 @@ const copySuggestionContent = async (suggestion) => {
                           return (
                             <div key={index} className="media-preview-item">
                               <div className="media-preview-container">
-                                {/* Clickable Image/Video Preview */}
                                 <div
                                   className="media-preview-wrapper"
                                   onClick={() => openCarousel(index)}
@@ -2306,23 +2268,6 @@ const copySuggestionContent = async (suggestion) => {
                             </div>
                           </div>
                         </div>
-
-
-
-
-                        {/* {(postData.scheduledDate && postData.scheduledTime) && (
-          <div className="scheduled-display">
-            <Calendar size={14} />
-            <span>
-              Scheduled for{" "}
-              {new Date(`${postData.scheduledDate}T${postData.scheduledTime}`)
-                .toLocaleDateString()}{" "}
-              at{" "}
-              {new Date(`${postData.scheduledDate}T${postData.scheduledTime}`)
-                .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </span>
-          </div>
-        )} */}
                       </div>
                     )}
                   </div>
@@ -2372,7 +2317,6 @@ const copySuggestionContent = async (suggestion) => {
                                         playsInline
                                         onError={(e) => { console.error('Preview video failed to load'); e.target.style.display = 'none'; }}
                                       />
-                                      {/* <div className="youtube-title">{postData.content?.substring(0, 100)}</div> */}
                                     </div>
                                   ))
                               ) : (
@@ -2464,22 +2408,13 @@ const copySuggestionContent = async (suggestion) => {
               </div>
             </div>
           )}
+          
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
             </button>
 
             <div className="footer-actions">
-              {/* Save as Draft Button */}
-              {/* <button
-                type="button"
-                className="btn-secondary-draft"
-                onClick={onSaveDraft}
-                disabled={isSubmitting}
-              >
-                Save as Draft
-              </button> */}
-
               {/* Publish / Schedule Button Footer */}
               <button
                 type="submit"
@@ -2533,7 +2468,7 @@ const copySuggestionContent = async (suggestion) => {
   );
 };
 
-// Enhanced Media Library Modal with Carousel Support
+// ✅ MOVED MediaLibraryModal OUTSIDE CreatePost Component
 const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
   const [mediaList, setMediaList] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -2600,7 +2535,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
   const handleClose = () => {
     setSelectedImages([]);
     setShowLibraryCarousel(false);
-    setLibraryCarouselIndex(0); // Reset carousel index when closing
+    setLibraryCarouselIndex(0);
     onClose();
   };
 
@@ -2614,10 +2549,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
   });
 
   const openLibraryCarousel = (index) => {
-    // Don't open carousel if no media or index is invalid
     if (filteredMedia.length === 0) return;
-
-    // Ensure index is within bounds of filtered media
     const safeIndex = Math.max(0, Math.min(index, filteredMedia.length - 1));
     setLibraryCarouselIndex(safeIndex);
     setShowLibraryCarousel(true);
@@ -2625,7 +2557,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
 
   const closeLibraryCarousel = () => {
     setShowLibraryCarousel(false);
-    setLibraryCarouselIndex(0); // Reset index when closing carousel
+    setLibraryCarouselIndex(0);
   };
 
   // Keyboard navigation for library carousel
@@ -2824,7 +2756,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
                       <div
                         key={mediaId}
                         className={`media-library-item ${isSelected ? 'selected' : ''}`}
-                        onClick={() => handleImageToggle(media)} // ✅ select whole container
+                        onClick={() => handleImageToggle(media)}
                       >
                         <div className="media-thumbnail">
                           {isVideo ? (
@@ -2846,8 +2778,8 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
                             <button
                               className={`media-action-btn select-btn ${isSelected ? 'selected' : ''}`}
                               onClick={(e) => {
-                                e.stopPropagation();      // ✅ prevent bubbling to parent
-                                handleImageToggle(media); // still works if you click just the button
+                                e.stopPropagation();
+                                handleImageToggle(media);
                               }}
                               title={isSelected ? 'Remove from selection' : 'Add to selection'}
                             >
@@ -2879,7 +2811,7 @@ const MediaLibraryModal = ({ isOpen, onClose, onSelectImages }) => {
                           <button
                             className="media-action-btn view-btn"
                             onClick={(e) => {
-                              e.stopPropagation(); // ✅ so selecting isn't triggered
+                              e.stopPropagation();
                               openLibraryCarousel(index);
                             }}
                             title="View in carousel"

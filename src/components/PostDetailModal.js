@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import "./PostDetailModal.css";
 import {
   X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal,
-  Bookmark, Send, Eye, Instagram, Facebook, Twitter,Linkedin, Youtube, ChevronRightCircle,
+  Bookmark, Send, Eye, Instagram, Facebook, Twitter, Linkedin, Youtube, ChevronRightCircle,
   ChevronLeftCircle, Edit, Trash2, RefreshCw, TrendingUp, BarChart3,
   Users, ExternalLink, Copy
 } from "lucide-react";
@@ -42,6 +42,11 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     };
   }, []);
 
+  useEffect(() => {
+    if (!post?.selectedAccounts && !post?.platformPosts && !post?.selectedAccountsWithNames) {
+      console.log('Post missing account information:', post);
+    }
+  }, [post]);
 
   // ✅ Add these helper functions at the top of your component
   const isVideoFile = (mediaItem) => {
@@ -163,89 +168,132 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   };
 
   const getAccountUsernames = () => {
-  // Combine all possible username sources
-  let allAccounts = [];
-  
-  // From platformPosts (most reliable source)
-  if (post.platformPosts && post.platformPosts.length > 0) {
-    post.platformPosts.forEach(pp => {
-      if (pp.accountName || pp.accountId) {
-        allAccounts.push({
-          platform: pp.platform,
-          username: pp.accountName || `Account on ${pp.platform}`,
-          id: pp.accountId
-        });
-      }
-    });
-  }
-  
-  // From selectedAccountsWithNames
-  if (post.selectedAccountsWithNames) {
-    Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
-      accounts.forEach(acc => {
-        if (acc.username || acc.id) {
+    // Combine all possible username sources
+    let allAccounts = [];
+
+    // From platformPosts (most reliable source)
+    if (post.platformPosts && post.platformPosts.length > 0) {
+      post.platformPosts.forEach(pp => {
+        if (pp.accountName || pp.accountId) {
           allAccounts.push({
-            platform,
-            username: acc.username || `Account on ${platform}`,
-            id: acc.id
+            platform: pp.platform,
+            username: pp.accountName || `Account on ${pp.platform}`,
+            id: pp.accountId
           });
         }
       });
-    });
-  }
-  
-  // From selectedAccounts
-  if (post.selectedAccounts) {
-    Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
-      if (Array.isArray(accountIds) && accountIds.length > 0) {
-        accountIds.forEach(id => {
-          if (id) {
+    }
+
+    // From selectedAccountsWithNames
+    if (post.selectedAccountsWithNames) {
+      Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+        accounts.forEach(acc => {
+          if (acc.username || acc.id) {
             allAccounts.push({
               platform,
-              username: `Account on ${platform}`,
-              id
+              username: acc.username || `Account on ${platform}`,
+              id: acc.id
             });
           }
         });
-      }
-    });
-  }
-  
-  // Use accountDetails if available
-  if (accountDetails) {
-    const username = accountDetails.username ||
-      accountDetails.name ||
-      accountDetails.displayName ||
-      accountDetails.pageName ||
-      accountDetails.handle ||
-      accountDetails.accountName ||
-      accountDetails.pageUsername ||
-      accountDetails.socialUsername;
-    
-    if (username) {
-      allAccounts.push({
-        platform,
-        username,
-        id: accountDetails.id || getAccountId()
       });
     }
-  }
-  
-  // Deduplicate by ID
-  const uniqueAccounts = [];
-  const accountIds = new Set();
-  
-  allAccounts.forEach(account => {
-    if (account.id && !accountIds.has(account.id)) {
-      accountIds.add(account.id);
-      uniqueAccounts.push(account);
-    } else if (!account.id) {
-      uniqueAccounts.push(account);
+
+    // From selectedAccounts
+    if (post.selectedAccounts) {
+      Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
+        if (Array.isArray(accountIds) && accountIds.length > 0) {
+          accountIds.forEach(id => {
+            if (id) {
+              allAccounts.push({
+                platform,
+                username: `Account on ${platform}`,
+                id
+              });
+            }
+          });
+        }
+      });
     }
-  });
-  
-  return uniqueAccounts;
-};
+
+    // Deduplicate by ID
+    const uniqueAccounts = [];
+    const accountIds = new Set();
+
+    allAccounts.forEach(account => {
+      if (account.id && !accountIds.has(account.id)) {
+        accountIds.add(account.id);
+        uniqueAccounts.push(account);
+      } else if (!account.id) {
+        uniqueAccounts.push(account);
+      }
+    });
+
+    return uniqueAccounts;
+  };
+
+  // Updated getAccountDetails function
+  const getAccountDetails = () => {
+    const details = [];
+
+    // 1. First try to get data from platformPosts (most reliable source)
+    if (post.platformPosts && post.platformPosts.length > 0) {
+      post.platformPosts.forEach(pp => {
+        if (pp.accountName || pp.accountId) {
+          details.push({
+            platform: pp.platform,
+            username: pp.accountName || `Account on ${pp.platform}`,
+            id: pp.accountId
+          });
+        }
+      });
+
+      // Return early if we found details here
+      if (details.length > 0) {
+        return details;
+      }
+    }
+
+    // 2. Try to get from selectedAccountsWithNames (next best source)
+    if (post.selectedAccountsWithNames) {
+      Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+        accounts.forEach(acc => {
+          if (acc && acc.username) {
+            details.push({
+              platform,
+              username: acc.username,
+              id: acc.id
+            });
+          }
+        });
+      });
+
+      // Return early if we found details here
+      if (details.length > 0) {
+        return details;
+      }
+    }
+
+    // 3. Last resort: try to extract from selectedAccounts
+    if (post.selectedAccounts) {
+      Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
+        if (Array.isArray(accountIds)) {
+          accountIds.forEach(id => {
+            if (id) {
+              details.push({
+                platform,
+                username: `Account on ${platform}`,
+                id
+              });
+            }
+          });
+        }
+      });
+    }
+
+    return details;
+  };
+
 
   // Fetch detailed analytics for the post
   const fetchPostAnalytics = async () => {
@@ -373,7 +421,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   };
 
   // Toast notification function
-  const showToast = (message, type = 'info' ,duration = 5000) => {
+  const showToast = (message, type = 'info', duration = 5000) => {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
@@ -420,147 +468,148 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     }, 3000);
   };
 
-const handlePostAgain = async () => {
-  setShowDropdown(false);
-  setIsPosting(true);
+  const handlePostAgain = async () => {
+    setShowDropdown(false);
+    setIsPosting(true);
 
-  try {
-    const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+    try {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
 
-    if (!token) {
-      throw new Error('Authentication token not found');
-    }
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
 
-    console.log('=== FIXED POST AGAIN ===');
-    console.log('Original post object:', post);
+      console.log('=== FIXED POST AGAIN ===');
+      console.log('Original post object:', post);
 
-    const cleanedSelectedAccounts = {};
-    if (post.selectedAccounts) {
-      Object.entries(post.selectedAccounts).forEach(([platform, accounts]) => {
-        if (accounts && Array.isArray(accounts)) {
-          const validAccounts = accounts.filter(account => account != null && account !== '');
-          if (validAccounts.length > 0) {
-            cleanedSelectedAccounts[platform] = validAccounts;
+      const cleanedSelectedAccounts = {};
+      if (post.selectedAccounts) {
+        Object.entries(post.selectedAccounts).forEach(([platform, accounts]) => {
+          if (accounts && Array.isArray(accounts)) {
+            const validAccounts = accounts.filter(account => account != null && account !== '');
+            if (validAccounts.length > 0) {
+              cleanedSelectedAccounts[platform] = validAccounts;
+            }
+          }
+        });
+      }
+
+      // Create selectedAccountsWithNames for logging but don't send to API
+      const selectedAccountsWithNames = {};
+      if (post.selectedAccountsWithNames) {
+        // Use existing data if available
+        Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+          if (accounts && Array.isArray(accounts)) {
+            const validAccounts = accounts.filter(account => account && account.id);
+            if (validAccounts.length > 0) {
+              selectedAccountsWithNames[platform] = validAccounts;
+            }
+          }
+        });
+      } else if (cleanedSelectedAccounts) {
+        // Generate basic version if not available
+        Object.entries(cleanedSelectedAccounts).forEach(([platform, accountIds]) => {
+          selectedAccountsWithNames[platform] = accountIds.map(id => ({
+            id: id,
+            username: 'Unknown Account'
+          }));
+        });
+      }
+
+      const processedImages = (post.images || []).map(img => ({
+        url: img.url,
+        altText: img.altText || 'Post image',
+        publicId: img.publicId || null
+      }));
+
+      const processedHashtags = Array.isArray(post.hashtags)
+        ? post.hashtags
+        : [];
+
+      const processedMentions = Array.isArray(post.mentions)
+        ? post.mentions
+        : [];
+
+      const postData = {
+        content: post.content || '',
+        platforms: post.platforms || [],
+        selectedAccounts: cleanedSelectedAccounts,
+        // Don't include selectedAccountsWithNames in the request to avoid validation errors
+        images: processedImages,
+        hashtags: processedHashtags,
+        mentions: processedMentions,
+        metadata: {
+          category: post.metadata?.category || 'other'
+        }
+      };
+
+
+      // Log the account usernames but don't send in API request
+      console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
+      console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
+
+      showToast('Creating new post...', 'info');
+
+      const createResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
+        postData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         }
-      });
-    }
+      );
 
-    // Create selectedAccountsWithNames for logging but don't send to API
-    const selectedAccountsWithNames = {};
-    if (post.selectedAccountsWithNames) {
-      // Use existing data if available
-      Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
-        if (accounts && Array.isArray(accounts)) {
-          const validAccounts = accounts.filter(account => account && account.id);
-          if (validAccounts.length > 0) {
-            selectedAccountsWithNames[platform] = validAccounts;
-          }
+      console.log('Post created successfully:', createResponse.data);
+
+      if (!createResponse?.data?.data?._id && !createResponse?.data?._id) {
+        throw new Error('Failed to create post - no ID returned');
+      }
+
+      const postId = createResponse.data.data?._id || createResponse.data._id;
+      console.log('Publishing post with ID:', postId);
+
+      showToast('Publishing post...', 'info');
+
+      const publishResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
         }
-      });
-    } else if (cleanedSelectedAccounts) {
-      // Generate basic version if not available
-      Object.entries(cleanedSelectedAccounts).forEach(([platform, accountIds]) => {
-        selectedAccountsWithNames[platform] = accountIds.map(id => ({
-          id: id,
-          username: 'Unknown Account'
-        }));
-      });
-    }
+      );
 
-    const processedImages = (post.images || []).map(img => ({
-      url: img.url,
-      altText: img.altText || 'Post image',
-      publicId: img.publicId || null
-    }));
+      console.log('Publish response:', publishResponse.data);
 
-    const processedHashtags = Array.isArray(post.hashtags)
-      ? post.hashtags
-      : [];
+      showToast('Post published again successfully!', 'success');
 
-    const processedMentions = Array.isArray(post.mentions)
-      ? post.mentions
-      : [];
-
-    const postData = {
-      content: post.content || '',
-      platforms: post.platforms || [],
-      selectedAccounts: cleanedSelectedAccounts,
-      // Don't include selectedAccountsWithNames in the request to avoid validation errors
-      images: processedImages,
-      hashtags: processedHashtags,
-      mentions: processedMentions,
-      metadata: {
-        category: post.metadata?.category || 'other'
+      if (onPostAgain && typeof onPostAgain === 'function') {
+        onPostAgain(post, publishResponse.data);
       }
-    };
 
-    // Log the account usernames but don't send in API request
-    console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
-    console.log('Complete post data with images:', JSON.stringify(postData, null, 2));
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
 
-    showToast('Creating new post...', 'info');
+    } catch (error) {
+      console.error('Failed to post again:', error);
 
-    const createResponse = await axios.post(
-      `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
-      postData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+      console.error('=== DETAILED ERROR INFO ===');
+      console.error('Status:', error.response?.status);
+      console.error('Error Data:', error.response?.data);
+      console.error('Error Message:', error.message);
+
+      if (error.response?.data?.errors) {
+        console.error('Validation Errors:', error.response.data.errors);
       }
-    );
 
-    console.log('Post created successfully:', createResponse.data);
-
-    if (!createResponse?.data?.data?._id && !createResponse?.data?._id) {
-      throw new Error('Failed to create post - no ID returned');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+      showToast(`Failed to publish post: ${errorMessage}`, 'error');
+    } finally {
+      setIsPosting(false);
     }
-
-    const postId = createResponse.data.data?._id || createResponse.data._id;
-    console.log('Publishing post with ID:', postId);
-
-    showToast('Publishing post...', 'info');
-
-    const publishResponse = await axios.post(
-      `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
-    );
-
-    console.log('Publish response:', publishResponse.data);
-
-    showToast('Post published again successfully!', 'success');
-
-    if (onPostAgain && typeof onPostAgain === 'function') {
-      onPostAgain(post, publishResponse.data);
-    }
-
-    setTimeout(() => {
-      handleClose();
-    }, 1500);
-
-  } catch (error) {
-    console.error('Failed to post again:', error);
-
-    console.error('=== DETAILED ERROR INFO ===');
-    console.error('Status:', error.response?.status);
-    console.error('Error Data:', error.response?.data);
-    console.error('Error Message:', error.message);
-
-    if (error.response?.data?.errors) {
-      console.error('Validation Errors:', error.response.data.errors);
-    }
-
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-    showToast(`Failed to publish post: ${errorMessage}`, 'error');
-  } finally {
-    setIsPosting(false);
-  }
-};
+  };
 
   // Handle copy link
   const handleCopyLink = () => {
@@ -1018,37 +1067,37 @@ const handlePostAgain = async () => {
               {/* Right Side - Content */}
               <div className="preview-right">
                 {/* Username */}
-              <div className="post-username">
-  {getAccountUsernames().length > 0 ? (
-    getAccountUsernames().map((account, idx) => {
-      // Define icon components for each platform
-      let PlatformIcon;
-      if (account.platform === 'instagram') PlatformIcon = Instagram;
-      else if (account.platform === 'facebook') PlatformIcon = Facebook;
-      else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
-      else if (account.platform === 'youtube') PlatformIcon = Youtube;
-      else if (account.platform === 'twitter') PlatformIcon = Twitter;
-      else PlatformIcon = MessageCircle;
-      
-      // Format username with @ if needed
-      const formattedUsername = account.username.startsWith('@') 
-        ? account.username 
-        : `@${account.username}`;
-      
-      return (
-        <span key={idx} className="username">
-          {PlatformIcon && <PlatformIcon size={16} color={getPlatformStyle(account.platform).primary} />}
-          {formattedUsername}
-        </span>
-      );
-    })
-  ) : (
-    // Fallback to old method if no accounts found
-    <span className="username">
-      {formatUsername(getSocialMediaUsername())}
-    </span>
-  )}
-</div>
+                <div className="post-username">
+                  {getAccountUsernames().length > 0 ? (
+                    getAccountUsernames().map((account, idx) => {
+                      // Define icon components for each platform
+                      let PlatformIcon;
+                      if (account.platform === 'instagram') PlatformIcon = Instagram;
+                      else if (account.platform === 'facebook') PlatformIcon = Facebook;
+                      else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
+                      else if (account.platform === 'youtube') PlatformIcon = Youtube;
+                      else if (account.platform === 'twitter') PlatformIcon = Twitter;
+                      else PlatformIcon = MessageCircle;
+
+                      // Format username with @ if needed
+                      const formattedUsername = account.username.startsWith('@')
+                        ? account.username
+                        : `@${account.username}`;
+
+                      return (
+                        <span key={idx} className="username">
+                          {PlatformIcon && <PlatformIcon size={16} color={getPlatformStyle(account.platform).primary} />}
+                          {formattedUsername}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    // Fallback to old method if no accounts found
+                    <span className="username">
+                      {formatUsername(getSocialMediaUsername())}
+                    </span>
+                  )}
+                </div>
 
                 {/* Caption */}
                 <div className="post-caption">
