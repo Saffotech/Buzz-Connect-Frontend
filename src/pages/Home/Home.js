@@ -162,14 +162,16 @@ const Home = () => {
       question: "How accurate are AI suggestions?",
       answer: "Our AI uses platform-specific algorithms and real-time trends. We recommend reviewing suggestions before publishing, but most users find 85%+ accuracy."
     },
-    {
-      question: "Is there a free plan?",
-      answer: "Yes! Our free tier includes 1 account per platform and 50 scheduled posts per month. Perfect for trying out all features."
-    },
-    {
-      question: "Can teams collaborate?",
-      answer: "Absolutely. Invite teammates, set role-based permissions, and use approval workflows. Great for agencies managing client accounts."
-    },
+    // {
+    //   question: "Is there a free plan?",
+    //   answer: "Yes! Our free tier includes 1 account per platform and 50 scheduled posts per month. Perfect for trying out all features."
+    // },
+
+    // {
+    //   question: "Can teams collaborate?",
+    //   answer: "Absolutely. Invite teammates, set role-based permissions, and use approval workflows. Great for agencies managing client accounts."
+    // },
+    
     {
       question: "Is my data secure?",
       answer: "Yes. We use OAuth authentication (never store passwords), TLS encryption, and SOC 2 compliance. Your content and accounts are safe."
@@ -504,13 +506,15 @@ const Home = () => {
                   >
                     Get Started — It's Free
                   </button>
-                  <button
+
+                  {/* <button
                     className="mga-btn mga-btn-ghost"
                     onClick={handleWatchDemo}
                   >
                     <PlayCircle size={16} />
                     Watch 60s Demo
-                  </button>
+                  </button> */}
+
                 </div>
                 
                 <p className="mga-hero-microcopy">

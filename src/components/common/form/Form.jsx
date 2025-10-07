@@ -495,7 +495,7 @@ const { login, register, isLoading } = useAuth();
           </label> */}
           <a
           style={{cursor: 'pointer'}}
-            className="forgot-password"
+            className="forgot-password-container"
             onClick={() => setFormMode('forgot')}
           >
             Forgot Password?
