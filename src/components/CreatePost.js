@@ -879,7 +879,6 @@ const getAvailablePlatforms = () => {
     showToast('Image removed', 'info');
   };
 
-  // ✅ FIXED: Updated handleSubmit with markdown stripping
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsSubmitting(true);
@@ -900,7 +899,6 @@ const handleSubmit = async (e) => {
     userProfile?.connectedAccounts?.forEach(account => {
       accountsMap[account._id.toString()] = account;
     });
-
 
     // Clean up selectedAccounts to remove null values and empty arrays
     Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
@@ -924,64 +922,77 @@ const handleSubmit = async (e) => {
     console.log('Sending account usernames:', selectedAccountsWithNames);
 
     // Enhanced post data preparation with account information
-   const apiPostData = {
-  content: postData.content,
-  platforms: postData.platforms,
-  selectedAccounts: cleanedSelectedAccounts,
-  // Remove selectedAccountsWithNames from the API request
-  // We'll log it for debugging but not send it to avoid validation errors
-  images: postData.images.map((img, index) => ({
-    url: img.url,
-    altText: img.altText || img.originalName || 'Post media',
-    originalName: img.originalName || img.filename || `Media ${index + 1}`,
-    displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-    filename: img.filename,
-    publicId: img.publicId || null,
-    fileType: img.fileType || 'image',
-    size: img.size,
-    dimensions: img.dimensions,
-    duration: img.duration,
-    order: index,
-    format: img.format,
-    humanSize: img.size ? formatFileSize(img.size) : null
-  })),
-  hashtags: Array.isArray(postData.hashtags)
-    ? postData.hashtags
-    : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-  mentions: Array.isArray(postData.mentions)
-    ? postData.mentions
-    : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-  metadata: {
-    category: postData.metadata?.category || 'other',
-    source: 'web'
-  }
-};
-
-// Log the account usernames for debugging, but don't send in API request
-console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
-
-    if (postData.platforms.includes('youtube')) {
-      // For YouTube, we use content as the video title
-      apiPostData.title = postData.content.substring(0, 100);
-
-      // For YouTube, we should prioritize video files
-      const videoFiles = postData.images.filter(img =>
-        img.fileType === 'video' ||
-        img.url?.includes('video') ||
-        img.url?.includes('.mp4')
-      );
-
-      if (videoFiles.length > 0) {
-        // Use only the first video for YouTube
-        apiPostData.youtubeVideo = videoFiles[0];
-        console.log('YouTube video selected:', apiPostData.youtubeVideo.url);
-
-        // If YouTube is the only platform, we might want to remove other images
-        if (postData.platforms.length === 1) {
-          apiPostData.images = [videoFiles[0]];
-        }
+    const apiPostData = {
+      content: postData.content,
+      platforms: postData.platforms,
+      selectedAccounts: cleanedSelectedAccounts,
+      // Remove selectedAccountsWithNames from the API request
+      // We'll log it for debugging but not send it to avoid validation errors
+      images: postData.images.map((img, index) => ({
+        url: img.url,
+        altText: img.altText || img.originalName || 'Post media',
+        originalName: img.originalName || img.filename || `Media ${index + 1}`,
+        displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+        filename: img.filename,
+        publicId: img.publicId || null,
+        fileType: img.fileType || 'image',
+        size: img.size,
+        dimensions: img.dimensions,
+        duration: img.duration,
+        order: index,
+        format: img.format,
+        humanSize: img.size ? formatFileSize(img.size) : null
+      })),
+      hashtags: Array.isArray(postData.hashtags)
+        ? postData.hashtags
+        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+      mentions: Array.isArray(postData.mentions)
+        ? postData.mentions
+        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+      metadata: {
+        category: postData.metadata?.category || 'other',
+        source: 'web'
       }
+    };
+
+    // Log the account usernames for debugging, but don't send in API request
+    console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
+
+   if (postData.platforms.includes('youtube')) {
+  // For YouTube, we use content as the video title
+  apiPostData.title = postData.content.substring(0, 100);
+  
+  // Use description from hashtags field if available, or create a default one
+  apiPostData.description = postData.hashtags ? 
+    postData.hashtags : 
+    `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
+
+  // For YouTube, we should prioritize video files
+  const videoFiles = postData.images.filter(img =>
+    img.fileType === 'video' ||
+    img.url?.includes('video') ||
+    img.url?.includes('.mp4')
+  );
+
+  if (videoFiles.length > 0) {
+    // Clean up the youtubeVideo object to remove _id if present
+    const { _id, ...cleanedVideo } = videoFiles[0];
+    apiPostData.youtubeVideo = cleanedVideo;
+
+    // Ensure this video is included in the images array
+    if (postData.platforms.length === 1) {
+      // If YouTube is the only platform, just use this video
+      apiPostData.images = [cleanedVideo];
     }
+  }
+  
+  // Add YouTube-specific tags from the mentions field
+  if (postData.mentions) {
+    apiPostData.tags = postData.mentions.split(/\s+/)
+      .map(tag => tag.startsWith('@') ? tag.substring(1) : tag)
+      .filter(tag => tag.length > 0);
+  }
+}
 
     // ✅ Handle scheduling vs immediate publishing
     if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
@@ -1069,69 +1080,92 @@ console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
   };
 
   // AI Content Generation
-  const generateAIContent = async () => {
-    // Check if platforms are selected
-    if (postData.platforms.length === 0) {
-      showToast('Please select at least one social media platform first', 'error');
-      return;
-    }
+ const generateAIContent = async () => {
+  // Check if platforms are selected
+  if (postData.platforms.length === 0) {
+    showToast('Please select at least one social media platform first', 'error');
+    return;
+  }
 
-    if (!aiPrompt.trim()) {
-      showToast('Please enter a prompt for AI content generation', 'error');
-      return;
-    }
+  if (!aiPrompt.trim()) {
+    showToast('Please enter a prompt for AI content generation', 'error');
+    return;
+  }
 
-    setIsGenerating(true);
-    setError(null);
-    showToast('Generating AI content...', 'info');
+  setIsGenerating(true);
+  setError(null);
+  showToast('Generating AI content...', 'info');
 
-    try {
-      const selectedPlatforms = postData.platforms;
+  try {
+    const selectedPlatforms = postData.platforms;
 
-      const response = await apiClient.generateContent({
-        prompt: aiPrompt,
-        tone: 'casual',
-        platforms: selectedPlatforms,
-        includeHashtags: true,
-        maxLength: 280
-      });
+    const response = await apiClient.generateContent({
+      prompt: aiPrompt,
+      tone: 'casual',
+      platforms: selectedPlatforms,
+      includeHashtags: true,
+      maxLength: 280
+    });
 
-      console.log('AI Response:', response);
+    console.log('AI Response:', response);
 
-      if (response.success && response.data) {
-        const suggestions = [];
+    if (response.success && response.data) {
+      const suggestions = [];
 
-        // ✅ UPDATED: Handle the response structure and extract hashtags
-        Object.entries(response.data.content).forEach(([platform, data]) => {
-          // Extract hashtags from the AI-generated content
-          const { content, hashtags } = extractHashtagsFromContent(data.content);
-
+      // Enhanced handling for different platform responses
+      Object.entries(response.data.content).forEach(([platform, data]) => {
+        if (platform === 'youtube') {
+          // Special handling for YouTube content
           suggestions.push({
             id: `${platform}-${Date.now()}`,
-            content: content, // Content without hashtags
-            hashtags: hashtags.join(' '), // Hashtags as string
+            content: {
+              title: data.title || '',
+              description: data.description || '',
+              tags: data.tags || [],
+              callToAction: data.callToAction || '',
+              videoIdeas: data.videoIdeas || []
+            },
+            hashtags: data.description || '',
+            mentions: Array.isArray(data.tags) ? data.tags.join(' ') : '',
             tone: response.data.options.tone,
             platforms: [platform],
-            characterCount: data.characterCount,
-            withinLimit: data.withinLimit,
-            provider: 'openai'
+            characterCount: data.characterCount || 0,
+            withinLimit: data.withinLimit || true,
+            provider: 'openai',
+            isYoutube: true
           });
-        });
+        } else {
+          // Regular handling for other platforms
+          const { content, hashtags } = extractHashtagsFromContent(data.content || '');
+          
+          suggestions.push({
+            id: `${platform}-${Date.now()}`,
+            content: content,
+            hashtags: hashtags.join(' '),
+            tone: response.data.options.tone,
+            platforms: [platform],
+            characterCount: data.characterCount || 0,
+            withinLimit: data.withinLimit || true,
+            provider: 'openai',
+            isYoutube: false
+          });
+        }
+      });
 
-        setAiSuggestions(suggestions);
-        showToast(`Generated ${suggestions.length} AI suggestions`, 'success');
-      } else {
-        throw new Error('Invalid response format');
-      }
-
-    } catch (error) {
-      console.error('AI generation failed:', error);
-      setError('Failed to generate AI content. Please try again.');
-      showToast('Failed to generate AI content', 'error');
-    } finally {
-      setIsGenerating(false);
+      setAiSuggestions(suggestions);
+      showToast(`Generated ${suggestions.length} AI suggestions`, 'success');
+    } else {
+      throw new Error('Invalid response format');
     }
-  };
+
+  } catch (error) {
+    console.error('AI generation failed:', error);
+    setError('Failed to generate AI content. Please try again.');
+    showToast('Failed to generate AI content', 'error');
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   const generateHashtags = async () => {
     // Check if platforms are selected
@@ -1228,29 +1262,48 @@ console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
   };
 
   // ✅ UPDATED: Apply AI suggestion with hashtag extraction
-  const applyAISuggestion = (suggestion) => {
-    console.log('Applying AI suggestion:', suggestion);
-    console.log('Original content:', suggestion.content);
-    console.log('Suggestion hashtags:', suggestion.hashtags);
-
+const applyAISuggestion = (suggestion) => {
+  console.log('Applying AI suggestion:', suggestion);
+  
+  if (suggestion.platforms.includes('youtube') && typeof suggestion.content === 'object') {
+    // Handle YouTube content specifically
     setPostData(prev => ({
       ...prev,
-      content: suggestion.content, // Content should already be without hashtags
-      hashtags: suggestion.hashtags || '', // Hashtags in separate field
+      content: suggestion.content.title || suggestion.content || '',
+      hashtags: suggestion.content.description || suggestion.hashtags || '',
+      mentions: suggestion.content.tags ? suggestion.content.tags.join(' ') : '',
+      platforms: suggestion.platforms
+    }));
+    showToast('YouTube content applied successfully', 'success');
+  } else {
+    // Handle other platforms (existing code)
+    setPostData(prev => ({
+      ...prev,
+      content: suggestion.content,
+      hashtags: suggestion.hashtags || '',
       platforms: suggestion.platforms
     }));
     showToast('AI suggestion applied successfully', 'success');
-  };
+  }
+};
 
-  const copySuggestionContent = async (suggestion) => {
-    try {
-      await navigator.clipboard.writeText(suggestion.content);
-      showToast('Content copied to clipboard', 'success');
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-      showToast('Failed to copy content', 'error');
+const copySuggestionContent = async (suggestion) => {
+  try {
+    let textToCopy;
+    
+    if (suggestion.isYoutube && typeof suggestion.content === 'object') {
+      textToCopy = `Title: ${suggestion.content.title || ''}\n\nDescription:\n${suggestion.content.description || ''}\n\nTags: ${suggestion.content.tags ? suggestion.content.tags.join(', ') : ''}`;
+    } else {
+      textToCopy = suggestion.content;
     }
-  };
+    
+    await navigator.clipboard.writeText(textToCopy);
+    showToast('Content copied to clipboard', 'success');
+  } catch (err) {
+    console.error('Failed to copy text: ', err);
+    showToast('Failed to copy content', 'error');
+  }
+};
 
   // Clean up blob URLs when component unmounts
   useEffect(() => {
@@ -1576,50 +1629,81 @@ console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
                         </button>
                       </div>
                       <div className="suggestions-list">
-                        {aiSuggestions.map(suggestion => (
-                          <div key={suggestion.id} className="suggestion-card">
-                            <div className="suggestion-header">
-                              <span className="suggestion-tone">{suggestion.tone}</span>
-                              <div className="suggestion-platforms">
-                                {suggestion.platforms.map(platform => {
-                                  const Icon = platform === 'instagram' ? Instagram :
-                                    platform === 'twitter' ? X :
-                                      platform === 'linkedin' ? Linkedin : Facebook;
-                                  return <Icon key={platform} size={14} />;
-                                })}
-                              </div>
-                            </div>
-                            {/* ✅ FIXED: Display AI suggestion with formatted content */}
-                            <div
-                              className="suggestion-content"
-                              dangerouslySetInnerHTML={{
-                                __html: formatContentForDisplay(suggestion.content)
-                              }}
-                            />
-                            <div className="suggestion-hashtags">
-                              {/* <Hash size={12} /> */}
-                              <span>{suggestion.hashtags}</span>
-                            </div>
-                            <div className="suggestion-actions">
-                              <button
-                                type="button"
-                                className="copy-suggestion-btn"
-                                onClick={() => copySuggestionContent(suggestion)}
-                                title="Copy content to clipboard"
-                              >
-                                <Copy size={14} />
-                                Copy
-                              </button>
-                              <button
-                                type="button"
-                                className="apply-suggestion-btn"
-                                onClick={() => applyAISuggestion(suggestion)}
-                              >
-                                Use This Content
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                     {aiSuggestions.map(suggestion => (
+  <div key={suggestion.id} className="suggestion-card">
+    <div className="suggestion-header">
+      <span className="suggestion-tone">{suggestion.tone}</span>
+      <div className="suggestion-platforms">
+        {suggestion.platforms.map(platform => {
+          const Icon = platform === 'instagram' ? Instagram :
+            platform === 'twitter' ? X :
+            platform === 'youtube' ? Youtube :
+            platform === 'linkedin' ? Linkedin : Facebook;
+          return <Icon key={platform} size={14} />;
+        })}
+      </div>
+    </div>
+    
+    {suggestion.isYoutube ? (
+      // YouTube suggestion content
+      <div className="youtube-suggestion">
+        <div className="youtube-title">
+          <h4>Title: {typeof suggestion.content === 'object' ? suggestion.content.title : suggestion.content}</h4>
+        </div>
+        <div className="youtube-description">
+          <p>{typeof suggestion.content === 'object' ? suggestion.content.description : suggestion.hashtags}</p>
+        </div>
+        {typeof suggestion.content === 'object' && suggestion.content.tags && (
+          <div className="youtube-tags">
+            <small>Tags: {suggestion.content.tags.join(', ')}</small>
+          </div>
+        )}
+        {typeof suggestion.content === 'object' && suggestion.content.videoIdeas && (
+          <div className="youtube-ideas">
+            <small>Video ideas: {Array.isArray(suggestion.content.videoIdeas) 
+              ? suggestion.content.videoIdeas.join(', ') 
+              : suggestion.content.videoIdeas}
+            </small>
+          </div>
+        )}
+      </div>
+    ) : (
+      // Standard content for other platforms
+      <>
+        <div
+          className="suggestion-content"
+          dangerouslySetInnerHTML={{
+            __html: formatContentForDisplay(
+              typeof suggestion.content === 'string' ? suggestion.content : JSON.stringify(suggestion.content)
+            )
+          }}
+        />
+        <div className="suggestion-hashtags">
+          <span>{suggestion.hashtags}</span>
+        </div>
+      </>
+    )}
+    
+    <div className="suggestion-actions">
+      <button
+        type="button"
+        className="copy-suggestion-btn"
+        onClick={() => copySuggestionContent(suggestion)}
+        title="Copy content to clipboard"
+      >
+        <Copy size={14} />
+        Copy
+      </button>
+      <button
+        type="button"
+        className="apply-suggestion-btn"
+        onClick={() => applyAISuggestion(suggestion)}
+      >
+        Use This Content
+      </button>
+    </div>
+  </div>
+))}
                       </div>
                     </div>
                   )}
