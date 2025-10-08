@@ -1184,19 +1184,68 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
             });
           } else {
             // Regular handling for other platforms
-            const { content, hashtags } = extractHashtagsFromContent(data.content || '');
+            const originalContent = data.content || '';
+            console.log('Original content from API for', platform, ':', originalContent);
 
-            suggestions.push({
-              id: `${platform}-${Date.now()}`,
-              content: content,
-              hashtags: hashtags.join(' '),
-              tone: response.data.options.tone,
-              platforms: [platform],
-              characterCount: data.characterCount || 0,
-              withinLimit: data.withinLimit || true,
-              provider: 'openai',
-              isYoutube: false
-            });
+            // Extract hashtags from content if they exist
+            const hashtagPattern = /#[\w]+/g;
+            const foundHashtags = originalContent.match(hashtagPattern) || [];
+            
+            // Remove hashtag-only lines from content
+            let cleanContent = originalContent;
+            if (foundHashtags.length > 0) {
+              const lines = originalContent.split('\n');
+              const contentLines = [];
+              const hashtagLines = [];
+              
+              lines.forEach(line => {
+                const trimmedLine = line.trim();
+                const lineHashtags = trimmedLine.match(hashtagPattern) || [];
+                
+                // Check if line is ONLY hashtags (no other text)
+                const lineWithoutHashtags = trimmedLine.replace(hashtagPattern, '').trim();
+                
+                if (lineHashtags.length > 0 && lineWithoutHashtags === '') {
+                  // This line contains only hashtags
+                  hashtagLines.push(...lineHashtags);
+                } else {
+                  // This line has actual content (keep it)
+                  contentLines.push(line);
+                }
+              });
+              
+              cleanContent = contentLines.join('\n').trim();
+              
+              // Use extracted hashtags or fallback to all found hashtags
+              const extractedHashtags = hashtagLines.length > 0 
+                ? hashtagLines 
+                : foundHashtags;
+              
+              suggestions.push({
+                id: `${platform}-${Date.now()}`,
+                content: cleanContent, // Content without hashtag-only lines
+                hashtags: extractedHashtags.join(' '), // Extracted hashtags
+                tone: response.data.options.tone,
+                platforms: [platform],
+                characterCount: data.characterCount || 0,
+                withinLimit: data.withinLimit || true,
+                provider: 'openai',
+                isYoutube: false
+              });
+            } else {
+              // No hashtags found - use content as-is
+              suggestions.push({
+                id: `${platform}-${Date.now()}`,
+                content: originalContent,
+                hashtags: data.hashtags || '', // Try to get hashtags from API response
+                tone: response.data.options.tone,
+                platforms: [platform],
+                characterCount: data.characterCount || 0,
+                withinLimit: data.withinLimit || true,
+                provider: 'openai',
+                isYoutube: false
+              });
+            }
           }
         });
 
@@ -1309,28 +1358,51 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   };
 
-  // ✅ UPDATED: Apply AI suggestion with hashtag extraction
+  // ✅ UPDATED: Apply AI suggestion - ALL content goes to content field only
   const applyAISuggestion = (suggestion) => {
     console.log('Applying AI suggestion:', suggestion);
 
     if (suggestion.platforms.includes('youtube') && typeof suggestion.content === 'object') {
-      // Handle YouTube content specifically
+      // Handle YouTube content - combine title and description in content field
+      const youtubeTitle = suggestion.content.title || '';
+      const youtubeDescription = suggestion.content.description || '';
+      
+      // Combine title and description with line breaks
+      const combinedContent = youtubeTitle && youtubeDescription 
+        ? `${youtubeTitle}\n\n${youtubeDescription}`
+        : youtubeTitle || youtubeDescription;
+
+      // Get tags and format them with # prefix
+      const youtubeTags = suggestion.content.tags || [];
+      const formattedTags = Array.isArray(youtubeTags) 
+        ? youtubeTags.map(tag => tag.startsWith('#') ? tag : `#${tag}`).join(' ')
+        : '';
+
       setPostData(prev => ({
         ...prev,
-        content: suggestion.content.title || suggestion.content || '',
-        hashtags: suggestion.content.description || suggestion.hashtags || '',
-        mentions: suggestion.content.tags ? suggestion.content.tags.join(' ') : '',
+        content: combinedContent,  // Title + Description goes here
+        hashtags: formattedTags,   // Tags go here with # prefix
+        mentions: '',              // Clear mentions
         platforms: suggestion.platforms
       }));
       showToast('YouTube content applied successfully', 'success');
     } else {
-      // Handle other platforms (existing code)
+      // Handle other platforms - put EVERYTHING in content field
+      const contentText = typeof suggestion.content === 'string' 
+        ? suggestion.content 
+        : JSON.stringify(suggestion.content);
+
+      // Get hashtags from the suggestion
+      const suggestedHashtags = suggestion.hashtags || '';
+
       setPostData(prev => ({
         ...prev,
-        content: suggestion.content,
-        hashtags: suggestion.hashtags || '',
+        content: contentText,      // ALL content goes here
+        hashtags: suggestedHashtags, // Hashtags from AI suggestion
+        mentions: '',              // Clear mentions
         platforms: suggestion.platforms
       }));
+      
       showToast('AI suggestion applied successfully', 'success');
     }
   };

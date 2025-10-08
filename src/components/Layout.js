@@ -115,6 +115,8 @@ const Layout = ({ children }) => {
     }
   };
 
+
+
   // Mark notification as read
   const markAsRead = async (id) => {
     try {
@@ -778,8 +780,8 @@ const Layout = ({ children }) => {
                 right: '0',
                 top: '100%',
                 marginTop: '8px',
-                width: '40vw',
-                backgroundColor: 'white',
+                width: (notifications.length === 0? 20 : 40) + 'vw',
+                backgroundColor: 'white', 
                 borderRadius: '8px',
                 boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
                 border: '1px solid #e2e8f0',
