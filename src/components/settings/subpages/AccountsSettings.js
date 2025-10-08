@@ -140,10 +140,12 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
             >
               {platform === 'Instagram' ? (
                 <Instagram size={24} style={{ color: '#E91E63' }} />
-              ) : platform === 'LinkedIn' ? (
+              ) : platform === 'Linkedin' ? (
                 <Linkedin size={24} style={{ color: '#0A66C2' }} />
-              ) : platform === 'YouTube' ? (
+              ) : platform === 'Youtube' ? (
                 <Youtube size={24} style={{ color: '#FF0000' }} />
+              ) : platform === 'Twitter' ? (
+                <FontAwesomeIcon icon={faSquareXTwitter} size="xl" color="#000000" />
               ) : (
                 <Facebook size={24} style={{ color: '#1877F2' }} />
               )}
@@ -3327,10 +3329,10 @@ const AccountsSettings = ({ onNotify }) => {
               gap: '16px'
             }}>
 
-      
+
               {/* View toggle buttons */}
               {connectedAccounts.length > 0 && (
-                <div className="view-toggle">
+                <div className="view-togglex">
                   <button
                     className={`toggle-btn ${!groupByUser ? 'active' : ''}`}
                     onClick={() => setGroupByUser(false)}

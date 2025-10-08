@@ -215,7 +215,7 @@ const Layout = ({ children }) => {
       case 'error':
         return <XCircle className="w-4 h-4 text-red-500" />;
       case 'scheduled':
-        return <Clock className="w-4 h-4 text-blue-500" />;
+        return <Clock size={20} className="w-4 h-4 text-blue-500" />;
       default:
         return <Bell className="w-4 h-4 text-gray-500" />;
     }
@@ -228,19 +228,19 @@ const Layout = ({ children }) => {
     const platformLower = platform.toLowerCase();
     
     if (platformLower.includes('instagram')) {
-      return <Instagram className="w-3 h-3 text-purple-500" />;
+      return <Instagram size={20} className="w-3 h-3 text-purple-500" />;
     } else if (platformLower.includes('facebook')) {
-      return <Facebook className="w-3 h-3 text-blue-600" />;
+      return <Facebook size={20} className="w-3 h-3 text-blue-600" />;
     } else if (platformLower.includes('twitter') || platformLower.includes('x.com')) {
-      return <Twitter className="w-3 h-3 text-blue-400" />;
+      return <Twitter size={20} className="w-3 h-3 text-blue-400" />;
     } else if (platformLower.includes('linkedin')) {
-      return <Linkedin className="w-3 h-3 text-blue-700" />;
+      return <Linkedin size={20} className="w-3 h-3 text-blue-700" />;
     } else if (platformLower.includes('youtube')) {
-      return <Youtube className="w-3 h-3 text-red-600" />;
+      return <Youtube size={20} className="w-3 h-3 text-red-600" />;
     } else if (platformLower.includes('tiktok')) {
-      return <Tiktok className="w-3 h-3 text-black" />;
+      return <Tiktok size={20} className="w-3 h-3 text-black" />;
     } else if (platformLower.includes('pinterest')) {
-      return <Pinterest className="w-3 h-3 text-red-500" />;
+      return <Pinterest size={20} className="w-3 h-3 text-red-500" />;
     } else {
       return <Globe className="w-3 h-3 text-gray-400" />;
     }
@@ -778,7 +778,7 @@ const Layout = ({ children }) => {
                 right: '0',
                 top: '100%',
                 marginTop: '8px',
-                width: '320px',
+                width: '40vw',
                 backgroundColor: 'white',
                 borderRadius: '8px',
                 boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
