@@ -52,7 +52,7 @@ const Home = () => {
     {
       icon: Users,
       title: 'Team Collaboration',
-      description: 'Invite teammates, role-based access, approval workflows. Perfect for agencies and growing teams managing multiple accounts.'
+      description: 'Coming Soon................'
     }
   ];
 
@@ -61,7 +61,7 @@ const Home = () => {
       icon: Link,
       title: 'Connect your accounts',
       description: 'Secure OAuth connections to all major platforms. Set up once, schedule everywhere.',
-      number: '01'
+number: '01'
     },
     {
       icon: PenTool,
@@ -79,21 +79,21 @@ const Home = () => {
 
   const testimonials = [
     {
-      quote: "Cut our posting time in half — and engagement is up 38%.",
-      author: "Sarah Chen",
-      role: "Social Manager, boutique agency",
+      quote: "MGABuzzConnect has simplified our entire social media workflow. From scheduling posts to tracking engagement across multiple platforms, everything happens seamlessly. It’s like having an extra team member!",
+      author: "Rohan Malhotra",
+      role: "Digital Marketing Manager",
       rating: 5
     },
     {
-      quote: "Scheduling 6 months ahead used to be a nightmare. MGA made it simple.",
-      author: "Marcus Rodriguez",
-      role: "Founder, e-commerce brand",
+      quote: "I love how easy it is to manage all my social profiles from one dashboard. The analytics are super clear, and the scheduling tool saves me hours every week. MGABuzzConnect is a total game-changer!",
+      author: "Sneha Patel",
+      role: "Content Creator",
       rating: 5
     },
     {
-      quote: "AI hashtag suggestions are shockingly accurate.",
+      quote: "With MGABuzzConnect, I can monitor brand mentions, plan posts, and get instant insights into performance. The automation tools have boosted our engagement rates significantly. Highly recommend it!",
       author: "Jenny Kim",
-      role: "Content Creator, 120K followers",
+      role: "Brand Manager",
       rating: 5
     }
   ];
