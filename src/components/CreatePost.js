@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Image,
   Calendar,
@@ -151,7 +151,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   }, [postData.scheduledDate, postData.scheduledTime, isScheduled, error]);
 
-  console.log("CreatePost component initialData:", initialData);
 
   // ✅ Helper functions for content formatting
   const formatContentForDisplay = (content) => {
@@ -259,7 +258,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       }
 
       if (!isValidInstagramAspectRatio(dims.width, dims.height)) {
-        showToast(`"${media.displayName || media.originalName || 'An image'}" has unsupported aspect ratio (${(dims.width/dims.height).toFixed(2)}). Instagram feed accepts 0.8–1.91.`, 'error', 6000);
+        showToast(`"${media.displayName || media.originalName || 'An image'}" has unsupported aspect ratio (${(dims.width / dims.height).toFixed(2)}). Instagram feed accepts 0.8–1.91.`, 'error', 6000);
         return false;
       }
     }
@@ -299,6 +298,32 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     return `${hour24.toString().padStart(2, '0')}:${minute}`;
   };
+
+  const getFiveMinutesAhead = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 5);
+    const hours = now.getHours().toString().padStart(2, "0");
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+
+  const initialFiveMinAhead = useMemo(() => getFiveMinutesAhead(), []);
+
+  // Set initial 5 min ahead only when scheduling is enabled
+  useEffect(() => {
+    if (isScheduled && !postData.scheduledTime) {
+      console.log("⏳ Setting scheduledTime initially:", initialFiveMinAhead);
+      setPostData(prev => ({ ...prev, scheduledTime: initialFiveMinAhead }));
+    }
+  }, [isScheduled, postData.scheduledTime, initialFiveMinAhead]);
+
+
+  // Memoized conversion — ✅ re-runs when scheduledTime changes
+  const currentTime12 = useMemo(() => {
+    if (!postData.scheduledTime) return { hour: "12", minute: "00", period: "PM" };
+    return convertTo12Hour(postData.scheduledTime);
+  }, [postData.scheduledTime]);
+
 
   // Carousel handlers
   const openCarousel = (index = 0) => {
@@ -346,110 +371,110 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     }
   }, [isOpen]);
 
-const handleFileUpload = async (files) => {
-  if (!files || files.length === 0) return;
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
 
-  const validFiles = [];
-  const invalidFiles = [];
+    const validFiles = [];
+    const invalidFiles = [];
 
-  Array.from(files).forEach(file => {
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
+    Array.from(files).forEach(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
 
-    if (!isImage && !isVideo) {
-      invalidFiles.push({ file, reason: 'Unsupported file type' });
-      return;
-    }
-
-    if (isVideo && file.size > 250 * 1024 * 1024) {
-      invalidFiles.push({ file, reason: 'Video too large (max 250MB)' });
-      return;
-    }
-    if (isImage && file.size > 50 * 1024 * 1024) {
-      invalidFiles.push({ file, reason: 'Image too large (max 50MB)' });
-      return;
-    }
-
-    validFiles.push(file);
-  });
-
-  if (invalidFiles.length > 0) {
-    const errorMessages = invalidFiles.map(({ file, reason }) =>
-      `${file.name}: ${reason}`
-    ).join('\n');
-    showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
-  }
-
-  if (validFiles.length === 0) return;
-
-  setUploadingFiles(true);
-  setError(null);
-
-  try {
-    console.log('✅ Uploading files:', validFiles);
-
-    const response = await uploadMedia(validFiles);
-    console.log('✅ Upload response:', response);
-
-    if (!response.data || !Array.isArray(response.data)) {
-      throw new Error('Invalid upload response format');
-    }
-
-    const uploadedMedia = response.data.map((media, index) => {
-      const originalFile = validFiles[index];
-
-      // ✅ Always ensure url is present
-      let mediaUrl = media.url || media.secure_url;
-      if (!mediaUrl) {
-        // fallback - use preview blob if server didn't return URL
-        mediaUrl = URL.createObjectURL(originalFile);
+      if (!isImage && !isVideo) {
+        invalidFiles.push({ file, reason: 'Unsupported file type' });
+        return;
       }
 
-      return {
-        url: mediaUrl, // REQUIRED for Joi validation
-        altText: media.originalName || originalFile?.name || 'Post media',
-        originalName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
-        displayName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
-        filename: media.filename || originalFile?.name,
-        publicId: media.publicId,
-        fileType: media.fileType || (originalFile?.type.startsWith('video/') ? 'video' : 'image'),
-        size: media.size || originalFile?.size,
-        dimensions: media.dimensions,
-        duration: media.duration || null,
-        fps: media.fps || null,
-        hasAudio: media.hasAudio || null,
-        thumbnails: media.thumbnails || null,
-        videoQualities: media.videoQualities || null,
-        platformOptimized: media.platformOptimized || null,
-        format: originalFile?.type || 'application/octet-stream',
-        createdAt: new Date().toISOString()
-      };
+      if (isVideo && file.size > 250 * 1024 * 1024) {
+        invalidFiles.push({ file, reason: 'Video too large (max 250MB)' });
+        return;
+      }
+      if (isImage && file.size > 50 * 1024 * 1024) {
+        invalidFiles.push({ file, reason: 'Image too large (max 50MB)' });
+        return;
+      }
+
+      validFiles.push(file);
     });
 
-    setPostData(prev => ({
-      ...prev,
-      images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
-    }));
+    if (invalidFiles.length > 0) {
+      const errorMessages = invalidFiles.map(({ file, reason }) =>
+        `${file.name}: ${reason}`
+      ).join('\n');
+      showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
+    }
 
-    const fileTypeText = validFiles.length === 1
-      ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
-      : 'files';
+    if (validFiles.length === 0) return;
 
-    showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
+    setUploadingFiles(true);
+    setError(null);
 
-  } catch (error) {
-    console.error('❌ Upload failed:', error);
-    setError(error.message || 'Failed to upload media');
-    showToast('Failed to upload media', 'error');
+    try {
+      console.log('✅ Uploading files:', validFiles);
 
-    setPostData(prev => ({
-      ...prev,
-      images: prev.images.filter(img => !img.isLocal)
-    }));
-  } finally {
-    setUploadingFiles(false);
-  }
-};
+      const response = await uploadMedia(validFiles);
+      console.log('✅ Upload response:', response);
+
+      if (!response.data || !Array.isArray(response.data)) {
+        throw new Error('Invalid upload response format');
+      }
+
+      const uploadedMedia = response.data.map((media, index) => {
+        const originalFile = validFiles[index];
+
+        // ✅ Always ensure url is present
+        let mediaUrl = media.url || media.secure_url;
+        if (!mediaUrl) {
+          // fallback - use preview blob if server didn't return URL
+          mediaUrl = URL.createObjectURL(originalFile);
+        }
+
+        return {
+          url: mediaUrl, // REQUIRED for Joi validation
+          altText: media.originalName || originalFile?.name || 'Post media',
+          originalName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
+          displayName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
+          filename: media.filename || originalFile?.name,
+          publicId: media.publicId,
+          fileType: media.fileType || (originalFile?.type.startsWith('video/') ? 'video' : 'image'),
+          size: media.size || originalFile?.size,
+          dimensions: media.dimensions,
+          duration: media.duration || null,
+          fps: media.fps || null,
+          hasAudio: media.hasAudio || null,
+          thumbnails: media.thumbnails || null,
+          videoQualities: media.videoQualities || null,
+          platformOptimized: media.platformOptimized || null,
+          format: originalFile?.type || 'application/octet-stream',
+          createdAt: new Date().toISOString()
+        };
+      });
+
+      setPostData(prev => ({
+        ...prev,
+        images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
+      }));
+
+      const fileTypeText = validFiles.length === 1
+        ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
+        : 'files';
+
+      showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
+
+    } catch (error) {
+      console.error('❌ Upload failed:', error);
+      setError(error.message || 'Failed to upload media');
+      showToast('Failed to upload media', 'error');
+
+      setPostData(prev => ({
+        ...prev,
+        images: prev.images.filter(img => !img.isLocal)
+      }));
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
 
   // ✅ Handle file input change
   const handleFileInputChange = (e) => {
@@ -524,86 +549,86 @@ const handleFileUpload = async (files) => {
     navigate('/settings?tab=accounts');
   };
 
-const fetchUserProfile = async () => {
-  setLoadingProfile(true);
-  try {
-    const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    if (response.data.success) {
-      // Get the raw data from API
-      const userData = response.data.data;
-      console.log('Raw API response data:', userData);
-      
-      // Ensure connectedPlatforms includes all platforms from connectedAccounts
-      let connectedPlatforms = userData.connectedPlatforms || [];
-      
-      // Check if there are connected accounts for each platform type
-      if (Array.isArray(userData.connectedAccounts)) {
-        // Extract unique platform types from connectedAccounts
-        const platformsFromAccounts = [
-          ...new Set(userData.connectedAccounts.map(acc => acc.platform))
-        ];
-        
-        // Ensure each platform from accounts exists in connectedPlatforms
-        platformsFromAccounts.forEach(platform => {
-          if (!connectedPlatforms.includes(platform)) {
-            connectedPlatforms.push(platform);
-          }
-        });
+  const fetchUserProfile = async () => {
+    setLoadingProfile(true);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        // Get the raw data from API
+        const userData = response.data.data;
+        console.log('Raw API response data:', userData);
+
+        // Ensure connectedPlatforms includes all platforms from connectedAccounts
+        let connectedPlatforms = userData.connectedPlatforms || [];
+
+        // Check if there are connected accounts for each platform type
+        if (Array.isArray(userData.connectedAccounts)) {
+          // Extract unique platform types from connectedAccounts
+          const platformsFromAccounts = [
+            ...new Set(userData.connectedAccounts.map(acc => acc.platform))
+          ];
+
+          // Ensure each platform from accounts exists in connectedPlatforms
+          platformsFromAccounts.forEach(platform => {
+            if (!connectedPlatforms.includes(platform)) {
+              connectedPlatforms.push(platform);
+            }
+          });
+        }
+
+        // Update the userData with the enhanced connectedPlatforms
+        userData.connectedPlatforms = connectedPlatforms;
+        console.log('Enhanced user data:', userData);
+
+        setUserProfile(userData);
       }
-      
-      // Update the userData with the enhanced connectedPlatforms
-      userData.connectedPlatforms = connectedPlatforms;
-      console.log('Enhanced user data:', userData);
-      
-      setUserProfile(userData);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      showToast('Failed to load user profile', 'error');
+    } finally {
+      setLoadingProfile(false);
     }
-  } catch (error) {
-    console.error('Failed to fetch user profile:', error);
-    showToast('Failed to load user profile', 'error');
-  } finally {
-    setLoadingProfile(false);
-  }
-};
+  };
 
   // Generate platforms array based on connected accounts
-const getAvailablePlatforms = () => {
-  const allPlatforms = [
-    { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
-    { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
-    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
-    { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
-    { id: 'twitter', name: 'X', icon:() => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{marginBottom: '4px'}} />, color: "#0A66C2"} ,
-  ];
+  const getAvailablePlatforms = () => {
+    const allPlatforms = [
+      { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
+      { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
+      { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
+      { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
+      { id: 'twitter', name: 'X', icon: () => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{ marginBottom: '4px' }} />, color: "#0A66C2" },
+    ];
 
-  return allPlatforms.map(platform => {
-    // First check if there are platform-specific accounts (most reliable)
-    const hasAccountsForPlatform = userProfile?.connectedAccounts?.some(acc => 
-      acc.platform === platform.id && acc.connected !== false
-    );
-    // Then check if the platform is in the connectedPlatforms array
-    const isInConnectedPlatforms = userProfile?.connectedPlatforms?.includes(platform.id);
-    
-    // A platform is connected if either condition is true
-    const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
-    return {
-      ...platform,
-      connected: isConnected,
-      accounts: userProfile?.connectedAccounts?.filter(acc => acc.platform === platform.id) || []
-    };
-  });
-};
+    return allPlatforms.map(platform => {
+      // First check if there are platform-specific accounts (most reliable)
+      const hasAccountsForPlatform = userProfile?.connectedAccounts?.some(acc =>
+        acc.platform === platform.id && acc.connected !== false
+      );
+      // Then check if the platform is in the connectedPlatforms array
+      const isInConnectedPlatforms = userProfile?.connectedPlatforms?.includes(platform.id);
+
+      // A platform is connected if either condition is true
+      const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
+      return {
+        ...platform,
+        connected: isConnected,
+        accounts: userProfile?.connectedAccounts?.filter(acc => acc.platform === platform.id) || []
+      };
+    });
+  };
 
   const platforms = userProfile ? getAvailablePlatforms() : [];
 
   // Images are now required for all platforms
   const areImagesRequired = () => {
-    return postData.platforms.includes('instagram' , 'youtube' , 'linkedin');
+    return postData.platforms.includes('instagram', 'youtube', 'linkedin');
   };
 
-// Toast notification function
+  // Toast notification function
   const showToast = (message, type = 'info', duration = 5000) => {
     setToast({ message, type });
     setTimeout(() => setToast(null), duration);
@@ -900,184 +925,184 @@ const getAvailablePlatforms = () => {
     showToast('Image removed', 'info');
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setError(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
-  if (!validateForm()) {
-    setIsSubmitting(false);
-    return;
-  }
-
-  // Define cleanedSelectedAccounts BEFORE the try block
-  const cleanedSelectedAccounts = {};
-  const selectedAccountsWithNames = {};
-  
-  try {
-    // Extract connected accounts from user profile
-    const accountsMap = {};
-    userProfile?.connectedAccounts?.forEach(account => {
-      accountsMap[account._id.toString()] = account;
-    });
-
-    // Clean up selectedAccounts to remove null values and empty arrays
-    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-      const validAccounts = accounts.filter(account => account != null && account !== '');
-      
-      if (validAccounts.length > 0) {
-        cleanedSelectedAccounts[platform] = validAccounts;
-        
-        // Get the real usernames from userProfile.connectedAccounts
-        selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
-          const account = accountsMap[accountId];
-          return {
-            id: accountId,
-            username: account ? account.username : 'Unknown Account'
-          };
-        });
-      }
-    });
-
-    // Log the actual account names being sent
-    console.log('Sending account usernames:', selectedAccountsWithNames);
-
-    // Enhanced post data preparation with account information
-    const apiPostData = {
-      content: postData.content,
-      platforms: postData.platforms,
-      selectedAccounts: cleanedSelectedAccounts,
-      // Remove selectedAccountsWithNames from the API request
-      // We'll log it for debugging but not send it to avoid validation errors
-      images: postData.images.map((img, index) => ({
-        url: img.url,
-        altText: img.altText || img.originalName || 'Post media',
-        originalName: img.originalName || img.filename || `Media ${index + 1}`,
-        displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-        filename: img.filename,
-        publicId: img.publicId || null,
-        fileType: img.fileType || 'image',
-        size: img.size,
-        dimensions: img.dimensions,
-        duration: img.duration,
-        order: index,
-        format: img.format,
-        humanSize: img.size ? formatFileSize(img.size) : null
-      })),
-      hashtags: Array.isArray(postData.hashtags)
-        ? postData.hashtags
-        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-      mentions: Array.isArray(postData.mentions)
-        ? postData.mentions
-        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-      metadata: {
-        category: postData.metadata?.category || 'other',
-        source: 'web'
-      }
-    };
-
-    // Log the account usernames for debugging, but don't send in API request
-
-
-    console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
-
-   if (postData.platforms.includes('youtube')) {
-  // For YouTube, we use content as the video title
-  apiPostData.title = postData.content.substring(0, 100);
-  
-  // Use description from hashtags field if available, or create a default one
-  apiPostData.description = postData.hashtags ? 
-    postData.hashtags : 
-    `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
-
-  // For YouTube, we should prioritize video files
-  const videoFiles = postData.images.filter(img =>
-    img.fileType === 'video' ||
-    img.url?.includes('video') ||
-    img.url?.includes('.mp4')
-  );
-
-  if (videoFiles.length > 0) {
-    // Clean up the youtubeVideo object to remove _id if present
-    const { _id, ...cleanedVideo } = videoFiles[0];
-    apiPostData.youtubeVideo = cleanedVideo;
-
-    // Ensure this video is included in the images array
-    if (postData.platforms.length === 1) {
-      // If YouTube is the only platform, just use this video
-      apiPostData.images = [cleanedVideo];
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
     }
-  }
-  
-  // Add YouTube-specific tags from the mentions field
-  if (postData.mentions) {
-    apiPostData.tags = postData.mentions.split(/\s+/)
-      .map(tag => tag.startsWith('@') ? tag.substring(1) : tag)
-      .filter(tag => tag.length > 0);
-  }
-}
 
-    // ✅ Handle scheduling vs immediate publishing
-    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-      // SCHEDULED POST
-      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-      apiPostData.scheduledDate = scheduledDateTime.toISOString();
+    // Define cleanedSelectedAccounts BEFORE the try block
+    const cleanedSelectedAccounts = {};
+    const selectedAccountsWithNames = {};
 
-      console.log('📅 Creating scheduled post for:', scheduledDateTime.toISOString());
-      showToast('Scheduling post...', 'info');
+    try {
+      // Extract connected accounts from user profile
+      const accountsMap = {};
+      userProfile?.connectedAccounts?.forEach(account => {
+        accountsMap[account._id.toString()] = account;
+      });
 
-      const response = await onPostCreated(apiPostData);
-      console.log('✅ Scheduled post created:', response);
+      // Clean up selectedAccounts to remove null values and empty arrays
+      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+        const validAccounts = accounts.filter(account => account != null && account !== '');
 
-      showToast('Post scheduled successfully!', 'success');
+        if (validAccounts.length > 0) {
+          cleanedSelectedAccounts[platform] = validAccounts;
 
-    } else {
-      // PUBLISH NOW
-      console.log('🚀 Creating and publishing post immediately...');
-      showToast('Creating and publishing post...', 'info');
-
-      // Step 1: Create the post as draft
-      const createResponse = await onPostCreated(apiPostData);
-      console.log('✅ Post created:', createResponse);
-
-      if (!createResponse?.data?._id) {
-        throw new Error('Failed to create post - no ID returned');
-      }
-
-      // Step 2: Immediately publish the created post
-      const postId = createResponse.data._id;
-      console.log('📤 Publishing post with ID:', postId);
-
-      const publishResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
+          // Get the real usernames from userProfile.connectedAccounts
+          selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
+            const account = accountsMap[accountId];
+            return {
+              id: accountId,
+              username: account ? account.username : 'Unknown Account'
+            };
+          });
         }
-      );
+      });
 
-      console.log('✅ Publish response:', publishResponse);
+      // Log the actual account names being sent
+      console.log('Sending account usernames:', selectedAccountsWithNames);
 
-      if (publishResponse.data.success) {
-        showToast('Post published successfully!', 'success');
-      } else {
-        throw new Error(publishResponse.data.message || 'Publishing failed');
+      // Enhanced post data preparation with account information
+      const apiPostData = {
+        content: postData.content,
+        platforms: postData.platforms,
+        selectedAccounts: cleanedSelectedAccounts,
+        // Remove selectedAccountsWithNames from the API request
+        // We'll log it for debugging but not send it to avoid validation errors
+        images: postData.images.map((img, index) => ({
+          url: img.url,
+          altText: img.altText || img.originalName || 'Post media',
+          originalName: img.originalName || img.filename || `Media ${index + 1}`,
+          displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+          filename: img.filename,
+          publicId: img.publicId || null,
+          fileType: img.fileType || 'image',
+          size: img.size,
+          dimensions: img.dimensions,
+          duration: img.duration,
+          order: index,
+          format: img.format,
+          humanSize: img.size ? formatFileSize(img.size) : null
+        })),
+        hashtags: Array.isArray(postData.hashtags)
+          ? postData.hashtags
+          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+        mentions: Array.isArray(postData.mentions)
+          ? postData.mentions
+          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+        metadata: {
+          category: postData.metadata?.category || 'other',
+          source: 'web'
+        }
+      };
+
+      // Log the account usernames for debugging, but don't send in API request
+
+
+      console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
+
+      if (postData.platforms.includes('youtube')) {
+        // For YouTube, we use content as the video title
+        apiPostData.title = postData.content.substring(0, 100);
+
+        // Use description from hashtags field if available, or create a default one
+        apiPostData.description = postData.hashtags ?
+          postData.hashtags :
+          `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
+
+        // For YouTube, we should prioritize video files
+        const videoFiles = postData.images.filter(img =>
+          img.fileType === 'video' ||
+          img.url?.includes('video') ||
+          img.url?.includes('.mp4')
+        );
+
+        if (videoFiles.length > 0) {
+          // Clean up the youtubeVideo object to remove _id if present
+          const { _id, ...cleanedVideo } = videoFiles[0];
+          apiPostData.youtubeVideo = cleanedVideo;
+
+          // Ensure this video is included in the images array
+          if (postData.platforms.length === 1) {
+            // If YouTube is the only platform, just use this video
+            apiPostData.images = [cleanedVideo];
+          }
+        }
+
+        // Add YouTube-specific tags from the mentions field
+        if (postData.mentions) {
+          apiPostData.tags = postData.mentions.split(/\s+/)
+            .map(tag => tag.startsWith('@') ? tag.substring(1) : tag)
+            .filter(tag => tag.length > 0);
+        }
       }
+
+      // ✅ Handle scheduling vs immediate publishing
+      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+        // SCHEDULED POST
+        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+        apiPostData.scheduledDate = scheduledDateTime.toISOString();
+
+        console.log('📅 Creating scheduled post for:', scheduledDateTime.toISOString());
+        showToast('Scheduling post...', 'info');
+
+        const response = await onPostCreated(apiPostData);
+        console.log('✅ Scheduled post created:', response);
+
+        showToast('Post scheduled successfully!', 'success');
+
+      } else {
+        // PUBLISH NOW
+        console.log('🚀 Creating and publishing post immediately...');
+        showToast('Creating and publishing post...', 'info');
+
+        // Step 1: Create the post as draft
+        const createResponse = await onPostCreated(apiPostData);
+        console.log('✅ Post created:', createResponse);
+
+        if (!createResponse?.data?._id) {
+          throw new Error('Failed to create post - no ID returned');
+        }
+
+        // Step 2: Immediately publish the created post
+        const postId = createResponse.data._id;
+        console.log('📤 Publishing post with ID:', postId);
+
+        const publishResponse = await axios.post(
+          `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+
+        console.log('✅ Publish response:', publishResponse);
+
+        if (publishResponse.data.success) {
+          showToast('Post published successfully!', 'success');
+        } else {
+          throw new Error(publishResponse.data.message || 'Publishing failed');
+        }
+      }
+
+      // Reset form on success
+      resetForm();
+      onClose();
+
+    } catch (error) {
+      console.error('❌ Failed to create/publish post:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+      setError(errorMessage);
+      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Reset form on success
-    resetForm();
-    onClose();
-
-  } catch (error) {
-    console.error('❌ Failed to create/publish post:', error);
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-    setError(errorMessage);
-    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   const resetForm = () => {
     setPostData({
@@ -1103,92 +1128,92 @@ const handleSubmit = async (e) => {
   };
 
   // AI Content Generation
- const generateAIContent = async () => {
-  // Check if platforms are selected
-  if (postData.platforms.length === 0) {
-    showToast('Please select at least one social media platform first', 'error');
-    return;
-  }
-
-  if (!aiPrompt.trim()) {
-    showToast('Please enter a prompt for AI content generation', 'error');
-    return;
-  }
-
-  setIsGenerating(true);
-  setError(null);
-  showToast('Generating AI content...', 'info');
-
-  try {
-    const selectedPlatforms = postData.platforms;
-
-    const response = await apiClient.generateContent({
-      prompt: aiPrompt,
-      tone: 'casual',
-      platforms: selectedPlatforms,
-      includeHashtags: true,
-      maxLength: 280
-    });
-
-    console.log('AI Response:', response);
-
-    if (response.success && response.data) {
-      const suggestions = [];
-
-      // Enhanced handling for different platform responses
-      Object.entries(response.data.content).forEach(([platform, data]) => {
-        if (platform === 'youtube') {
-          // Special handling for YouTube content
-          suggestions.push({
-            id: `${platform}-${Date.now()}`,
-            content: {
-              title: data.title || '',
-              description: data.description || '',
-              tags: data.tags || [],
-              callToAction: data.callToAction || '',
-              videoIdeas: data.videoIdeas || []
-            },
-            hashtags: data.description || '',
-            mentions: Array.isArray(data.tags) ? data.tags.join(' ') : '',
-            tone: response.data.options.tone,
-            platforms: [platform],
-            characterCount: data.characterCount || 0,
-            withinLimit: data.withinLimit || true,
-            provider: 'openai',
-            isYoutube: true
-          });
-        } else {
-          // Regular handling for other platforms
-          const { content, hashtags } = extractHashtagsFromContent(data.content || '');
-          
-          suggestions.push({
-            id: `${platform}-${Date.now()}`,
-            content: content,
-            hashtags: hashtags.join(' '),
-            tone: response.data.options.tone,
-            platforms: [platform],
-            characterCount: data.characterCount || 0,
-            withinLimit: data.withinLimit || true,
-            provider: 'openai',
-            isYoutube: false
-          });
-        }
-      });
-
-      setAiSuggestions(suggestions);
-      showToast(`Generated ${suggestions.length} AI suggestions`, 'success');
-    } else {
-      throw new Error('Invalid response format');
+  const generateAIContent = async () => {
+    // Check if platforms are selected
+    if (postData.platforms.length === 0) {
+      showToast('Please select at least one social media platform first', 'error');
+      return;
     }
 
-  } catch (error) {
-    console.error('AI generation failed:', error);
-    setError('Failed to generate AI content. Please try again.');
-    showToast('Failed to generate AI content', 'error');
-  } finally {
-    setIsGenerating(false);
-  }
-};
+    if (!aiPrompt.trim()) {
+      showToast('Please enter a prompt for AI content generation', 'error');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    showToast('Generating AI content...', 'info');
+
+    try {
+      const selectedPlatforms = postData.platforms;
+
+      const response = await apiClient.generateContent({
+        prompt: aiPrompt,
+        tone: 'casual',
+        platforms: selectedPlatforms,
+        includeHashtags: true,
+        maxLength: 280
+      });
+
+      console.log('AI Response:', response);
+
+      if (response.success && response.data) {
+        const suggestions = [];
+
+        // Enhanced handling for different platform responses
+        Object.entries(response.data.content).forEach(([platform, data]) => {
+          if (platform === 'youtube') {
+            // Special handling for YouTube content
+            suggestions.push({
+              id: `${platform}-${Date.now()}`,
+              content: {
+                title: data.title || '',
+                description: data.description || '',
+                tags: data.tags || [],
+                callToAction: data.callToAction || '',
+                videoIdeas: data.videoIdeas || []
+              },
+              hashtags: data.description || '',
+              mentions: Array.isArray(data.tags) ? data.tags.join(' ') : '',
+              tone: response.data.options.tone,
+              platforms: [platform],
+              characterCount: data.characterCount || 0,
+              withinLimit: data.withinLimit || true,
+              provider: 'openai',
+              isYoutube: true
+            });
+          } else {
+            // Regular handling for other platforms
+            const { content, hashtags } = extractHashtagsFromContent(data.content || '');
+
+            suggestions.push({
+              id: `${platform}-${Date.now()}`,
+              content: content,
+              hashtags: hashtags.join(' '),
+              tone: response.data.options.tone,
+              platforms: [platform],
+              characterCount: data.characterCount || 0,
+              withinLimit: data.withinLimit || true,
+              provider: 'openai',
+              isYoutube: false
+            });
+          }
+        });
+
+        setAiSuggestions(suggestions);
+        showToast(`Generated ${suggestions.length} AI suggestions`, 'success');
+      } else {
+        throw new Error('Invalid response format');
+      }
+
+    } catch (error) {
+      console.error('AI generation failed:', error);
+      setError('Failed to generate AI content. Please try again.');
+      showToast('Failed to generate AI content', 'error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const generateHashtags = async () => {
     // Check if platforms are selected
@@ -1285,48 +1310,48 @@ const handleSubmit = async (e) => {
   };
 
   // ✅ UPDATED: Apply AI suggestion with hashtag extraction
-const applyAISuggestion = (suggestion) => {
-  console.log('Applying AI suggestion:', suggestion);
-  
-  if (suggestion.platforms.includes('youtube') && typeof suggestion.content === 'object') {
-    // Handle YouTube content specifically
-    setPostData(prev => ({
-      ...prev,
-      content: suggestion.content.title || suggestion.content || '',
-      hashtags: suggestion.content.description || suggestion.hashtags || '',
-      mentions: suggestion.content.tags ? suggestion.content.tags.join(' ') : '',
-      platforms: suggestion.platforms
-    }));
-    showToast('YouTube content applied successfully', 'success');
-  } else {
-    // Handle other platforms (existing code)
-    setPostData(prev => ({
-      ...prev,
-      content: suggestion.content,
-      hashtags: suggestion.hashtags || '',
-      platforms: suggestion.platforms
-    }));
-    showToast('AI suggestion applied successfully', 'success');
-  }
-};
+  const applyAISuggestion = (suggestion) => {
+    console.log('Applying AI suggestion:', suggestion);
 
-const copySuggestionContent = async (suggestion) => {
-  try {
-    let textToCopy;
-    
-    if (suggestion.isYoutube && typeof suggestion.content === 'object') {
-      textToCopy = `Title: ${suggestion.content.title || ''}\n\nDescription:\n${suggestion.content.description || ''}\n\nTags: ${suggestion.content.tags ? suggestion.content.tags.join(', ') : ''}`;
+    if (suggestion.platforms.includes('youtube') && typeof suggestion.content === 'object') {
+      // Handle YouTube content specifically
+      setPostData(prev => ({
+        ...prev,
+        content: suggestion.content.title || suggestion.content || '',
+        hashtags: suggestion.content.description || suggestion.hashtags || '',
+        mentions: suggestion.content.tags ? suggestion.content.tags.join(' ') : '',
+        platforms: suggestion.platforms
+      }));
+      showToast('YouTube content applied successfully', 'success');
     } else {
-      textToCopy = suggestion.content;
+      // Handle other platforms (existing code)
+      setPostData(prev => ({
+        ...prev,
+        content: suggestion.content,
+        hashtags: suggestion.hashtags || '',
+        platforms: suggestion.platforms
+      }));
+      showToast('AI suggestion applied successfully', 'success');
     }
-    
-    await navigator.clipboard.writeText(textToCopy);
-    showToast('Content copied to clipboard', 'success');
-  } catch (err) {
-    console.error('Failed to copy text: ', err);
-    showToast('Failed to copy content', 'error');
-  }
-};
+  };
+
+  const copySuggestionContent = async (suggestion) => {
+    try {
+      let textToCopy;
+
+      if (suggestion.isYoutube && typeof suggestion.content === 'object') {
+        textToCopy = `Title: ${suggestion.content.title || ''}\n\nDescription:\n${suggestion.content.description || ''}\n\nTags: ${suggestion.content.tags ? suggestion.content.tags.join(', ') : ''}`;
+      } else {
+        textToCopy = suggestion.content;
+      }
+
+      await navigator.clipboard.writeText(textToCopy);
+      showToast('Content copied to clipboard', 'success');
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      showToast('Failed to copy content', 'error');
+    }
+  };
 
   // Clean up blob URLs when component unmounts
   useEffect(() => {
@@ -1631,81 +1656,81 @@ const copySuggestionContent = async (suggestion) => {
                         </button>
                       </div>
                       <div className="suggestions-list">
-                     {aiSuggestions.map(suggestion => (
-  <div key={suggestion.id} className="suggestion-card">
-    <div className="suggestion-header">
-      <span className="suggestion-tone">{suggestion.tone}</span>
-      <div className="suggestion-platforms">
-        {suggestion.platforms.map(platform => {
-          const Icon = platform === 'instagram' ? Instagram :
-            platform === 'twitter' ? X :
-            platform === 'youtube' ? Youtube :
-            platform === 'linkedin' ? Linkedin : Facebook;
-          return <Icon key={platform} size={14} />;
-        })}
-      </div>
-    </div>
-    
-    {suggestion.isYoutube ? (
-      // YouTube suggestion content
-      <div className="youtube-suggestion">
-        <div className="youtube-title">
-          <h4>Title: {typeof suggestion.content === 'object' ? suggestion.content.title : suggestion.content}</h4>
-        </div>
-        <div className="youtube-description">
-          <p>{typeof suggestion.content === 'object' ? suggestion.content.description : suggestion.hashtags}</p>
-        </div>
-        {typeof suggestion.content === 'object' && suggestion.content.tags && (
-          <div className="youtube-tags">
-            <small>Tags: {suggestion.content.tags.join(', ')}</small>
-          </div>
-        )}
-        {typeof suggestion.content === 'object' && suggestion.content.videoIdeas && (
-          <div className="youtube-ideas">
-            <small>Video ideas: {Array.isArray(suggestion.content.videoIdeas) 
-              ? suggestion.content.videoIdeas.join(', ') 
-              : suggestion.content.videoIdeas}
-            </small>
-          </div>
-        )}
-      </div>
-    ) : (
-      // Standard content for other platforms
-      <>
-        <div
-          className="suggestion-content"
-          dangerouslySetInnerHTML={{
-            __html: formatContentForDisplay(
-              typeof suggestion.content === 'string' ? suggestion.content : JSON.stringify(suggestion.content)
-            )
-          }}
-        />
-        <div className="suggestion-hashtags">
-          <span>{suggestion.hashtags}</span>
-        </div>
-      </>
-    )}
-    
-    <div className="suggestion-actions">
-      <button
-        type="button"
-        className="copy-suggestion-btn"
-        onClick={() => copySuggestionContent(suggestion)}
-        title="Copy content to clipboard"
-      >
-        <Copy size={14} />
-        Copy
-      </button>
-      <button
-        type="button"
-        className="apply-suggestion-btn"
-        onClick={() => applyAISuggestion(suggestion)}
-      >
-        Use This Content
-      </button>
-    </div>
-  </div>
-))}
+                        {aiSuggestions.map(suggestion => (
+                          <div key={suggestion.id} className="suggestion-card">
+                            <div className="suggestion-header">
+                              <span className="suggestion-tone">{suggestion.tone}</span>
+                              <div className="suggestion-platforms">
+                                {suggestion.platforms.map(platform => {
+                                  const Icon = platform === 'instagram' ? Instagram :
+                                    platform === 'twitter' ? X :
+                                      platform === 'youtube' ? Youtube :
+                                        platform === 'linkedin' ? Linkedin : Facebook;
+                                  return <Icon key={platform} size={14} />;
+                                })}
+                              </div>
+                            </div>
+
+                            {suggestion.isYoutube ? (
+                              // YouTube suggestion content
+                              <div className="youtube-suggestion">
+                                <div className="youtube-title">
+                                  <h4>Title: {typeof suggestion.content === 'object' ? suggestion.content.title : suggestion.content}</h4>
+                                </div>
+                                <div className="youtube-description">
+                                  <p>{typeof suggestion.content === 'object' ? suggestion.content.description : suggestion.hashtags}</p>
+                                </div>
+                                {typeof suggestion.content === 'object' && suggestion.content.tags && (
+                                  <div className="youtube-tags">
+                                    <small>Tags: {suggestion.content.tags.join(', ')}</small>
+                                  </div>
+                                )}
+                                {typeof suggestion.content === 'object' && suggestion.content.videoIdeas && (
+                                  <div className="youtube-ideas">
+                                    <small>Video ideas: {Array.isArray(suggestion.content.videoIdeas)
+                                      ? suggestion.content.videoIdeas.join(', ')
+                                      : suggestion.content.videoIdeas}
+                                    </small>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              // Standard content for other platforms
+                              <>
+                                <div
+                                  className="suggestion-content"
+                                  dangerouslySetInnerHTML={{
+                                    __html: formatContentForDisplay(
+                                      typeof suggestion.content === 'string' ? suggestion.content : JSON.stringify(suggestion.content)
+                                    )
+                                  }}
+                                />
+                                <div className="suggestion-hashtags">
+                                  <span>{suggestion.hashtags}</span>
+                                </div>
+                              </>
+                            )}
+
+                            <div className="suggestion-actions">
+                              <button
+                                type="button"
+                                className="copy-suggestion-btn"
+                                onClick={() => copySuggestionContent(suggestion)}
+                                title="Copy content to clipboard"
+                              >
+                                <Copy size={14} />
+                                Copy
+                              </button>
+                              <button
+                                type="button"
+                                className="apply-suggestion-btn"
+                                onClick={() => applyAISuggestion(suggestion)}
+                              >
+                                Use This Content
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -2166,11 +2191,13 @@ const copySuggestionContent = async (suggestion) => {
                             setIsScheduled(true);
                             if (!postData.scheduledDate) {
                               const defaultDate = new Date();
-                              defaultDate.setHours(defaultDate.getHours());
+                              const fiveMinAhead = new Date();
+                              fiveMinAhead.setMinutes(fiveMinAhead.getMinutes() + 5);
+                              
                               setPostData(prev => ({
                                 ...prev,
                                 scheduledDate: defaultDate.toISOString().split("T")[0],
-                                scheduledTime: defaultDate.toTimeString().slice(0, 5)
+                                scheduledTime: `${fiveMinAhead.getHours().toString().padStart(2, '0')}:${fiveMinAhead.getMinutes().toString().padStart(2, '0')}`
                               }));
                             }
                           }}
@@ -2206,9 +2233,9 @@ const copySuggestionContent = async (suggestion) => {
                               <span className="time-input-label">Select time</span>
                               <Clock size={16} className="time-input-icon" />
                             </div>
-                            <div className="time-picker-12hr">
+                            <div key={postData.scheduledTime} className="time-picker-12hr">
                               <select
-                                value={postData.scheduledTime ? convertTo12Hour(postData.scheduledTime).hour : '12'}
+                                value={currentTime12.hour}
                                 onChange={(e) => {
                                   const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
                                   const newTime = { ...currentTime, hour: e.target.value };
@@ -2231,7 +2258,7 @@ const copySuggestionContent = async (suggestion) => {
                               <span className="time-separator">:</span>
 
                               <select
-                                value={postData.scheduledTime ? convertTo12Hour(postData.scheduledTime).minute : '00'}
+                                value={currentTime12.minute}
                                 onChange={(e) => {
                                   const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
                                   const newTime = { ...currentTime, minute: e.target.value };
@@ -2252,7 +2279,7 @@ const copySuggestionContent = async (suggestion) => {
                               </select>
 
                               <select
-                                value={postData.scheduledTime ? convertTo12Hour(postData.scheduledTime).period : 'PM'}
+                                value={currentTime12.period}
                                 onChange={(e) => {
                                   const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
                                   const newTime = { ...currentTime, period: e.target.value };
@@ -2408,7 +2435,7 @@ const copySuggestionContent = async (suggestion) => {
               </div>
             </div>
           )}
-          
+
           <div className="modal-footer">
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel

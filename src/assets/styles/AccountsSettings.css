@@ -265,7 +265,7 @@
 
 @media (max-width: 768px) {
   .settings-subpage {
-    padding: 1rem;
+    /* padding: 1rem; */
   }
 
   .settings-header h2 {
