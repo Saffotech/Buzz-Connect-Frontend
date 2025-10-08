@@ -952,6 +952,7 @@
 
   .platforms-grid {
     grid-template-columns: 1fr;
+    flex-wrap: wrap;
   }
 
   .form-row {

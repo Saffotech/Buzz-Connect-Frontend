@@ -246,7 +246,7 @@
   gap: 20px;
   height: 100%;
   max-height: 65vh;
-  grid-template-areas: 
+  grid-template-areas:
     "image content"
     "stats stats";
   min-height: 450px;
@@ -309,8 +309,8 @@
   transition: all 0.2s ease;
 }
 
-.arrow-btnx{
-padding: .5rem !important; 
+.arrow-btnx {
+  padding: 0.5rem !important;
 }
 
 .image-counter {
@@ -342,7 +342,7 @@ padding: .5rem !important;
 }
 
 .username {
-   /* Increased from 14px */
+  /* Increased from 14px */
   font-weight: 600;
   color: #2c3e50;
   margin: 0;
@@ -445,7 +445,6 @@ padding: .5rem !important;
   padding-top: 16px;
   margin-top: 0; /* Remove top margin */
 }
-
 
 .status-published {
   background: #d4edda;
@@ -1027,7 +1026,7 @@ padding: .5rem !important;
     max-width: 950px !important;
     width: 92% !important;
   }
-  
+
   .preview-content {
     gap: 18px;
   }
@@ -1038,7 +1037,7 @@ padding: .5rem !important;
     max-width: 800px !important;
     width: 95% !important;
   }
-  
+
   .preview-content {
     grid-template-columns: 1fr 0.8fr; /* Slightly reduce right column on smaller screens */
     gap: 16px;
@@ -1052,9 +1051,13 @@ padding: .5rem !important;
     max-height: 85vh !important;
   }
   
+  .preview-content-pd {
+    display: block;
+  }
+
   .preview-content {
     grid-template-columns: 1fr;
-    grid-template-areas: 
+    grid-template-areas:
       "image"
       "username"
       "caption"
@@ -1248,7 +1251,7 @@ padding: .5rem !important;
 /* Platform-specific colors */
 .username svg[color="#E1306C"],
 .username .instagram svg {
-  color: #E1306C;
+  color: #e1306c;
 }
 
 .username svg[color="#1877f2"],
@@ -1262,9 +1265,9 @@ padding: .5rem !important;
 }
 
 .username .linkedin svg {
-  color: #0077B5;
+  color: #0077b5;
 }
 
 .username .youtube svg {
-  color: #FF0000;
+  color: #ff0000;
 }
