@@ -3,7 +3,7 @@ import "./PostDetailModal.css";
 import {
   X, Calendar, Clock, Heart, MessageCircle, Share, MoreHorizontal,
   Bookmark, Send, Eye, Instagram, Facebook, Twitter, Linkedin, Youtube, ChevronRightCircle,
-  ChevronLeftCircle, Edit, Trash2, RefreshCw, TrendingUp, BarChart3,
+  ChevronLeftCircle, Edit, Trash2, RefreshCw, TrendingUp, BarChart3, CheckCircle, XCircle, AlertTriangle, AlertCircle,
   Users, ExternalLink, Copy
 } from "lucide-react";
 import axios from "axios";
@@ -611,6 +611,58 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     }
   };
 
+  // Add this function to your component
+  const handleRetryPublish = async (platformPost) => {
+    if (!platformPost || !platformPost.accountId) {
+      showToast('Cannot republish: missing account information', 'error');
+      return;
+    }
+
+    try {
+      setIsPosting(true);
+      showToast(`Republishing to ${platformPost.platform}...`, 'info');
+
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      const postId = post._id || post.id;
+
+      // Prepare publish request with specific platform and account
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
+        {
+          platforms: [platformPost.platform],
+          accountIds: [platformPost.accountId]
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      console.log('Republish response:', response.data);
+      showToast(`Successfully republished to ${platformPost.platform}!`, 'success');
+
+      // Refresh the post details
+      if (onPostAgain && typeof onPostAgain === 'function') {
+        onPostAgain(post, response.data);
+      } else {
+        // Fallback: close modal and let parent component handle refresh
+        setTimeout(() => {
+          handleClose();
+        }, 1500);
+      }
+
+    } catch (error) {
+      console.error('Failed to retry publish:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to republish';
+      showToast(`Republish failed: ${errorMessage}`, 'error');
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
   // Handle copy link
   const handleCopyLink = () => {
     const postId = post._id || post.id;
@@ -978,15 +1030,15 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
             <TrendingUp size={16} />
             Analytics
           </button>
-          {/* <button 
-            className={`tab-btn ${activeTab === 'comments' ? 'active' : ''}`}
-            onClick={() => setActiveTab('comments')}
+          <button
+            className={`tab-btn ${activeTab === 'publishing' ? 'active' : ''}`}
+            onClick={() => setActiveTab('publishing')}
           >
-            <MessageCircle size={16} />
-            Comments ({mockComments.length})
-          </button> */}
-
+            <ExternalLink size={16} />
+            Publishing Details
+          </button>
         </div>
+
 
         {/* Modal Content */}
         <div className="modal-content">
@@ -1313,44 +1365,227 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
               )}
             </div>
           )}
+          {activeTab === 'publishing' && (
+            <div className="mga-publishing-tab">
+              {/* Only show heading if post is published and has platformPosts */}
+              {post.status === 'published' && post.platformPosts?.length > 0 && (
+                <h3 className="mga-tab-section-title">
+                  <ExternalLink size={18} />
+                  Publishing Details
+                </h3>
+              )}
 
-          {activeTab === 'comments' && (
-            <div className="comments-tab">
-              <div className="comments-list">
-                {mockComments.map(comment => (
-                  <div key={comment.id} className="comment-item">
-                    <img src={comment.avatar} alt={comment.author} className="comment-avatar" />
-                    <div className="comment-content">
-                      <div className="comment-header">
-                        <div className="comment-author-info">
-                          {getPlatformIcon(comment.platform)}
-                          <span className="comment-author">{comment.author}</span>
-                        </div>
-                        <span className="comment-time">{comment.timestamp}</span>
+              {/* Loading state */}
+              {post.status === 'published' && !post.platformPosts ? (
+                <div className="mga-publishing-loading">
+                  <RefreshCw size={20} className="mga-spinning" />
+                  <span>Loading publishing details...</span>
+                </div>
+              ) : post.status !== 'published' ? (
+                <div className="mga-no-platform-posts">
+                  <AlertCircle size={48} />
+                  <p>Publishing details are only available for published posts</p>
+                  {post.status === 'draft' && <span>This post is still a draft</span>}
+                  {post.status === 'scheduled' && <span>This post is scheduled for future publishing</span>}
+                  {post.status === 'failed' && <span>This post failed to publish</span>}
+                </div>
+              ) : !post.platformPosts || post.platformPosts.length === 0 ? (
+                <div className="mga-no-platform-posts">
+                  <AlertCircle size={48} />
+                  <p>No publishing details available for this post</p>
+                  <span>This post was published but no platform details were found</span>
+                </div>
+              ) : (
+                <>
+                  {/* Publish Summary Stats */}
+                  <div className="mga-publish-summary-stats">
+                    <div className="mga-publish-stat-item">
+                      <div className="mga-stat-value">
+                        {post.platformPosts.length}/{post.platforms?.length || 0}
                       </div>
-                      <p className="comment-text">{comment.content}</p>
-                      <div className="comment-actions">
-                        <button className="comment-like">
-                          <Heart size={14} />
-                          {comment.likes}
-                        </button>
-                        <button className="comment-reply">Reply</button>
+                      <div className="mga-stat-label">Accounts Published</div>
+                    </div>
+                    <div className="mga-publish-stat-item">
+                      <div className="mga-stat-value">
+                        {post.platformPosts.filter(p => p.status === 'published').length}
                       </div>
+                      <div className="mga-stat-label">Successful</div>
+                    </div>
+                    <div className="mga-publish-stat-item">
+                      <div className="mga-stat-value">
+                        {post.platformPosts.filter(p => p.status !== 'published').length}
+                      </div>
+                      <div className="mga-stat-label">Failed</div>
                     </div>
                   </div>
-                ))}
-              </div>
 
-              <div className="add-comment">
-                <input
-                  type="text"
-                  placeholder="Add a comment..."
-                  className="comment-input"
-                />
-                <button className="comment-submit">Post</button>
-              </div>
+                  {/* Platform Posts List */}
+                  <div className="mga-platform-posts-list">
+                    {post.platformPosts.map((platformPost, index) => {
+                      let PlatformIcon;
+                      if (platformPost.platform === 'instagram') PlatformIcon = Instagram;
+                      else if (platformPost.platform === 'facebook') PlatformIcon = Facebook;
+                      else if (platformPost.platform === 'linkedin') PlatformIcon = Linkedin;
+                      else if (platformPost.platform === 'youtube') PlatformIcon = Youtube;
+                      else if (platformPost.platform === 'twitter') PlatformIcon = Twitter;
+                      else PlatformIcon = MessageCircle;
+
+                      const accountInfo = getAccountDetails().find(
+                        account => account.platform === platformPost.platform && account.id === platformPost.accountId
+                      );
+
+                      const accountUsername = accountInfo?.username ||
+                        platformPost.accountUsername ||
+                        platformPost.accountName ||
+                        'Unknown Account';
+
+                      const isPublished = platformPost.status === 'published';
+
+                      return (
+                        <div
+                          key={index}
+                          className={`mga-platform-post-item ${isPublished ? 'mga-success' : 'mga-failed'}`}
+                        >
+                          <div className="mga-platform-post-header">
+                            <div className="mga-platform-post-info">
+                              <div className={`mga-platform-icon ${platformPost.platform}`}>
+                                <PlatformIcon size={18} />
+                              </div>
+                              <div className="mga-platform-details">
+                                <span className="mga-platform-name">
+                                  {platformPost.platform.charAt(0).toUpperCase() + platformPost.platform.slice(1)}
+                                </span>
+                                <span className="mga-account-username">{accountUsername}</span>
+                              </div>
+                            </div>
+
+                            <div className="mga-platform-post-status">
+                              {isPublished ? (
+                                <span className="mga-status-published">
+                                  <CheckCircle size={16} />
+                                  Published
+                                </span>
+                              ) : (
+                                <span className="mga-status-failed">
+                                  <XCircle size={16} />
+                                  Failed
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mga-platform-post-details">
+                            {/* View on Platform only if URL exists */}
+                            {isPublished && platformPost.url && (
+                              <div className="mga-detail-item mga-view-post">
+                                <a
+                                  href={platformPost.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mga-view-on-platform-btn"
+                                >
+                                  <ExternalLink size={16} />
+                                  View on {platformPost.platform.charAt(0).toUpperCase() + platformPost.platform.slice(1)}
+                                </a>
+                                <button
+                                  className="mga-copy-link-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(platformPost.url);
+                                    showToast('Link copied to clipboard', 'success');
+                                  }}
+                                  title="Copy link"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                              </div>
+                            )}
+
+                            {platformPost.publishedAt && (
+                              <div className="mga-detail-item">
+                                <span className="mga-detail-label">Published:</span>
+                                <span className="mga-detail-value">
+                                  {new Date(platformPost.publishedAt).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+
+                            {platformPost.additionalInfo && (
+                              <div className="mga-platform-additional-info">
+                                <div className="mga-detail-item">
+                                  <span className="mga-detail-label">Type:</span>
+                                  <span className="mga-detail-value">
+                                    {platformPost.additionalInfo.mediaType || 'Standard post'}
+                                  </span>
+                                </div>
+
+                                {platformPost.additionalInfo.mediaCount > 0 && (
+                                  <div className="mga-detail-item">
+                                    <span className="mga-detail-label">Media count:</span>
+                                    <span className="mga-detail-value">{platformPost.additionalInfo.mediaCount}</span>
+                                  </div>
+                                )}
+
+                                {platformPost.additionalInfo.hasVideo && (
+                                  <div className="mga-detail-tag mga-video-tag">
+                                    <Play size={12} />
+                                    Video
+                                  </div>
+                                )}
+
+                                {platformPost.platform === 'youtube' && platformPost.additionalInfo.title && (
+                                  <div className="mga-detail-item">
+                                    <span className="mga-detail-label">Title:</span>
+                                    <span className="mga-detail-value">{platformPost.additionalInfo.title}</span>
+                                  </div>
+                                )}
+
+                                {platformPost.platform === 'instagram' && platformPost.additionalInfo.processingTime && (
+                                  <div className="mga-detail-item">
+                                    <span className="mga-detail-label">Processing Time:</span>
+                                    <span className="mga-detail-value">{platformPost.additionalInfo.processingTime}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {!isPublished && (
+                              <div className="mga-platform-error">
+                                {platformPost.error && (
+                                  <>
+                                    <div className="mga-error-header">
+                                      <AlertTriangle size={14} />
+                                      <span>Error Details</span>
+                                    </div>
+                                    <div className="mga-error-message">{platformPost.error}</div>
+                                  </>
+                                )}
+                                <button
+                                  className="mga-retry-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRetryPublish(platformPost);
+                                  }}
+                                >
+                                  <RefreshCw size={14} />
+                                  Republish
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           )}
+
+
+
+
+
         </div>
 
         {/* Loading overlay when posting */}

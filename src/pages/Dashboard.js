@@ -46,7 +46,7 @@ const Dashboard = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [notification, setNotification] = useState(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [slicePosts, setSlicePosts] = useState(1);
+  const [slicePosts, setSlicePosts] = useState(2);
   const [posts, setPosts] = useState([]);
   const [upcomingPosts, setUpcomingPosts] = useState([]);
   const [userStats, setUserStats] = useState(null);
