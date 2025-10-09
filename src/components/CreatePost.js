@@ -1073,6 +1073,9 @@ const handleSubmit = async (e) => {
         throw new Error(publishResponse.data.message || 'Publishing failed');
       }
     }
+    console.log('✅ FRONTEND - selectedAccountsWithNames built:', JSON.stringify(selectedAccountsWithNames, null, 2));
+console.log('✅ FRONTEND - userProfile.connectedAccounts:', 
+  userProfile?.connectedAccounts?.map(acc => ({ id: acc._id, username: acc.username })));
 
     // ✅ Reset and close modal
     resetForm();
