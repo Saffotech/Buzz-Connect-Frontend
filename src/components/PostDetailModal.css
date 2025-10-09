@@ -1054,7 +1054,9 @@
   .preview-content-pd {
     display: block;
   }
-
+   .mga-publish-summary-stats{
+     flex-direction: column;
+   }
   .preview-content {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -1397,3 +1399,83 @@
 
 @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
 
+@media (max-width: 768px) {
+  /* Overall card */
+  .mga-platform-post-item {
+    border-left-width: 2px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    padding: 8px 10px; /* Reduced overall padding */
+    margin-bottom: 8px; /* Less spacing between cards */
+  }
+
+  /* Header */
+  .mga-platform-post-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px; /* Reduced gap */
+    padding: 6px 8px; /* Reduced padding */
+  }
+
+  .mga-platform-post-info {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .mga-platform-post-status {
+    align-self: flex-end;
+    font-size: 12px;
+  }
+
+  /* Details */
+  .mga-platform-post-details {
+    padding: 8px 10px; /* Reduced padding */
+    gap: 4px;
+  }
+
+  .mga-detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px; /* Compact spacing */
+  }
+
+  .mga-detail-label {
+    width: auto;
+    font-size: 12px;
+  }
+
+  .mga-detail-value {
+    font-size: 12px;
+    word-break: break-word;
+  }
+
+  /* View Post section */
+  .mga-view-post {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .mga-view-on-platform-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  /* Additional info */
+  .mga-platform-additional-info {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* Buttons and tags smaller for mobile */
+  .mga-retry-btn {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .mga-detail-tag {
+    font-size: 10px;
+    padding: 2px 5px;
+  }
+}
