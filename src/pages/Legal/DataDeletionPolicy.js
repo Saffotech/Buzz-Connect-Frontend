@@ -36,7 +36,7 @@ const DataDeletionPolicy = () => {
         </li>
         <li>
           <strong>Via Email Request:</strong> By contacting us at{" "}
-          <a href="mailto:privacy@mgabuzzconnect.com">privacy@mgabuzzconnect.com</a>{" "}
+          <a href="mailto:contact@mgabuzzconnect.com">contact@mgabuzzconnect.com</a>{" "}
           from the registered email address.
         </li>
       </ul>
@@ -87,7 +87,7 @@ const DataDeletionPolicy = () => {
       <h2>8. Contact</h2>
       <p>
         For questions or deletion requests, contact us at{" "}
-        <a href="mailto:privacy@mgabuzzconnect.com">privacy@mgabuzzconnect.com</a>.
+        <a href="mailto:contact@mgabuzzconnect.com">contact@mgabuzzconnect.com</a>.
       </p>
       <p>📍 MGA Buzz Connect, Mumbai, Maharashtra, India</p>
 

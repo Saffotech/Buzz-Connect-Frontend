@@ -121,11 +121,11 @@
 
 .form-row {
   /* display: flex; */
-  gap: 20px;        /* space between Name & Email */
+  gap: 20px; /* space between Name & Email */
 }
 
 .form-group {
-  flex: 1;          /* both inputs take equal width */
+  flex: 1; /* both inputs take equal width */
   display: flex;
   flex-direction: column;
 }
@@ -203,9 +203,8 @@
   flex-shrink: 0;
 }
 
-
 .card-content {
-  padding: 1.5em;;
+  padding: 1.5em;
 }
 
 /* Buttons */
@@ -249,27 +248,25 @@
   border-color: #9ca3af;
 }
 
-.new{
+.new {
   display: flex;
   gap: 1.5rem;
 }
 
-.btn-secondary-draft{
+.btn-secondary-draft {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   /* background: #9ca3af; */
   color: #374151;
-  border:  2px solid #6b7280;
+  border: 2px solid #6b7280;
   border-radius: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
-
-
 
 .btn-danger-outline {
   display: inline-flex;
@@ -381,7 +378,14 @@
 }
 
 .platform-badge.instagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
   color: white;
 }
 
@@ -617,7 +621,6 @@
   backdrop-filter: blur(3px);
 }
 
-
 .modal {
   background: white;
   border-radius: 0.75rem;
@@ -629,9 +632,15 @@
   flex-direction: column;
 }
 
-.modal-small { max-width: 400px; }
-.modal-medium { max-width: 500px; }
-.modal-large { max-width: 700px; }
+.modal-small {
+  max-width: 400px;
+}
+.modal-medium {
+  max-width: 500px;
+}
+.modal-large {
+  max-width: 700px;
+}
 
 .modal-header {
   padding: 1.5rem;
@@ -775,57 +784,57 @@
   .page-header {
     padding: 1.5rem 0;
   }
-  
+
   .header-content {
     padding: 0 1rem;
   }
-  
+
   .page-header h1 {
     font-size: 1.5rem;
   }
-  
+
   .tabs {
     padding: 0 1rem;
     overflow-x: auto;
   }
-  
+
   .nav-tab {
     padding: 1rem;
     min-width: fit-content;
   }
-  
+
   .settings-hub-main {
     padding: 1.5rem 1rem;
   }
-  
+
   .card-header {
-    flex-wrap: wrap; 
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
   }
-  
+
   .account-item,
   .member-item {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
   }
-  
+
   .account-actions,
   .member-actions {
     justify-content: space-between;
   }
-  
+
   .coming-soon-actions {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .modal {
     margin: 1rem;
     max-height: calc(100vh - 2rem);
   }
-  
+
   .notification {
     left: 1rem;
     right: 1rem;
@@ -837,7 +846,7 @@
   .edit-actions {
     flex-direction: column;
   }
-  
+
   .workspace-display {
     flex-direction: column;
     align-items: stretch;
@@ -852,18 +861,18 @@
 }
 
 .verify-btn {
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    padding: 1rem 1.3rem;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  padding: 1rem 1.3rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .verification-success {
@@ -883,7 +892,6 @@
   margin-top: 20px;
   margin-bottom: 1rem;
 }
-
 
 .connection-buttons {
   display: flex;
@@ -930,7 +938,14 @@
 }
 
 .platform-badge.instagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
 }
 
 .platform-badge.facebook {
@@ -1094,7 +1109,14 @@
 }
 
 .platform-instagram {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
   color: white;
 }
 
@@ -1154,7 +1176,6 @@
   font-size: 0.875rem;
   color: #6b7280;
   /* margin: 0 0 0.5rem 0; */
-
 }
 
 .followers-count {
@@ -1221,22 +1242,22 @@
 }
 
 @keyframes fadeIn {
-  from { 
-    opacity: 0; 
+  from {
+    opacity: 0;
   }
-  to { 
-    opacity: 1; 
+  to {
+    opacity: 1;
   }
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     opacity: 0;
-    transform: translateY(20px) scale(0.95); 
+    transform: translateY(20px) scale(0.95);
   }
-  to { 
+  to {
     opacity: 1;
-    transform: translateY(0) scale(1); 
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -1264,7 +1285,7 @@
 .settings-content {
   width: 100%;
   max-width: 100%;
-  padding: 0 20px;
+  /* padding: 0 20px; */
   box-sizing: border-box;
 }
 
@@ -1364,27 +1385,28 @@
 /* Mobile responsive - stack cards */
 @media (max-width: 767px) {
   .settings-content {
-    padding: 0 16px;
+    /* padding: 0 16px; */
   }
-  
+
   .accounts-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .account-group-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .account-count {
     align-self: flex-end;
   }
 }
 
 /* Ensure no horizontal scrolling */
-body, html {
+body,
+html {
   overflow-x: hidden;
 }
 
@@ -1399,14 +1421,14 @@ body, html {
 /* Add this to your CSS */
 .connection-badge {
   font-size: 12px;
-  color: #6B7280;
+  color: #6b7280;
   font-weight: normal;
 }
 
 /* If you have platform-specific styling */
 .platform-instagram.direct {
-  background-color: #FDF2F8;
-  border-color: #FCE7F3;
+  background-color: #fdf2f8;
+  border-color: #fce7f3;
 }
 
 .account-card.instagram-only {
@@ -1440,7 +1462,6 @@ body, html {
   color: #64748b;
 }
 
-
 .avatar-fallback {
   width: 32px;
   height: 32px;
@@ -1455,28 +1476,46 @@ body, html {
 }
 
 .view-toggle {
-  display: flex;
-  border: 2px solid #00e3a4;
-  border-radius: 9999px; /* pill shape */
+  display: flex; /* border: 2px solid rgb(59, 130, 246); */
   overflow: hidden;
-  background-color: #111; /* dark background */
   width: fit-content;
+  background-color: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
+.view-togglex {
+  display: flex; 
+  border: 1px solid rgb(59, 130, 246);
+  overflow: hidden;
+  width: fit-content;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
 .toggle-btn {
-  flex: 1;
+  /* flex: 1; */
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 500;
   border: none;
   cursor: pointer;
-  color: #00e3a4;
+  color: rgb(59, 130, 246);
   background: transparent;
   transition: all 0.3s ease;
 }
 
 .toggle-btn.active {
-  background-color: #00e3a4;
-  color: #111;
+  background-color: rgb(59, 130, 246);
+  color: #fff;
   font-weight: 600;
 }

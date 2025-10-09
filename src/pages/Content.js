@@ -967,7 +967,7 @@ const PostsSubPage = ({
             onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
           >
             <option value="all">All Posts</option>
-            <option value="draft">Draft</option>
+            {/* <option value="draft">Draft</option> */}
             <option value="scheduled">Scheduled</option>
             <option value="published">Published</option>
             <option value="failed">Failed</option>

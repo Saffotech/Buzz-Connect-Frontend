@@ -952,6 +952,7 @@
 
   .platforms-grid {
     grid-template-columns: 1fr;
+    flex-wrap: wrap;
   }
 
   .form-row {
@@ -3717,6 +3718,7 @@
   background: var(--bg-hover);
   padding: 2px 6px;
   border-radius: 4px;
+  font-size: 0.75rem;
 }
 
 /* Footer Actions */

@@ -140,10 +140,12 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platfo
             >
               {platform === 'Instagram' ? (
                 <Instagram size={24} style={{ color: '#E91E63' }} />
-              ) : platform === 'LinkedIn' ? (
+              ) : platform === 'Linkedin' ? (
                 <Linkedin size={24} style={{ color: '#0A66C2' }} />
-              ) : platform === 'YouTube' ? (
+              ) : platform === 'Youtube' ? (
                 <Youtube size={24} style={{ color: '#FF0000' }} />
+              ) : platform === 'Twitter' ? (
+                <FontAwesomeIcon icon={faSquareXTwitter} size="xl" color="#000000" />
               ) : (
                 <Facebook size={24} style={{ color: '#1877F2' }} />
               )}
@@ -738,7 +740,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
           </button>
 
           {/* LinkedIn Business Profile Connection Option */}
-          <button
+          {/* <button
             onClick={onSelectLinkedInBusiness}
             style={{
               display: 'flex',
@@ -780,7 +782,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
                 Connect your LinkedIn business or company page
               </div>
             </div>
-          </button>
+          </button> */}
 
           <button
             onClick={onSelectTwitter}
@@ -3327,24 +3329,61 @@ const AccountsSettings = ({ onNotify }) => {
               gap: '16px'
             }}>
 
+
               {/* View toggle buttons */}
-            {/* View toggle buttons */}
-{connectedAccounts.length > 0 && (
-  <div className="view-toggle">
-    <button
-      className={`toggle-btn ${!groupByUser ? 'active' : ''}`}
-      onClick={() => setGroupByUser(false)}
-    >
-      Group by Platform
-    </button>
-    <button
-      className={`toggle-btn ${groupByUser ? 'active' : ''}`}
-      onClick={() => setGroupByUser(true)}
-    >
-      Group by User
-    </button>
-  </div>
-)}
+              {connectedAccounts.length > 0 && (
+                <div className="view-togglex">
+                  <button
+                    className={`toggle-btn ${!groupByUser ? 'active' : ''}`}
+                    onClick={() => setGroupByUser(false)}
+                  >
+                    Group by Platform
+                  </button>
+                  <button
+                    className={`toggle-btn ${groupByUser ? 'active' : ''}`}
+                    onClick={() => setGroupByUser(true)}
+                  >
+                    Group by User
+                  </button>
+                </div>
+              )}
+              {/* {connectedAccounts.length > 0 && (
+                <div className="view-toggle" style={{
+                  display: 'flex',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  border: '1px solid #E5E7EB'
+                }}>
+                  <button
+                    onClick={() => setGroupByUser(false)}
+                    style={{
+                      padding: '6px 12px',
+                      border: 'none',
+                      background: !groupByUser ? '#F3F4F6' : 'white',
+                      color: !groupByUser ? '#111827' : '#6B7280',
+                      fontWeight: !groupByUser ? '500' : '400',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Group by Platform
+                  </button>
+                  <button
+                    onClick={() => setGroupByUser(true)}
+                    style={{
+                      padding: '6px 12px',
+                      border: 'none',
+                      background: groupByUser ? '#F3F4F6' : 'white',
+                      color: groupByUser ? '#111827' : '#6B7280',
+                      fontWeight: groupByUser ? '500' : '400',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Group by User
+                  </button>
+                </div>
+              )} */}
 
 
               <button

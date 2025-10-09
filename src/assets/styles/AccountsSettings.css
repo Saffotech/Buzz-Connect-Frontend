@@ -265,7 +265,7 @@
 
 @media (max-width: 768px) {
   .settings-subpage {
-    padding: 1rem;
+    /* padding: 1rem; */
   }
 
   .settings-header h2 {
@@ -327,6 +327,7 @@
     font-size: 1rem;
   }
 }
+
 
 /* Animations */
 @keyframes fadeIn {
@@ -407,3 +408,30 @@ html {
   position: relative;
 }
 
+/* Toggle button code */
+.view-toggle {
+  display: flex;
+  /* border: 2px solid rgb(59, 130, 246); */
+  border-radius: 9999px; /* pill shape */
+  overflow: hidden;
+  background-color: #dbeafe; /* dark background */
+  width: fit-content;
+}
+
+.toggle-btn {
+  /* flex: 1; */
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  color: rgb(59, 130, 246);
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn.active {
+  background-color: rgb(59, 130, 246);
+  color: #fff;
+  font-weight: 600;
+}
