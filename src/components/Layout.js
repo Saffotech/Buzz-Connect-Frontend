@@ -453,7 +453,13 @@ const Layout = ({ children }) => {
               <Menu size={24} />
             }
           </button>
-          <div className="app-logo"><h1>BuzzConnect</h1></div>
+          <div className="app-logo">
+            <h1>
+               <a href="/dashboard" rel="noopener noreferrer">
+              BuzzConnect
+              </a>
+              </h1>
+            </div>
           <div className="header-right">
             {/* Mobile Notification Bell */}
             <div 
