@@ -947,8 +947,7 @@ const handleSubmit = async (e) => {
       content: postData.content,
       platforms: postData.platforms,
       selectedAccounts: cleanedSelectedAccounts,
-      // Remove selectedAccountsWithNames from the API request
-      // We'll log it for debugging but not send it to avoid validation errors
+      selectedAccountsWithNames: selectedAccountsWithNames,
       images: postData.images.map((img, index) => ({
         url: img.url,
         altText: img.altText || img.originalName || 'Post media',
@@ -976,50 +975,38 @@ const handleSubmit = async (e) => {
       }
     };
 
-    // Log the account usernames for debugging, but don't send in API request
+    // ✅ YouTube-specific handling
+    if (postData.platforms.includes('youtube')) {
+      apiPostData.title = postData.content.substring(0, 100);
+      apiPostData.description = postData.hashtags
+        ? postData.hashtags
+        : `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
 
+      const videoFiles = postData.images.filter(img =>
+        img.fileType === 'video' ||
+        img.url?.includes('video') ||
+        img.url?.includes('.mp4')
+      );
 
-    console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
+      if (videoFiles.length > 0) {
+        const { _id, ...cleanedVideo } = videoFiles[0];
+        apiPostData.youtubeVideo = cleanedVideo;
 
-   if (postData.platforms.includes('youtube')) {
-  // For YouTube, we use content as the video title
-  apiPostData.title = postData.content.substring(0, 100);
-  
-  // Use description from hashtags field if available, or create a default one
-  apiPostData.description = postData.hashtags ? 
-    postData.hashtags : 
-    `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
+        if (postData.platforms.length === 1) {
+          apiPostData.images = [cleanedVideo];
+        }
+      }
 
-  // For YouTube, we should prioritize video files
-  const videoFiles = postData.images.filter(img =>
-    img.fileType === 'video' ||
-    img.url?.includes('video') ||
-    img.url?.includes('.mp4')
-  );
-
-  if (videoFiles.length > 0) {
-    // Clean up the youtubeVideo object to remove _id if present
-    const { _id, ...cleanedVideo } = videoFiles[0];
-    apiPostData.youtubeVideo = cleanedVideo;
-
-    // Ensure this video is included in the images array
-    if (postData.platforms.length === 1) {
-      // If YouTube is the only platform, just use this video
-      apiPostData.images = [cleanedVideo];
+      if (postData.mentions) {
+        apiPostData.tags = postData.mentions
+          .split(/\s+/)
+          .map(tag => tag.startsWith('@') ? tag.substring(1) : tag)
+          .filter(tag => tag.length > 0);
+      }
     }
-  }
-  
-  // Add YouTube-specific tags from the mentions field
-  if (postData.mentions) {
-    apiPostData.tags = postData.mentions.split(/\s+/)
-      .map(tag => tag.startsWith('@') ? tag.substring(1) : tag)
-      .filter(tag => tag.length > 0);
-  }
-}
 
     // ✅ Handle scheduling vs immediate publishing
     if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-      // SCHEDULED POST
       const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
       apiPostData.scheduledDate = scheduledDateTime.toISOString();
 
@@ -1030,13 +1017,10 @@ const handleSubmit = async (e) => {
       console.log('✅ Scheduled post created:', response);
 
       showToast('Post scheduled successfully!', 'success');
-
     } else {
-      // PUBLISH NOW
       console.log('🚀 Creating and publishing post immediately...');
       showToast('Creating and publishing post...', 'info');
 
-      // Step 1: Create the post as draft
       const createResponse = await onPostCreated(apiPostData);
       console.log('✅ Post created:', createResponse);
 
@@ -1044,16 +1028,13 @@ const handleSubmit = async (e) => {
         throw new Error('Failed to create post - no ID returned');
       }
 
-      // Step 2: Immediately publish the created post
       const postId = createResponse.data._id;
       console.log('📤 Publishing post with ID:', postId);
 
       const publishResponse = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       console.log('✅ Publish response:', publishResponse);
@@ -1065,10 +1046,8 @@ const handleSubmit = async (e) => {
       }
     }
 
-    // Reset form on success
     resetForm();
     onClose();
-
   } catch (error) {
     console.error('❌ Failed to create/publish post:', error);
     const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
