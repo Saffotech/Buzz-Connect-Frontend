@@ -925,184 +925,170 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     showToast('Image removed', 'info');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setError(null);
 
-    if (!validateForm()) {
-      setIsSubmitting(false);
-      return;
-    }
+  if (!validateForm()) {
+    setIsSubmitting(false);
+    return;
+  }
 
-    // Define cleanedSelectedAccounts BEFORE the try block
-    const cleanedSelectedAccounts = {};
-    const selectedAccountsWithNames = {};
+  // Define cleanedSelectedAccounts BEFORE the try block
+  const cleanedSelectedAccounts = {};
+  const selectedAccountsWithNames = {}; // ✅ Added
 
-    try {
-      // Extract connected accounts from user profile
-      const accountsMap = {};
-      userProfile?.connectedAccounts?.forEach(account => {
-        accountsMap[account._id.toString()] = account;
-      });
+  try {
+    // 🔹 Extract connected accounts from user profile
+    const accountsMap = {};
+    userProfile?.connectedAccounts?.forEach(account => {
+      accountsMap[account._id.toString()] = account;
+    });
 
-      // Clean up selectedAccounts to remove null values and empty arrays
-      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-        const validAccounts = accounts.filter(account => account != null && account !== '');
+    // 🔹 Clean up selectedAccounts (remove null/empty)
+    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+      const validAccounts = accounts.filter(account => account != null && account !== '');
+      if (validAccounts.length > 0) {
+        cleanedSelectedAccounts[platform] = validAccounts;
 
-        if (validAccounts.length > 0) {
-          cleanedSelectedAccounts[platform] = validAccounts;
+        // ✅ Add usernames mapped from connectedAccounts
+        selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
+          const account = accountsMap[accountId];
+          return {
+            id: accountId,
+            username: account ? account.username : 'Unknown Account'
+          };
+        });
+      }
+    });
 
-          // Get the real usernames from userProfile.connectedAccounts
-          selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
-            const account = accountsMap[accountId];
-            return {
-              id: accountId,
-              username: account ? account.username : 'Unknown Account'
-            };
-          });
-        }
-      });
+    console.log('✅ Sending account usernames:', selectedAccountsWithNames);
 
-      // Log the actual account names being sent
-      console.log('Sending account usernames:', selectedAccountsWithNames);
+    // 🔹 Prepare final API post data
+    const apiPostData = {
+      content: postData.content,
+      platforms: postData.platforms,
+      selectedAccounts: cleanedSelectedAccounts,
+      selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
+      images: postData.images.map((img, index) => ({
+        url: img.url,
+        altText: img.altText || img.originalName || 'Post media',
+        originalName: img.originalName || img.filename || `Media ${index + 1}`,
+        displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+        filename: img.filename,
+        publicId: img.publicId || null,
+        fileType: img.fileType || 'image',
+        size: img.size,
+        dimensions: img.dimensions,
+        duration: img.duration,
+        order: index,
+        format: img.format,
+        humanSize: img.size ? formatFileSize(img.size) : null
+      })),
+      hashtags: Array.isArray(postData.hashtags)
+        ? postData.hashtags
+        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+      mentions: Array.isArray(postData.mentions)
+        ? postData.mentions
+        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+      metadata: {
+        category: postData.metadata?.category || 'other',
+        source: 'web'
+      }
+    };
 
-      // Enhanced post data preparation with account information
-      const apiPostData = {
-        content: postData.content,
-        platforms: postData.platforms,
-        selectedAccounts: cleanedSelectedAccounts,
-        // Remove selectedAccountsWithNames from the API request
-        // We'll log it for debugging but not send it to avoid validation errors
-        images: postData.images.map((img, index) => ({
-          url: img.url,
-          altText: img.altText || img.originalName || 'Post media',
-          originalName: img.originalName || img.filename || `Media ${index + 1}`,
-          displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-          filename: img.filename,
-          publicId: img.publicId || null,
-          fileType: img.fileType || 'image',
-          size: img.size,
-          dimensions: img.dimensions,
-          duration: img.duration,
-          order: index,
-          format: img.format,
-          humanSize: img.size ? formatFileSize(img.size) : null
-        })),
-        hashtags: Array.isArray(postData.hashtags)
-          ? postData.hashtags
-          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-        mentions: Array.isArray(postData.mentions)
-          ? postData.mentions
-          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-        metadata: {
-          category: postData.metadata?.category || 'other',
-          source: 'web'
-        }
-      };
+    // 🟥 YouTube-specific logic
+    if (postData.platforms.includes('youtube')) {
+      apiPostData.title = postData.content.substring(0, 100);
+      apiPostData.description = postData.hashtags
+        ? postData.hashtags
+        : `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
 
-      // Log the account usernames for debugging, but don't send in API request
+      const videoFiles = postData.images.filter(
+        img => img.fileType === 'video' || img.url?.includes('video') || img.url?.includes('.mp4')
+      );
 
+      if (videoFiles.length > 0) {
+        const { _id, ...cleanedVideo } = videoFiles[0];
+        apiPostData.youtubeVideo = cleanedVideo;
 
-      console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
-
-      if (postData.platforms.includes('youtube')) {
-        // For YouTube, we use content as the video title
-        apiPostData.title = postData.content.substring(0, 100);
-
-        // Use description from hashtags field if available, or create a default one
-        apiPostData.description = postData.hashtags ?
-          postData.hashtags :
-          `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
-
-        // For YouTube, we should prioritize video files
-        const videoFiles = postData.images.filter(img =>
-          img.fileType === 'video' ||
-          img.url?.includes('video') ||
-          img.url?.includes('.mp4')
-        );
-
-        if (videoFiles.length > 0) {
-          // Clean up the youtubeVideo object to remove _id if present
-          const { _id, ...cleanedVideo } = videoFiles[0];
-          apiPostData.youtubeVideo = cleanedVideo;
-
-          // Ensure this video is included in the images array
-          if (postData.platforms.length === 1) {
-            // If YouTube is the only platform, just use this video
-            apiPostData.images = [cleanedVideo];
-          }
-        }
-
-        // Add YouTube-specific tags from the mentions field
-        if (postData.mentions) {
-          apiPostData.tags = postData.mentions.split(/\s+/)
-            .map(tag => tag.startsWith('@') ? tag.substring(1) : tag)
-            .filter(tag => tag.length > 0);
+        if (postData.platforms.length === 1) {
+          apiPostData.images = [cleanedVideo];
         }
       }
 
-      // ✅ Handle scheduling vs immediate publishing
-      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-        // SCHEDULED POST
-        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-        apiPostData.scheduledDate = scheduledDateTime.toISOString();
+      if (postData.mentions) {
+        apiPostData.tags = postData.mentions
+          .split(/\s+/)
+          .map(tag => (tag.startsWith('@') ? tag.substring(1) : tag))
+          .filter(tag => tag.length > 0);
+      }
+    }
 
-        console.log('📅 Creating scheduled post for:', scheduledDateTime.toISOString());
-        showToast('Scheduling post...', 'info');
+    // ✅ Handle scheduling or immediate publish
+    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+      apiPostData.scheduledDate = scheduledDateTime.toISOString();
 
-        const response = await onPostCreated(apiPostData);
-        console.log('✅ Scheduled post created:', response);
+      console.log('📅 Scheduling post for:', scheduledDateTime.toISOString());
+      showToast('Scheduling post...', 'info');
 
-        showToast('Post scheduled successfully!', 'success');
+      const response = await onPostCreated(apiPostData);
+      console.log('✅ Scheduled post created:', response);
 
+      showToast('Post scheduled successfully!', 'success');
+    } else {
+      console.log('🚀 Creating and publishing post immediately...');
+      showToast('Creating and publishing post...', 'info');
+
+      const createResponse = await onPostCreated(apiPostData);
+      console.log('✅ Post created:', createResponse);
+
+      if (!createResponse?.data?._id) {
+        throw new Error('Failed to create post - no ID returned');
+      }
+
+      const token =
+        localStorage.getItem('token') ||
+        localStorage.getItem('authToken') ||
+        localStorage.getItem('accessToken');
+
+      if (!token) throw new Error('Authentication token not found');
+
+      const postId = createResponse.data._id;
+      console.log('📤 Publishing post with ID:', postId);
+
+      const publishResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log('✅ Publish response:', publishResponse);
+
+      if (publishResponse.data.success) {
+        showToast('Post published successfully!', 'success');
       } else {
-        // PUBLISH NOW
-        console.log('🚀 Creating and publishing post immediately...');
-        showToast('Creating and publishing post...', 'info');
-
-        // Step 1: Create the post as draft
-        const createResponse = await onPostCreated(apiPostData);
-        console.log('✅ Post created:', createResponse);
-
-        if (!createResponse?.data?._id) {
-          throw new Error('Failed to create post - no ID returned');
-        }
-
-        // Step 2: Immediately publish the created post
-        const postId = createResponse.data._id;
-        console.log('📤 Publishing post with ID:', postId);
-
-        const publishResponse = await axios.post(
-          `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
-
-        console.log('✅ Publish response:', publishResponse);
-
-        if (publishResponse.data.success) {
-          showToast('Post published successfully!', 'success');
-        } else {
-          throw new Error(publishResponse.data.message || 'Publishing failed');
-        }
+        throw new Error(publishResponse.data.message || 'Publishing failed');
       }
-
-      // Reset form on success
-      resetForm();
-      onClose();
-
-    } catch (error) {
-      console.error('❌ Failed to create/publish post:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-      setError(errorMessage);
-      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+
+    // ✅ Reset and close modal
+    resetForm();
+    onClose();
+
+  } catch (error) {
+    console.error('❌ Failed to create/publish post:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+    setError(errorMessage);
+    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
 
   const resetForm = () => {
     setPostData({
