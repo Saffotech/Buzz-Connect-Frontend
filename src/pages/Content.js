@@ -1148,11 +1148,10 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
     }
   };
 
-  // New function to get account usernames
 const getAccountDetails = () => {
   const details = [];
 
-  // 1. First try to get data from platformPosts (most reliable source)
+  // 1️⃣ First: Check if this post has platformPosts with account names (most accurate)
   if (post.platformPosts && post.platformPosts.length > 0) {
     post.platformPosts.forEach(pp => {
       if (pp.accountName || pp.accountId) {
@@ -1164,33 +1163,35 @@ const getAccountDetails = () => {
       }
     });
 
-    // Return early if we found details here
+    // ✅ Return early if we found valid details here
     if (details.length > 0) {
       return details;
     }
   }
 
-  // 2. Try to get from selectedAccountsWithNames (next best source)
+  // 2️⃣ Next: Check selectedAccountsWithNames (from form submission)
   if (post.selectedAccountsWithNames) {
     Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
-      accounts.forEach(acc => {
-        if (acc && acc.username) {
-          details.push({
-            platform,
-            username: acc.username,
-            id: acc.id
-          });
-        }
-      });
+      if (Array.isArray(accounts)) {
+        accounts.forEach(acc => {
+          if (acc && acc.username) {
+            details.push({
+              platform,
+              username: acc.username,
+              id: acc.id
+            });
+          }
+        });
+      }
     });
 
-    // Return early if we found details here
+    // ✅ Return early if we found valid details here
     if (details.length > 0) {
       return details;
     }
   }
 
-  // 3. Last resort: try to extract from selectedAccounts
+  // 3️⃣ Finally: Fall back to selectedAccounts (IDs only, no usernames)
   if (post.selectedAccounts) {
     Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
       if (Array.isArray(accountIds)) {
@@ -1198,7 +1199,7 @@ const getAccountDetails = () => {
           if (id) {
             details.push({
               platform,
-              username: `Account on ${platform}`,
+              username: `Account on ${platform}`, // Default fallback label
               id
             });
           }
@@ -1207,8 +1208,10 @@ const getAccountDetails = () => {
     });
   }
 
+  // 4️⃣ Return whatever we found (could be empty if no data sources available)
   return details;
 };
+
 
   const accountDetails = getAccountDetails();
 

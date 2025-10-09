@@ -233,30 +233,31 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   };
 
   // Updated getAccountDetails function
-  const getAccountDetails = () => {
-    const details = [];
+ const getAccountDetails = () => {
+  const details = [];
 
-    // 1. First try to get data from platformPosts (most reliable source)
-    if (post.platformPosts && post.platformPosts.length > 0) {
-      post.platformPosts.forEach(pp => {
-        if (pp.accountName || pp.accountId) {
-          details.push({
-            platform: pp.platform,
-            username: pp.accountName || `Account on ${pp.platform}`,
-            id: pp.accountId
-          });
-        }
-      });
-
-      // Return early if we found details here
-      if (details.length > 0) {
-        return details;
+  // 1️⃣ First: Check if this post has platformPosts with account names (most accurate)
+  if (post.platformPosts && post.platformPosts.length > 0) {
+    post.platformPosts.forEach(pp => {
+      if (pp.accountName || pp.accountId) {
+        details.push({
+          platform: pp.platform,
+          username: pp.accountName || `Account on ${pp.platform}`,
+          id: pp.accountId
+        });
       }
-    }
+    });
 
-    // 2. Try to get from selectedAccountsWithNames (next best source)
-    if (post.selectedAccountsWithNames) {
-      Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+    // ✅ Return early if we found valid details here
+    if (details.length > 0) {
+      return details;
+    }
+  }
+
+  // 2️⃣ Next: Check selectedAccountsWithNames (from form submission)
+  if (post.selectedAccountsWithNames) {
+    Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+      if (Array.isArray(accounts)) {
         accounts.forEach(acc => {
           if (acc && acc.username) {
             details.push({
@@ -266,33 +267,35 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
             });
           }
         });
-      });
-
-      // Return early if we found details here
-      if (details.length > 0) {
-        return details;
       }
-    }
+    });
 
-    // 3. Last resort: try to extract from selectedAccounts
-    if (post.selectedAccounts) {
-      Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
-        if (Array.isArray(accountIds)) {
-          accountIds.forEach(id => {
-            if (id) {
-              details.push({
-                platform,
-                username: `Account on ${platform}`,
-                id
-              });
-            }
-          });
-        }
-      });
+    // ✅ Return early if we found valid details here
+    if (details.length > 0) {
+      return details;
     }
+  }
 
-    return details;
-  };
+  // 3️⃣ Finally: Fall back to selectedAccounts (IDs only, no usernames)
+  if (post.selectedAccounts) {
+    Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
+      if (Array.isArray(accountIds)) {
+        accountIds.forEach(id => {
+          if (id) {
+            details.push({
+              platform,
+              username: `Account on ${platform}`, // Default fallback label
+              id
+            });
+          }
+        });
+      }
+    });
+  }
+
+  // 4️⃣ Return whatever we found (could be empty if no data sources available)
+  return details;
+};
 
 
   // Fetch detailed analytics for the post

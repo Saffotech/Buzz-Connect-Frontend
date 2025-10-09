@@ -1320,7 +1320,7 @@
   font-size: 0.75rem;
   margin-bottom: 1rem;
   padding: 1rem !important;
-  background: #f8fafc;
+  /* background: #f8fafc; */
   border-radius: 8px;
   user-select: text;
   -webkit-user-select: text;
