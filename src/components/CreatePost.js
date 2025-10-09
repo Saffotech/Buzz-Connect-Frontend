@@ -935,118 +935,104 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       return;
     }
 
-    // Define cleanedSelectedAccounts BEFORE the try block
-    const cleanedSelectedAccounts = {};
-    const selectedAccountsWithNames = {};
+    // Log the actual account names being sent
+    console.log('Sending account usernames:', selectedAccountsWithNames);
 
-    try {
-      // Extract connected accounts from user profile
-      const accountsMap = {};
-      userProfile?.connectedAccounts?.forEach(account => {
-        accountsMap[account._id.toString()] = account;
-      });
+    // Enhanced post data preparation with account information
+    const apiPostData = {
+      content: postData.content,
+      platforms: postData.platforms,
+      selectedAccounts: cleanedSelectedAccounts,
+      selectedAccountsWithNames: selectedAccountsWithNames,
+      images: postData.images.map((img, index) => ({
+        url: img.url,
+        altText: img.altText || img.originalName || 'Post media',
+        originalName: img.originalName || img.filename || `Media ${index + 1}`,
+        displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+        filename: img.filename,
+        publicId: img.publicId || null,
+        fileType: img.fileType || 'image',
+        size: img.size,
+        dimensions: img.dimensions,
+        duration: img.duration,
+        order: index,
+        format: img.format,
+        humanSize: img.size ? formatFileSize(img.size) : null
+      })),
+      hashtags: Array.isArray(postData.hashtags)
+        ? postData.hashtags
+        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+      mentions: Array.isArray(postData.mentions)
+        ? postData.mentions
+        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+      metadata: {
+        category: postData.metadata?.category || 'other',
+        source: 'web'
+      }
+    };
 
-      // Clean up selectedAccounts to remove null values and empty arrays
-      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-        const validAccounts = accounts.filter(account => account != null && account !== '');
+    // ✅ YouTube-specific handling
+    if (postData.platforms.includes('youtube')) {
+      apiPostData.title = postData.content.substring(0, 100);
+      apiPostData.description = postData.hashtags
+        ? postData.hashtags
+        : `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
 
-        if (validAccounts.length > 0) {
-          cleanedSelectedAccounts[platform] = validAccounts;
+      const videoFiles = postData.images.filter(img =>
+        img.fileType === 'video' ||
+        img.url?.includes('video') ||
+        img.url?.includes('.mp4')
+      );
 
-          // Get the real usernames from userProfile.connectedAccounts
-          selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
-            const account = accountsMap[accountId];
-            return {
-              id: accountId,
-              username: account ? account.username : 'Unknown Account'
-            };
-          });
+      if (videoFiles.length > 0) {
+        const { _id, ...cleanedVideo } = videoFiles[0];
+        apiPostData.youtubeVideo = cleanedVideo;
+
+        if (postData.platforms.length === 1) {
+          apiPostData.images = [cleanedVideo];
         }
-      });
+      }
 
-      // Log the actual account names being sent
-      console.log('Sending account usernames:', selectedAccountsWithNames);
+      if (postData.mentions) {
+        apiPostData.tags = postData.mentions
+          .split(/\s+/)
+          .map(tag => tag.startsWith('@') ? tag.substring(1) : tag)
+          .filter(tag => tag.length > 0);
+      }
+    }
 
-      // Enhanced post data preparation with account information
-      const apiPostData = {
-        content: postData.content,
-        platforms: postData.platforms,
-        selectedAccounts: cleanedSelectedAccounts,
-        // Remove selectedAccountsWithNames from the API request
-        // We'll log it for debugging but not send it to avoid validation errors
-        images: postData.images.map((img, index) => ({
-          url: img.url,
-          altText: img.altText || img.originalName || 'Post media',
-          originalName: img.originalName || img.filename || `Media ${index + 1}`,
-          displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-          filename: img.filename,
-          publicId: img.publicId || null,
-          fileType: img.fileType || 'image',
-          size: img.size,
-          dimensions: img.dimensions,
-          duration: img.duration,
-          order: index,
-          format: img.format,
-          humanSize: img.size ? formatFileSize(img.size) : null
-        })),
-        hashtags: Array.isArray(postData.hashtags)
-          ? postData.hashtags
-          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-        mentions: Array.isArray(postData.mentions)
-          ? postData.mentions
-          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-        metadata: {
-          category: postData.metadata?.category || 'other',
-          source: 'web'
-        }
-      };
+    // ✅ Handle scheduling vs immediate publishing
+    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+      apiPostData.scheduledDate = scheduledDateTime.toISOString();
 
-      // Log the account usernames for debugging, but don't send in API request
 
 
       console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
 
-      if (postData.platforms.includes('youtube')) {
-        // For YouTube, we use content as the video title
-        apiPostData.title = postData.content.substring(0, 100);
+      showToast('Post scheduled successfully!', 'success');
+    } else {
+      console.log('🚀 Creating and publishing post immediately...');
+      showToast('Creating and publishing post...', 'info');
 
-        // Use description from hashtags field if available, or create a default one
-        apiPostData.description = postData.hashtags ?
-          postData.hashtags :
-          `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
+      const createResponse = await onPostCreated(apiPostData);
+      console.log('✅ Post created:', createResponse);
 
-        // For YouTube, we should prioritize video files
-        const videoFiles = postData.images.filter(img =>
-          img.fileType === 'video' ||
-          img.url?.includes('video') ||
-          img.url?.includes('.mp4')
-        );
 
         if (videoFiles.length > 0) {
           // Clean up the youtubeVideo object to remove _id if present
           const { _id, ...cleanedVideo } = videoFiles[0];
           apiPostData.youtubeVideo = cleanedVideo;
 
-          // Ensure this video is included in the images array
-          if (postData.platforms.length === 1) {
-            // If YouTube is the only platform, just use this video
-            apiPostData.images = [cleanedVideo];
-          }
-        }
+      const postId = createResponse.data._id;
+      console.log('📤 Publishing post with ID:', postId);
 
-        // Add YouTube-specific tags from the mentions field
-        if (postData.mentions) {
-          apiPostData.tags = postData.mentions.split(/\s+/)
-            .map(tag => tag.startsWith('@') ? tag.substring(1) : tag)
-            .filter(tag => tag.length > 0);
-        }
-      }
+      const publishResponse = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      // ✅ Handle scheduling vs immediate publishing
-      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-        // SCHEDULED POST
-        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-        apiPostData.scheduledDate = scheduledDateTime.toISOString();
 
         console.log('📅 Creating scheduled post for:', scheduledDateTime.toISOString());
         showToast('Scheduling post...', 'info');
@@ -1090,19 +1076,18 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         }
       }
 
-      // Reset form on success
-      resetForm();
-      onClose();
+    resetForm();
+    onClose();
+  } catch (error) {
+    console.error('❌ Failed to create/publish post:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+    setError(errorMessage);
+    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
-    } catch (error) {
-      console.error('❌ Failed to create/publish post:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-      setError(errorMessage);
-      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const resetForm = () => {
     setPostData({
