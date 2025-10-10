@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Settings,
   LogOut,
+
   ChevronDown,
   ChevronUp,
   Upload,
@@ -775,10 +776,10 @@ const Dashboard = () => {
               </button>
               <button className="btn-secondary action-btn" onClick={
                 // () => document.getElementById('media-upload').click()
-                () => navigate('/ai-assistant')
+                () => navigate('/settings?tab=accounts')
               }>
-                <Sparkles size={18} />
-                AI Assistant
+                <Link2 size={18} />
+                Link Accounts
               </button>
               <input
                 id="media-upload"

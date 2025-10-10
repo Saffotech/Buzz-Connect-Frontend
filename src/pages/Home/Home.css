@@ -627,7 +627,7 @@ section {
 }
 
 .mga-feature-card p {
-  color: var(--mga-text-muted);
+  /* color: var(--mga-text-muted); */
   margin: 0;
   line-height: 1.7;
 }
