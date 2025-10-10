@@ -4060,3 +4060,116 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* Content Optimization Button */
+.mga-ai-content-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 4px;
+  background-color: #7856ff;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mga-ai-content-btn:hover {
+  background-color: #6545e0;
+}
+
+.mga-ai-content-btn:disabled {
+  background-color: #c9b8ff;
+  cursor: not-allowed;
+}
+
+.mga-icon-spin {
+  animation: mga-spin 1.5s linear infinite;
+}
+
+@keyframes mga-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Content Optimization Results */
+.mga-optimization-results {
+  margin-top: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.mga-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mga-results-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #7856ff;
+}
+
+.mga-character-count {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.mga-optimized-content-preview {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.mga-optimization-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mga-optimization-actions button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mga-btn-secondary {
+  background-color: #f1f1f1;
+  border: 1px solid #ddd;
+  color: #444;
+}
+
+.mga-btn-secondary:hover {
+  background-color: #e6e6e6;
+}
+
+.mga-btn-primary {
+  background-color: #7856ff;
+  border: 1px solid #7856ff;
+  color: white;
+}
+
+.mga-btn-primary:hover {
+  background-color: #6545e0;
+}
