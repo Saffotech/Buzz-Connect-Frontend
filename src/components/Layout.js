@@ -700,7 +700,7 @@ const Layout = ({ children }) => {
               </button>
               {showUserDropdown && (
                 <div className="dropdown-menu">
-                  <button
+                  {/* <button
                     onClick={() => {
                       setShowFeedbackModal(true);
                       setShowUserDropdown(false);
@@ -709,7 +709,7 @@ const Layout = ({ children }) => {
                   >
                     <MessageCircle size={16} />
                     Feedback
-                  </button>
+                  </button> */}
                   <button onClick={handleUserProfileClick} className="dropdown-item">
                     <Settings size={16} />
                     Settings
@@ -979,7 +979,7 @@ const Layout = ({ children }) => {
             </button>
             {showUserDropdown && (
               <div className="dropdown-menu">
-                <button
+                {/* <button
                   onClick={() => {
                     setShowFeedbackModal(true);
                     setShowUserDropdown(false);
@@ -988,7 +988,7 @@ const Layout = ({ children }) => {
                 >
                   <MessageCircle size={16} />
                   Feedback
-                </button>
+                </button> */}
                 <button onClick={handleUserProfileClick} className="dropdown-item">
                   <Settings size={16} />
                   Settings
