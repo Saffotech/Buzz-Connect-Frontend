@@ -1950,7 +1950,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary, #6c757d);
-  margin-bottom: 4px;
+  padding: 10px;
 }
 
 .account-dropdown {
@@ -2003,7 +2003,6 @@
   font-size: 14px;
   font-weight: 600;
   color: #495057;
-  margin-bottom: 12px;
   text-wrap: nowrap;
 }
 
@@ -2037,6 +2036,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  margin: 0 10px;
 }
 
 .account-checkbox-item:hover {
