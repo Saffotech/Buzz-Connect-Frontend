@@ -42,14 +42,14 @@ const Layout = ({ children }) => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showLegalDropdown, setShowLegalDropdown] = useState(false);
-  
+
   // Notification state
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsError, setNotificationsError] = useState(null);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
-  
+
   // Ref for notification dropdown
   const notificationDropdownRef = useRef(null);
 
@@ -82,23 +82,23 @@ const Layout = ({ children }) => {
 
     setIsLoadingNotifications(true);
     setNotificationsError(null);
-    
+
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.data && response.data.success) {
         const notificationsData = response.data.notifications || [];
-        
+
         // Process notifications
         setNotifications(notificationsData);
-        
+
         // Get unread count from API response or calculate it
-        const unreadCount = response.data.unreadCount !== undefined 
-          ? response.data.unreadCount 
+        const unreadCount = response.data.unreadCount !== undefined
+          ? response.data.unreadCount
           : notificationsData.filter(n => !n.read).length;
-          
+
         setUnreadCount(unreadCount);
       } else {
         throw new Error('Unexpected API response format');
@@ -106,7 +106,7 @@ const Layout = ({ children }) => {
     } catch (error) {
       console.error('Error loading notifications:', error);
       setNotificationsError(error.message);
-      
+
       // Clear notifications on error rather than showing sample data
       setNotifications([]);
       setUnreadCount(0);
@@ -121,29 +121,29 @@ const Layout = ({ children }) => {
   const markAsRead = async (id) => {
     try {
       await axios.patch(
-        `${process.env.REACT_APP_API_URL}/api/notifications/${id}/read`, 
-        {}, 
-        { headers: { Authorization: `Bearer ${token}` }}
+        `${process.env.REACT_APP_API_URL}/api/notifications/${id}/read`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification._id === id 
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification._id === id
             ? { ...notification, read: true }
             : notification
         )
       );
-      
+
       // Update unread count
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      
+
       // Still update UI locally if API fails
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification._id === id 
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification._id === id
             ? { ...notification, read: true }
             : notification
         )
@@ -156,21 +156,21 @@ const Layout = ({ children }) => {
   const markAllAsRead = async () => {
     try {
       await axios.patch(
-        `${process.env.REACT_APP_API_URL}/api/notifications/read-all`, 
-        {}, 
-        { headers: { Authorization: `Bearer ${token}` }}
+        `${process.env.REACT_APP_API_URL}/api/notifications/read-all`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       // Update local state
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(notification => ({ ...notification, read: true }))
       );
       setUnreadCount(0);
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
-      
+
       // Still update UI locally if API fails
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(notification => ({ ...notification, read: true }))
       );
       setUnreadCount(0);
@@ -182,24 +182,24 @@ const Layout = ({ children }) => {
     if (event) {
       event.stopPropagation(); // Prevent triggering parent click events
     }
-    
+
     try {
       await axios.delete(
         `${process.env.REACT_APP_API_URL}/api/notifications/${id}`,
-        { headers: { Authorization: `Bearer ${token}` }}
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       // Check if notification was unread and update count if needed
       const notification = notifications.find(n => n._id === id);
       if (notification && !notification.read) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
-      
+
       // Remove from local state
       setNotifications(prev => prev.filter(n => n._id !== id));
     } catch (error) {
       console.error('Error removing notification:', error);
-      
+
       // Still update UI locally if API fails
       const notification = notifications.find(n => n._id === id);
       if (notification && !notification.read) {
@@ -226,9 +226,9 @@ const Layout = ({ children }) => {
   // Get platform icon based on platform name
   const getPlatformIcon = (platform) => {
     if (!platform) return <Globe className="w-3 h-3 text-gray-400" />;
-    
+
     const platformLower = platform.toLowerCase();
-    
+
     if (platformLower.includes('instagram')) {
       return <Instagram size={20} className="w-3 h-3 text-purple-500" />;
     } else if (platformLower.includes('facebook')) {
@@ -247,20 +247,20 @@ const Layout = ({ children }) => {
       return <Globe className="w-3 h-3 text-gray-400" />;
     }
   };
-  
+
   // Generate platform icons for a platform string
   const renderPlatformIcons = (platformString) => {
     if (!platformString) return <Globe className="w-3 h-3 text-gray-400" />;
-    
+
     // If it contains "Published to X/Y accounts", extract just the accounts part
     const publishPattern = /published to \d+\/\d+ accounts/i;
     if (publishPattern.test(platformString.toLowerCase())) {
       return <Globe className="w-3 h-3 text-gray-400" />;
     }
-    
+
     // Split the platform string and render icon for each platform
     const platforms = platformString.split(',').map(p => p.trim());
-    
+
     return (
       <div style={{ display: 'flex', gap: '4px' }}>
         {platforms.map((platform, index) => (
@@ -273,15 +273,15 @@ const Layout = ({ children }) => {
   // Format time ago
   const formatTimeAgo = (timestamp) => {
     if (!timestamp) return '';
-    
+
     try {
       const now = new Date();
       const date = new Date(timestamp);
-      
+
       if (isNaN(date.getTime())) {
         return '';
       }
-      
+
       const diff = now - date;
       const minutes = Math.floor(diff / (1000 * 60));
       const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -341,9 +341,9 @@ const Layout = ({ children }) => {
       if (showUserDropdown && !event.target.closest('.user-profile-dropdown')) {
         setShowUserDropdown(false);
       }
-      if (showNotifications && 
-          notificationDropdownRef.current && 
-          !notificationDropdownRef.current.contains(event.target)) {
+      if (showNotifications &&
+        notificationDropdownRef.current &&
+        !notificationDropdownRef.current.contains(event.target)) {
         setShowNotifications(false);
       }
     };
@@ -453,11 +453,17 @@ const Layout = ({ children }) => {
               <Menu size={24} />
             }
           </button>
-          <div className="app-logo"><h1>BuzzConnect</h1></div>
+          <div className="app-logo">
+            <h1>
+              <a href="/dashboard" rel="noopener noreferrer" style={{ color: 'black', textDecoration: 'none' }}>
+                BuzzConnect
+              </a>
+            </h1>
+          </div>
           <div className="header-right">
             {/* Mobile Notification Bell */}
-            <div 
-              className="notification-dropdown" 
+            <div
+              className="notification-dropdown"
               style={{ marginRight: '10px' }}
               ref={notificationDropdownRef}
             >
@@ -493,7 +499,7 @@ const Layout = ({ children }) => {
                   </span>
                 )}
               </button>
-              
+
               {/* Mobile Notification Dropdown */}
               {showNotifications && (
                 <div style={{
@@ -543,7 +549,7 @@ const Layout = ({ children }) => {
                   </div>
 
                   {/* Mobile Notification List with dynamic height */}
-                  <div style={{ 
+                  <div style={{
                     overflowY: 'auto',
                     flex: '1 1 auto',
                     maxHeight: '350px'
@@ -682,7 +688,7 @@ const Layout = ({ children }) => {
                 </div>
               )}
             </div>
-            
+
             <div className="user-profile-dropdown">
               <button
                 className="user-avatar-btn"
@@ -732,8 +738,8 @@ const Layout = ({ children }) => {
             {user?.displayName || user?.email || 'User'}!
           </span>
           {/* Desktop Notification Bell */}
-          <div 
-            className="notification-dropdown" 
+          <div
+            className="notification-dropdown"
             style={{ position: 'relative' }}
             ref={notificationDropdownRef}
           >
@@ -780,8 +786,8 @@ const Layout = ({ children }) => {
                 right: '0',
                 top: '100%',
                 marginTop: '8px',
-                width: (notifications.length === 0? 20 : 40) + 'vw',
-                backgroundColor: 'white', 
+                width: (notifications.length === 0 ? 20 : 40) + 'vw',
+                backgroundColor: 'white',
                 borderRadius: '8px',
                 boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
                 border: '1px solid #e2e8f0',
@@ -822,7 +828,7 @@ const Layout = ({ children }) => {
                 </div>
 
                 {/* Desktop Notification List with dynamic height */}
-                <div style={{ 
+                <div style={{
                   overflowY: 'auto',
                   flex: '1 1 auto',
                   maxHeight: notifications.length > 3 ? '350px' : 'auto'
@@ -1029,7 +1035,7 @@ const Layout = ({ children }) => {
                         className="dropdown-item"
                       >
                         Data Deletion Policy
-                      </a>                     
+                      </a>
                     </div>
                   )}
                 </div>
@@ -1051,7 +1057,7 @@ const Layout = ({ children }) => {
       {/* Sidebar */}
       <div className='bxd'>
         <aside
-          className={`app-sidebar ${isSidebarOpen ?           'open' : 'collapsed'}`}
+          className={`app-sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}
           onMouseEnter={() => enterSidebar(true)}
           onMouseLeave={() => enterSidebar(false)}
         >

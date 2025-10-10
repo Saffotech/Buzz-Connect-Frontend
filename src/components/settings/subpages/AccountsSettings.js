@@ -2204,6 +2204,7 @@ const AccountsSettings = ({ onNotify }) => {
   const [loading, setLoading] = useState(true);
   const [showConnectionOptions, setShowConnectionOptions] = useState(false);
   const [groupByUser, setGroupByUser] = useState(false);
+  const [failedImages, setFailedImages] = useState(new Set());
 
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -2944,16 +2945,21 @@ const AccountsSettings = ({ onNotify }) => {
 
   // Format follower count with appropriate label
   const formatFollowerCount = (count, platform) => {
+    // Don't show follower count for twitter, youtube, linkedin
+    if (platform === 'twitter' || platform === 'youtube' || platform === 'linkedin') {
+      return "-";
+    }
+    
     if (!count || count === 0) return "-";
 
     const formattedCount = typeof count === 'number' ?
       new Intl.NumberFormat().format(count) : count;
 
-    if (platform === 'youtube') {
-      return `${formattedCount} subscribers`;
-    } else {
+    if (platform === 'instagram' || platform === 'facebook') {
       return `${formattedCount} followers`;
     }
+    
+    return "-";
   };
 
   // Render an account card with consistent styling
@@ -3049,11 +3055,12 @@ const AccountsSettings = ({ onNotify }) => {
             width: '48px',
             height: '48px',
           }}>
-            {account.profilePicture ? (
+            {account.profilePicture && !failedImages.has(account._id) ? (
               <img
                 src={account.profilePicture}
                 alt={account.username}
                 className="avatar-img"
+                onError={() => setFailedImages(prev => new Set([...prev, account._id]))}
                 style={{
                   width: '100%',
                   height: '100%',

@@ -42,12 +42,12 @@ const Home = () => {
     {
       icon: Image,
       title: 'Media & Library',
-      description: 'Centralized asset library with tagging and folders. Auto-resize & aspect presets for each platform. Video trimming + thumbnail selector.'
+      description: 'Centralized asset library with tagging and folders. Aspect presets for each platform.'
     },
     {
       icon: BarChart3,
       title: 'Analytics Snapshot',
-      description: 'Engagement per post, best posting times, hashtag performance & growth trends.'
+      description: 'Engagement per post, hashtag performance & growth trends.'
     },
     {
       icon: Users,

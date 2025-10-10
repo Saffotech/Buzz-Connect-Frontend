@@ -1148,11 +1148,10 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
     }
   };
 
-  // New function to get account usernames
 const getAccountDetails = () => {
   const details = [];
 
-  // 1. First try to get data from platformPosts (most reliable source)
+  // 1️⃣ First: Check if this post has platformPosts with account names (most accurate)
   if (post.platformPosts && post.platformPosts.length > 0) {
     post.platformPosts.forEach(pp => {
       if (pp.accountName || pp.accountId) {
@@ -1164,33 +1163,35 @@ const getAccountDetails = () => {
       }
     });
 
-    // Return early if we found details here
+    // ✅ Return early if we found valid details here
     if (details.length > 0) {
       return details;
     }
   }
 
-  // 2. Try to get from selectedAccountsWithNames (next best source)
+  // 2️⃣ Next: Check selectedAccountsWithNames (from form submission)
   if (post.selectedAccountsWithNames) {
     Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
-      accounts.forEach(acc => {
-        if (acc && acc.username) {
-          details.push({
-            platform,
-            username: acc.username,
-            id: acc.id
-          });
-        }
-      });
+      if (Array.isArray(accounts)) {
+        accounts.forEach(acc => {
+          if (acc && acc.username) {
+            details.push({
+              platform,
+              username: acc.username,
+              id: acc.id
+            });
+          }
+        });
+      }
     });
 
-    // Return early if we found details here
+    // ✅ Return early if we found valid details here
     if (details.length > 0) {
       return details;
     }
   }
 
-  // 3. Last resort: try to extract from selectedAccounts
+  // 3️⃣ Finally: Fall back to selectedAccounts (IDs only, no usernames)
   if (post.selectedAccounts) {
     Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
       if (Array.isArray(accountIds)) {
@@ -1198,7 +1199,7 @@ const getAccountDetails = () => {
           if (id) {
             details.push({
               platform,
-              username: `Account on ${platform}`,
+              username: `Account on ${platform}`, // Default fallback label
               id
             });
           }
@@ -1207,8 +1208,10 @@ const getAccountDetails = () => {
     });
   }
 
+  // 4️⃣ Return whatever we found (could be empty if no data sources available)
   return details;
 };
+
 
   const accountDetails = getAccountDetails();
 
@@ -1599,35 +1602,26 @@ const DeleteConfirmationModal = ({
   setDeleteFromYouTube,
   deleteFromFacebook,
   setDeleteFromFacebook,
-  deleteFromTwitter,      // Add Twitter deletion state
-  setDeleteFromTwitter,   // Add Twitter state setter
-  deleteFromLinkedin,     // Add LinkedIn deletion state
-  setDeleteFromLinkedin   // Add LinkedIn state setter
+  deleteFromTwitter,
+  setDeleteFromTwitter,
+  deleteFromLinkedin,
+  setDeleteFromLinkedin
 }) => {
   if (!isOpen) return null;
 
-  // Check for published posts on each platform
-  const youtubeVideos = post?.platformPosts?.filter(
-    platformPost => platformPost.platform === 'youtube' && platformPost.status === 'published'
-  ) || [];
-
-  const hasYouTubePost = youtubeVideos.length > 0;
-
-  // Check if this post has Instagram posts
-  const instagramPosts = post?.platformPosts?.filter(
-    platformPost => platformPost.platform === 'instagram' && platformPost.status === 'published'
-  ) || [];
+  // Platform posts filter
+  const instagramPosts = post?.platformPosts?.filter(p => p.platform === 'instagram' && p.status === 'published') || [];
+  const facebookPosts = post?.platformPosts?.filter(p => p.platform === 'facebook' && p.status === 'published') || [];
+  const youtubePosts = post?.platformPosts?.filter(p => p.platform === 'youtube' && p.status === 'published') || [];
+  const twitterPosts = post?.platformPosts?.filter(p => p.platform === 'twitter' && p.status === 'published') || [];
+  const linkedinPosts = post?.platformPosts?.filter(p => p.platform === 'linkedin' && p.status === 'published') || [];
 
   const hasInstagramPost = instagramPosts.length > 0;
-
-  // Check if this post has Facebook posts
-  const facebookPosts = post?.platformPosts?.filter(
-    platformPost => platformPost.platform === 'facebook' && platformPost.status === 'published'
-  ) || [];
-
   const hasFacebookPost = facebookPosts.length > 0;
+  const hasYouTubePost = youtubePosts.length > 0;
+  const hasTwitterPost = twitterPosts.length > 0;
+  const hasLinkedinPost = linkedinPosts.length > 0;
 
-  // Log if no platform posts were found
   if (!post?.platformPosts || post.platformPosts.length === 0) {
     console.log('⚠️ No platform posts found in this post object:', post);
   }
@@ -1652,9 +1646,10 @@ const DeleteConfirmationModal = ({
             Are you sure you want to delete this post?
           </p>
 
-          {(hasFacebookPost || hasInstagramPost || hasYouTubePost) ? 
-
+          {(hasInstagramPost || hasFacebookPost || hasYouTubePost || hasTwitterPost || hasLinkedinPost) && (
             <div className="delete-extra-options">
+
+              {/* Instagram (API limitation - manual delete) */}
               {hasInstagramPost && (
                 <div className="platform-deletion-option">
                   <div className="deletion-option instagram disabled">
@@ -1666,8 +1661,7 @@ const DeleteConfirmationModal = ({
                       <small className="note-delete">
                         <InfoIcon size={22} />
                         <span>
-                          Instagram posts must be deleted manually through the Instagram
-                          app due to API limitations.
+                          Instagram posts must be deleted manually due to API limitations.
                         </span>
                       </small>
                     </div>
@@ -1675,10 +1669,10 @@ const DeleteConfirmationModal = ({
                 </div>
               )}
 
-
+              {/* Facebook */}
               {hasFacebookPost && (
-                <div className="fb button ctfb"> 
-                  <label id=''>
+                <div className="fb button ctfb">
+                  <label>
                     <input
                       type="checkbox"
                       checked={deleteFromFacebook}
@@ -1689,22 +1683,50 @@ const DeleteConfirmationModal = ({
                 </div>
               )}
 
+              {/* YouTube */}
               {hasYouTubePost && (
                 <div className="yt button ctyoutube">
-                  <label id=''>
+                  <label>
                     <input
                       type="checkbox"
                       checked={deleteFromYouTube}
                       onChange={(e) => setDeleteFromYouTube(e.target.checked)}
                     />
-                    &nbsp; Delete from YouTube also {youtubeVideos.length > 1 ? `(${youtubeVideos.length} videos)` : ''}
+                    &nbsp; Delete from YouTube {youtubePosts.length > 1 ? `(${youtubePosts.length} videos)` : ''}
                   </label>
                 </div>
               )}
-            </div>
-            : ''
 
-          }
+              {/* Twitter */}
+              {hasTwitterPost && (
+                <div className="twitter button cttwitter">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={deleteFromTwitter}
+                      onChange={(e) => setDeleteFromTwitter(e.target.checked)}
+                    />
+                    &nbsp; Delete from Twitter also
+                  </label>
+                </div>
+              )}
+
+              {/* LinkedIn */}
+              {hasLinkedinPost && (
+                <div className="linkedin button ctlinkedin">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={deleteFromLinkedin}
+                      onChange={(e) => setDeleteFromLinkedin(e.target.checked)}
+                    />
+                    &nbsp; Delete from LinkedIn also
+                  </label>
+                </div>
+              )}
+
+            </div>
+          )}
         </div>
 
         <div className="modal-footer">

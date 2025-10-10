@@ -36,6 +36,7 @@ import {
   MoreHorizontal,
   Grid3X3,
   Maximize2,
+  Lightbulb
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
 import apiClient from '../utils/api';
@@ -59,7 +60,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [showImageCarousel, setShowImageCarousel] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
-
+  const [optimizingContent, setOptimizingContent] = useState(false);
+  const [optimizedContent, setOptimizedContent] = useState(null);
+  const [optimizationTarget, setOptimizationTarget] = useState('instagram'); // Default platform
+  const [showOptimizationOptions, setShowOptimizationOptions] = useState(false);
   const [postData, setPostData] = useState({
     content: '',
     platforms: [],
@@ -106,6 +110,92 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     return { isValid: true };
   };
+
+  const handleOptimizeContent = async () => {
+    if (!postData.content.trim()) {
+      showToast('Please enter some content to optimize', 'error');
+      return;
+    }
+
+    // Use the first selected platform as the optimization target
+    if (postData.platforms.length === 0) {
+      showToast('Please select at least one platform first', 'error');
+      return;
+    }
+
+    // Set optimization target to the first selected platform
+    const targetPlatform = postData.platforms[0];
+    setOptimizationTarget(targetPlatform);
+
+    setOptimizingContent(true);
+    setError(null);
+
+    try {
+      // Create the API URL properly
+      const apiUrl = `${process.env.REACT_APP_API_URL}/api/ai/optimize-content`;
+
+      const response = await axios.post(
+        apiUrl,
+        {
+          content: postData.content,
+          targetPlatform: targetPlatform
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Check if the response was successful
+      if (response.data?.success && response.data?.data) {
+        const data = response.data.data;
+        setOptimizedContent(data);
+        showToast('Content optimized successfully! Review and apply changes.', 'success');
+      } else {
+        throw new Error('Failed to optimize content');
+      }
+    } catch (error) {
+      console.error('Failed to optimize content:', error);
+      setError(error.message || 'Failed to optimize content');
+      showToast('Failed to optimize content', 'error');
+    } finally {
+      setOptimizingContent(false);
+    }
+  };
+
+  const applyOptimizedContent = () => {
+    if (!optimizedContent?.optimizedContent) return;
+
+    const optimizedText = optimizedContent.optimizedContent;
+
+    // Extract all hashtags
+    const hashtagRegex = /#[\w\u0590-\u05FF]+/g;
+    const foundHashtags = optimizedText.match(hashtagRegex) || [];
+
+    // Simply replace all hashtags with empty string
+    const cleanedContent = optimizedText.replace(hashtagRegex, '').replace(/\s+/g, ' ').trim();
+
+    // Combine with existing hashtags
+    const existingHashtags = postData.hashtags
+      ? postData.hashtags.split(/\s+/).filter(tag => tag.trim().startsWith('#'))
+      : [];
+
+    // Combine and remove duplicates
+    const allHashtags = [...new Set([...existingHashtags, ...foundHashtags])];
+
+    setPostData(prev => ({
+      ...prev,
+      content: cleanedContent,
+      hashtags: allHashtags.join(' ')
+    }));
+
+    showToast('Optimized content applied!', 'success');
+    setOptimizedContent(null);
+  };
+
+
 
   useEffect(() => {
     if (initialData) {
@@ -599,7 +689,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
       { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
       { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
-      { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
+      // { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
       { id: 'twitter', name: 'X', icon: () => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{ marginBottom: '4px' }} />, color: "#0A66C2" },
     ];
 
@@ -937,23 +1027,22 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     // Define cleanedSelectedAccounts BEFORE the try block
     const cleanedSelectedAccounts = {};
-    const selectedAccountsWithNames = {};
+    const selectedAccountsWithNames = {}; // ✅ Added
 
     try {
-      // Extract connected accounts from user profile
+      // 🔹 Extract connected accounts from user profile
       const accountsMap = {};
       userProfile?.connectedAccounts?.forEach(account => {
         accountsMap[account._id.toString()] = account;
       });
 
-      // Clean up selectedAccounts to remove null values and empty arrays
+      // 🔹 Clean up selectedAccounts (remove null/empty)
       Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
         const validAccounts = accounts.filter(account => account != null && account !== '');
-
         if (validAccounts.length > 0) {
           cleanedSelectedAccounts[platform] = validAccounts;
 
-          // Get the real usernames from userProfile.connectedAccounts
+          // ✅ Add usernames mapped from connectedAccounts
           selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
             const account = accountsMap[accountId];
             return {
@@ -964,16 +1053,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         }
       });
 
-      // Log the actual account names being sent
-      console.log('Sending account usernames:', selectedAccountsWithNames);
+      console.log('✅ Sending account usernames:', selectedAccountsWithNames);
 
-      // Enhanced post data preparation with account information
+      // 🔹 Prepare final API post data
       const apiPostData = {
         content: postData.content,
         platforms: postData.platforms,
         selectedAccounts: cleanedSelectedAccounts,
-        // Remove selectedAccountsWithNames from the API request
-        // We'll log it for debugging but not send it to avoid validation errors
+        selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
         images: postData.images.map((img, index) => ({
           url: img.url,
           altText: img.altText || img.originalName || 'Post media',
@@ -1001,67 +1088,50 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         }
       };
 
-      // Log the account usernames for debugging, but don't send in API request
-
-
-      console.log('Account usernames (not sent to API):', selectedAccountsWithNames);
-
+      // 🟥 YouTube-specific logic
       if (postData.platforms.includes('youtube')) {
-        // For YouTube, we use content as the video title
         apiPostData.title = postData.content.substring(0, 100);
+        apiPostData.description = postData.hashtags
+          ? postData.hashtags
+          : `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
 
-        // Use description from hashtags field if available, or create a default one
-        apiPostData.description = postData.hashtags ?
-          postData.hashtags :
-          `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
-
-        // For YouTube, we should prioritize video files
-        const videoFiles = postData.images.filter(img =>
-          img.fileType === 'video' ||
-          img.url?.includes('video') ||
-          img.url?.includes('.mp4')
+        const videoFiles = postData.images.filter(
+          img => img.fileType === 'video' || img.url?.includes('video') || img.url?.includes('.mp4')
         );
 
         if (videoFiles.length > 0) {
-          // Clean up the youtubeVideo object to remove _id if present
           const { _id, ...cleanedVideo } = videoFiles[0];
           apiPostData.youtubeVideo = cleanedVideo;
 
-          // Ensure this video is included in the images array
           if (postData.platforms.length === 1) {
-            // If YouTube is the only platform, just use this video
             apiPostData.images = [cleanedVideo];
           }
         }
 
-        // Add YouTube-specific tags from the mentions field
         if (postData.mentions) {
-          apiPostData.tags = postData.mentions.split(/\s+/)
-            .map(tag => tag.startsWith('@') ? tag.substring(1) : tag)
+          apiPostData.tags = postData.mentions
+            .split(/\s+/)
+            .map(tag => (tag.startsWith('@') ? tag.substring(1) : tag))
             .filter(tag => tag.length > 0);
         }
       }
 
-      // ✅ Handle scheduling vs immediate publishing
+      // ✅ Handle scheduling or immediate publish
       if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-        // SCHEDULED POST
         const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
         apiPostData.scheduledDate = scheduledDateTime.toISOString();
 
-        console.log('📅 Creating scheduled post for:', scheduledDateTime.toISOString());
+        console.log('📅 Scheduling post for:', scheduledDateTime.toISOString());
         showToast('Scheduling post...', 'info');
 
         const response = await onPostCreated(apiPostData);
         console.log('✅ Scheduled post created:', response);
 
         showToast('Post scheduled successfully!', 'success');
-
       } else {
-        // PUBLISH NOW
         console.log('🚀 Creating and publishing post immediately...');
         showToast('Creating and publishing post...', 'info');
 
-        // Step 1: Create the post as draft
         const createResponse = await onPostCreated(apiPostData);
         console.log('✅ Post created:', createResponse);
 
@@ -1069,16 +1139,20 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           throw new Error('Failed to create post - no ID returned');
         }
 
-        // Step 2: Immediately publish the created post
+        const token =
+          localStorage.getItem('token') ||
+          localStorage.getItem('authToken') ||
+          localStorage.getItem('accessToken');
+
+        if (!token) throw new Error('Authentication token not found');
+
         const postId = createResponse.data._id;
         console.log('📤 Publishing post with ID:', postId);
 
         const publishResponse = await axios.post(
           `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
           {},
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         console.log('✅ Publish response:', publishResponse);
@@ -1089,8 +1163,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           throw new Error(publishResponse.data.message || 'Publishing failed');
         }
       }
+      console.log('✅ FRONTEND - selectedAccountsWithNames built:', JSON.stringify(selectedAccountsWithNames, null, 2));
+      console.log('✅ FRONTEND - userProfile.connectedAccounts:',
+        userProfile?.connectedAccounts?.map(acc => ({ id: acc._id, username: acc.username })));
 
-      // Reset form on success
+      // ✅ Reset and close modal
       resetForm();
       onClose();
 
@@ -1103,6 +1180,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       setIsSubmitting(false);
     }
   };
+
+
 
   const resetForm = () => {
     setPostData({
@@ -1190,21 +1269,21 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
             // Extract hashtags from content if they exist
             const hashtagPattern = /#[\w]+/g;
             const foundHashtags = originalContent.match(hashtagPattern) || [];
-            
+
             // Remove hashtag-only lines from content
             let cleanContent = originalContent;
             if (foundHashtags.length > 0) {
               const lines = originalContent.split('\n');
               const contentLines = [];
               const hashtagLines = [];
-              
+
               lines.forEach(line => {
                 const trimmedLine = line.trim();
                 const lineHashtags = trimmedLine.match(hashtagPattern) || [];
-                
+
                 // Check if line is ONLY hashtags (no other text)
                 const lineWithoutHashtags = trimmedLine.replace(hashtagPattern, '').trim();
-                
+
                 if (lineHashtags.length > 0 && lineWithoutHashtags === '') {
                   // This line contains only hashtags
                   hashtagLines.push(...lineHashtags);
@@ -1213,14 +1292,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                   contentLines.push(line);
                 }
               });
-              
+
               cleanContent = contentLines.join('\n').trim();
-              
+
               // Use extracted hashtags or fallback to all found hashtags
-              const extractedHashtags = hashtagLines.length > 0 
-                ? hashtagLines 
+              const extractedHashtags = hashtagLines.length > 0
+                ? hashtagLines
                 : foundHashtags;
-              
+
               suggestions.push({
                 id: `${platform}-${Date.now()}`,
                 content: cleanContent, // Content without hashtag-only lines
@@ -1366,15 +1445,15 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       // Handle YouTube content - combine title and description in content field
       const youtubeTitle = suggestion.content.title || '';
       const youtubeDescription = suggestion.content.description || '';
-      
+
       // Combine title and description with line breaks
-      const combinedContent = youtubeTitle && youtubeDescription 
+      const combinedContent = youtubeTitle && youtubeDescription
         ? `${youtubeTitle}\n\n${youtubeDescription}`
         : youtubeTitle || youtubeDescription;
 
       // Get tags and format them with # prefix
       const youtubeTags = suggestion.content.tags || [];
-      const formattedTags = Array.isArray(youtubeTags) 
+      const formattedTags = Array.isArray(youtubeTags)
         ? youtubeTags.map(tag => tag.startsWith('#') ? tag : `#${tag}`).join(' ')
         : '';
 
@@ -1388,8 +1467,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       showToast('YouTube content applied successfully', 'success');
     } else {
       // Handle other platforms - put EVERYTHING in content field
-      const contentText = typeof suggestion.content === 'string' 
-        ? suggestion.content 
+      const contentText = typeof suggestion.content === 'string'
+        ? suggestion.content
         : JSON.stringify(suggestion.content);
 
       // Get hashtags from the suggestion
@@ -1402,7 +1481,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         mentions: '',              // Clear mentions
         platforms: suggestion.platforms
       }));
-      
+
       showToast('AI suggestion applied successfully', 'success');
     }
   };
@@ -1940,22 +2019,71 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 </div>
 
                 {/* Content */}
-                <div className="form-section">
-                  <label className="section-label">
-                    Content
-                    <span className={`char-count ${charCount.remaining < 0 ? 'over-limit' : ''}`}>
-                      {charCount.current}/{charCount.max}
-                    </span>
-                  </label>
-                  <textarea
-                    value={postData.content}
-                    onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
-                    placeholder="What's happening? Share your thoughts..."
-                    className="content-textarea"
-                    rows={6}
-                    required
-                  />
-                </div>
+
+
+              <div className="form-section">
+  <label className="section-label">
+    Content
+    <span className={`char-count ${charCount.remaining < 0 ? 'over-limit' : ''}`}>
+      {charCount.current}/{charCount.max}
+    </span>
+    <button
+      type="button"
+      className="mga-ai-content-btn"
+      onClick={handleOptimizeContent}
+      disabled={optimizingContent || !postData.content.trim() || postData.platforms.length === 0}
+      title="Optimize content with AI"
+    >
+      {optimizingContent ? <RefreshCw size={14} className="mga-icon-spin" /> : <Wand2 size={14} />}
+      Optimize
+    </button>
+  </label>
+
+  <textarea
+    value={postData.content}
+    onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
+    placeholder="What's happening? Share your thoughts..."
+    className="content-textarea"
+    rows={6}
+    required
+  />
+
+  {/* Content Optimization Results */}
+  {optimizedContent && (
+    <div className="mga-optimization-results">
+      <div className="mga-results-header">
+        <h4>
+          <Sparkles size={14} />
+          Optimized Content
+        </h4>
+        <div className="mga-character-count">
+          {optimizedContent.characterCount} characters
+        </div>
+      </div>
+
+      <div className="mga-optimized-content-preview">
+        {optimizedContent.optimizedContent}
+      </div>
+
+      <div className="mga-optimization-actions">
+        <button
+          className="mga-btn-secondary"
+          onClick={() => setOptimizedContent(null)}
+        >
+          Dismiss
+        </button>
+        <button
+          className="mga-btn-primary"
+          onClick={applyOptimizedContent}
+        >
+          Apply Changes
+        </button>
+      </div>
+    </div>
+  )}
+</div>
+
+
 
                 {/* Hashtags and Mentions */}
                 <div className="form-row">
@@ -2265,7 +2393,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                               const defaultDate = new Date();
                               const fiveMinAhead = new Date();
                               fiveMinAhead.setMinutes(fiveMinAhead.getMinutes() + 5);
-                              
+
                               setPostData(prev => ({
                                 ...prev,
                                 scheduledDate: defaultDate.toISOString().split("T")[0],
