@@ -1978,7 +1978,9 @@
 /* Platform Grid Updates */
 .platforms-grid {
   display: flex;
-  gap: 16px;
+  gap: 10px;
+  max-width: 100;
+  margin: 10px;
 }
 
 /* Multi-Account Selection Styles */
@@ -2000,7 +2002,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: #495057;
   text-wrap: nowrap;

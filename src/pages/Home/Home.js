@@ -42,7 +42,7 @@ const Home = () => {
     {
       icon: Image,
       title: 'Media & Library',
-      description: 'Centralized asset library with tagging and folders. Aspect presets for each platform. Video trimming + thumbnail selector.'
+      description: 'Centralized asset library with tagging and folders. Aspect presets for each platform.'
     },
     {
       icon: BarChart3,
