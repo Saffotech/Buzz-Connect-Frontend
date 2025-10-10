@@ -61,7 +61,7 @@ export const PLATFORMS = {
   FACEBOOK: 'facebook', 
   TWITTER: 'twitter',
   LINKEDIN: 'linkedin',
-  // YOUTUBE: 'youtube'            // Make sure this matches the ID used in the platform grid
+  YOUTUBE: 'youtube'            // Make sure this matches the ID used in the platform grid
 };
 
 export const PLATFORM_CONFIGS = {
