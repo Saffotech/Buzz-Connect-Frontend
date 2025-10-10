@@ -599,7 +599,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       { id: 'instagram', name: 'Instagram', icon: Instagram, color: '#E4405F' },
       { id: 'facebook', name: 'Facebook', icon: Facebook, color: '#1877F2' },
       { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: '#0A66C2' },
-      // { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
+      { id: 'youtube', name: 'YouTube', icon: Youtube, color: '#FF0000' },
       { id: 'twitter', name: 'X', icon: () => <FontAwesomeIcon icon={faXTwitter} size="lg" style={{ marginBottom: '4px' }} />, color: "#0A66C2" },
     ];
 
