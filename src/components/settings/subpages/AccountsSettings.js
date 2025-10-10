@@ -2204,6 +2204,7 @@ const AccountsSettings = ({ onNotify }) => {
   const [loading, setLoading] = useState(true);
   const [showConnectionOptions, setShowConnectionOptions] = useState(false);
   const [groupByUser, setGroupByUser] = useState(false);
+  const [failedImages, setFailedImages] = useState(new Set());
 
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -3049,11 +3050,12 @@ const AccountsSettings = ({ onNotify }) => {
             width: '48px',
             height: '48px',
           }}>
-            {account.profilePicture ? (
+            {account.profilePicture && !failedImages.has(account._id) ? (
               <img
                 src={account.profilePicture}
                 alt={account.username}
                 className="avatar-img"
+                onError={() => setFailedImages(prev => new Set([...prev, account._id]))}
                 style={{
                   width: '100%',
                   height: '100%',

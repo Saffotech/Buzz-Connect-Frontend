@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
   Hash,
@@ -46,31 +46,31 @@ const AIAssistant = () => {
   ];
 
   const renderTabContent = () => {
-  switch (activeTab) {
-    case 'generator':
-      return <ContentGeneratorTab loading={loading} setLoading={setLoading} setError={setError} />;
-    case 'hashtags':
-      return <HashtagSuggesterTab loading={loading} setLoading={setLoading} setError={setError} />;
-    case 'optimizer':
-      return <ContentOptimizerTab loading={loading} setLoading={setLoading} setError={setError} />;
-    default:
-      return <ContentGeneratorTab loading={loading} setLoading={setLoading} setError={setError} />;
-  }
-};
-// Add this useEffect to test API connection when component mounts
-useEffect(() => {
-  const testConnection = async () => {
-    try {
-      const response = await apiClient.healthCheck();
-      console.log('API Health Check:', response);
-    } catch (error) {
-      console.error('API connection failed:', error);
-      setError('Unable to connect to AI services. Please check your connection.');
+    switch (activeTab) {
+      case 'generator':
+        return <ContentGeneratorTab loading={loading} setLoading={setLoading} setError={setError} />;
+      case 'hashtags':
+        return <HashtagSuggesterTab loading={loading} setLoading={setLoading} setError={setError} />;
+      case 'optimizer':
+        return <ContentOptimizerTab loading={loading} setLoading={setLoading} setError={setError} />;
+      default:
+        return <ContentGeneratorTab loading={loading} setLoading={setLoading} setError={setError} />;
     }
   };
+  // Add this useEffect to test API connection when component mounts
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const response = await apiClient.healthCheck();
+        console.log('API Health Check:', response);
+      } catch (error) {
+        console.error('API connection failed:', error);
+        setError('Unable to connect to AI services. Please check your connection.');
+      }
+    };
 
-  testConnection();
-}, []);
+    testConnection();
+  }, []);
 
 
 
@@ -131,7 +131,7 @@ useEffect(() => {
 };
 
 // Content Generator Tab Component
-  const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
+const ContentGeneratorTab = ({ loading, setLoading, setError }) => {
   const [formData, setFormData] = useState({
     prompt: '',
     tone: DEFAULTS.DEFAULT_TONE,
@@ -148,96 +148,96 @@ useEffect(() => {
     }));
   };
 
-const generateContent = async () => {
-  if (!formData.prompt.trim()) return;
+  const generateContent = async () => {
+    if (!formData.prompt.trim()) return;
 
-  setLoading(true);
-  setError(null); // Clear previous errors
+    setLoading(true);
+    setError(null); // Clear previous errors
 
-  try {
-    const response = await apiClient.generateContent({
-      prompt: formData.prompt,
-      tone: formData.tone,
-      platforms: formData.platforms,
-      includeHashtags: formData.includeHashtags,
-      maxLength: formData.maxLength
-    });
-
-    console.log('API Response:', response);
-
-    if (response.success && response.data) {
-      const suggestions = [];
-      
-      // Handle the response structure from your API
-      Object.entries(response.data.content).forEach(([platform, data]) => {
-        if (platform === 'youtube') {
-          // Special handling for YouTube content
-          suggestions.push({
-            id: `${platform}-${Date.now()}`,
-            content: data.description || '', // Use description as content
-            title: data.title || '',
-            hashtags: data.tags ? data.tags.map(tag => `#${tag.replace(/\s+/g, '')}`) : [], // Convert tags to hashtags
-            tone: response.data.options.tone,
-            characterCount: data.characterCount || 0,
-            platform: platform,
-            withinLimit: data.withinLimit || true,
-            isYouTube: true, // Flag to identify YouTube content
-            videoIdeas: data.videoIdeas || [],
-            callToAction: data.callToAction || ''
-          });
-        } else {
-          // Regular handling for other platforms
-          suggestions.push({
-            id: `${platform}-${Date.now()}`,
-            content: data.content,
-            hashtags: extractHashtagsFromContent(data.content),
-            tone: response.data.options.tone,
-            characterCount: data.characterCount,
-            platform: platform,
-            withinLimit: data.withinLimit,
-            isYouTube: false
-          });
-        }
+    try {
+      const response = await apiClient.generateContent({
+        prompt: formData.prompt,
+        tone: formData.tone,
+        platforms: formData.platforms,
+        includeHashtags: formData.includeHashtags,
+        maxLength: formData.maxLength
       });
 
-      setSuggestions(suggestions);
-    } else {
-      throw new Error('Invalid response format');
+      console.log('API Response:', response);
+
+      if (response.success && response.data) {
+        const suggestions = [];
+
+        // Handle the response structure from your API
+        Object.entries(response.data.content).forEach(([platform, data]) => {
+          if (platform === 'youtube') {
+            // Special handling for YouTube content
+            suggestions.push({
+              id: `${platform}-${Date.now()}`,
+              content: data.description || '', // Use description as content
+              title: data.title || '',
+              hashtags: data.tags ? data.tags.map(tag => `#${tag.replace(/\s+/g, '')}`) : [], // Convert tags to hashtags
+              tone: response.data.options.tone,
+              characterCount: data.characterCount || 0,
+              platform: platform,
+              withinLimit: data.withinLimit || true,
+              isYouTube: true, // Flag to identify YouTube content
+              videoIdeas: data.videoIdeas || [],
+              callToAction: data.callToAction || ''
+            });
+          } else {
+            // Regular handling for other platforms
+            suggestions.push({
+              id: `${platform}-${Date.now()}`,
+              content: data.content,
+              hashtags: extractHashtagsFromContent(data.content),
+              tone: response.data.options.tone,
+              characterCount: data.characterCount,
+              platform: platform,
+              withinLimit: data.withinLimit,
+              isYouTube: false
+            });
+          }
+        });
+
+        setSuggestions(suggestions);
+      } else {
+        throw new Error('Invalid response format');
+      }
+
+    } catch (error) {
+      console.error('Error generating content:', error);
+      setError(error.message || 'Failed to generate content. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to extract hashtags from content
+  const extractHashtagsFromContent = (content) => {
+    // If content is not a string (like in YouTube's case), handle it differently
+    if (typeof content !== 'string') {
+      // For YouTube, return the tags array if available
+      if (content.tags && Array.isArray(content.tags)) {
+        // Return tags with # prefix
+        return content.tags.map(tag => `#${tag.replace(/\s+/g, '')}`);
+      }
+
+      // If there's a description field, extract hashtags from there
+      if (content.description) {
+        const hashtagRegex = /#\w+/g;
+        const matches = content.description.match(hashtagRegex);
+        return matches || [];
+      }
+
+      return []; // No hashtags found
     }
 
-  } catch (error) {
-    console.error('Error generating content:', error);
-    setError(error.message || 'Failed to generate content. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
-
-// Helper function to extract hashtags from content
-const extractHashtagsFromContent = (content) => {
-  // If content is not a string (like in YouTube's case), handle it differently
-  if (typeof content !== 'string') {
-    // For YouTube, return the tags array if available
-    if (content.tags && Array.isArray(content.tags)) {
-      // Return tags with # prefix
-      return content.tags.map(tag => `#${tag.replace(/\s+/g, '')}`);
-    }
-    
-    // If there's a description field, extract hashtags from there
-    if (content.description) {
-      const hashtagRegex = /#\w+/g;
-      const matches = content.description.match(hashtagRegex);
-      return matches || [];
-    }
-    
-    return []; // No hashtags found
-  }
-  
-  // Original behavior for string content
-  const hashtagRegex = /#\w+/g;
-  const matches = content.match(hashtagRegex);
-  return matches || [];
-};
+    // Original behavior for string content
+    const hashtagRegex = /#\w+/g;
+    const matches = content.match(hashtagRegex);
+    return matches || [];
+  };
 
 
   // const generateContent = async () => {
@@ -397,6 +397,21 @@ const extractHashtagsFromContent = (content) => {
 
 // Suggestion Card Component
 const SuggestionCard = ({ suggestion, onCopy, onUse }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    const textToCopy = suggestion.content + " " + suggestion.hashtags.join(" ");
+    onCopy(textToCopy);
+    setCopied(true);
+
+    // Reset after 3 seconds
+    setTimeout(() => setCopied(false), 3000);
+  };
+
+  
+
+
+
   // Special rendering for YouTube content
   if (suggestion.isYouTube) {
     return (
@@ -406,7 +421,7 @@ const SuggestionCard = ({ suggestion, onCopy, onUse }) => {
           <span className="suggestion-tone">{suggestion.tone}</span>
           <span className="character-count">{suggestion.characterCount} chars</span>
         </div>
-        
+
         <div className="youtube-title">
           <h3>{suggestion.title}</h3>
         </div>
@@ -486,12 +501,13 @@ const SuggestionCard = ({ suggestion, onCopy, onUse }) => {
       )}
 
       <div className="suggestion-actions">
+
         <button
-          onClick={() => onCopy(suggestion.content + ' ' + suggestion.hashtags.join(' '))}
-          className="action-button secondary"
+          onClick={handleCopy}
+          className={`action-button secondary ${copied ? "copied" : ""}`}
         >
           <Copy size={16} />
-          Copy
+          {copied ? "Copied" : "Copy"}
         </button>
         {/* <button
           onClick={() => onUse(suggestion)}
@@ -522,33 +538,33 @@ const HashtagSuggesterTab = ({ loading, setLoading }) => {
     }));
   };
   const suggestHashtags = async () => {
-  if (!formData.content.trim()) return;
+    if (!formData.content.trim()) return;
 
-  setLoading(true);
-  try {
-    // Use real API instead of mock
-    const response = await apiClient.suggestHashtags({
-      content: formData.content,
-      platform: formData.platform,
-      count: formData.count
-    });
+    setLoading(true);
+    try {
+      // Use real API instead of mock
+      const response = await apiClient.suggestHashtags({
+        content: formData.content,
+        platform: formData.platform,
+        count: formData.count
+      });
 
-    console.log('Hashtag API Response:', response);
+      console.log('Hashtag API Response:', response);
 
-    if (response.success && response.data.hashtags) {
-      setHashtags(response.data.hashtags);
-      setSelectedHashtags([]);
-    } else {
-      throw new Error('Invalid response format');
+      if (response.success && response.data.hashtags) {
+        setHashtags(response.data.hashtags);
+        setSelectedHashtags([]);
+      } else {
+        throw new Error('Invalid response format');
+      }
+
+    } catch (error) {
+      console.error('Error suggesting hashtags:', error);
+      alert('Failed to suggest hashtags. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-  } catch (error) {
-    console.error('Error suggesting hashtags:', error);
-    alert('Failed to suggest hashtags. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 
@@ -705,6 +721,7 @@ const ContentOptimizerTab = ({ loading, setLoading }) => {
     platform: 'instagram'
   });
   const [optimizedContent, setOptimizedContent] = useState(null);
+  const [copyOptimizedContent, setCopyOptimizedContent] = useState(false);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -713,39 +730,39 @@ const ContentOptimizerTab = ({ loading, setLoading }) => {
     }));
   };
   const optimizeContent = async () => {
-  if (!formData.content.trim()) return;
+    if (!formData.content.trim()) return;
 
-  setLoading(true);
-  try {
-    // Use real API instead of mock
-    const response = await apiClient.optimizeContent({
-      content: formData.content,
-      targetPlatform: formData.platform
-    });
+    setLoading(true);
+    try {
+      // Use real API instead of mock
+      const response = await apiClient.optimizeContent({
+        content: formData.content,
+        targetPlatform: formData.platform
+      });
 
-    console.log('Optimize API Response:', response);
+      console.log('Optimize API Response:', response);
 
-    if (response.success && response.data) {
-      const optimizedData = {
-        original: response.data.original,
-        optimized: response.data.optimizedContent,
-        improvements: response.data.improvements || [],
-        suggestions: response.data.suggestions || [],
-        platform: response.data.platform
-      };
+      if (response.success && response.data) {
+        const optimizedData = {
+          original: response.data.original,
+          optimized: response.data.optimizedContent,
+          improvements: response.data.improvements || [],
+          suggestions: response.data.suggestions || [],
+          platform: response.data.platform
+        };
 
-      setOptimizedContent(optimizedData);
-    } else {
-      throw new Error('Invalid response format');
+        setOptimizedContent(optimizedData);
+      } else {
+        throw new Error('Invalid response format');
+      }
+
+    } catch (error) {
+      console.error('Error optimizing content:', error);
+      alert('Failed to optimize content. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-  } catch (error) {
-    console.error('Error optimizing content:', error);
-    alert('Failed to optimize content. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 
@@ -781,6 +798,7 @@ const ContentOptimizerTab = ({ loading, setLoading }) => {
   const copyOptimized = () => {
     if (optimizedContent) {
       navigator.clipboard.writeText(optimizedContent.optimized);
+      setCopyOptimizedContent(true);
     }
   };
 
@@ -885,12 +903,14 @@ const ContentOptimizerTab = ({ loading, setLoading }) => {
           <div className="optimizer-actions">
             <button onClick={copyOptimized} className="action-button secondary">
               <Copy size={16} />
-              Copy Optimized Text
+              {copyOptimizedContent ? "Copied Optimized Text" : "Copy Optimized Text"}
             </button>
-            <button onClick={useOptimized} className="action-button primary">
+
+            {/* <button onClick={useOptimized} className="action-button primary">
               <Send size={16} />
               Use in New Post
-            </button>
+            </button> */}
+
           </div>
         </div>
       )}
