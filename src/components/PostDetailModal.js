@@ -90,63 +90,8 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     return false;
   };
 
-  const getMediaType = (media) => {
-    if (isVideoFile(media)) {
-      return 'video';
-    }
-    return 'image';
-  };
-
-  const getMediaMimeType = (mediaItem) => {
-    if (mediaItem.type) return mediaItem.type;
-    if (mediaItem.fileType) return mediaItem.fileType;
-
-    // Try to guess from URL extension
-    if (mediaItem.url) {
-      const url = mediaItem.url.toLowerCase();
-      if (url.includes('.mp4')) return 'video/mp4';
-      if (url.includes('.mov')) return 'video/quicktime';
-      if (url.includes('.webm')) return 'video/webm';
-      if (url.includes('.avi')) return 'video/x-msvideo';
-      if (url.includes('.mkv')) return 'video/x-matroska';
-    }
-
-    return 'video/mp4'; // Default fallback
-  };
-
   // Fixed: Declare platform first, handling null/undefined cases
   const platform = post?.selectedPlatform?.toLowerCase() || post?.platforms?.[0]?.toLowerCase() || "post";
-
-  // Mock comments data (replace with real API data)
-  const mockComments = [
-    {
-      id: 1,
-      platform: 'instagram',
-      author: 'sarah_marketing',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face',
-      content: 'This is amazing! Love the creativity 🔥',
-      timestamp: '2 hours ago',
-      likes: 12
-    },
-    {
-      id: 2,
-      platform: 'facebook',
-      author: 'Digital Marketing Pro',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face',
-      content: 'Great content strategy! How did you come up with this concept?',
-      timestamp: '4 hours ago',
-      likes: 8
-    },
-    {
-      id: 3,
-      platform: 'instagram',
-      author: 'creative_minds',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face',
-      content: 'Bookmarked for inspiration! 💡',
-      timestamp: '6 hours ago',
-      likes: 5
-    }
-  ];
 
   // Get account ID based on platform
   const getAccountId = () => {
@@ -233,69 +178,69 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
   };
 
   // Updated getAccountDetails function
- const getAccountDetails = () => {
-  const details = [];
+  const getAccountDetails = () => {
+    const details = [];
 
-  // 1️⃣ First: Check if this post has platformPosts with account names (most accurate)
-  if (post.platformPosts && post.platformPosts.length > 0) {
-    post.platformPosts.forEach(pp => {
-      if (pp.accountName || pp.accountId) {
-        details.push({
-          platform: pp.platform,
-          username: pp.accountName || `Account on ${pp.platform}`,
-          id: pp.accountId
-        });
+    // 1️⃣ First: Check if this post has platformPosts with account names (most accurate)
+    if (post.platformPosts && post.platformPosts.length > 0) {
+      post.platformPosts.forEach(pp => {
+        if (pp.accountName || pp.accountId) {
+          details.push({
+            platform: pp.platform,
+            username: pp.accountName || `Account on ${pp.platform}`,
+            id: pp.accountId
+          });
+        }
+      });
+
+      // ✅ Return early if we found valid details here
+      if (details.length > 0) {
+        return details;
       }
-    });
-
-    // ✅ Return early if we found valid details here
-    if (details.length > 0) {
-      return details;
     }
-  }
 
-  // 2️⃣ Next: Check selectedAccountsWithNames (from form submission)
-  if (post.selectedAccountsWithNames) {
-    Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
-      if (Array.isArray(accounts)) {
-        accounts.forEach(acc => {
-          if (acc && acc.username) {
-            details.push({
-              platform,
-              username: acc.username,
-              id: acc.id
-            });
-          }
-        });
+    // 2️⃣ Next: Check selectedAccountsWithNames (from form submission)
+    if (post.selectedAccountsWithNames) {
+      Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+        if (Array.isArray(accounts)) {
+          accounts.forEach(acc => {
+            if (acc && acc.username) {
+              details.push({
+                platform,
+                username: acc.username,
+                id: acc.id
+              });
+            }
+          });
+        }
+      });
+
+      // ✅ Return early if we found valid details here
+      if (details.length > 0) {
+        return details;
       }
-    });
-
-    // ✅ Return early if we found valid details here
-    if (details.length > 0) {
-      return details;
     }
-  }
 
-  // 3️⃣ Finally: Fall back to selectedAccounts (IDs only, no usernames)
-  if (post.selectedAccounts) {
-    Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
-      if (Array.isArray(accountIds)) {
-        accountIds.forEach(id => {
-          if (id) {
-            details.push({
-              platform,
-              username: `Account on ${platform}`, // Default fallback label
-              id
-            });
-          }
-        });
-      }
-    });
-  }
+    // 3️⃣ Finally: Fall back to selectedAccounts (IDs only, no usernames)
+    if (post.selectedAccounts) {
+      Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
+        if (Array.isArray(accountIds)) {
+          accountIds.forEach(id => {
+            if (id) {
+              details.push({
+                platform,
+                username: `Account on ${platform}`, // Default fallback label
+                id
+              });
+            }
+          });
+        }
+      });
+    }
 
-  // 4️⃣ Return whatever we found (could be empty if no data sources available)
-  return details;
-};
+    // 4️⃣ Return whatever we found (could be empty if no data sources available)
+    return details;
+  };
 
 
   // Fetch detailed analytics for the post
@@ -621,71 +566,50 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       return;
     }
 
-    try {
-      setIsPosting(true);
-      showToast(`Republishing to ${platformPost.platform}...`, 'info');
+    if (typeof onClose === 'function') onClose(); // Instantly close the modal
 
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-      if (!token) {
-        throw new Error('Authentication token not found');
-      }
+    // 🔹 Step 2: Run publishing in background (non-blocking)
+    setTimeout(async () => {
+      try {
+        const token =
+          localStorage.getItem('token') ||
+          localStorage.getItem('authToken') ||
+          localStorage.getItem('accessToken');
 
-      const postId = post._id || post.id;
+        if (!token) throw new Error('Authentication token not found');
 
-      // Prepare publish request with specific platform and account
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
-        {
-          platforms: [platformPost.platform],
-          accountIds: [platformPost.accountId]
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
+        const postId = post._id || post.id;
+        console.log(`🚀 Re-publishing ${platformPost.platform} for post ${postId}...`);
+
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
+          {
+            platforms: [platformPost.platform],
+            accountIds: [platformPost.accountId],
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        console.log('✅ Republish response:', response.data);
+        showToast(`Successfully republished to ${platformPost.platform}!`, 'success');
+
+        // Optional: trigger parent refresh silently
+        if (onPostAgain && typeof onPostAgain === 'function') {
+          onPostAgain(post, response.data);
         }
-      );
 
-      console.log('Republish response:', response.data);
-      showToast(`Successfully republished to ${platformPost.platform}!`, 'success');
-
-      // Refresh the post details
-      if (onPostAgain && typeof onPostAgain === 'function') {
-        onPostAgain(post, response.data);
-      } else {
-        // Fallback: close modal and let parent component handle refresh
-        setTimeout(() => {
-          handleClose();
-        }, 1500);
+      } catch (error) {
+        console.error('❌ Failed to retry publish:', error);
+        const errorMessage =
+          error.response?.data?.message || error.message || 'Failed to republish';
+        showToast(`Republish failed: ${errorMessage}`, 'error');
       }
-
-    } catch (error) {
-      console.error('Failed to retry publish:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to republish';
-      showToast(`Republish failed: ${errorMessage}`, 'error');
-    } finally {
-      setIsPosting(false);
-    }
+    }, 200); // small delay to ensure popup closes cleanly
   };
 
-  // Handle copy link
-  const handleCopyLink = () => {
-    const postId = post._id || post.id;
-    navigator.clipboard.writeText(`${window.location.origin}/post/${postId}`);
-    showToast('Post link copied to clipboard!', 'success');
-  };
 
-  // Handle share
-  const handleShare = () => {
-    const postId = post._id || post.id;
-    if (navigator.share) {
-      navigator.share({
-        title: 'Check out this post',
-        text: post.content?.substring(0, 100) + '...',
-        url: `${window.location.origin}/post/${postId}`
-      });
-    } else {
-      handleCopyLink();
-    }
-  };
 
   // Effects
   useEffect(() => {
@@ -1404,12 +1328,6 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                   <div className="mga-publish-summary-stats">
                     <div className="mga-publish-stat-item">
                       <div className="mga-stat-value">
-                        {post.platformPosts.length}/{post.platforms?.length || 0}
-                      </div>
-                      <div className="mga-stat-label">Accounts Published</div>
-                    </div>
-                    <div className="mga-publish-stat-item">
-                      <div className="mga-stat-value">
                         {post.platformPosts.filter(p => p.status === 'published').length}
                       </div>
                       <div className="mga-stat-label">Successful</div>
@@ -1567,12 +1485,14 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
                                   className="mga-retry-btn"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleRetryPublish(platformPost);
+                                    handleRetryPublish(platformPost); // 🔹 Just call handler — no timeout or extra toast
                                   }}
                                 >
                                   <RefreshCw size={14} />
                                   Republish
                                 </button>
+
+
                               </div>
                             )}
                           </div>

@@ -2944,16 +2944,21 @@ const AccountsSettings = ({ onNotify }) => {
 
   // Format follower count with appropriate label
   const formatFollowerCount = (count, platform) => {
+    // Don't show follower count for twitter, youtube, linkedin
+    if (platform === 'twitter' || platform === 'youtube' || platform === 'linkedin') {
+      return "-";
+    }
+    
     if (!count || count === 0) return "-";
 
     const formattedCount = typeof count === 'number' ?
       new Intl.NumberFormat().format(count) : count;
 
-    if (platform === 'youtube') {
-      return `${formattedCount} subscribers`;
-    } else {
+    if (platform === 'instagram' || platform === 'facebook') {
       return `${formattedCount} followers`;
     }
+    
+    return "-";
   };
 
   // Render an account card with consistent styling
