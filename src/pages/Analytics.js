@@ -784,10 +784,10 @@ const Analytics = () => {
                   <div className="kpi-content">
                     <div className="kpi-value">{analyticsData.overview.totalPosts || 0}</div>
                     <div className="kpi-label">Total Posts</div>
-                    <div className="kpi-change neutral">
+                    {/* <div className="kpi-change neutral">
                       <Minus size={12} />
                       Period total
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -798,10 +798,10 @@ const Analytics = () => {
                   <div className="kpi-content">
                     <div className="kpi-value">{formatNumber(analyticsData.overview.totalLikes || 0)}</div>
                     <div className="kpi-label">Total Likes</div>
-                    <div className="kpi-change positive">
+                    {/* <div className="kpi-change positive">
                       <ArrowUp size={12} />
                       +{((analyticsData.overview.totalLikes || 0) * 0.15).toFixed(1)}%
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -812,10 +812,10 @@ const Analytics = () => {
                   <div className="kpi-content">
                     <div className="kpi-value">{formatNumber(analyticsData.overview.totalComments || 0)}</div>
                     <div className="kpi-label">Total Comments</div>
-                    <div className="kpi-change positive">
+                    {/* <div className="kpi-change positive">
                       <ArrowUp size={12} />
                       +{((analyticsData.overview.totalComments || 0) * 0.12).toFixed(1)}%
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -826,10 +826,10 @@ const Analytics = () => {
                   <div className="kpi-content">
                     <div className="kpi-value">{formatNumber(analyticsData.overview.totalShares || 0)}</div>
                     <div className="kpi-label">Total Shares</div>
-                    <div className="kpi-change neutral">
+                    {/* <div className="kpi-change neutral">
                       <Minus size={12} />
                       +{((analyticsData.overview.totalShares || 0) * 0.08).toFixed(1)}%
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -840,10 +840,10 @@ const Analytics = () => {
                   <div className="kpi-content">
                     <div className="kpi-value">{formatNumber(analyticsData.overview.totalReach || 0)}</div>
                     <div className="kpi-label">Total Reach</div>
-                    <div className="kpi-change positive">
+                    {/* <div className="kpi-change positive">
                       <ArrowUp size={12} />
                       +{((analyticsData.overview.totalReach || 0) * 0.18).toFixed(1)}%
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -854,10 +854,10 @@ const Analytics = () => {
                   <div className="kpi-content">
                     <div className="kpi-value">{formatNumber(analyticsData.overview.totalImpressions || 0)}</div>
                     <div className="kpi-label">Total Impressions</div>
-                    <div className="kpi-change positive">
+                    {/* <div className="kpi-change positive">
                       <ArrowUp size={12} />
                       +{((analyticsData.overview.totalImpressions || 0) * 0.14).toFixed(1)}%
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -868,10 +868,10 @@ const Analytics = () => {
                   <div className="kpi-content">
                     <div className="kpi-value">{(analyticsData.overview.avgEngagementRate || 0).toFixed(1)}%</div>
                     <div className="kpi-label">Avg Engagement Rate</div>
-                    <div className="kpi-change positive">
+                    {/* <div className="kpi-change positive">
                       <ArrowUp size={12} />
                       +{(analyticsData.overview.avgEngagementRate * 0.05 || 0).toFixed(1)}%
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -882,10 +882,10 @@ const Analytics = () => {
                   <div className="kpi-content">
                     <div className="kpi-value">{formatNumber(dashboardData?.stats?.totalFollowers || 15200)}</div>
                     <div className="kpi-label">Total Followers</div>
-                    <div className="kpi-change positive">
+                    {/* <div className="kpi-change positive">
                       <ArrowUp size={12} />
                       +2.3%
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>
