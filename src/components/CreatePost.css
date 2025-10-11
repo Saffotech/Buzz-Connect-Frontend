@@ -3380,9 +3380,9 @@
 .media-controls {
   position: absolute;
   top: 8px;
-  right: 8px;
+  left: 8px;
   display: flex;
-  gap: 4px;
+  gap: 45px;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
