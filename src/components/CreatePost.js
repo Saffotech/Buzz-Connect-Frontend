@@ -1292,7 +1292,7 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
       }
     } catch (error) {
       console.error('Hashtag generation failed:', error);
-      setError('Failed to generate hashtags. Please try again.');
+      setError('Failed to generate hashtags. Please try again. Content must contain at least 5 characters.');
       showToast('Failed to generate hashtags', 'error');
     } finally {
       setIsGenerating(false);

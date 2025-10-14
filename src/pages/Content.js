@@ -154,6 +154,8 @@ const Content = () => {
   const [deleteFromInsta, setDeleteFromInsta] = useState(false);
   const [deleteFromYouTube, setDeleteFromYouTube] = useState(false); // Add this
   const [deleteFromFacebook, setDeleteFromFacebook] = useState(false);
+  const [deleteFromTwitter, setDeleteFromTwitter] = useState(false);
+  const [deleteFromLinkedin, setDeleteFromLinkedin] = useState(false);
 
   // Enhanced Media state
   const [mediaList, setMediaList] = useState([]);
@@ -256,122 +258,112 @@ const Content = () => {
   const handleDeletePost = async (postId) => {
     try {
       console.log('🗑️ Starting post deletion process for ID:', postId);
-      console.log('📊 Post to delete details:', {
-        id: postToDelete?._id || postToDelete?.id,
-        platforms: postToDelete?.platforms,
-        platformPosts: postToDelete?.platformPosts?.map(p => ({
-          platform: p.platform,
-          status: p.status,
-          id: p.platformPostId,
-          accountId: p.accountId
-        }))
+
+      // Start notification
+      setNotification({
+        type: 'info',
+        message: 'Deleting post...'
       });
 
-      // First delete from database
+      // Step 1: Delete from database first
       console.log('🗑️ Deleting post from database...');
       await apiClient.request(`/api/posts/${postId}`, { method: 'DELETE' });
       console.log('✅ Post deleted from database successfully');
 
-      // Handle Instagram deletion if checked
+      let platformErrors = [];
+
+      // Step 2: Instagram (manual delete notice)
       if (deleteFromInsta) {
         const instagramPosts = postToDelete?.platformPosts?.filter(
           post => post.platform === 'instagram' && post.status === 'published'
         );
-
-        console.log(`📸 Found ${instagramPosts?.length || 0} Instagram posts to delete`);
-        let instagramDeletionFailed = false;
-
-        for (const post of instagramPosts || []) {
-          try {
-            console.log(`🗑️ Attempting to delete Instagram post: ${post.platformPostId}`);
-            await apiClient.request(`/api/auth/instagram/posts/instagram/${post.platformPostId}`, { method: 'DELETE' });
-            console.log(`✅ Deleted Instagram post: ${post.platformPostId}`);
-          } catch (error) {
-            console.error(`❌ Failed to delete Instagram post ${post.platformPostId}:`, error);
-            instagramDeletionFailed = true;
-          }
-        }
-
-        // Always show this notification for Instagram posts since deletion usually fails
-        if (instagramDeletionFailed) {
-          setNotification({
-            type: 'warning',
-            message: 'Post deleted from the app, but Instagram posts need to be deleted manually from the Instagram app'
-          });
+        if (instagramPosts?.length > 0) {
+          platformErrors.push('Instagram: must delete manually from Instagram app due to API limits');
         }
       }
 
-      // Handle Facebook deletion if checked
+      // Step 3: Facebook (manual delete notice)
       if (deleteFromFacebook) {
         const facebookPosts = postToDelete?.platformPosts?.filter(
           post => post.platform === 'facebook' && post.status === 'published'
         );
-
-        console.log(`📘 Found ${facebookPosts?.length || 0} Facebook posts to delete`);
-
-        for (const post of facebookPosts || []) {
-          try {
-            console.log(`🗑️ Deleting Facebook post: ${post.platformPostId}`);
-            // FIXED: Correct endpoint path based on router configuration
-            await apiClient.request(`/api/auth/instagram/posts/facebook/${post.platformPostId}`, { method: 'DELETE' });
-            console.log(`✅ Deleted Facebook post: ${post.platformPostId}`);
-          } catch (error) {
-            console.error(`❌ Failed to delete Facebook post ${post.platformPostId}:`, error);
-            console.error('Error details:', error.response?.data);
-          }
+        if (facebookPosts?.length > 0) {
+          platformErrors.push('Facebook: must delete manually from Facebook page');
         }
       }
 
-      // Handle YouTube deletion if checked (unchanged)
+      // Step 4: Twitter (manual delete notice)
+      if (deleteFromTwitter) {
+        const twitterPosts = postToDelete?.platformPosts?.filter(
+          post => post.platform === 'twitter' && post.status === 'published'
+        );
+        if (twitterPosts?.length > 0) {
+          platformErrors.push('Twitter: must delete manually from X (Twitter)');
+        }
+      }
+
+      // Step 5: LinkedIn (actual API delete)
+      if (deleteFromLinkedin) {
+        const linkedinPosts = postToDelete?.platformPosts?.filter(
+          post => post.platform === 'linkedin' && post.status === 'published'
+        );
+        console.log(`📘 Found ${linkedinPosts?.length || 0} LinkedIn posts to delete`);
+        for (const post of linkedinPosts || []) {
+          try {
+            let postId = post.platformPostId;
+            if (postId.startsWith('urn:') && !postId.includes('%')) {
+              postId = encodeURIComponent(postId);
+            }
+            console.log(`🗑️ Deleting LinkedIn post: ${postId}`);
+            await apiClient.request(`/api/auth/linkedin/posts/${postId}`, { method: 'DELETE' });
+            console.log(`✅ Deleted LinkedIn post: ${post.platformPostId}`);
+          } catch (error) {
+            console.error(`❌ Failed to delete LinkedIn post ${post.platformPostId}:`, error);
+            platformErrors.push(`LinkedIn: ${error.response?.data?.message || error.message}`);
+          }
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+      }
+
+      // Step 6: YouTube (optional — skip or make manual notice)
       if (deleteFromYouTube) {
         const youtubePosts = postToDelete?.platformPosts?.filter(
           post => post.platform === 'youtube' && post.status === 'published'
         );
-
-        console.log(`📺 Found ${youtubePosts?.length || 0} YouTube videos to delete`);
-
-        for (const post of youtubePosts || []) {
-          try {
-            console.log(`🗑️ Attempting to delete YouTube video:`, {
-              videoId: post.platformPostId,
-              accountId: post.accountId,
-              url: post?.additionalInfo?.url || 'N/A'
-            });
-
-            const deleteResponse = await apiClient.request(
-              `/api/auth/youtube/videos/${post.platformPostId}`,
-              { method: 'DELETE' }
-            );
-
-            console.log(`✅ YouTube API response:`, deleteResponse?.data);
-            console.log(`✅ Deleted YouTube video: ${post.platformPostId}`);
-          } catch (error) {
-            console.error(`❌ Failed to delete YouTube video ${post.platformPostId}:`, error);
-            console.error('Error response:', error.response?.data);
-            console.error('Error status:', error.response?.status);
-
-            // Show specific error for YouTube deletion
-            setNotification({
-              type: 'warning',
-              message: `Post deleted, but YouTube video deletion failed: ${error.response?.data?.error || error.message}`
-            });
-          }
+        if (youtubePosts?.length > 0) {
+          platformErrors.push('YouTube: must delete manually from YouTube Studio');
         }
-      } else {
-        console.log('📺 YouTube deletion not requested (checkbox not checked)');
       }
 
-      setNotification({ type: 'success', message: 'Post deleted successfully' });
+      // Step 7: Final notifications
+      if (platformErrors.length > 0) {
+        setNotification({
+          type: 'warning',
+          message: `Post deleted, but some platforms need manual deletion: ${platformErrors.join('; ')}`
+        });
+      } else {
+        setNotification({
+          type: 'success',
+          message: 'Post deleted successfully from all platforms'
+        });
+      }
+
+      // Step 8: Reset state and refresh
       setShowDeleteConfirm(false);
       setPostToDelete(null);
       setDeleteFromInsta(false);
       setDeleteFromFacebook(false);
       setDeleteFromYouTube(false);
+      setDeleteFromTwitter(false);
+      setDeleteFromLinkedin(false);
       await fetchAllPosts();
+
     } catch (error) {
       console.error('❌ Post deletion error:', error);
-      console.error('Error response:', error.response?.data);
-      setNotification({ type: 'error', message: error.message || 'Failed to delete post' });
+      setNotification({
+        type: 'error',
+        message: error.message || 'Failed to delete post'
+      });
     }
   };
 
@@ -717,6 +709,10 @@ const Content = () => {
         setDeleteFromFacebook={setDeleteFromFacebook}
         deleteFromYouTube={deleteFromYouTube}
         setDeleteFromYouTube={setDeleteFromYouTube}
+        deleteFromTwitter={deleteFromTwitter}         // Add these
+        setDeleteFromTwitter={setDeleteFromTwitter}   // Add these
+        deleteFromLinkedin={deleteFromLinkedin}       // Add these
+        setDeleteFromLinkedin={setDeleteFromLinkedin} // Add these
         postStatus={postToDelete?.status || 'draft'}
         isOpen={showDeleteConfirm}
         post={postToDelete}
@@ -726,10 +722,13 @@ const Content = () => {
           setDeleteFromInsta(false);
           setDeleteFromFacebook(false);
           setDeleteFromYouTube(false);
+          setDeleteFromTwitter(false);    // Add this
+          setDeleteFromLinkedin(false);   // Add this
         }}
         onConfirm={() => handleDeletePost(postToDelete?._id || postToDelete?.id)}
         postTitle={postToDelete?.content?.substring(0, 50) || 'this post'}
       />
+
 
 
       <MediaUploadModal
@@ -1720,15 +1719,12 @@ const DeleteConfirmationModal = ({
                 <div className="platform-deletion-option">
                   <div className="deletion-option instagram disabled">
                     <span className="deletion-label">
-                      <Instagram size={16} />
-                      Instagram
+                      <Instagram size={16} /> Instagram
                     </span>
                     <div className="deletion-note">
                       <small className="note-delete">
                         <InfoIcon size={22} />
-                        <span>
-                          Instagram posts must be deleted manually due to API limitations.
-                        </span>
+                        <span>Instagram posts must be deleted manually due to API limitations.</span>
                       </small>
                     </div>
                   </div>
@@ -1737,7 +1733,7 @@ const DeleteConfirmationModal = ({
 
               {/* Facebook */}
               {hasFacebookPost && (
-                <div className="fb button ctfb">
+                <div className="platform-deletion-option fb button ctfb">
                   <label>
                     <input
                       type="checkbox"
@@ -1751,7 +1747,7 @@ const DeleteConfirmationModal = ({
 
               {/* YouTube */}
               {hasYouTubePost && (
-                <div className="yt button ctyoutube">
+                <div className="platform-deletion-option yt button ctyoutube">
                   <label>
                     <input
                       type="checkbox"
@@ -1791,6 +1787,7 @@ const DeleteConfirmationModal = ({
                 </div>
               )}
 
+
             </div>
           )}
         </div>
@@ -1806,6 +1803,7 @@ const DeleteConfirmationModal = ({
       </div>
     </div>
   );
+
 };
 
 // Media Library Subpage Component
