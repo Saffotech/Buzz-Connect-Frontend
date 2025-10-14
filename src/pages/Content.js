@@ -777,6 +777,8 @@ const PostsSubPage = ({
   const [postsLoading, setPostsLoading] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [postsError, setPostsError] = useState(null); // 👈 ADD THIS
+  const [showPlatformFilters, setShowPlatformFilters] = useState(false);
+  const [showStatusFilters, setShowStatusFilters] = useState(false);
 
   const handleRefreshPosts = () => {
     // Call your API or refresh logic here
@@ -824,6 +826,10 @@ const PostsSubPage = ({
   };
 
 
+  const statusBtnRef = useRef(null); // reference for status dropdown button
+  const statusDropdownRef = useRef(null); // reference for status dropdown
+  const platformBtnRef = useRef(null); // reference for platform dropdown button
+  const platformDropdownRef = useRef(null); // reference for platform dropdown
 
   const allPosts = posts;
 
@@ -945,6 +951,49 @@ const PostsSubPage = ({
     );
   }
 
+  useEffect(() => {
+    if (!showStatusFilters && !showPlatformFilters) return;
+
+    const onPointerDown = (e) => {
+      const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+      const statusBtnEl = statusBtnRef.current;
+      const statusDropEl = statusDropdownRef.current;
+      const platformBtnEl = platformBtnRef.current;
+      const platformDropEl = platformDropdownRef.current;
+
+      const clickedInsideStatusFilter =
+        (statusBtnEl && (statusBtnEl.contains(e.target) || path.includes(statusBtnEl))) ||
+        (statusDropEl && (statusDropEl.contains(e.target) || path.includes(statusDropEl)));
+
+      const clickedInsidePlatformFilter =
+        (platformBtnEl && (platformBtnEl.contains(e.target) || path.includes(platformBtnEl))) ||
+        (platformDropEl && (platformDropEl.contains(e.target) || path.includes(platformDropEl)));
+
+      if (!clickedInsideStatusFilter) {
+        setShowStatusFilters(false);
+      }
+      if (!clickedInsidePlatformFilter) {
+        setShowPlatformFilters(false);
+      }
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowStatusFilters(false);
+        setShowPlatformFilters(false);
+      }
+    };
+
+    // Capture phase helps avoid races with React onClick
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showStatusFilters, showPlatformFilters]);
+
   return (
     <div className="posts-subpage">
       {/* Control Bar & Search */}
@@ -961,42 +1010,59 @@ const PostsSubPage = ({
           </div>
         </div>
         <div className="filters-bar">
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-          >
-            <option value="all">All Posts</option>
-            {/* <option value="draft">Draft</option> */}
-            <option value="scheduled">Scheduled</option>
-            <option value="published">Published</option>
-            <option value="failed">Failed</option>
-          </select>
+          <div className='flxbt' >
+            <button
+              className={`filter-btn `}
+              ref={statusBtnRef}
+              onClick={() => setShowStatusFilters(!showStatusFilters)}
+            >
+              {filters.status === 'all' ? 'All Posts' : filters.status}
+              {showStatusFilters && <div className="status-dropdown" ref={statusDropdownRef}>
+                <div className="filter-group">
+                  <label>Filter Posts</label>
+                  <div className="filter-options">
+                    <button className={`filter-option `}
+                      onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}>
+                      All Posts
+                    </button>
+                    <button className={`filter-option `}
+                      onClick={() => setFilters(prev => ({ ...prev, status: 'scheduled' }))}>
+                      Scheduled
+                    </button>
+                    <button className={`filter-option `}
+                      onClick={() => setFilters(prev => ({ ...prev, status: 'published' }))}>
+                      Published
+                    </button>
+                    <button className={`filter-option `}
+                      onClick={() => setFilters(prev => ({ ...prev, status: 'failed' }))}>
+                      Failed
+                    </button>
+                  </div>
+                </div>
+              </div>}
+            </button>
+            <button
+              className={`filter-btn `}
+              ref={platformBtnRef}
+              onClick={() => setShowPlatformFilters(!showPlatformFilters)}
+            >
+              {filters.platform === 'all' ? 'All Platforms' : filters.platform.charAt(0).toUpperCase() + filters.platform.slice(1)}
+              {showPlatformFilters && <div className="platform-dropdown" ref={platformDropdownRef}>
+                <div className="filter-group">
+                  <label>Select Platform</label>
+                  <div className="filter-options">
+                    {getPlatformOptions().map(option => (
+                      <button key={option.value} className={`filter-option `}
+                        onClick={() => setFilters(prev => ({ ...prev, platform: option.value }))}>
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>}
+            </button>
 
-          {/* <select
-            value={filters.platform}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, platform: e.target.value }))
-            }
-          >
-            <option value="all">All Platforms</option>
-            {connectedPlatforms.map((platform) => (
-              <option key={platform} value={platform}>
-                {platformLabels[platform]}
-              </option>
-            ))}
-          </select> */}
-
-
-          <select
-            value={filters.platform}
-            onChange={(e) => setFilters(prev => ({ ...prev, platform: e.target.value }))}
-          >
-            {getPlatformOptions().map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          </div>
 
           <div className="date-range-dropdown">
             <span className="date-label">Date Range :</span>

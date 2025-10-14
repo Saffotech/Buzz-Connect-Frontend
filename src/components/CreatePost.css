@@ -339,9 +339,9 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.platform-btn.selected {
+.platform-btn.selectedx {
   border-color: var(--platform-color);
-  background: color-mix(in srgb, var(--platform-color) 10%, white);
+  /* background: color-mix(in srgb, var(--platform-color) 10%, white); */
   color: var(--platform-color);
 }
 
@@ -3102,7 +3102,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10000;
+  z-index: 100000000000 !important;
   backdrop-filter: blur(5px);
 }
 
@@ -3141,16 +3141,16 @@
 .carousel-btn {
   padding: 8px;
   border: none;
-  background: var(--bg-hover);
+  background: white;
   color: var(--text);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.carousel-btn:hover {
+/* .carousel-btn:hover {
   background: var(--bg-active);
-}
+} */
 
 .carousel-content {
   flex: 1;
