@@ -1833,10 +1833,57 @@
 
 /* Filters Bar */
 .filters-bar {
+  position: relative;
   display: flex;
   gap: 12px;
   align-items: center;
   padding: 8px 0;
+}
+
+.filter-btn {
+  position: relative;
+  height: 36px;
+  padding: 6px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 14px;
+  color: #2d3748;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flxbt {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.status-dropdown,
+.platform-dropdown {
+  position: absolute;
+  top: 100%;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 0.5rem;
+  padding: 1rem;
+}
+
+.platform-dropdown .filter-group label {
+  white-space: nowrap;
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+.status-dropdown {
+  right: 0;
+}
+.platform-dropdown {
+  left: 0;
 }
 
 .filters-bar select,
@@ -2220,6 +2267,20 @@
 }
 
 @media (max-width: 768px) {
+  .flxbt {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .status-dropdown {
+    width: max-content;
+    left: 0;
+  }
+  .platform-dropdown {
+    width: max-content;
+    right: 0;
+    left: auto;
+  }
   .page-header {
     padding: 1.5rem 1rem 1rem 1rem;
   }
@@ -2817,9 +2878,7 @@
   gap: 6px;
 }
 
-
 @media (max-width: 768px) {
-
   .note-delete span {
     width: 95%;
   }
@@ -2832,7 +2891,8 @@
   color: #0077b5;
 }
 
-#cttwitter, #ctlinkedin {
+#cttwitter,
+#ctlinkedin {
   margin: 8px 0;
   display: flex;
   align-items: center;
@@ -2852,7 +2912,7 @@
   display: inline-flex;
   align-items: center;
   background: #3b82f6;
-  border: 1px solid #3b82f6;; /* blue-700 */
+  border: 1px solid #3b82f6; /* blue-700 */
   color: white;
   padding: 8px 12px;
   border-radius: 6px;
@@ -2886,12 +2946,12 @@
 }
 
 .ctfb {
- display: flex;
- justify-self: flex-start !important;
- gap: 6px; /* or use margin-right on the icon */
+  display: flex;
+  justify-self: flex-start !important;
+  gap: 6px; /* or use margin-right on the icon */
 }
 
-.ctyoutube{
+.ctyoutube {
   display: flex;
- justify-self: flex-start !important;
+  justify-self: flex-start !important;
 }

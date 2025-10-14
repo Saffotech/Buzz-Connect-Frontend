@@ -1816,7 +1816,8 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                             onMouseEnter={() => setHoveredPlatform(platform.id)}
                             onMouseLeave={() => setHoveredPlatform(null)}
                             className={`platform-btn
-                               ${!platform.connected ? 'not-connected-btn' : ''}`}
+                               ${!platform.connected ? 'not-connected-btn' : ''}
+                               ${selectedAccountsCount > 0 ? 'selectedx' : ''}`}
                             onClick={(e) =>
                               platform.connected
                                 ? handlePlatformToggle(platform.id)
@@ -1826,13 +1827,13 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                           >
                             <Icon
                               size={20}
-                              color={hoveredPlatform === platform.id ? platform.color : "#000"}
+                              color={hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000"}
                               style={{
                                 transition: "transform 0.2s ease, color 0.2s ease",
                                 transform: hoveredPlatform === platform.id ? "scale(1.1)" : "scale(1)"
                               }}
                             />
-                            <span style={{ color: hoveredPlatform === platform.id ? platform.color : "#000" }} >{platform.name}</span>
+                            <span style={{ color: hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000" }} >{platform.name}</span>
                             <span className="connect-status">
                               {platform.connected ?
                                 (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')

@@ -778,6 +778,8 @@ const PostsSubPage = ({
   const [postsLoading, setPostsLoading] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [postsError, setPostsError] = useState(null); // 👈 ADD THIS
+  const [showPlatformFilters, setShowPlatformFilters] = useState(false);
+  const [showStatusFilters, setShowStatusFilters] = useState(false);
 
   const handleRefreshPosts = () => {
     // Call your API or refresh logic here
@@ -825,6 +827,10 @@ const PostsSubPage = ({
   };
 
 
+  const statusBtnRef = useRef(null); // reference for status dropdown button
+  const statusDropdownRef = useRef(null); // reference for status dropdown
+  const platformBtnRef = useRef(null); // reference for platform dropdown button
+  const platformDropdownRef = useRef(null); // reference for platform dropdown
 
   const allPosts = posts;
 
@@ -946,6 +952,49 @@ const PostsSubPage = ({
     );
   }
 
+  useEffect(() => {
+    if (!showStatusFilters && !showPlatformFilters) return;
+
+    const onPointerDown = (e) => {
+      const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+      const statusBtnEl = statusBtnRef.current;
+      const statusDropEl = statusDropdownRef.current;
+      const platformBtnEl = platformBtnRef.current;
+      const platformDropEl = platformDropdownRef.current;
+
+      const clickedInsideStatusFilter =
+        (statusBtnEl && (statusBtnEl.contains(e.target) || path.includes(statusBtnEl))) ||
+        (statusDropEl && (statusDropEl.contains(e.target) || path.includes(statusDropEl)));
+
+      const clickedInsidePlatformFilter =
+        (platformBtnEl && (platformBtnEl.contains(e.target) || path.includes(platformBtnEl))) ||
+        (platformDropEl && (platformDropEl.contains(e.target) || path.includes(platformDropEl)));
+
+      if (!clickedInsideStatusFilter) {
+        setShowStatusFilters(false);
+      }
+      if (!clickedInsidePlatformFilter) {
+        setShowPlatformFilters(false);
+      }
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowStatusFilters(false);
+        setShowPlatformFilters(false);
+      }
+    };
+
+    // Capture phase helps avoid races with React onClick
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showStatusFilters, showPlatformFilters]);
+
   return (
     <div className="posts-subpage">
       {/* Control Bar & Search */}
@@ -962,42 +1011,59 @@ const PostsSubPage = ({
           </div>
         </div>
         <div className="filters-bar">
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-          >
-            <option value="all">All Posts</option>
-            {/* <option value="draft">Draft</option> */}
-            <option value="scheduled">Scheduled</option>
-            <option value="published">Published</option>
-            <option value="failed">Failed</option>
-          </select>
+          <div className='flxbt' >
+            <button
+              className={`filter-btn `}
+              ref={statusBtnRef}
+              onClick={() => setShowStatusFilters(!showStatusFilters)}
+            >
+              {filters.status === 'all' ? 'All Posts' : filters.status}
+              {showStatusFilters && <div className="status-dropdown" ref={statusDropdownRef}>
+                <div className="filter-group">
+                  <label>Filter Posts</label>
+                  <div className="filter-options">
+                    <button className={`filter-option `}
+                      onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}>
+                      All Posts
+                    </button>
+                    <button className={`filter-option `}
+                      onClick={() => setFilters(prev => ({ ...prev, status: 'scheduled' }))}>
+                      Scheduled
+                    </button>
+                    <button className={`filter-option `}
+                      onClick={() => setFilters(prev => ({ ...prev, status: 'published' }))}>
+                      Published
+                    </button>
+                    <button className={`filter-option `}
+                      onClick={() => setFilters(prev => ({ ...prev, status: 'failed' }))}>
+                      Failed
+                    </button>
+                  </div>
+                </div>
+              </div>}
+            </button>
+            <button
+              className={`filter-btn `}
+              ref={platformBtnRef}
+              onClick={() => setShowPlatformFilters(!showPlatformFilters)}
+            >
+              {filters.platform === 'all' ? 'All Platforms' : filters.platform.charAt(0).toUpperCase() + filters.platform.slice(1)}
+              {showPlatformFilters && <div className="platform-dropdown" ref={platformDropdownRef}>
+                <div className="filter-group">
+                  <label>Select Platform</label>
+                  <div className="filter-options">
+                    {getPlatformOptions().map(option => (
+                      <button key={option.value} className={`filter-option `}
+                        onClick={() => setFilters(prev => ({ ...prev, platform: option.value }))}>
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>}
+            </button>
 
-          {/* <select
-            value={filters.platform}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, platform: e.target.value }))
-            }
-          >
-            <option value="all">All Platforms</option>
-            {connectedPlatforms.map((platform) => (
-              <option key={platform} value={platform}>
-                {platformLabels[platform]}
-              </option>
-            ))}
-          </select> */}
-
-
-          <select
-            value={filters.platform}
-            onChange={(e) => setFilters(prev => ({ ...prev, platform: e.target.value }))}
-          >
-            {getPlatformOptions().map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          </div>
 
           <div className="date-range-dropdown">
             <span className="date-label">Date Range :</span>
@@ -1148,69 +1214,69 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
     }
   };
 
-const getAccountDetails = () => {
-  const details = [];
+  const getAccountDetails = () => {
+    const details = [];
 
-  // 1️⃣ First: Check if this post has platformPosts with account names (most accurate)
-  if (post.platformPosts && post.platformPosts.length > 0) {
-    post.platformPosts.forEach(pp => {
-      if (pp.accountName || pp.accountId) {
-        details.push({
-          platform: pp.platform,
-          username: pp.accountName || `Account on ${pp.platform}`,
-          id: pp.accountId
-        });
+    // 1️⃣ First: Check if this post has platformPosts with account names (most accurate)
+    if (post.platformPosts && post.platformPosts.length > 0) {
+      post.platformPosts.forEach(pp => {
+        if (pp.accountName || pp.accountId) {
+          details.push({
+            platform: pp.platform,
+            username: pp.accountName || `Account on ${pp.platform}`,
+            id: pp.accountId
+          });
+        }
+      });
+
+      // ✅ Return early if we found valid details here
+      if (details.length > 0) {
+        return details;
       }
-    });
-
-    // ✅ Return early if we found valid details here
-    if (details.length > 0) {
-      return details;
     }
-  }
 
-  // 2️⃣ Next: Check selectedAccountsWithNames (from form submission)
-  if (post.selectedAccountsWithNames) {
-    Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
-      if (Array.isArray(accounts)) {
-        accounts.forEach(acc => {
-          if (acc && acc.username) {
-            details.push({
-              platform,
-              username: acc.username,
-              id: acc.id
-            });
-          }
-        });
+    // 2️⃣ Next: Check selectedAccountsWithNames (from form submission)
+    if (post.selectedAccountsWithNames) {
+      Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
+        if (Array.isArray(accounts)) {
+          accounts.forEach(acc => {
+            if (acc && acc.username) {
+              details.push({
+                platform,
+                username: acc.username,
+                id: acc.id
+              });
+            }
+          });
+        }
+      });
+
+      // ✅ Return early if we found valid details here
+      if (details.length > 0) {
+        return details;
       }
-    });
-
-    // ✅ Return early if we found valid details here
-    if (details.length > 0) {
-      return details;
     }
-  }
 
-  // 3️⃣ Finally: Fall back to selectedAccounts (IDs only, no usernames)
-  if (post.selectedAccounts) {
-    Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
-      if (Array.isArray(accountIds)) {
-        accountIds.forEach(id => {
-          if (id) {
-            details.push({
-              platform,
-              username: `Account on ${platform}`, // Default fallback label
-              id
-            });
-          }
-        });
-      }
-    });
-  }
+    // 3️⃣ Finally: Fall back to selectedAccounts (IDs only, no usernames)
+    if (post.selectedAccounts) {
+      Object.entries(post.selectedAccounts).forEach(([platform, accountIds]) => {
+        if (Array.isArray(accountIds)) {
+          accountIds.forEach(id => {
+            if (id) {
+              details.push({
+                platform,
+                username: `Account on ${platform}`, // Default fallback label
+                id
+              });
+            }
+          });
+        }
+      });
+    }
 
-  // 4️⃣ Return whatever we found (could be empty if no data sources available)
-  return details;
-};
+    // 4️⃣ Return whatever we found (could be empty if no data sources available)
+    return details;
+  };
 
 
   const accountDetails = getAccountDetails();
@@ -1538,27 +1604,27 @@ const getAccountDetails = () => {
         </div>
 
         {/* Account Names Display */}
-       {accountDetails.length > 0 && (
-  <div className="post-account-details">
-    {accountDetails.map((account, idx) => {
-      // Define icon components for each platform
-      let PlatformIcon;
-      if (account.platform === 'instagram') PlatformIcon = Instagram;
-      else if (account.platform === 'facebook') PlatformIcon = Facebook;
-      else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
-      else if (account.platform === 'youtube') PlatformIcon = Youtube;
-      else if (account.platform === 'twitter') PlatformIcon = Twitter;
-      else PlatformIcon = null;
+        {accountDetails.length > 0 && (
+          <div className="post-account-details">
+            {accountDetails.map((account, idx) => {
+              // Define icon components for each platform
+              let PlatformIcon;
+              if (account.platform === 'instagram') PlatformIcon = Instagram;
+              else if (account.platform === 'facebook') PlatformIcon = Facebook;
+              else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
+              else if (account.platform === 'youtube') PlatformIcon = Youtube;
+              else if (account.platform === 'twitter') PlatformIcon = Twitter;
+              else PlatformIcon = null;
 
-      return (
-        <span key={idx} className={`account-badge ${account.platform}`}>
-          {PlatformIcon && <PlatformIcon size={12} />}
-          {account.username}
-        </span>
-      );
-    })}
-  </div>
-)}
+              return (
+                <span key={idx} className={`account-badge ${account.platform}`}>
+                  {PlatformIcon && <PlatformIcon size={12} />}
+                  {account.username}
+                </span>
+              );
+            })}
+          </div>
+        )}
 
         {/* Existing hashtags section */}
         <div className="preview-hashtags">

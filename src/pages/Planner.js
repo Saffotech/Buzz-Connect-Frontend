@@ -297,33 +297,6 @@ const Planner = () => {
               <div className="filters-dropdown"
                ref={filterDropdownRef}
               >
-                {/* <div className="filter-group">
-                  <label>Platforms</label>
-                  <div className="filter-options">
-                    <button
-                      className={`filter-option ${filters.platforms.includes('instagram') ? 'active' : ''}`}
-                      onClick={() => togglePlatformFilter('instagram')}
-                    >
-                      <Instagram size={16} />
-                      Instagram
-                    </button>
-                    <button
-                      className={`filter-option ${filters.platforms.includes('twitter') ? 'active' : ''}`}
-                      onClick={() => togglePlatformFilter('twitter')}
-                    >
-                      <Twitter size={16} />
-                      Twitter
-                    </button>
-                    <button
-                      className={`filter-option ${filters.platforms.includes('facebook') ? 'active' : ''}`}
-                      onClick={() => togglePlatformFilter('facebook')}
-                    >
-                      <Facebook size={16} />
-                      Facebook
-                    </button>
-                  </div>
-                </div> */}
-
                 <div className="filter-group">
                   <label>Status</label>
                   <div className="filter-options">
@@ -357,7 +330,6 @@ const Planner = () => {
                     </button>
                   </div>
                 </div>
-                
               </div>
             )}
           </div>
