@@ -47,6 +47,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
+import { validateImageDimensions, autoResizeImage, isValidAspectRatio, getOptimalImageType } from '../utils/imageUtils';
+import DIMENSIONS from '../utils/dimensions-config';
 
 const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData }) => {
   const [imgIndex, setImgIndex] = useState(0);
@@ -59,6 +61,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [showImageCarousel, setShowImageCarousel] = useState(false);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
+  const [mediaType, setMediaType] = useState('square');
 
   const [postData, setPostData] = useState({
     content: '',
@@ -372,109 +375,177 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   }, [isOpen]);
 
   const handleFileUpload = async (files) => {
-    if (!files || files.length === 0) return;
+  if (!files || files.length === 0) return;
 
-    const validFiles = [];
-    const invalidFiles = [];
+  const validFiles = [];
+  const invalidFiles = [];
+  const resizedFiles = []; // ⭐ NEW
+  
 
-    Array.from(files).forEach(file => {
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
+  // ⭐ NEW — Platform selection check
+  const selectedPlatforms = postData?.platforms || [];
+  if (selectedPlatforms.length === 0) {
+    showToast('Please select at least one platform before uploading media', 'warning');
+    return;
+  }
 
-      if (!isImage && !isVideo) {
-        invalidFiles.push({ file, reason: 'Unsupported file type' });
-        return;
+  const platform = selectedPlatforms[0]; // use first platform
+
+
+  Array.from(files).forEach(async (file) => {
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+
+    if (!isImage && !isVideo) {
+      invalidFiles.push({ file, reason: "Unsupported file type" });
+      return;
+    }
+
+    if (isVideo && file.size > 250 * 1024 * 1024) {
+      invalidFiles.push({ file, reason: "Video too large (max 250MB)" });
+      return;
+    }
+
+    if (isImage && file.size > 50 * 1024 * 1024) {
+      invalidFiles.push({ file, reason: "Image too large (max 50MB)" });
+      return;
+    }
+
+    // ⭐ NEW — Image dimension validation + auto-resize
+    if (isImage) {
+      try {
+        const img = new Image();
+
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.src = URL.createObjectURL(file);
+        });
+
+        const imageType = getOptimalImageType(img.width, img.height, platform);
+        URL.revokeObjectURL(img.src);
+
+        const validation = await validateImageDimensions(file, platform, imageType);
+
+        if (!validation.isValid) {
+          console.log(`Auto-resizing image for ${platform}/${imageType}`);
+          const resizedFile = await autoResizeImage(file, platform, imageType);
+          validFiles.push(resizedFile);
+          resizedFiles.push(file.name);
+        } else {
+          validFiles.push(file);
+        }
+      } catch (err) {
+        console.error("Image validation failed:", err);
+        validFiles.push(file); // fallback
       }
 
-      if (isVideo && file.size > 250 * 1024 * 1024) {
-        invalidFiles.push({ file, reason: 'Video too large (max 250MB)' });
-        return;
-      }
-      if (isImage && file.size > 50 * 1024 * 1024) {
-        invalidFiles.push({ file, reason: 'Image too large (max 50MB)' });
-        return;
-      }
+      return;
+    }
 
-      validFiles.push(file);
+    // Videos remain unchanged
+    validFiles.push(file);
+  });
+
+  if (invalidFiles.length > 0) {
+    const errorMessages = invalidFiles
+      .map(({ file, reason }) => `${file.name}: ${reason}`)
+      .join("\n");
+    showToast(`Some files were skipped:\n${errorMessages}`, "error", 5000);
+  }
+
+  if (resizedFiles.length > 0) {
+    showToast(
+      `${resizedFiles.length} image(s) automatically resized for ${platform}: ${resizedFiles.join(", ")}`,
+      "info",
+      5000
+    );
+  }
+
+  if (validFiles.length === 0) return;
+
+  setUploadingFiles(true);
+  setError(null);
+
+  try {
+    console.log("✅ Uploading files:", validFiles);
+
+    const response = await uploadMedia(validFiles);
+    console.log("✅ Upload response:", response);
+
+    if (!response.data || !Array.isArray(response.data)) {
+      throw new Error("Invalid upload response format");
+    }
+
+    const uploadedMedia = response.data.map((media, index) => {
+      const originalFile = validFiles[index];
+
+      let mediaUrl = media.url || media.secure_url;
+      if (!mediaUrl) mediaUrl = URL.createObjectURL(originalFile);
+
+      return {
+        url: mediaUrl,
+        altText:
+          media.originalName ||
+          originalFile?.name ||
+          "Post media",
+        originalName:
+          media.originalName ||
+          originalFile?.name ||
+          media.filename ||
+          "Untitled Media",
+        displayName:
+          media.originalName ||
+          originalFile?.name ||
+          media.filename ||
+          "Untitled Media",
+        filename: media.filename || originalFile?.name,
+        publicId: media.publicId,
+        fileType:
+          media.fileType ||
+          (originalFile?.type.startsWith("video/") ? "video" : "image"),
+        size: media.size || originalFile?.size,
+        dimensions: media.dimensions,
+        duration: media.duration || null,
+        fps: media.fps || null,
+        hasAudio: media.hasAudio || null,
+        thumbnails: media.thumbnails || null,
+        videoQualities: media.videoQualities || null,
+        platformOptimized: media.platformOptimized || null,
+        format: originalFile?.type || "application/octet-stream",
+        createdAt: new Date().toISOString(),
+      };
     });
 
-    if (invalidFiles.length > 0) {
-      const errorMessages = invalidFiles.map(({ file, reason }) =>
-        `${file.name}: ${reason}`
-      ).join('\n');
-      showToast(`Some files were skipped:\n${errorMessages}`, 'error', 5000);
-    }
+    setPostData((prev) => ({
+      ...prev,
+      images: prev.images.filter((img) => !img.isLocal).concat(uploadedMedia),
+    }));
 
-    if (validFiles.length === 0) return;
+    const fileTypeText =
+      validFiles.length === 1
+        ? validFiles[0].type.startsWith("video/")
+          ? "video"
+          : "image"
+        : "files";
 
-    setUploadingFiles(true);
-    setError(null);
+    showToast(
+      `Successfully uploaded ${validFiles.length} ${fileTypeText}!`,
+      "success"
+    );
+  } catch (error) {
+    console.error("❌ Upload failed:", error);
+    setError(error.message || "Failed to upload media");
+    showToast("Failed to upload media", "error");
 
-    try {
-      console.log('✅ Uploading files:', validFiles);
+    setPostData((prev) => ({
+      ...prev,
+      images: prev.images.filter((img) => !img.isLocal),
+    }));
+  } finally {
+    setUploadingFiles(false);
+  }
+};
 
-      const response = await uploadMedia(validFiles);
-      console.log('✅ Upload response:', response);
-
-      if (!response.data || !Array.isArray(response.data)) {
-        throw new Error('Invalid upload response format');
-      }
-
-      const uploadedMedia = response.data.map((media, index) => {
-        const originalFile = validFiles[index];
-
-        // ✅ Always ensure url is present
-        let mediaUrl = media.url || media.secure_url;
-        if (!mediaUrl) {
-          // fallback - use preview blob if server didn't return URL
-          mediaUrl = URL.createObjectURL(originalFile);
-        }
-
-        return {
-          url: mediaUrl, // REQUIRED for Joi validation
-          altText: media.originalName || originalFile?.name || 'Post media',
-          originalName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
-          displayName: media.originalName || originalFile?.name || media.filename || 'Untitled Media',
-          filename: media.filename || originalFile?.name,
-          publicId: media.publicId,
-          fileType: media.fileType || (originalFile?.type.startsWith('video/') ? 'video' : 'image'),
-          size: media.size || originalFile?.size,
-          dimensions: media.dimensions,
-          duration: media.duration || null,
-          fps: media.fps || null,
-          hasAudio: media.hasAudio || null,
-          thumbnails: media.thumbnails || null,
-          videoQualities: media.videoQualities || null,
-          platformOptimized: media.platformOptimized || null,
-          format: originalFile?.type || 'application/octet-stream',
-          createdAt: new Date().toISOString()
-        };
-      });
-
-      setPostData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => !img.isLocal).concat(uploadedMedia)
-      }));
-
-      const fileTypeText = validFiles.length === 1
-        ? (validFiles[0].type.startsWith('video/') ? 'video' : 'image')
-        : 'files';
-
-      showToast(`Successfully uploaded ${validFiles.length} ${fileTypeText}!`, 'success');
-
-    } catch (error) {
-      console.error('❌ Upload failed:', error);
-      setError(error.message || 'Failed to upload media');
-      showToast('Failed to upload media', 'error');
-
-      setPostData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => !img.isLocal)
-      }));
-    } finally {
-      setUploadingFiles(false);
-    }
-  };
 
   // ✅ Handle file input change
   const handleFileInputChange = (e) => {
@@ -2010,6 +2081,28 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                       Import from Media Library
                     </label>
                   </div>
+                  <div className="media-type-selector">
+  <label className="section-label">Media Type:</label>
+  <div className="media-type-options">
+    {postData.platforms.length > 0 && DIMENSIONS[postData.platforms[0]] && 
+      Object.keys(DIMENSIONS[postData.platforms[0]]).map(type => (
+        <button
+          key={type}
+          type="button"
+          className={`type-option ${mediaType === type ? 'active' : ''}`}
+          onClick={() => setMediaType(type)}
+        >
+          {type.charAt(0).toUpperCase() + type.slice(1)}
+          {type !== 'profile' && (
+            <small>
+              {DIMENSIONS[postData.platforms[0]][type][0]} x {DIMENSIONS[postData.platforms[0]][type][1]}
+            </small>
+          )}
+        </button>
+      ))
+    }
+  </div>
+</div>
 
                   {/* Upload Options Grid */}
                   <div className="media-upload-container">

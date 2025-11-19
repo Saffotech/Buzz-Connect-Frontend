@@ -288,6 +288,49 @@ class ApiClient {
   async getDashboard() {
   return this.request('/api/dashboard');
 }
+async validateImageDimensions(file, platform, type) {
+  const formData = new FormData();
+  formData.append('media', file);
+  formData.append('platform', platform);
+  formData.append('type', type);
+
+  const token = this.getAuthToken();
+  const response = await fetch(`${this.baseURL}/api/media/validate-dimensions`, {
+    method: 'POST',
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` })
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(`Validation failed: ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+async uploadAndResize(file, platform, type) {
+  const formData = new FormData();
+  formData.append('media', file);
+  formData.append('platform', platform);
+  formData.append('type', type);
+
+  const token = this.getAuthToken();
+  const response = await fetch(`${this.baseURL}/api/media/upload/resize`, {
+    method: 'POST',
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` })
+    },
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(`Upload and resize failed: ${response.status}`);
+  }
+  
+  return response.json();
+}
 
 }
 
@@ -329,5 +372,7 @@ export const {
   testAIConnection,
   getAIInfo,
   getAIHealth,
-  healthCheck
+  healthCheck,
+  validateImageDimensions,
+  uploadAndResize
 } = apiClient;
