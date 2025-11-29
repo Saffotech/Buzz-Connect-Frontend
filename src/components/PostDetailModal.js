@@ -132,15 +132,17 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
     // From selectedAccountsWithNames
     if (post.selectedAccountsWithNames) {
       Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
-        accounts.forEach(acc => {
-          if (acc.username || acc.id) {
-            allAccounts.push({
-              platform,
-              username: acc.username || `Account on ${platform}`,
-              id: acc.id
-            });
-          }
-        });
+        if (Array.isArray(accounts) && accounts.length > 0) {
+          accounts.forEach(acc => {
+            if (acc.username || acc.id) {
+              allAccounts.push({
+                platform,
+                username: acc.username || `Account on ${platform}`,
+                id: acc.id
+              });
+            }
+          });
+        }
       });
     }
 

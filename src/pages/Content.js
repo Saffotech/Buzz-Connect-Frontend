@@ -1287,13 +1287,15 @@ const PostCard = ({ post, onClick, onEdit, onDelete }) => {
     if (post.selectedAccountsWithNames) {
       const allAccounts = [];
       Object.entries(post.selectedAccountsWithNames).forEach(([platform, accounts]) => {
-        accounts.forEach(acc => {
-          allAccounts.push({
-            platform,
-            username: acc.username || 'Unknown',
-            id: acc.id
+        if (Array.isArray(accounts) && accounts.length > 0) {
+          accounts.forEach(acc => {
+            allAccounts.push({
+              platform,
+              username: acc.username || 'Unknown',
+              id: acc.id
+            });
           });
-        });
+        }
       });
       return allAccounts;
     }

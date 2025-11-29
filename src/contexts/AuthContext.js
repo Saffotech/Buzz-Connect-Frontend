@@ -27,19 +27,51 @@ export const AuthProvider = ({ children }) => {
         try {
           // Verify token and get user data
           const response = await apiClient.getCurrentUser();
-          if (response.success) {
-            setUser(response.data.user);
-            setIsAuthenticated(true);
-            setToken(storedToken);
-            console.log("Stored token at init:", storedToken);
+          console.log('getCurrentUser response:', response);
+          
+          // Handle different response structures
+          if (response && response.success) {
+            // Backend returns: { success: true, message: "...", data: user }
+            // Some endpoints return: { success: true, data: { user: ... } }
+            let userData = null;
+            
+            if (response.data) {
+              // Check if data is the user object directly or wrapped
+              if (response.data.user) {
+                userData = response.data.user;
+              } else if (response.data.id || response.data.email) {
+                // Data is the user object directly
+                userData = response.data;
+              }
+            }
+            
+            if (userData && (userData.id || userData._id)) {
+              // Normalize user ID
+              if (userData._id && !userData.id) {
+                userData.id = userData._id;
+              }
+              
+              setUser(userData);
+              setIsAuthenticated(true);
+              setToken(storedToken);
+              console.log("User authenticated:", userData.email || userData.displayName);
+            } else {
+              console.warn("Invalid user data in response, clearing auth", response);
+              clearAuth();
+            }
           } else {
-            // Token is invalid, clear it
+            // Token is invalid, clear it silently
+            console.log("Token verification failed, clearing auth");
             clearAuth();
           }
         } catch (error) {
-          console.error('Token verification failed:', error);
+          // Silently handle errors (user doesn't exist, token invalid, etc.)
+          console.log('Token verification failed (user may not exist):', error.message);
           clearAuth();
         }
+      } else {
+        // No token, make sure auth is cleared
+        clearAuth();
       }
       
       setIsLoading(false);
@@ -61,10 +93,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       setIsLoading(true);
+      console.log('Attempting login with:', { email: credentials.email });
       const response = await apiClient.login(credentials);
+      console.log('Login response:', response);
       
-      if (response.success) {
+      if (response && response.success) {
         const { token: newToken, user: userData } = response.data;
+        
+        if (!newToken || !userData) {
+          console.error('Missing token or user data in response:', response);
+          toast.error('Invalid response from server');
+          return { success: false, message: 'Invalid response from server' };
+        }
         
         // Store token and user data
         localStorage.setItem('token', newToken);
@@ -74,14 +114,22 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setIsAuthenticated(true);
         
-        toast.success(`Welcome back, ${userData.name || userData.email}! 🎉`);
+        const displayName = userData.displayName || userData.name || userData.email;
+        toast.success(`Welcome back, ${displayName}! 🎉`);
         return { success: true };
       } else {
-        toast.error(response.message || 'Login failed');
-        return { success: false, message: response.message };
+        const errorMsg = response?.message || response?.error || 'Login failed';
+        console.error('Login failed:', response);
+        toast.error(errorMsg);
+        return { success: false, message: errorMsg };
       }
     } catch (error) {
       console.error('Login error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       const message = error.message || 'Login failed. Please try again.';
       toast.error(message);
       return { success: false, message };
@@ -94,10 +142,18 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       setIsLoading(true);
+      console.log('Attempting registration with:', { email: userData.email, displayName: userData.displayName });
       const response = await apiClient.register(userData);
+      console.log('Registration response:', response);
       
-      if (response.success) {
+      if (response && response.success) {
         const { token: newToken, user: newUser } = response.data;
+        
+        if (!newToken || !newUser) {
+          console.error('Missing token or user data in response:', response);
+          toast.error('Invalid response from server');
+          return { success: false, message: 'Invalid response from server' };
+        }
         
         // Store token and user data
         localStorage.setItem('token', newToken);
@@ -107,14 +163,22 @@ export const AuthProvider = ({ children }) => {
         setUser(newUser);
         setIsAuthenticated(true);
         
-        toast.success(`Welcome to BuzzConnect, ${newUser.name || newUser.email}! 🎉`);
+        const displayName = newUser.displayName || newUser.name || newUser.email;
+        toast.success(`Welcome to BuzzConnect, ${displayName}! 🎉`);
         return { success: true };
       } else {
-        toast.error(response.message || 'Registration failed');
-        return { success: false, message: response.message };
+        const errorMsg = response?.message || response?.error || 'Registration failed';
+        console.error('Registration failed:', response);
+        toast.error(errorMsg);
+        return { success: false, message: errorMsg };
       }
     } catch (error) {
       console.error('Registration error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       const message = error.message || 'Registration failed. Please try again.';
       toast.error(message);
       return { success: false, message };

@@ -1,9 +1,17 @@
 // API Configuration and Client
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// Log API configuration on load
+console.log('API Configuration:', {
+  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+  API_BASE_URL: API_BASE_URL,
+  NODE_ENV: process.env.NODE_ENV
+});
+
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
+    console.log('ApiClient initialized with baseURL:', this.baseURL);
   }
 
   // Get auth token from localStorage
@@ -28,8 +36,22 @@ class ApiClient {
       ...options
     };
 
+    // Log request for debugging
+    console.log('API Request:', {
+      url,
+      method: options.method || 'GET',
+      headers: config.headers
+    });
+
     try {
       const response = await fetch(url, config);
+
+      console.log('API Response:', {
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
 
       // Handle 304 Not Modified responses
       if (response.status === 304) {
@@ -44,18 +66,43 @@ class ApiClient {
       let data;
       try {
         data = await response.json();
+        console.log('API Response data:', data);
       } catch (jsonError) {
+        console.error('JSON parse error:', jsonError);
         // If JSON parsing fails, create a generic error response
-        data = { message: `HTTP error! status: ${response.status}` };
+        const text = await response.text();
+        console.error('Response text:', text);
+        data = { 
+          success: false,
+          message: `HTTP error! status: ${response.status}`,
+          error: `HTTP error! status: ${response.status}`
+        };
       }
 
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        const errorMessage = data.message || data.error || data.detail || `HTTP error! status: ${response.status}`;
+        console.error('API Error:', {
+          status: response.status,
+          message: errorMessage,
+          data: data
+        });
+        throw new Error(errorMessage);
       }
 
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error('API request failed:', {
+        url,
+        error: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      // Handle network errors (CORS, connection refused, etc.)
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        throw new Error('Unable to connect to server. Please check if the backend is running on http://localhost:5000');
+      }
+      
       throw error;
     }
   }

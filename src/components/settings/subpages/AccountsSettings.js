@@ -4,6 +4,7 @@ import { CheckCircle, Info, AlertCircle, Plus, Trash2, Check, Link2, Instagram, 
 import SettingsCard from '../SettingsCard';
 import { useAuth } from '../../../hooks/useAuth';
 import toast from 'react-hot-toast';
+import { useLocation, useNavigate } from 'react-router-dom';
 import '../../../assets/styles/AccountsSettings.css';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -2200,6 +2201,8 @@ const TwitterTermsModal = ({ isOpen, onClose, onConfirm }) => {
 
 const AccountsSettings = ({ onNotify }) => {
   const { user, token, isLoading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showConnectionOptions, setShowConnectionOptions] = useState(false);
@@ -2294,6 +2297,47 @@ const AccountsSettings = ({ onNotify }) => {
   };
 
   const authToken = token || localStorage.getItem('token');
+
+  // Handle OAuth callback errors from URL parameters
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const error = searchParams.get('error');
+    
+    if (error) {
+      // Error messages mapping
+      const errorMessages = {
+        'invalid_scopes': 'Invalid Scopes: Facebook requires Advanced Access for Page permissions. Please request Advanced Access in Facebook Developer Console → App Review → Permissions and Features.',
+        'missing_code_or_state': 'OAuth flow incomplete: Missing authorization code or state parameter. Please try connecting again.',
+        'user-not-found': 'User not found: Please log in again and try connecting your account.',
+        'token-error': 'Failed to get access token from Facebook. Please try again.',
+        'no-pages-found': 'No Facebook Pages found: Make sure you have a Facebook Page and are an admin of it.',
+        'no_instagram_business_account': 'No Instagram Business Account found: Please ensure your Instagram account is a Business account and is linked to a Facebook Page.',
+        'facebook_app_unavailable': 'Facebook app unavailable: Please check your Facebook App configuration in Developer Console.',
+        'graph-error': 'Facebook Graph API error: Please check your app permissions and try again.',
+        'server-error': 'Server error occurred during connection. Please try again later.',
+        'oauth_error': 'OAuth authentication error: Please try connecting again.',
+        'invalid_user_id': 'Invalid user ID: Please log in again.',
+        'invalid_user_id_format': 'Invalid user ID format: Please log in again.',
+      };
+
+      const errorMessage = errorMessages[error] || `Connection error: ${error}. Please try again or check your Facebook App configuration.`;
+      
+      // Show error toast
+      toast.error(errorMessage, {
+        duration: 8000,
+        style: {
+          maxWidth: '600px',
+          fontSize: '14px',
+          lineHeight: '1.5',
+        },
+      });
+
+      // Clear error from URL
+      searchParams.delete('error');
+      const newSearch = searchParams.toString();
+      navigate(`${location.pathname}${newSearch ? `?${newSearch}` : ''}`, { replace: true });
+    }
+  }, [location.search, navigate, location.pathname]);
 
   // Fetch all connected accounts
   useEffect(() => {
@@ -2836,19 +2880,30 @@ const AccountsSettings = ({ onNotify }) => {
   };
 
   const handleDisconnectClick = (account) => {
+    // Get account ID (handle both _id and id properties)
+    const accountId = account?._id || account?.id;
+    
+    // Validate account and account ID
+    if (!account || !accountId) {
+      console.error('Invalid account or missing account ID:', account);
+      toast.error('Invalid account. Cannot disconnect.');
+      return;
+    }
+
     // Determine if this is a view-only Facebook account linked to Instagram
     let displayAccount = account;
-    let actualAccountId = account._id;
+    let actualAccountId = accountId;
 
     if (account.platform === 'facebook' &&
       (account.metadata?.viewOnly ||
         account.metadata?.linkedViaInstagram ||
-        account.username.includes('linked via Instagram'))) {
+        account.username?.includes('linked via Instagram'))) {
       // Find the associated Instagram account
-      const sourceId = account.metadata?.sourceAccountId || account._id.replace('-fb', '');
-      const sourceAccount = connectedAccounts.find(acc => acc._id === sourceId);
+      const accountIdStr = accountId.toString();
+      const sourceId = account.metadata?.sourceAccountId || (accountIdStr ? accountIdStr.replace('-fb', '') : null);
+      const sourceAccount = sourceId ? connectedAccounts.find(acc => (acc._id === sourceId || acc.id === sourceId)) : null;
 
-      if (sourceAccount) {
+      if (sourceAccount && sourceId) {
         // Set a more descriptive username for the confirmation modal
         displayAccount = {
           ...account,
@@ -2858,10 +2913,17 @@ const AccountsSettings = ({ onNotify }) => {
       }
     }
 
+    // Final validation before opening modal
+    if (!actualAccountId) {
+      console.error('Account ID is missing after processing:', account);
+      toast.error('Account ID is missing. Cannot disconnect.');
+      return;
+    }
+
     setConfirmationModal({
       isOpen: true,
       accountId: actualAccountId,
-      accountUsername: displayAccount.username,
+      accountUsername: displayAccount?.username || 'Unknown Account',
       platform: account?.platform
         ? account.platform.charAt(0).toUpperCase() + account.platform.slice(1)
         : ''
@@ -2871,11 +2933,20 @@ const AccountsSettings = ({ onNotify }) => {
   const handleConfirmDisconnect = async () => {
     try {
       const { accountId } = confirmationModal;
-      const baseId = accountId.replace('-fb', '');
+      
+      if (!accountId) {
+        console.error('Account ID is missing');
+        toast.error('Account ID is missing. Please try again.');
+        setConfirmationModal({ isOpen: false, accountId: null, accountUsername: '', platform: '' });
+        return;
+      }
+      
+      const baseId = accountId.toString().replace('-fb', '');
 
       // Determine the API endpoint based on the account platform
-      const platform = connectedAccounts.find(acc => acc._id === baseId)?.platform || 'instagram';
-      const accountType = connectedAccounts.find(acc => acc._id === baseId)?.accountType || 'personal';
+      const foundAccount = connectedAccounts.find(acc => (acc._id === baseId || acc.id === baseId));
+      const platform = foundAccount?.platform || 'instagram';
+      const accountType = foundAccount?.accountType || 'personal';
 
       let endpoint = `${process.env.REACT_APP_API_URL}/api/auth/instagram/disconnect/${baseId}`;
 
@@ -2897,9 +2968,10 @@ const AccountsSettings = ({ onNotify }) => {
       setConnectedAccounts(prev => {
         // Handle both direct removal and related FB account removal
         const updatedAccounts = prev.filter(acc => {
-          const isMainAccount = acc._id !== baseId;
+          const accId = acc._id || acc.id;
+          const isMainAccount = accId !== baseId && accId !== accountId;
           const isRelatedFBAccount = !(acc.platform === 'facebook' &&
-            (acc._id === `${baseId}-fb` ||
+            ((accId === `${baseId}-fb` || accId === `${accountId}-fb`) ||
               acc.metadata?.sourceAccountId === baseId));
           return isMainAccount && isRelatedFBAccount;
         });

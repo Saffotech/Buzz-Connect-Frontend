@@ -996,6 +996,47 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     showToast('Image removed', 'info');
   };
 
+  // Helper function to convert blob URL to base64
+  const blobUrlToBase64 = async (blobUrl) => {
+    const response = await fetch(blobUrl);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  // Process images - convert blob URLs to base64
+  const processImagesForSubmission = async (images) => {
+    const processedImages = [];
+    
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      
+      // If image has blob URL, convert to base64
+      if (img.url && img.url.startsWith('blob:')) {
+        try {
+          showToast(`Processing image ${i + 1}...`, 'info');
+          const base64 = await blobUrlToBase64(img.url);
+          processedImages.push({
+            ...img,
+            url: base64
+          });
+        } catch (error) {
+          console.error(`Failed to convert blob URL to base64 for image ${i + 1}:`, error);
+          throw new Error(`Failed to process image ${i + 1}: ${error.message}`);
+        }
+      } else {
+        // Image already has S3 URL or base64, use as is
+        processedImages.push(img);
+      }
+    }
+    
+    return processedImages;
+  };
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsSubmitting(true);
@@ -1011,10 +1052,17 @@ const handleSubmit = async (e) => {
   const selectedAccountsWithNames = {}; // ✅ Added
 
   try {
+    // 🔹 Process images - convert blob URLs to base64
+    showToast('Processing images...', 'info');
+    const processedImages = await processImagesForSubmission(postData.images);
+    
+    // 🔹 Extract connected accounts from user profile
     // 🔹 Extract connected accounts from user profile
     const accountsMap = {};
     userProfile?.connectedAccounts?.forEach(account => {
-      accountsMap[account._id.toString()] = account;
+      if (account?._id) {
+        accountsMap[account._id.toString()] = account;
+      }
     });
 
     // 🔹 Clean up selectedAccounts (remove null/empty)
@@ -1025,7 +1073,7 @@ const handleSubmit = async (e) => {
 
         // ✅ Add usernames mapped from connectedAccounts
         selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
-          const account = accountsMap[accountId];
+          const account = accountsMap[accountId?.toString()];
           return {
             id: accountId,
             username: account ? account.username : 'Unknown Account'
@@ -1042,7 +1090,7 @@ const handleSubmit = async (e) => {
       platforms: postData.platforms,
       selectedAccounts: cleanedSelectedAccounts,
       selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
-      images: postData.images.map((img, index) => ({
+      images: processedImages.map((img, index) => ({
         url: img.url,
         altText: img.altText || img.originalName || 'Post media',
         originalName: img.originalName || img.filename || `Media ${index + 1}`,
@@ -1076,7 +1124,7 @@ const handleSubmit = async (e) => {
         ? postData.hashtags
         : `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
 
-      const videoFiles = postData.images.filter(
+      const videoFiles = processedImages.filter(
         img => img.fileType === 'video' || img.url?.includes('video') || img.url?.includes('.mp4')
       );
 
