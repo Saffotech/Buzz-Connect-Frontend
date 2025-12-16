@@ -1052,6 +1052,35 @@ const handleSubmit = async (e) => {
   const selectedAccountsWithNames = {}; // ✅ Added
 
   try {
+    // ✅ Validate Instagram account connection before posting
+    if (postData.platforms.includes('instagram')) {
+      const instagramAccounts = userProfile?.connectedAccounts?.filter(
+        acc => acc.platform === 'instagram' && acc.connected !== false
+      ) || [];
+      
+      if (instagramAccounts.length === 0) {
+        throw new Error(
+          'Instagram account is not connected. Please connect your Instagram Business account in Settings → Accounts. ' +
+          'Make sure your Instagram account is linked to your Facebook Page.'
+        );
+      }
+      
+      // Check if any selected Instagram accounts are valid
+      const selectedInstagramIds = postData.selectedAccounts?.instagram || [];
+      if (selectedInstagramIds.length > 0) {
+        const validInstagramIds = instagramAccounts.map(acc => acc._id?.toString() || acc.id);
+        const hasValidSelection = selectedInstagramIds.some(id => 
+          validInstagramIds.includes(id?.toString())
+        );
+        
+        if (!hasValidSelection) {
+          throw new Error(
+            'Selected Instagram account is not connected. Please reconnect your Instagram account in Settings → Accounts.'
+          );
+        }
+      }
+    }
+    
     // 🔹 Process images - convert blob URLs to base64
     showToast('Processing images...', 'info');
     const processedImages = await processImagesForSubmission(postData.images);
@@ -1202,9 +1231,46 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
 
   } catch (error) {
     console.error('❌ Failed to create/publish post:', error);
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+    
+    // ✅ Better error messages for Instagram-specific issues
+    let errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+    
+    // Check for Instagram-specific errors
+    if (errorMessage.includes('Missing Instagram') || 
+        errorMessage.includes('Instagram account') ||
+        errorMessage.includes('access token') ||
+        errorMessage.includes('authorization denied')) {
+      
+      if (errorMessage.includes('authorization denied') || errorMessage.includes('No token')) {
+        errorMessage = 'Instagram account is missing access token. Please reconnect your Instagram account in Settings → Accounts. ' +
+          'Make sure your Instagram Business account is linked to your Facebook Page.';
+      } else if (!errorMessage.includes('Please connect') && !errorMessage.includes('Please reconnect')) {
+        errorMessage = `Instagram posting failed: ${errorMessage}. Please check your Instagram account connection in Settings.`;
+      }
+    }
+    
+    // Check for platform-specific errors in response
+    if (error.response?.data?.data?.publishResults) {
+      const publishResults = error.response.data.data.publishResults;
+      const instagramErrors = publishResults.results?.filter(
+        r => r.platform === 'instagram' && !r.success
+      ) || [];
+      
+      if (instagramErrors.length > 0) {
+        const igError = instagramErrors[0].error || '';
+        if (igError.includes('Missing Instagram') || igError.includes('access token')) {
+          errorMessage = 'Instagram account is missing access token. Please reconnect your Instagram account in Settings → Accounts.';
+        } else if (igError) {
+          errorMessage = `Instagram posting failed: ${igError}`;
+        }
+      }
+    }
+    
     setError(errorMessage);
-    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+    showToast(
+      errorMessage.length > 100 ? 'Failed to publish post. See error details below.' : errorMessage,
+      'error'
+    );
   } finally {
     setIsSubmitting(false);
   }

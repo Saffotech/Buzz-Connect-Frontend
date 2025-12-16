@@ -35,8 +35,9 @@ export const API_ENDPOINTS = {
   },
   INSTAGRAM: {
     CONNECT: '/api/auth/instagram/connect',
-    DISCONNECT: '/api/auth/instagram/disconnect',
-    STATUS: '/api/auth/instagram/status'
+    ACCOUNTS: '/api/auth/instagram/accounts',
+    CONNECTION_STATUS: '/api/auth/instagram/connection-status',
+    DISCONNECT: '/api/auth/instagram/accounts' // DELETE /api/auth/instagram/accounts/{accountId}
   },
   AI: {
     GENERATE_CONTENT: '/api/ai/generate-content',

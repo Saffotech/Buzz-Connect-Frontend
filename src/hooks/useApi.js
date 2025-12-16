@@ -284,7 +284,7 @@ export const useAnalytics = () => {
 
 // Custom hook for Instagram connection status
 export const useInstagramStatus = () => {
-  const { data, loading, error, refetch } = useApi(() => apiClient.getInstagramStatus());
+  const { data, loading, error, refetch } = useApi(() => apiClient.getInstagramConnectionStatus());
 
   const connectInstagram = async () => {
     try {
@@ -298,9 +298,12 @@ export const useInstagramStatus = () => {
     }
   };
 
-  const disconnectInstagram = async () => {
+  const disconnectInstagram = async (accountId) => {
     try {
-      const response = await apiClient.disconnectInstagram();
+      if (!accountId) {
+        throw new Error('Account ID is required to disconnect Instagram');
+      }
+      const response = await apiClient.disconnectInstagramAccount(accountId);
       refetch(); // Refresh status
       return response;
     } catch (err) {
@@ -353,7 +356,7 @@ export const useDashboardData = () => {
         apiClient.getCurrentUser(),
         apiClient.getPosts(),
         apiClient.getAnalyticsOverview(),
-        apiClient.getInstagramStatus(),
+        apiClient.getInstagramConnectionStatus(),
         apiClient.getMedia()
       ]);
 
@@ -433,9 +436,9 @@ export const useDashboardData = () => {
     }
   };
 
-  const connectInstagram = async () => {
+  const connectInstagram = async (connectionType = 'standard') => {
     try {
-      const response = await apiClient.connectInstagram();
+      const response = await apiClient.connectInstagram(connectionType);
       if (response.data?.authUrl) {
         window.open(response.data.authUrl, '_blank');
       }
@@ -445,11 +448,11 @@ export const useDashboardData = () => {
     }
   };
 
-  const disconnectInstagram = async () => {
+  const disconnectInstagram = async (accountId) => {
     try {
-      const response = await apiClient.disconnectInstagram();
+      const response = await apiClient.disconnectInstagramAccount(accountId);
       // Refresh Instagram status
-      const statusRes = await apiClient.getInstagramStatus();
+      const statusRes = await apiClient.getInstagramConnectionStatus();
       setData(prev => ({
         ...prev,
         instagramStatus: statusRes.data

@@ -2306,21 +2306,56 @@ const AccountsSettings = ({ onNotify }) => {
     if (error) {
       // Error messages mapping
       const errorMessages = {
+        // Facebook/Instagram errors
         'invalid_scopes': 'Invalid Scopes: Facebook requires Advanced Access for Page permissions. Please request Advanced Access in Facebook Developer Console → App Review → Permissions and Features.',
         'missing_code_or_state': 'OAuth flow incomplete: Missing authorization code or state parameter. Please try connecting again.',
-        'user-not-found': 'User not found: Please log in again and try connecting your account.',
         'token-error': 'Failed to get access token from Facebook. Please try again.',
         'no-pages-found': 'No Facebook Pages found: Make sure you have a Facebook Page and are an admin of it.',
         'no_instagram_business_account': 'No Instagram Business Account found: Please ensure your Instagram account is a Business account and is linked to a Facebook Page.',
         'facebook_app_unavailable': 'Facebook app unavailable: Please check your Facebook App configuration in Developer Console.',
         'graph-error': 'Facebook Graph API error: Please check your app permissions and try again.',
+        
+        // Twitter/X errors
+        'twitter_auth_failed': 'Twitter/X authentication failed: Please check your Twitter API credentials and callback URL configuration. Verify that TWITTER_API_KEY, TWITTER_API_SECRET, and TWITTER_CALLBACK_URL are correctly set in your backend environment variables, and that the callback URL matches your Twitter Developer Portal settings.',
+        'twitter_oauth_denied': 'Twitter/X authorization was denied: You cancelled the authorization or denied access. Please try again and approve the connection.',
+        'twitter_token_exchange_failed': 'Twitter/X token exchange failed: Failed to exchange authorization code for access token. Please try connecting again.',
+        'twitter_callback_failed': 'Twitter/X callback error: An error occurred while processing the Twitter authorization callback. Please try connecting again.',
+        
+        // Common errors (shared across platforms)
+        'user-not-found': 'User not found: Please log in again and try connecting your account.',
         'server-error': 'Server error occurred during connection. Please try again later.',
         'oauth_error': 'OAuth authentication error: Please try connecting again.',
         'invalid_user_id': 'Invalid user ID: Please log in again.',
         'invalid_user_id_format': 'Invalid user ID format: Please log in again.',
+        'missing_oauth_params': 'OAuth parameters missing: The authorization flow is incomplete. Please try connecting again.',
       };
 
-      const errorMessage = errorMessages[error] || `Connection error: ${error}. Please try again or check your Facebook App configuration.`;
+      // Determine platform from error code to provide appropriate default message
+      const isTwitterError = error && (
+        error.startsWith('twitter_') || 
+        error.includes('twitter') ||
+        error === 'missing_oauth_params' // Can be Twitter or other platforms
+      );
+      
+      const isFacebookError = error && (
+        error.includes('facebook') ||
+        error.includes('instagram') ||
+        error === 'invalid_scopes' ||
+        error === 'graph-error' ||
+        error === 'no-pages-found' ||
+        error === 'no_instagram_business_account'
+      );
+
+      let defaultMessage;
+      if (isTwitterError) {
+        defaultMessage = `Twitter/X connection error: ${error}. Please check your Twitter Developer Portal configuration and ensure your API credentials and callback URL are correct.`;
+      } else if (isFacebookError) {
+        defaultMessage = `Connection error: ${error}. Please try again or check your Facebook App configuration.`;
+      } else {
+        defaultMessage = `Connection error: ${error}. Please try again or check your platform configuration.`;
+      }
+
+      const errorMessage = errorMessages[error] || defaultMessage;
       
       // Show error toast
       toast.error(errorMessage, {
@@ -2347,22 +2382,44 @@ const AccountsSettings = ({ onNotify }) => {
       try {
         setLoading(true);
 
-        // First, get the current user profile which contains all connected accounts
-        const userRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${authToken}` }
-        });
-
-        if (userRes.data.success && userRes.data.data) {
-          // Extract all connected accounts from the user profile
-          const allAccounts = userRes.data.data.connectedAccounts || [];
-          setConnectedAccounts(allAccounts);
-        } else {
-          // Fallback to the existing approach if /api/auth/me doesn't return accounts
+        // Always use the Instagram accounts endpoint for Meta accounts (Instagram + Facebook)
+        // This endpoint returns properly formatted accounts with accountsByPlatform structure
+        let accounts = [];
+        
+        try {
           const instaRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`, {
             headers: { Authorization: `Bearer ${authToken}` }
           });
 
-          let accounts = instaRes.data.accounts || [];
+          // Handle new response structure: data.data.accountsByPlatform
+          if (instaRes.data.success && instaRes.data.data) {
+            // Get all accounts from accountsByPlatform (Instagram + Facebook)
+            if (instaRes.data.data.accountsByPlatform) {
+              accounts = [
+                ...(instaRes.data.data.accountsByPlatform.instagram || []),
+                ...(instaRes.data.data.accountsByPlatform.facebook || []),
+              ];
+              console.log('📊 Fetched accounts from accountsByPlatform:', {
+                instagram: instaRes.data.data.accountsByPlatform.instagram?.length || 0,
+                facebook: instaRes.data.data.accountsByPlatform.facebook?.length || 0,
+                total: accounts.length
+              });
+            } else if (instaRes.data.data.accounts) {
+              // Fallback to flat accounts array
+              accounts = instaRes.data.data.accounts;
+              console.log('📊 Fetched accounts from accounts array:', accounts.length);
+            } else if (Array.isArray(instaRes.data.data)) {
+              accounts = instaRes.data.data;
+              console.log('📊 Fetched accounts from array:', accounts.length);
+            }
+          } else if (instaRes.data.accounts) {
+            accounts = instaRes.data.accounts;
+            console.log('📊 Fetched accounts from root:', accounts.length);
+          }
+        } catch (instaErr) {
+          console.error('Error fetching Instagram/Facebook accounts:', instaErr);
+          // Continue to fetch other platforms even if Meta accounts fail
+        }
 
           // Fetch LinkedIn accounts
           try {
@@ -2370,8 +2427,17 @@ const AccountsSettings = ({ onNotify }) => {
               headers: { Authorization: `Bearer ${authToken}` }
             });
 
-            if (linkedInRes.data.connected && linkedInRes.data.accounts) {
+            // Backend returns SuccessResponse with nested data structure
+            if (linkedInRes.data.success && linkedInRes.data.data) {
+              const linkedInData = linkedInRes.data.data;
+              if (linkedInData.connected && linkedInData.accounts && Array.isArray(linkedInData.accounts)) {
+                accounts = [...accounts, ...linkedInData.accounts];
+                console.log('📊 Fetched LinkedIn personal accounts:', linkedInData.accounts.length);
+              }
+            } else if (linkedInRes.data.connected && linkedInRes.data.accounts) {
+              // Fallback for old response format
               accounts = [...accounts, ...linkedInRes.data.accounts];
+              console.log('📊 Fetched LinkedIn personal accounts (fallback):', linkedInRes.data.accounts.length);
             }
           } catch (linkedInErr) {
             console.error('Error fetching LinkedIn accounts:', linkedInErr);
@@ -2383,8 +2449,17 @@ const AccountsSettings = ({ onNotify }) => {
               headers: { Authorization: `Bearer ${authToken}` }
             });
 
-            if (linkedInBusinessRes.data.connected && linkedInBusinessRes.data.accounts) {
+            // Backend returns SuccessResponse with nested data structure
+            if (linkedInBusinessRes.data.success && linkedInBusinessRes.data.data) {
+              const linkedInBusinessData = linkedInBusinessRes.data.data;
+              if (linkedInBusinessData.connected && linkedInBusinessData.accounts && Array.isArray(linkedInBusinessData.accounts)) {
+                accounts = [...accounts, ...linkedInBusinessData.accounts];
+                console.log('📊 Fetched LinkedIn Business accounts:', linkedInBusinessData.accounts.length);
+              }
+            } else if (linkedInBusinessRes.data.connected && linkedInBusinessRes.data.accounts) {
+              // Fallback for old response format
               accounts = [...accounts, ...linkedInBusinessRes.data.accounts];
+              console.log('📊 Fetched LinkedIn Business accounts (fallback):', linkedInBusinessRes.data.accounts.length);
             }
           } catch (linkedInBusinessErr) {
             console.error('Error fetching LinkedIn Business accounts:', linkedInBusinessErr);
@@ -2396,7 +2471,11 @@ const AccountsSettings = ({ onNotify }) => {
               headers: { Authorization: `Bearer ${authToken}` }
             });
 
-            if (youtubeRes.data.connected) {
+            // Backend wraps data inside { success, data: { connected, accounts } }
+            const ytStatus = youtubeRes.data?.data || youtubeRes.data;
+            const ytConnected = ytStatus?.connected;
+
+            if (ytConnected) {
               const channelRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/youtube/channel`, {
                 headers: { Authorization: `Bearer ${authToken}` }
               });
@@ -2427,8 +2506,39 @@ const AccountsSettings = ({ onNotify }) => {
             console.error('Error fetching YouTube account:', ytErr);
           }
 
+          // Fetch Twitter/X accounts
+          try {
+            const twitterRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/x/status`, {
+              headers: { Authorization: `Bearer ${authToken}` }
+            });
+
+            // Backend returns SuccessResponse with nested data structure
+            if (twitterRes.data.success && twitterRes.data.data) {
+              const twitterData = twitterRes.data.data;
+              if (twitterData.connected && twitterData.accounts && Array.isArray(twitterData.accounts)) {
+                accounts = [...accounts, ...twitterData.accounts];
+                console.log('📊 Fetched Twitter/X accounts:', twitterData.accounts.length);
+              }
+            } else if (twitterRes.data.connected && twitterRes.data.accounts) {
+              // Fallback for old response format
+              accounts = [...accounts, ...twitterRes.data.accounts];
+              console.log('📊 Fetched Twitter/X accounts (fallback):', twitterRes.data.accounts.length);
+            }
+          } catch (twitterErr) {
+            console.error('Error fetching Twitter/X accounts:', twitterErr);
+          }
+
+          // Debug: Log all accounts before setting
+          console.log('📊 Total accounts fetched:', accounts.length);
+          console.log('📊 Accounts by platform:', {
+            instagram: accounts.filter(acc => acc.platform === 'instagram').length,
+            facebook: accounts.filter(acc => acc.platform === 'facebook').length,
+            linkedin: accounts.filter(acc => acc.platform === 'linkedin').length,
+            twitter: accounts.filter(acc => acc.platform === 'twitter').length,
+            youtube: accounts.filter(acc => acc.platform === 'youtube').length,
+          });
+          
           setConnectedAccounts(accounts);
-        }
       } catch (err) {
         console.error('Failed to fetch connected accounts', err);
         toast.error('Failed to load accounts');
@@ -2745,8 +2855,16 @@ const AccountsSettings = ({ onNotify }) => {
         const freshUser = res.data.data;
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-        // Construct the Twitter auth URL
-        const twitterAuthUrl = `${apiUrl}/api/auth/x?userId=${freshUser._id}&token=${storedToken}`;
+        // Ensure we have a valid user id from /api/auth/me
+        const userId = freshUser?.id || freshUser?._id;
+        if (!userId) {
+          toast.error('User ID not found');
+          return;
+        }
+
+        // Construct the Twitter auth URL (backend placeholder endpoint)
+        // Token is no longer included in the state to avoid exposing it.
+        const twitterAuthUrl = `${apiUrl}/api/auth/x/auth?userId=${userId}`;
 
         // console.log('Redirecting to Twitter auth:', twitterAuthUrl);
 
@@ -2826,7 +2944,12 @@ const AccountsSettings = ({ onNotify }) => {
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
         // Construct the YouTube auth URL
-        const youtubeAuthUrl = `${apiUrl}/api/auth/youtube?userId=${freshUser._id}&token=${storedToken}`;
+        const userId = freshUser?.id || freshUser?._id;
+        if (!userId) {
+          toast.error('Invalid user ID. Please log in again.');
+          return;
+        }
+        const youtubeAuthUrl = `${apiUrl}/api/auth/youtube?userId=${userId}&token=${storedToken}`;
 
         console.log('Redirecting to YouTube auth:', youtubeAuthUrl);
 
@@ -2861,8 +2984,25 @@ const AccountsSettings = ({ onNotify }) => {
         const freshUser = res.data.data;
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-        // Standard Instagram+Facebook connection
-        window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+        // Use POST endpoint with connectionType (recommended method)
+        try {
+          const connectRes = await axios.post(
+            `${apiUrl}/api/auth/instagram/connect`,
+            { connectionType: 'standard' },
+            { headers: { Authorization: `Bearer ${storedToken}` } }
+          );
+
+          if (connectRes.data.success && connectRes.data.data?.authUrl) {
+            window.location.href = connectRes.data.data.authUrl;
+          } else {
+            // Fallback to GET method
+            window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+          }
+        } catch (connectErr) {
+          console.error('Error connecting Instagram:', connectErr);
+          // Fallback to GET method
+          window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+        }
       } else {
         toast.error('Failed to get user data');
       }
@@ -2944,34 +3084,60 @@ const AccountsSettings = ({ onNotify }) => {
       const baseId = accountId.toString().replace('-fb', '');
 
       // Determine the API endpoint based on the account platform
-      const foundAccount = connectedAccounts.find(acc => (acc._id === baseId || acc.id === baseId));
-      const platform = foundAccount?.platform || 'instagram';
+      const foundAccount = connectedAccounts.find(acc => {
+        const accId = acc._id || acc.id;
+        return accId && (accId.toString() === baseId || accId === baseId);
+      });
+      const platform = foundAccount?.platform || confirmationModal.platform?.toLowerCase() || 'instagram';
       const accountType = foundAccount?.accountType || 'personal';
 
-      let endpoint = `${process.env.REACT_APP_API_URL}/api/auth/instagram/disconnect/${baseId}`;
+      console.log('Disconnecting account:', { baseId, platform, accountType, foundAccount });
 
-      if (platform === 'linkedin') {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+      let endpoint = '';
+
+      if (platform === 'instagram') {
+        // Backend recommendation:
+        // Option 1 (preferred for a single account row):
+        //   DELETE /api/auth/instagram/accounts/{accountId}
+        // Option 2 (alias path):
+        //   DELETE /api/auth/instagram/disconnect/{accountId}
+        //
+        // We'll use the documented alias path here:
+        endpoint = `${apiUrl}/api/auth/instagram/disconnect/${baseId}`;
+      } else if (platform === 'linkedin') {
         if (accountType === 'business') {
-          endpoint = `${process.env.REACT_APP_API_URL}/api/auth/linkedin-business/accounts/${baseId}`;
+          endpoint = `${apiUrl}/api/auth/linkedin-business/accounts/${baseId}`;
         } else {
-          endpoint = `${process.env.REACT_APP_API_URL}/api/auth/linkedin/accounts/${baseId}`;
+          endpoint = `${apiUrl}/api/auth/linkedin/accounts/${baseId}`;
         }
       } else if (platform === 'youtube') {
-        endpoint = `${process.env.REACT_APP_API_URL}/api/auth/youtube/disconnect/${baseId}`;
+        endpoint = `${apiUrl}/api/auth/youtube/disconnect/${baseId}`;
+      } else if (platform === 'twitter') {
+        endpoint = `${apiUrl}/api/auth/x/disconnect/${baseId}`;
+      } else {
+        // Generic by-platform disconnect (e.g. /api/users/connected-accounts/{platform})
+        endpoint = `${apiUrl}/api/users/connected-accounts/${platform}`;
       }
 
-      await axios.delete(endpoint, {
+      console.log('Calling disconnect endpoint:', endpoint);
+
+      const response = await axios.delete(endpoint, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
+
+      console.log('Disconnect response:', response.data);
 
       // Remove the account from state
       setConnectedAccounts(prev => {
         // Handle both direct removal and related FB account removal
         const updatedAccounts = prev.filter(acc => {
           const accId = acc._id || acc.id;
-          const isMainAccount = accId !== baseId && accId !== accountId;
+          const accIdStr = accId ? accId.toString() : '';
+          const isMainAccount = accIdStr !== baseId && accIdStr !== accountId.toString();
           const isRelatedFBAccount = !(acc.platform === 'facebook' &&
-            ((accId === `${baseId}-fb` || accId === `${accountId}-fb`) ||
+            ((accIdStr === `${baseId}-fb` || accIdStr === `${accountId}-fb`) ||
               acc.metadata?.sourceAccountId === baseId));
           return isMainAccount && isRelatedFBAccount;
         });
@@ -2986,7 +3152,21 @@ const AccountsSettings = ({ onNotify }) => {
 
     } catch (err) {
       console.error('Failed to disconnect account', err);
-      toast.error('Failed to disconnect account');
+      
+      // Extract error message from response
+      let errorMessage = 'Failed to disconnect account';
+      if (err.response) {
+        const errorDetail = err.response.data?.detail || err.response.data?.error || err.response.data?.message;
+        if (errorDetail) {
+          errorMessage = typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail);
+        } else {
+          errorMessage = `Failed to disconnect account: ${err.response.status} ${err.response.statusText}`;
+        }
+      } else if (err.message) {
+        errorMessage = `Failed to disconnect account: ${err.message}`;
+      }
+      
+      toast.error(errorMessage);
     }
   };
 

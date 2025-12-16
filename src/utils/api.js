@@ -80,7 +80,28 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        const errorMessage = data.message || data.error || data.detail || `HTTP error! status: ${response.status}`;
+        let errorMessage = data.message || data.error || data.detail || `HTTP error! status: ${response.status}`;
+        
+        // ✅ Better error messages for 401 (authentication) errors
+        if (response.status === 401) {
+          if (errorMessage.includes('token') || errorMessage.includes('authorization')) {
+            // Check if it's Instagram-specific
+            if (endpoint.includes('instagram') || endpoint.includes('post')) {
+              errorMessage = 'Instagram account authentication failed. Please reconnect your Instagram account in Settings → Accounts.';
+            } else {
+              errorMessage = 'Authentication failed. Please log in again.';
+            }
+          }
+        }
+        
+        // ✅ Better error messages for Instagram posting errors
+        if (data.error && typeof data.error === 'string') {
+          if (data.error.includes('Missing Instagram') || data.error.includes('Instagram account is missing')) {
+            errorMessage = 'Instagram account is missing access token. Please reconnect your Instagram account in Settings → Accounts. ' +
+              'Make sure your Instagram Business account is linked to your Facebook Page.';
+          }
+        }
+        
         console.error('API Error:', {
           status: response.status,
           message: errorMessage,
@@ -256,20 +277,25 @@ class ApiClient {
   }
 
   // Instagram OAuth endpoints
-  async connectInstagram() {
+  async connectInstagram(connectionType = 'standard') {
     return this.request('/api/auth/instagram/connect', {
-      method: 'POST'
+      method: 'POST',
+      body: JSON.stringify({ connectionType })
     });
   }
 
-  async disconnectInstagram() {
-    return this.request('/api/auth/instagram/disconnect', {
-      method: 'POST'
-    });
+  async getInstagramAccounts() {
+    return this.request('/api/auth/instagram/accounts');
   }
 
-  async getInstagramStatus() {
-    return this.request('/api/auth/instagram/status');
+  async getInstagramConnectionStatus() {
+    return this.request('/api/auth/instagram/connection-status');
+  }
+
+  async disconnectInstagramAccount(accountId) {
+    return this.request(`/api/auth/instagram/accounts/${accountId}`, {
+      method: 'DELETE'
+    });
   }
 
   // AI Content endpoints
@@ -411,8 +437,9 @@ export const {
   triggerScheduler,
   getUpcomingPosts,
   connectInstagram,
-  disconnectInstagram,
-  getInstagramStatus,
+  getInstagramAccounts,
+  getInstagramConnectionStatus,
+  disconnectInstagramAccount,
   generateContent,
   suggestHashtags,
   analyzeContent,

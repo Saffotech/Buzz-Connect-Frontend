@@ -15,7 +15,9 @@ export function useInstagramConnection(token) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/auth/instagram/status', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      // Use connection-status endpoint to get Instagram connection info
+      const res = await fetch(`${apiUrl}/api/auth/instagram/connection-status`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -26,7 +28,17 @@ export function useInstagramConnection(token) {
         throw new Error(`Status fetch failed: ${res.status}`);
       }
       const json = await res.json();
-      setStatus(json.data);
+      // Extract Instagram status from response
+      const instagramData = json.data?.instagram;
+      if (instagramData) {
+        setStatus({
+          connected: instagramData.connected,
+          username: instagramData.username,
+          accountId: instagramData.accountId
+        });
+      } else {
+        setStatus(null);
+      }
     } catch (e) {
       console.error(e);
       setError('Failed to load Instagram status.');
@@ -48,14 +60,16 @@ export function useInstagramConnection(token) {
     setConnecting(true);
     setError(null);
     try {
-      const res = await fetch('/api/auth/instagram/connect', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiUrl}/api/auth/instagram/connect`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          accept: 'application/json',
           'Content-Type': 'application/json',
         },
-        body: '',
+        body: JSON.stringify({
+          connectionType: 'standard' // 'standard' or 'direct'
+        }),
       });
       if (res.status === 401) {
         throw new Error('Unauthorized. Re-login required.');

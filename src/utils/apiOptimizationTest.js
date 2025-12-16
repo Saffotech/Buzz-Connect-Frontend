@@ -19,7 +19,7 @@ export const fetchDashboardDataOldWay = async () => {
     const analytics = await apiClient.getAnalyticsOverview();
     console.log('✅ Analytics data fetched');
     
-    const instagramStatus = await apiClient.getInstagramStatus();
+    const instagramStatus = await apiClient.getInstagramConnectionStatus();
     console.log('✅ Instagram status fetched');
     
     const media = await apiClient.getMedia();
@@ -52,7 +52,7 @@ export const fetchDashboardDataNewWay = async () => {
       apiClient.getCurrentUser(),
       apiClient.getPosts(),
       apiClient.getAnalyticsOverview(),
-      apiClient.getInstagramStatus(),
+      apiClient.getInstagramConnectionStatus(),
       apiClient.getMedia()
     ]);
     
