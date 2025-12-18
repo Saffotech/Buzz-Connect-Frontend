@@ -2813,16 +2813,19 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
+      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const base = rawApi.replace(/\/+$/, '');
+      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
+
       const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${storedToken}` }
       });
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
         // Construct the LinkedIn Personal auth URL
-        const linkedInAuthUrl = `${apiUrl}/api/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
+        const linkedInAuthUrl = `${apiUrl}/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
 
         console.log('Redirecting to LinkedIn Personal auth:', linkedInAuthUrl);
         // Open in the same window
@@ -2847,13 +2850,16 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
+      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const base = rawApi.replace(/\/+$/, '');
+      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
+
       const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${storedToken}` }
       });
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
         // Ensure we have a valid user id from /api/auth/me
         const userId = freshUser?.id || freshUser?._id;
@@ -2864,7 +2870,7 @@ const AccountsSettings = ({ onNotify }) => {
 
         // Construct the Twitter auth URL (backend placeholder endpoint)
         // Token is no longer included in the state to avoid exposing it.
-        const twitterAuthUrl = `${apiUrl}/api/auth/x/auth?userId=${userId}`;
+        const twitterAuthUrl = `${apiUrl}/auth/x/auth?userId=${userId}`;
 
         // console.log('Redirecting to Twitter auth:', twitterAuthUrl);
 
@@ -2891,16 +2897,19 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
+      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const base = rawApi.replace(/\/+$/, '');
+      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
+
       const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${storedToken}` }
       });
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
         // Construct the LinkedIn Business auth URL
-        const linkedInBusinessAuthUrl = `${apiUrl}/api/auth/linkedin-business?userId=${freshUser._id}&token=${storedToken}`;
+        const linkedInBusinessAuthUrl = `${apiUrl}/auth/linkedin-business?userId=${freshUser._id}&token=${storedToken}`;
 
         console.log('Redirecting to LinkedIn Business auth:', linkedInBusinessAuthUrl);
 
@@ -2935,13 +2944,16 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
+      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const base = rawApi.replace(/\/+$/, '');
+      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
+
       const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${storedToken}` }
       });
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
         // Construct the YouTube auth URL
         const userId = freshUser?.id || freshUser?._id;
@@ -2949,7 +2961,7 @@ const AccountsSettings = ({ onNotify }) => {
           toast.error('Invalid user ID. Please log in again.');
           return;
         }
-        const youtubeAuthUrl = `${apiUrl}/api/auth/youtube?userId=${userId}&token=${storedToken}`;
+        const youtubeAuthUrl = `${apiUrl}/auth/youtube?userId=${userId}&token=${storedToken}`;
 
         console.log('Redirecting to YouTube auth:', youtubeAuthUrl);
 
@@ -2976,18 +2988,21 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
+      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const base = rawApi.replace(/\/+$/, '');
+      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
+
       const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
         headers: { Authorization: `Bearer ${storedToken}` }
       });
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
         // Use POST endpoint with connectionType (recommended method)
         try {
           const connectRes = await axios.post(
-            `${apiUrl}/api/auth/instagram/connect`,
+            `${apiUrl}/auth/instagram/connect`,
             { connectionType: 'standard' },
             { headers: { Authorization: `Bearer ${storedToken}` } }
           );
@@ -2996,12 +3011,12 @@ const AccountsSettings = ({ onNotify }) => {
             window.location.href = connectRes.data.data.authUrl;
           } else {
             // Fallback to GET method
-            window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+            window.location.href = `${apiUrl}/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
           }
         } catch (connectErr) {
           console.error('Error connecting Instagram:', connectErr);
           // Fallback to GET method
-          window.location.href = `${apiUrl}/api/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+          window.location.href = `${apiUrl}/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
         }
       } else {
         toast.error('Failed to get user data');

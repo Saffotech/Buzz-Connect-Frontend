@@ -1,6 +1,6 @@
 // API Configuration and Client
 // Normalize base URL once (remove trailing slashes)
-const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(
+const API_BASE_URL = (process.env.REACT_APP_API_URL || 'https://mgabuzzconnect.com').replace(
   /\/+$/,
   ''
 );
