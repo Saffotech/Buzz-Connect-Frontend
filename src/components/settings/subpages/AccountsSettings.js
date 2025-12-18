@@ -2388,7 +2388,7 @@ const AccountsSettings = ({ onNotify }) => {
         let accounts = [];
         
         try {
-          const instaRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/instagram/accounts`, {
+          const instaRes = await axios.get('/api/auth/instagram/accounts', {
             headers: { Authorization: `Bearer ${authToken}` }
           });
 
@@ -2424,7 +2424,7 @@ const AccountsSettings = ({ onNotify }) => {
 
           // Fetch LinkedIn accounts
           try {
-            const linkedInRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/linkedin/status`, {
+            const linkedInRes = await axios.get('/api/auth/linkedin/status', {
               headers: { Authorization: `Bearer ${authToken}` }
             });
 
@@ -2446,7 +2446,7 @@ const AccountsSettings = ({ onNotify }) => {
 
           // Fetch LinkedIn Business accounts
           try {
-            const linkedInBusinessRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/linkedin-business/status`, {
+            const linkedInBusinessRes = await axios.get('/api/auth/linkedin-business/status', {
               headers: { Authorization: `Bearer ${authToken}` }
             });
 
@@ -2468,7 +2468,7 @@ const AccountsSettings = ({ onNotify }) => {
 
           // Fetch YouTube accounts
           try {
-            const youtubeRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/youtube/status`, {
+            const youtubeRes = await axios.get('/api/auth/youtube/status', {
               headers: { Authorization: `Bearer ${authToken}` }
             });
 
@@ -2477,7 +2477,7 @@ const AccountsSettings = ({ onNotify }) => {
             const ytConnected = ytStatus?.connected;
 
             if (ytConnected) {
-              const channelRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/youtube/channel`, {
+              const channelRes = await axios.get('/api/auth/youtube/channel', {
                 headers: { Authorization: `Bearer ${authToken}` }
               });
 
@@ -2509,7 +2509,7 @@ const AccountsSettings = ({ onNotify }) => {
 
           // Fetch Twitter/X accounts
           try {
-            const twitterRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/x/status`, {
+            const twitterRes = await axios.get('/api/auth/x/status', {
               headers: { Authorization: `Bearer ${authToken}` }
             });
 

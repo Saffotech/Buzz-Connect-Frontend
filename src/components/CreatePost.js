@@ -1206,7 +1206,7 @@ const handleSubmit = async (e) => {
       console.log('📤 Publishing post with ID:', postId);
 
       const publishResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
+        '/api/posts/' + postId + '/publish',
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

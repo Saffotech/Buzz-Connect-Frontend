@@ -84,7 +84,7 @@ const Layout = ({ children }) => {
     setNotificationsError(null);
 
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications`, {
+      const response = await axios.get('/api/notifications', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -121,7 +121,7 @@ const Layout = ({ children }) => {
   const markAsRead = async (id) => {
     try {
       await axios.patch(
-        `${process.env.REACT_APP_API_URL}/api/notifications/${id}/read`,
+        `/api/notifications/${id}/read`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -156,7 +156,7 @@ const Layout = ({ children }) => {
   const markAllAsRead = async () => {
     try {
       await axios.patch(
-        `${process.env.REACT_APP_API_URL}/api/notifications/read-all`,
+        '/api/notifications/read-all',
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -185,7 +185,7 @@ const Layout = ({ children }) => {
 
     try {
       await axios.delete(
-        `${process.env.REACT_APP_API_URL}/api/notifications/${id}`,
+        `/api/notifications/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -383,7 +383,7 @@ const Layout = ({ children }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
+        const res = await axios.get('/api/users/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data.success) {
@@ -419,7 +419,7 @@ const Layout = ({ children }) => {
       }
 
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/feedback`,
+        '/api/feedback',
         formData,
         {
           headers: {

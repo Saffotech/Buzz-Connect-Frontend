@@ -27,7 +27,7 @@ const ProfileSettings = ({ onNotify }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/profile`, {
+        const res = await axios.get('/api/users/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -59,7 +59,7 @@ const ProfileSettings = ({ onNotify }) => {
     try {
       // Call API to verify current password
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/users/verify-password`,
+        '/api/users/verify-password',
         { currentPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -100,7 +100,7 @@ const ProfileSettings = ({ onNotify }) => {
     setUpdatingPassword(true);
     try {
       const res = await axios.put(
-        `${process.env.REACT_APP_API_URL}/api/users/update-password`,
+        '/api/users/update-password',
         {
           currentPassword,
           newPassword
