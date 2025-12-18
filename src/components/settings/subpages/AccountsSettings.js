@@ -10,6 +10,7 @@ import '../../../assets/styles/AccountsSettings.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquareXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
+import apiClient from '../../../utils/api';
 
 
 // Confirmation Modal Component
@@ -2817,9 +2818,7 @@ const AccountsSettings = ({ onNotify }) => {
       const base = rawApi.replace(/\/+$/, '');
       const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
 
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` }
-      });
+      const res = await apiClient.getCurrentUser();
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
@@ -2854,9 +2853,7 @@ const AccountsSettings = ({ onNotify }) => {
       const base = rawApi.replace(/\/+$/, '');
       const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
 
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` }
-      });
+      const res = await apiClient.getCurrentUser();
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
@@ -2901,9 +2898,7 @@ const AccountsSettings = ({ onNotify }) => {
       const base = rawApi.replace(/\/+$/, '');
       const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
 
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` }
-      });
+      const res = await apiClient.getCurrentUser();
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
@@ -2948,9 +2943,7 @@ const AccountsSettings = ({ onNotify }) => {
       const base = rawApi.replace(/\/+$/, '');
       const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
 
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` }
-      });
+      const res = await apiClient.getCurrentUser();
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;
@@ -2992,9 +2985,7 @@ const AccountsSettings = ({ onNotify }) => {
       const base = rawApi.replace(/\/+$/, '');
       const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
 
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` }
-      });
+      const res = await apiClient.getCurrentUser();
 
       if (res.data.success && res.data.data) {
         const freshUser = res.data.data;

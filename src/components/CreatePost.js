@@ -43,6 +43,7 @@ import { PLATFORMS, PLATFORM_CONFIGS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '.
 import './CreatePost.css';
 import Loader from '../components/common/Loader';
 import axios from 'axios';
+import apiClient from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -623,9 +624,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const fetchUserProfile = async () => {
     setLoadingProfile(true);
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.getCurrentUser();
 
       if (response.data.success) {
         // Get the raw data from API
