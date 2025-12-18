@@ -1,5 +1,9 @@
 // API Configuration and Client
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Normalize base URL once (remove trailing slashes)
+const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(
+  /\/+$/,
+  ''
+);
 
 // Log API configuration on load
 console.log('API Configuration:', {
@@ -12,6 +16,24 @@ class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
     console.log('ApiClient initialized with baseURL:', this.baseURL);
+  }
+
+  // Helper to safely build full URL without double /api or extra slashes
+  buildUrl(endpoint = '') {
+    const base = this.baseURL.replace(/\/+$/, '');
+    let normalizedEndpoint = endpoint || '';
+
+    // Ensure endpoint has a single leading slash
+    if (!normalizedEndpoint.startsWith('/')) {
+      normalizedEndpoint = `/${normalizedEndpoint}`;
+    }
+
+    // Prevent /api duplication: if base already ends with /api and endpoint starts with /api/
+    if (base.endsWith('/api') && normalizedEndpoint.startsWith('/api/')) {
+      normalizedEndpoint = normalizedEndpoint.replace(/^\/api/, '');
+    }
+
+    return `${base}${normalizedEndpoint}`;
   }
 
   // Get auth token from localStorage
@@ -30,7 +52,7 @@ class ApiClient {
 
   // Generic request method
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
+    const url = this.buildUrl(endpoint);
     const config = {
       headers: this.getAuthHeaders(),
       ...options
@@ -72,7 +94,7 @@ class ApiClient {
         // If JSON parsing fails, create a generic error response
         const text = await response.text();
         console.error('Response text:', text);
-        data = { 
+        data = {
           success: false,
           message: `HTTP error! status: ${response.status}`,
           error: `HTTP error! status: ${response.status}`
@@ -80,28 +102,34 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        let errorMessage = data.message || data.error || data.detail || `HTTP error! status: ${response.status}`;
-        
+        let errorMessage =
+          data.message || data.error || data.detail || `HTTP error! status: ${response.status}`;
+
         // ✅ Better error messages for 401 (authentication) errors
         if (response.status === 401) {
           if (errorMessage.includes('token') || errorMessage.includes('authorization')) {
             // Check if it's Instagram-specific
             if (endpoint.includes('instagram') || endpoint.includes('post')) {
-              errorMessage = 'Instagram account authentication failed. Please reconnect your Instagram account in Settings → Accounts.';
+              errorMessage =
+                'Instagram account authentication failed. Please reconnect your Instagram account in Settings → Accounts.';
             } else {
               errorMessage = 'Authentication failed. Please log in again.';
             }
           }
         }
-        
+
         // ✅ Better error messages for Instagram posting errors
         if (data.error && typeof data.error === 'string') {
-          if (data.error.includes('Missing Instagram') || data.error.includes('Instagram account is missing')) {
-            errorMessage = 'Instagram account is missing access token. Please reconnect your Instagram account in Settings → Accounts. ' +
+          if (
+            data.error.includes('Missing Instagram') ||
+            data.error.includes('Instagram account is missing')
+          ) {
+            errorMessage =
+              'Instagram account is missing access token. Please reconnect your Instagram account in Settings → Accounts. ' +
               'Make sure your Instagram Business account is linked to your Facebook Page.';
           }
         }
-        
+
         console.error('API Error:', {
           status: response.status,
           message: errorMessage,
@@ -118,12 +146,14 @@ class ApiClient {
         stack: error.stack,
         name: error.name
       });
-      
+
       // Handle network errors (CORS, connection refused, etc.)
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        throw new Error('Unable to connect to server. Please check if the backend is running on http://localhost:5000');
+        throw new Error(
+          'Unable to connect to server. Please check if the backend is running on http://localhost:5000'
+        );
       }
-      
+
       throw error;
     }
   }
@@ -203,7 +233,8 @@ class ApiClient {
     }
 
     const token = this.getAuthToken();
-    return fetch(`${this.baseURL}/api/media/upload`, {
+    const url = this.buildUrl('/api/media/upload');
+    return fetch(url, {
       method: 'POST',
       headers: {
         ...(token && { Authorization: `Bearer ${token}` })
@@ -368,7 +399,8 @@ async validateImageDimensions(file, platform, type) {
   formData.append('type', type);
 
   const token = this.getAuthToken();
-  const response = await fetch(`${this.baseURL}/api/media/validate-dimensions`, {
+  const url = this.buildUrl('/api/media/validate-dimensions');
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       ...(token && { Authorization: `Bearer ${token}` })
@@ -390,7 +422,8 @@ async uploadAndResize(file, platform, type) {
   formData.append('type', type);
 
   const token = this.getAuthToken();
-  const response = await fetch(`${this.baseURL}/api/media/upload/resize`, {
+  const url = this.buildUrl('/api/media/upload/resize');
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       ...(token && { Authorization: `Bearer ${token}` })
