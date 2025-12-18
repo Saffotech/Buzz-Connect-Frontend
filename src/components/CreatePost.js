@@ -38,7 +38,6 @@ import {
   Maximize2,
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
-import apiClient from '../utils/api';
 import { PLATFORMS, PLATFORM_CONFIGS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import './CreatePost.css';
 import Loader from '../components/common/Loader';
