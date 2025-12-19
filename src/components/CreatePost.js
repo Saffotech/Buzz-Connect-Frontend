@@ -673,19 +673,35 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     ];
 
     return allPlatforms.map(platform => {
-      // First check if there are platform-specific accounts (most reliable)
-      const hasAccountsForPlatform = userProfile?.connectedAccounts?.some(acc =>
+      // Get all accounts for this platform
+      const platformAccounts = userProfile?.connectedAccounts?.filter(acc => 
         acc.platform === platform.id && acc.connected !== false
-      );
+      ) || [];
+      
+      // First check if there are platform-specific accounts (most reliable)
+      const hasAccountsForPlatform = platformAccounts.length > 0;
+      
       // Then check if the platform is in the connectedPlatforms array
       const isInConnectedPlatforms = userProfile?.connectedPlatforms?.includes(platform.id);
 
       // A platform is connected if either condition is true
       const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
+      
+      // Debug logging for Facebook specifically
+      if (platform.id === 'facebook' && userProfile) {
+        console.log('🔍 Facebook Platform Check:', {
+          platformAccounts: platformAccounts.length,
+          hasAccountsForPlatform,
+          isInConnectedPlatforms,
+          isConnected,
+          allConnectedAccounts: userProfile.connectedAccounts?.length || 0
+        });
+      }
+      
       return {
         ...platform,
         connected: isConnected,
-        accounts: userProfile?.connectedAccounts?.filter(acc => acc.platform === platform.id) || []
+        accounts: platformAccounts
       };
     });
   };
@@ -872,7 +888,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   const handlePlatformToggle = (platformId) => {
     const platform = platforms.find(p => p.id === platformId);
-    if (!platform || !platform.connected) return;
+    // Allow toggle if platform is connected OR has accounts available
+    const hasAccounts = platform?.accounts && platform.accounts.length > 0;
+    if (!platform || (!platform.connected && !hasAccounts)) return;
 
     setPostData(prev => {
       const newPlatforms = prev.platforms.includes(platformId)
@@ -2151,6 +2169,10 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                       const isSelected = postData.platforms.includes(platform.id);
                       const selectedAccountsCount = getSelectedAccountsCount(platform.id);
 
+                      // Check if platform has accounts (more reliable than just connected flag)
+                      const hasAccounts = platform.accounts && platform.accounts.length > 0;
+                      const canSelect = platform.connected || hasAccounts;
+
                       return (
                         <div key={platform.id} className="platform-container" >
                           <button
@@ -2158,10 +2180,10 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                             onMouseEnter={() => setHoveredPlatform(platform.id)}
                             onMouseLeave={() => setHoveredPlatform(null)}
                             className={`platform-btn
-                               ${!platform.connected ? 'not-connected-btn' : ''}
+                               ${!canSelect ? 'not-connected-btn' : ''}
                                ${selectedAccountsCount > 0 ? 'selectedx' : ''}`}
                             onClick={(e) =>
-                              platform.connected
+                              canSelect
                                 ? handlePlatformToggle(platform.id)
                                 : handleConnectClick(e)
                             }
@@ -2177,15 +2199,15 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                             />
                             <span style={{ color: hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000" }} >{platform.name}</span>
                             <span className="connect-status">
-                              {platform.connected ?
-                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')
+                              {canSelect ?
+                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : (hasAccounts ? `${platform.accounts.length} account${platform.accounts.length > 1 ? 's' : ''} available` : 'Connected'))
                                 : 'Connect Now'
                               }
                             </span>
                           </button>
 
                           {/* Multi-Account Selection */}
-                          {isSelected && platform.connected && platform.accounts && platform.accounts.length > 0 && (
+                          {isSelected && canSelect && platform.accounts && platform.accounts.length > 0 && (
                             <div className="account-multi-selector">
                               <label className="account-label">
                                 Choose Profile{platform.accounts.length > 1 ? 's' : ''}:
@@ -2807,6 +2829,10 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                         const isSelected = postData.platforms.includes(platform.id);
                         const selectedAccountsCount = getSelectedAccountsCount(platform.id);
 
+                        // Check if platform has accounts (more reliable than just connected flag)
+                        const hasAccounts = platform.accounts && platform.accounts.length > 0;
+                        const canSelect = platform.connected || hasAccounts;
+
                         return (
                           <div key={platform.id} className="platform-container" >
                             <button
@@ -2814,10 +2840,10 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                               onMouseEnter={() => setHoveredPlatform(platform.id)}
                               onMouseLeave={() => setHoveredPlatform(null)}
                               className={`platform-btn
-                                 ${!platform.connected ? 'not-connected-btn' : ''}
+                                 ${!canSelect ? 'not-connected-btn' : ''}
                                  ${selectedAccountsCount > 0 ? 'selectedx' : ''}`}
                               onClick={(e) =>
-                                platform.connected
+                                canSelect
                                   ? handlePlatformToggle(platform.id)
                                   : handleConnectClick(e)
                               }
@@ -2833,15 +2859,15 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                               />
                               <span style={{ color: hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000" }} >{platform.name}</span>
                               <span className="connect-status">
-                                {platform.connected ?
-                                  (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')
+                                {canSelect ?
+                                  (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : (hasAccounts ? `${platform.accounts.length} account${platform.accounts.length > 1 ? 's' : ''} available` : 'Connected'))
                                   : 'Connect Now'
                                 }
                               </span>
                             </button>
 
                             {/* Multi-Account Selection */}
-                            {isSelected && platform.connected && platform.accounts && platform.accounts.length > 0 && (
+                            {isSelected && canSelect && platform.accounts && platform.accounts.length > 0 && (
                               <div className="account-multi-selector">
                                 <label className="account-label">
                                   Choose Profile{platform.accounts.length > 1 ? 's' : ''}:
