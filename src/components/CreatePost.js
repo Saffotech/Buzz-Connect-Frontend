@@ -1985,7 +1985,7 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
 
               {/* Main Form Column - ALWAYS visible */}
               {postData.images && postData.images.length > 0 ? (
-                <>
+                <div className="two-column-layout">
                   {/* Left Column - Media Preview */}
                   <div className="media-preview-column">
                     {/* Enhanced Media Previews with Carousel Integration */}
@@ -2794,7 +2794,7 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                   </div>
                     </div>
                   </div>
-                </>
+                </div>
               ) : (
                 /* Single Column Layout - No Media */
                 <div className="form-column">
@@ -3367,7 +3367,6 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                   </div>
                 </div>
               )}
-              </div>
             </div>
           )}
 
