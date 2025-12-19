@@ -220,6 +220,14 @@
   grid-template-columns: 400px 1fr;
 }
 
+.compose-tab.with-media {
+  grid-template-columns: 1fr 400px;
+}
+
+.compose-tab.with-ai.with-media {
+  grid-template-columns: 400px 1fr 400px;
+}
+
 .preview-tab {
   flex: 1;
   padding: 1.5rem;
@@ -239,6 +247,13 @@
   padding: 1.5rem;
   overflow-y: auto;
   min-height: 0;
+}
+
+.media-preview-column {
+  padding: 1.5rem;
+  overflow-y: auto;
+  min-height: 0;
+  border-right: 1px solid #e2e8f0;
 }
 
 .form-section {

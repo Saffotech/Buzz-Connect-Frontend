@@ -690,7 +690,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     });
   };
 
-  const platforms = userProfile ? getAvailablePlatforms() : [];
+  // Always show all platforms, even if userProfile hasn't loaded yet
+  // getAvailablePlatforms() handles null userProfile with optional chaining
+  const platforms = getAvailablePlatforms();
 
   // Images are now required for all platforms
   const areImagesRequired = () => {
@@ -1825,7 +1827,7 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
           )}
 
           {activeTab === 'compose' && (
-            <div className={`compose-tab ${showAISuggestions ? 'with-ai' : ''}`}>
+            <div className={`compose-tab ${showAISuggestions ? 'with-ai' : ''} ${postData.images && postData.images.length > 0 ? 'with-media' : ''}`}>
               {/* AI Suggestions Column */}
               {showAISuggestions && (
                 <div className="ai-suggestions-column">
@@ -1982,10 +1984,167 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
               )}
 
               {/* Main Form Column - ALWAYS visible */}
-              <div className="form-column">
-                {/* Platform Selection */}
-                <div className="form-section">
-                  <label className="section-label">Select Platforms</label>
+              {postData.images && postData.images.length > 0 ? (
+                <>
+                  {/* Left Column - Media Preview */}
+                  <div className="media-preview-column">
+                    {/* Enhanced Media Previews with Carousel Integration */}
+                    {postData.images && postData.images.length > 0 && (
+                      <div className="uploaded-media-section">
+                        <div className="media-section-header">
+                          <h4>Selected Media ({postData.images.length})</h4>
+                          <div className="media-header-actions">
+                            {postData.images.length > 1 && (
+                              <button
+                                type="button"
+                                className="view-carousel-header-btn"
+                                onClick={() => openCarousel(0)}
+                                title="View in carousel"
+                              >
+                                <GalleryHorizontal size={16} />
+                                View Carousel
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="clear-all-media"
+                              onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
+                              title="Remove all media"
+                            >
+                              Clear All
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="media-preview-grid">
+                          {postData.images.map((mediaItem, index) => {
+                            const MediaIcon = getMediaTypeIcon(mediaItem);
+                            const isVideo = mediaItem.fileType === 'video' || mediaItem.url?.includes('video');
+                            const displayName = mediaItem.displayName || mediaItem.originalName || mediaItem.altText || `Media ${index + 1}`;
+
+                            return (
+                              <div key={index} className="media-preview-item">
+                                <div className="media-preview-container">
+                                  <div
+                                    className="media-preview-wrapper"
+                                    onClick={() => openCarousel(index)}
+                                    title="Click to view in carousel"
+                                  >
+                                    {isVideo ? (
+                                      <div className="video-preview">
+                                        <video
+                                          src={mediaItem.url}
+                                          className="media-preview-content"
+                                          muted
+                                          playsInline
+                                        />
+                                        <div className="video-overlay">
+                                          <Play size={24} className="play-icon" />
+                                        </div>
+                                        <div className="preview-overlay">
+                                          <Eye size={20} />
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="image-preview">
+                                        <img
+                                          src={mediaItem.url}
+                                          alt={mediaItem.altText || displayName}
+                                          className="media-preview-content"
+                                          onError={(e) => {
+                                            console.error('Failed to load image preview:', mediaItem.url);
+                                            e.target.style.display = 'none';
+                                          }}
+                                        />
+                                        <div className="preview-overlay">
+                                          <Eye size={20} />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Media Controls */}
+                                  <div className="media-controls">
+                                    <button
+                                      type="button"
+                                      className="media-control-btn view-btn"
+                                      onClick={() => openCarousel(index)}
+                                      title="View in carousel"
+                                    >
+                                      <Eye size={14} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="media-control-btn remove-btn"
+                                      onClick={() => removeMedia(index)}
+                                      title={`Remove ${displayName}`}
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+
+                                  {/* Position Indicator for Multiple Images */}
+                                  {postData.images.length > 1 && (
+                                    <div className="position-indicator">
+                                      {index + 1}
+                                    </div>
+                                  )}
+
+                                  {/* Loading Overlay for uploading files */}
+                                  {mediaItem.isLocal && uploadingFiles && (
+                                    <div className="upload-overlay">
+                                      <Loader size={20} />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Media Info */}
+                                <div className="media-preview-info">
+                                  <div className="media-name" title={displayName}>
+                                    <MediaIcon size={14} />
+                                    <span>
+                                      {displayName.length > 15
+                                        ? `${displayName.substring(0, 15)}...`
+                                        : displayName
+                                      }
+                                    </span>
+                                  </div>
+                                  {mediaItem.size && (
+                                    <div className="media-size">
+                                      {formatFileSize(mediaItem.size)}
+                                    </div>
+                                  )}
+                                  {mediaItem.dimensions && (
+                                    <div className="media-dimensions">
+                                      {mediaItem.dimensions.width}×{mediaItem.dimensions.height}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Carousel Quick Navigation */}
+                        {postData.images.length > 3 && (
+                          <div className="carousel-quick-nav">
+                            <button
+                              className="quick-nav-btn"
+                              onClick={() => openCarousel(0)}
+                            >
+                              <GalleryHorizontal size={16} />
+                              View All {postData.images.length} Media Files
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column - Platform Selection and Form */}
+                  <div className="form-column">
+                    {/* Platform Selection */}
+                    <div className="form-section">
+                      <label className="section-label">Select Platforms</label>
                   <div className="platforms-grid">
                     {platforms.map((platform) => {
                       const Icon = platform.icon;
@@ -2416,8 +2575,76 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                   )}
                 </div>
 
-                {/* Scheduler Section */}
-                <div className="form-section">
+                    {/* Content */}
+                    <div className="form-section">
+                      <label className="section-label">
+                        Content
+                        <span className={`char-count ${charCount.remaining < 0 ? 'over-limit' : ''}`}>
+                          {charCount.current}/{charCount.max}
+                        </span>
+                      </label>
+                      <textarea
+                        value={postData.content}
+                        onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
+                        placeholder="What's happening? Share your thoughts..."
+                        className="content-textarea"
+                        rows={6}
+                        required
+                      />
+                    </div>
+
+                    {/* Hashtags and Mentions */}
+                    <div className="form-row">
+                      <div className="form-section">
+                        <label className="section-label">
+                          <Hash size={16} />
+                          Hashtags
+                          <button
+                            type="button"
+                            className="ai-hashtag-btn"
+                            onClick={generateHashtags}
+                            disabled={isGenerating || !postData.content.trim()}
+                            title="Generate hashtags with AI"
+                          >
+                            {isGenerating ? <></> : <Sparkles size={14} />}
+                            AI
+                          </button>
+                        </label>
+                        <input
+                          type="text"
+                          value={postData.hashtags}
+                          onChange={(e) => setPostData(prev => ({ ...prev, hashtags: e.target.value }))}
+                          placeholder="#marketing #socialmedia #content"
+                          className="form-input"
+                        />
+                      </div>
+                      <div className="form-section">
+                        <label className="section-label">
+                          <AtSign size={16} />
+                          Mentions
+                          <button
+                            type="button"
+                            className="ai-hashtag-btn"
+                            onClick={generateMentions}
+                            disabled={isGenerating || !postData.content.trim()}
+                            title="Generate mentions with AI"
+                          >
+                            {isGenerating ? <></> : <Sparkles size={14} />}
+                            AI
+                          </button>
+                        </label>
+                        <input
+                          type="text"
+                          value={postData.mentions}
+                          onChange={(e) => setPostData(prev => ({ ...prev, mentions: e.target.value }))}
+                          placeholder="@username @brand"
+                          className="form-input"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Scheduler Section */}
+                    <div className="form-section">
                   <label className="section-label">
                     <Clock size={16} />
                     Scheduler
@@ -2565,8 +2792,581 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                       </div>
                     )}
                   </div>
-                </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Single Column Layout - No Media */
+                <div className="form-column">
+                  {/* Platform Selection */}
+                  <div className="form-section">
+                    <label className="section-label">Select Platforms</label>
+                    <div className="platforms-grid">
+                      {platforms.map((platform) => {
+                        const Icon = platform.icon;
+                        const isSelected = postData.platforms.includes(platform.id);
+                        const selectedAccountsCount = getSelectedAccountsCount(platform.id);
 
+                        return (
+                          <div key={platform.id} className="platform-container" >
+                            <button
+                              type="button"
+                              onMouseEnter={() => setHoveredPlatform(platform.id)}
+                              onMouseLeave={() => setHoveredPlatform(null)}
+                              className={`platform-btn
+                                 ${!platform.connected ? 'not-connected-btn' : ''}
+                                 ${selectedAccountsCount > 0 ? 'selectedx' : ''}`}
+                              onClick={(e) =>
+                                platform.connected
+                                  ? handlePlatformToggle(platform.id)
+                                  : handleConnectClick(e)
+                              }
+                              style={{ '--platform-color': platform.color }}
+                            >
+                              <Icon
+                                size={20}
+                                color={hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000"}
+                                style={{
+                                  transition: "transform 0.2s ease, color 0.2s ease",
+                                  transform: hoveredPlatform === platform.id ? "scale(1.1)" : "scale(1)"
+                                }}
+                              />
+                              <span style={{ color: hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000" }} >{platform.name}</span>
+                              <span className="connect-status">
+                                {platform.connected ?
+                                  (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')
+                                  : 'Connect Now'
+                                }
+                              </span>
+                            </button>
+
+                            {/* Multi-Account Selection */}
+                            {isSelected && platform.connected && platform.accounts && platform.accounts.length > 0 && (
+                              <div className="account-multi-selector">
+                                <label className="account-label">
+                                  Choose Profile{platform.accounts.length > 1 ? 's' : ''}:
+                                  <span className="account-count">
+                                    ({selectedAccountsCount} of {platform.accounts.length} selected)
+                                  </span>
+                                </label>
+                                <div className="accounts-checkbox-list">
+                                  {platform.accounts.map((account) => {
+                                    const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId;
+
+                                    if (!accountId) {
+                                      console.warn('Account missing ID:', account);
+                                      return null;
+                                    }
+
+                                    const isChecked = isAccountSelected(platform.id, accountId);
+
+                                    const accountName = platform.id === 'linkedin' && account.accountType === 'company'
+                                      ? `${account.username || account.companyName || accountId} (Company Page)`
+                                      : account.username || account.name || account.displayName || accountId;
+
+                                    return (
+                                      <label key={`${platform.id}-${accountId}`} className="account-checkbox-item">
+                                        <input
+                                          type="checkbox"
+                                          checked={isChecked}
+                                          onChange={(e) => handleAccountSelection(platform.id, accountId, e.target.checked)}
+                                          className="account-checkbox"
+                                        />
+                                        <span className="checkbox-custom"></span>
+                                        <span className="account-name">
+                                          {accountName}
+                                          {account.pageId && account.pageId !== accountId && (
+                                            <span className="account-id"> (ID: {account.pageId})</span>
+                                          )}
+                                        </span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+
+                                {platform.accounts.length > 1 && (
+                                  <div className="account-selection-controls">
+                                    <button
+                                      type="button"
+                                      className="select-all-btn"
+                                      onClick={() => {
+                                        platform.accounts.forEach(account => {
+                                          const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId;
+                                          if (accountId && !isAccountSelected(platform.id, accountId)) {
+                                            handleAccountSelection(platform.id, accountId, true);
+                                          }
+                                        });
+                                      }}
+                                      disabled={selectedAccountsCount === platform.accounts.length}
+                                    >
+                                      Select All
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="deselect-all-btn"
+                                      onClick={() => {
+                                        setPostData(prev => ({
+                                          ...prev,
+                                          selectedAccounts: {
+                                            ...prev.selectedAccounts,
+                                            [platform.id]: []
+                                          }
+                                        }));
+                                      }}
+                                      disabled={selectedAccountsCount === 0}
+                                    >
+                                      Deselect All
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="form-section">
+                    <label className="section-label">
+                      Content
+                      <span className={`char-count ${charCount.remaining < 0 ? 'over-limit' : ''}`}>
+                        {charCount.current}/{charCount.max}
+                      </span>
+                    </label>
+                    <textarea
+                      value={postData.content}
+                      onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
+                      placeholder="What's happening? Share your thoughts..."
+                      className="content-textarea"
+                      rows={6}
+                      required
+                    />
+                  </div>
+
+                  {/* Hashtags and Mentions */}
+                  <div className="form-row">
+                    <div className="form-section">
+                      <label className="section-label">
+                        <Hash size={16} />
+                        Hashtags
+                        <button
+                          type="button"
+                          className="ai-hashtag-btn"
+                          onClick={generateHashtags}
+                          disabled={isGenerating || !postData.content.trim()}
+                          title="Generate hashtags with AI"
+                        >
+                          {isGenerating ? <></> : <Sparkles size={14} />}
+                          AI
+                        </button>
+                      </label>
+                      <input
+                        type="text"
+                        value={postData.hashtags}
+                        onChange={(e) => setPostData(prev => ({ ...prev, hashtags: e.target.value }))}
+                        placeholder="#marketing #socialmedia #content"
+                        className="form-input"
+                      />
+                    </div>
+                    <div className="form-section">
+                      <label className="section-label">
+                        <AtSign size={16} />
+                        Mentions
+                        <button
+                          type="button"
+                          className="ai-hashtag-btn"
+                          onClick={generateMentions}
+                          disabled={isGenerating || !postData.content.trim()}
+                          title="Generate mentions with AI"
+                        >
+                          {isGenerating ? <></> : <Sparkles size={14} />}
+                          AI
+                        </button>
+                      </label>
+                      <input
+                        type="text"
+                        value={postData.mentions}
+                        onChange={(e) => setPostData(prev => ({ ...prev, mentions: e.target.value }))}
+                        placeholder="@username @brand"
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Enhanced Media Upload Section with Carousel Support */}
+                  <div className="form-section">
+                    <div className="headz">
+                      <label className="section-label">
+                        <Image size={16} />
+                        Media (Images & Videos)
+                      </label>
+
+                      <label className="section-label px" onClick={() => setShowMediaLibrary(true)}>
+                        <FolderOpen size={16} />
+                        Import from Media Library
+                      </label>
+                    </div>
+                    <div className="media-type-selector">
+  <label className="section-label">Media Type:</label>
+  <div className="media-type-options">
+    {postData.platforms.length > 0 && DIMENSIONS[postData.platforms[0]] && 
+      Object.keys(DIMENSIONS[postData.platforms[0]]).map(type => (
+        <button
+          key={type}
+          type="button"
+          className={`type-option ${mediaType === type ? 'active' : ''}`}
+          onClick={() => setMediaType(type)}
+        >
+          {type.charAt(0).toUpperCase() + type.slice(1)}
+          {type !== 'profile' && (
+            <small>
+              {DIMENSIONS[postData.platforms[0]][type][0]} x {DIMENSIONS[postData.platforms[0]][type][1]}
+            </small>
+          )}
+        </button>
+      ))
+    }
+  </div>
+</div>
+
+                    {/* Upload Options Grid */}
+                    <div className="media-upload-container">
+                      <div className="upload-options-grid">
+                        {/* Upload New Files with Drag & Drop */}
+                        <div className="upload-option">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*,video/*"
+                            onChange={handleFileInputChange}
+                            className="file-input"
+                            id="media-upload"
+                          />
+                          <div
+                            className={`upload-area ${dragActive ? 'drag-active' : ''} ${uploadingFiles ? 'uploading' : ''}`}
+                            onDragEnter={handleDrag}
+                            onDragLeave={handleDrag}
+                            onDragOver={handleDrag}
+                            onDrop={handleDrop}
+                            onClick={handleUploadAreaClick}
+                          >
+                            {uploadingFiles ? (
+                              <>
+                                <Loader className="spinner" size={32} />
+                                <span className="upload-title">Uploading media...</span>
+                                <small>Please wait while we upload your files</small>
+                              </>
+                            ) : (
+                              <>
+                                <Upload size={32} />
+                                <span className="upload-title">
+                                  {dragActive ? 'Drop files here' : 'Upload Media Files'}
+                                </span>
+                                <small className="upload-subtitle">
+                                  Drag & drop or click to select
+                                </small>
+                                <div className="upload-specs">
+                                  <span className='upidsc'><Image size={16} />  PNG, JPG, GIF up to 50MB</span>
+                                  <span className='upidsc'><Video size={16} />  MP4, MOV, AVI up to 250MB</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Enhanced Media Previews with Carousel Integration */}
+                    {postData.images && postData.images.length > 0 && (
+                      <div className="uploaded-media-section">
+                        <div className="media-section-header">
+                          <h4>Selected Media ({postData.images.length})</h4>
+                          <div className="media-header-actions">
+                            {postData.images.length > 1 && (
+                              <button
+                                type="button"
+                                className="view-carousel-header-btn"
+                                onClick={() => openCarousel(0)}
+                                title="View in carousel"
+                              >
+                                <GalleryHorizontal size={16} />
+                                View Carousel
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="clear-all-media"
+                              onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
+                              title="Remove all media"
+                            >
+                              Clear All
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="media-preview-grid">
+                          {postData.images.map((mediaItem, index) => {
+                            const MediaIcon = getMediaTypeIcon(mediaItem);
+                            const isVideo = mediaItem.fileType === 'video' || mediaItem.url?.includes('video');
+                            const displayName = mediaItem.displayName || mediaItem.originalName || mediaItem.altText || `Media ${index + 1}`;
+
+                            return (
+                              <div key={index} className="media-preview-item">
+                                <div className="media-preview-container">
+                                  <div
+                                    className="media-preview-wrapper"
+                                    onClick={() => openCarousel(index)}
+                                    title="Click to view in carousel"
+                                  >
+                                    {isVideo ? (
+                                      <div className="video-preview">
+                                        <video
+                                          src={mediaItem.url}
+                                          className="media-preview-content"
+                                          muted
+                                          playsInline
+                                        />
+                                        <div className="video-overlay">
+                                          <Play size={24} className="play-icon" />
+                                        </div>
+                                        <div className="preview-overlay">
+                                          <Eye size={20} />
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="image-preview">
+                                        <img
+                                          src={mediaItem.url}
+                                          alt={mediaItem.altText || displayName}
+                                          className="media-preview-content"
+                                          onError={(e) => {
+                                            console.error('Failed to load image preview:', mediaItem.url);
+                                            e.target.style.display = 'none';
+                                          }}
+                                        />
+                                        <div className="preview-overlay">
+                                          <Eye size={20} />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Media Controls */}
+                                  <div className="media-controls">
+                                    <button
+                                      type="button"
+                                      className="media-control-btn view-btn"
+                                      onClick={() => openCarousel(index)}
+                                      title="View in carousel"
+                                    >
+                                      <Eye size={14} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="media-control-btn remove-btn"
+                                      onClick={() => removeMedia(index)}
+                                      title={`Remove ${displayName}`}
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+
+                                  {/* Position Indicator for Multiple Images */}
+                                  {postData.images.length > 1 && (
+                                    <div className="position-indicator">
+                                      {index + 1}
+                                    </div>
+                                  )}
+
+                                  {/* Loading Overlay for uploading files */}
+                                  {mediaItem.isLocal && uploadingFiles && (
+                                    <div className="upload-overlay">
+                                      <Loader size={20} />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Media Info */}
+                                <div className="media-preview-info">
+                                  <div className="media-name" title={displayName}>
+                                    <MediaIcon size={14} />
+                                    <span>
+                                      {displayName.length > 15
+                                        ? `${displayName.substring(0, 15)}...`
+                                        : displayName
+                                      }
+                                    </span>
+                                  </div>
+                                  {mediaItem.size && (
+                                    <div className="media-size">
+                                      {formatFileSize(mediaItem.size)}
+                                    </div>
+                                  )}
+                                  {mediaItem.dimensions && (
+                                    <div className="media-dimensions">
+                                      {mediaItem.dimensions.width}×{mediaItem.dimensions.height}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Carousel Quick Navigation */}
+                        {postData.images.length > 3 && (
+                          <div className="carousel-quick-nav">
+                            <button
+                              className="quick-nav-btn"
+                              onClick={() => openCarousel(0)}
+                            >
+                              <GalleryHorizontal size={16} />
+                              View All {postData.images.length} Media Files
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Scheduler Section */}
+                  <div className="form-section">
+                    <label className="section-label">
+                      <Clock size={16} />
+                      Scheduler
+                    </label>
+
+                    <div className="scheduler-options">
+                      <div className="radio-group">
+                        <label className={`radio-option ${!isScheduled ? 'active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="scheduler"
+                            value="now"
+                            checked={!isScheduled}
+                            onChange={() => {
+                              setIsScheduled(false);
+                              setPostData(prev => ({
+                                ...prev,
+                                scheduledDate: '',
+                                scheduledTime: ''
+                              }));
+                            }}
+                          />
+                          <span>Publish Now</span>
+                        </label>
+                        <label className={`radio-option ${isScheduled ? 'active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="scheduler"
+                            value="later"
+                            checked={isScheduled}
+                            onChange={() => setIsScheduled(true)}
+                          />
+                          <span>Schedule for Later</span>
+                        </label>
+                      </div>
+
+                      {isScheduled && (
+                        <div className="schedule-inputs">
+                          <div className="input-group">
+                            <label>Select date</label>
+                            <input
+                              type="date"
+                              value={postData.scheduledDate}
+                              onChange={(e) => {
+                                const selectedDate = e.target.value;
+                                setPostData(prev => ({ ...prev, scheduledDate: selectedDate }));
+                                
+                                // Validate date
+                                const validation = validateScheduleDateTime(selectedDate, postData.scheduledTime);
+                                if (!validation.isValid) {
+                                  setError(validation.error);
+                                } else {
+                                  setError(null);
+                                }
+                              }}
+                              min={new Date().toISOString().split('T')[0]}
+                              required
+                            />
+                          </div>
+
+                          <div className="input-group">
+                            <div className="time-input-container">
+                              <div className="time-input-header">
+                                <span className="time-input-label">Select time</span>
+                                <Clock size={16} className="time-input-icon" />
+                              </div>
+                              <div key={postData.scheduledTime} className="time-picker-12hr">
+                                <select
+                                  value={currentTime12.hour}
+                                  onChange={(e) => {
+                                    const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
+                                    const newTime = { ...currentTime, hour: e.target.value };
+                                    const time24 = convertTo24Hour(newTime.hour, newTime.minute, newTime.period);
+                                    setPostData(prev => ({ ...prev, scheduledTime: time24 }));
+                                  }}
+                                  className="time-select"
+                                  required
+                                >
+                                  {[...Array(12)].map((_, i) => {
+                                    const hour = i + 1;
+                                    return (
+                                      <option key={hour} value={hour.toString()}>
+                                        {hour}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+
+                                <span className="time-separator">:</span>
+
+                                <select
+                                  value={currentTime12.minute}
+                                  onChange={(e) => {
+                                    const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
+                                    const newTime = { ...currentTime, minute: e.target.value };
+                                    const time24 = convertTo24Hour(newTime.hour, newTime.minute, newTime.period);
+                                    setPostData(prev => ({ ...prev, scheduledTime: time24 }));
+                                  }}
+                                  className="time-select"
+                                  required
+                                >
+                                  {[...Array(60)].map((_, i) => {
+                                    const minute = i.toString().padStart(2, '0');
+                                    return (
+                                      <option key={minute} value={minute}>
+                                        {minute}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+
+                                <select
+                                  value={currentTime12.period}
+                                  onChange={(e) => {
+                                    const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
+                                    const newTime = { ...currentTime, period: e.target.value };
+                                    const time24 = convertTo24Hour(newTime.hour, newTime.minute, newTime.period);
+                                    setPostData(prev => ({ ...prev, scheduledTime: time24 }));
+                                  }}
+                                  className="time-select period-select"
+                                  required
+                                >
+                                  <option value="AM">AM</option>
+                                  <option value="PM">PM</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
               </div>
             </div>
           )}
