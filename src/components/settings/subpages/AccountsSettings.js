@@ -2820,8 +2820,8 @@ const AccountsSettings = ({ onNotify }) => {
 
       const res = await apiClient.getCurrentUser();
 
-      if (res.data.success && res.data.data) {
-        const freshUser = res.data.data;
+      if (res.success && res.data) {
+        const freshUser = res.data;
 
         // Construct the LinkedIn Personal auth URL
         const linkedInAuthUrl = `${apiUrl}/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
@@ -2855,8 +2855,8 @@ const AccountsSettings = ({ onNotify }) => {
 
       const res = await apiClient.getCurrentUser();
 
-      if (res.data.success && res.data.data) {
-        const freshUser = res.data.data;
+      if (res.success && res.data) {
+        const freshUser = res.data;
 
         // Ensure we have a valid user id from /api/auth/me
         const userId = freshUser?.id || freshUser?._id;
@@ -2900,8 +2900,8 @@ const AccountsSettings = ({ onNotify }) => {
 
       const res = await apiClient.getCurrentUser();
 
-      if (res.data.success && res.data.data) {
-        const freshUser = res.data.data;
+      if (res.success && res.data) {
+        const freshUser = res.data;
 
         // Construct the LinkedIn Business auth URL
         const linkedInBusinessAuthUrl = `${apiUrl}/auth/linkedin-business?userId=${freshUser._id}&token=${storedToken}`;
@@ -2945,8 +2945,8 @@ const AccountsSettings = ({ onNotify }) => {
 
       const res = await apiClient.getCurrentUser();
 
-      if (res.data.success && res.data.data) {
-        const freshUser = res.data.data;
+      if (res.success && res.data) {
+        const freshUser = res.data;
 
         // Construct the YouTube auth URL
         const userId = freshUser?.id || freshUser?._id;
@@ -2987,8 +2987,8 @@ const AccountsSettings = ({ onNotify }) => {
 
       const res = await apiClient.getCurrentUser();
 
-      if (res.data.success && res.data.data) {
-        const freshUser = res.data.data;
+      if (res.success && res.data) {
+        const freshUser = res.data;
 
         // Use POST endpoint with connectionType (recommended method)
         try {
