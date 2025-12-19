@@ -651,6 +651,23 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         // Update the userData with the enhanced connectedPlatforms
         userData.connectedPlatforms = connectedPlatforms;
         console.log('Enhanced user data:', userData);
+        console.log('📊 Connected Accounts from API:', userData.connectedAccounts);
+        console.log('📊 Connected Platforms:', connectedPlatforms);
+
+        // Also merge with connectedAccounts prop if provided
+        if (connectedAccounts && Array.isArray(connectedAccounts) && connectedAccounts.length > 0) {
+          console.log('📊 Merging with connectedAccounts prop:', connectedAccounts);
+          // Merge accounts from prop with accounts from API
+          const existingAccountIds = new Set((userData.connectedAccounts || []).map(acc => acc._id || acc.id));
+          const newAccounts = connectedAccounts.filter(acc => {
+            const accId = acc._id || acc.id;
+            return accId && !existingAccountIds.has(accId);
+          });
+          if (newAccounts.length > 0) {
+            userData.connectedAccounts = [...(userData.connectedAccounts || []), ...newAccounts];
+            console.log('📊 Merged accounts:', userData.connectedAccounts);
+          }
+        }
 
         setUserProfile(userData);
       }
@@ -673,10 +690,17 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     ];
 
     return allPlatforms.map(platform => {
-      // Get all accounts for this platform
-      const platformAccounts = userProfile?.connectedAccounts?.filter(acc => 
-        acc.platform === platform.id && acc.connected !== false
+      // Get all accounts for this platform - be more lenient with filtering
+      // Include accounts that match the platform, excluding only those explicitly marked as disconnected
+      const allPlatformAccounts = userProfile?.connectedAccounts?.filter(acc => 
+        acc.platform === platform.id
       ) || [];
+      
+      // Filter out only accounts that are explicitly disconnected
+      const platformAccounts = allPlatformAccounts.filter(acc => {
+        // Include if connected is true, undefined, null, or not explicitly false
+        return acc.connected !== false && acc.connected !== 'false';
+      });
       
       // First check if there are platform-specific accounts (most reliable)
       const hasAccountsForPlatform = platformAccounts.length > 0;
@@ -687,14 +711,18 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       // A platform is connected if either condition is true
       const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
       
-      // Debug logging for Facebook specifically
-      if (platform.id === 'facebook' && userProfile) {
-        console.log('🔍 Facebook Platform Check:', {
-          platformAccounts: platformAccounts.length,
+      // Debug logging for Facebook and Instagram
+      if ((platform.id === 'facebook' || platform.id === 'instagram') && userProfile) {
+        console.log(`🔍 ${platform.id.toUpperCase()} Platform Check:`, {
+          platformId: platform.id,
+          allPlatformAccountsCount: allPlatformAccounts.length,
+          platformAccountsCount: platformAccounts.length,
           hasAccountsForPlatform,
           isInConnectedPlatforms,
           isConnected,
-          allConnectedAccounts: userProfile.connectedAccounts?.length || 0
+          allConnectedAccounts: userProfile.connectedAccounts?.length || 0,
+          rawAccounts: allPlatformAccounts,
+          filteredAccounts: platformAccounts
         });
       }
       
@@ -2173,6 +2201,18 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                       const hasAccounts = platform.accounts && platform.accounts.length > 0;
                       const canSelect = platform.connected || hasAccounts;
 
+                      // Debug logging for click handler
+                      if (platform.id === 'facebook' || platform.id === 'instagram') {
+                        console.log(`🔍 ${platform.id.toUpperCase()} Platform State:`, {
+                          platformId: platform.id,
+                          hasAccounts,
+                          accountsCount: platform.accounts?.length || 0,
+                          platformConnected: platform.connected,
+                          canSelect,
+                          accounts: platform.accounts
+                        });
+                      }
+
                       return (
                         <div key={platform.id} className="platform-container" >
                           <button
@@ -2182,11 +2222,14 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                             className={`platform-btn
                                ${!canSelect ? 'not-connected-btn' : ''}
                                ${selectedAccountsCount > 0 ? 'selectedx' : ''}`}
-                            onClick={(e) =>
-                              canSelect
-                                ? handlePlatformToggle(platform.id)
-                                : handleConnectClick(e)
-                            }
+                            onClick={(e) => {
+                              console.log(`🖱️ Clicked ${platform.id}:`, { canSelect, hasAccounts, connected: platform.connected, accountsCount: platform.accounts?.length });
+                              if (canSelect) {
+                                handlePlatformToggle(platform.id);
+                              } else {
+                                handleConnectClick(e);
+                              }
+                            }}
                             style={{ '--platform-color': platform.color }}
                           >
                             <Icon
@@ -2842,11 +2885,14 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                               className={`platform-btn
                                  ${!canSelect ? 'not-connected-btn' : ''}
                                  ${selectedAccountsCount > 0 ? 'selectedx' : ''}`}
-                              onClick={(e) =>
-                                canSelect
-                                  ? handlePlatformToggle(platform.id)
-                                  : handleConnectClick(e)
-                              }
+                              onClick={(e) => {
+                                console.log(`🖱️ Clicked ${platform.id}:`, { canSelect, hasAccounts, connected: platform.connected, accountsCount: platform.accounts?.length });
+                                if (canSelect) {
+                                  handlePlatformToggle(platform.id);
+                                } else {
+                                  handleConnectClick(e);
+                                }
+                              }}
                               style={{ '--platform-color': platform.color }}
                             >
                               <Icon
