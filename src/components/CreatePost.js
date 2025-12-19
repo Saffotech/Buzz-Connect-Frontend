@@ -650,9 +650,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
         // Update the userData with the enhanced connectedPlatforms
         userData.connectedPlatforms = connectedPlatforms;
-        console.log('Enhanced user data:', userData);
+        console.log('✅ Enhanced user data:', userData);
         console.log('📊 Connected Accounts from API:', userData.connectedAccounts);
         console.log('📊 Connected Platforms:', connectedPlatforms);
+        console.log('📊 Facebook accounts:', userData.connectedAccounts?.filter(acc => acc.platform === 'facebook'));
+        console.log('📊 Instagram accounts:', userData.connectedAccounts?.filter(acc => acc.platform === 'instagram'));
 
         // Also merge with connectedAccounts prop if provided
         if (connectedAccounts && Array.isArray(connectedAccounts) && connectedAccounts.length > 0) {
@@ -692,15 +694,39 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     return allPlatforms.map(platform => {
       // Get all accounts for this platform - be more lenient with filtering
       // Include accounts that match the platform, excluding only those explicitly marked as disconnected
-      const allPlatformAccounts = userProfile?.connectedAccounts?.filter(acc => 
-        acc.platform === platform.id
-      ) || [];
+      const allPlatformAccounts = userProfile?.connectedAccounts?.filter(acc => {
+        // Match platform (case-insensitive)
+        const accPlatform = (acc.platform || '').toLowerCase();
+        const targetPlatform = platform.id.toLowerCase();
+        return accPlatform === targetPlatform;
+      }) || [];
       
       // Filter out only accounts that are explicitly disconnected
+      // Include accounts where connected is true, undefined, null, or missing
       const platformAccounts = allPlatformAccounts.filter(acc => {
         // Include if connected is true, undefined, null, or not explicitly false
-        return acc.connected !== false && acc.connected !== 'false';
-      });
+        const isConnected = acc.connected !== false && acc.connected !== 'false';
+        return isConnected;
+      }).map(acc => ({
+        // Normalize account structure - handle both id and _id
+        accountId: acc.id || acc._id || acc.platformUserId,
+        id: acc.id || acc._id || acc.platformUserId,
+        _id: acc.id || acc._id || acc.platformUserId,
+        platform: acc.platform,
+        username: acc.username || acc.name || acc.displayName,
+        name: acc.username || acc.name || acc.displayName,
+        displayName: acc.username || acc.name || acc.displayName,
+        platformUserId: acc.platformUserId,
+        accessToken: acc.accessToken,
+        connected: acc.connected !== false,
+        accountType: acc.accountType,
+        connectionType: acc.connectionType,
+        profilePicture: acc.profilePicture,
+        followerCount: acc.followerCount,
+        metadata: acc.metadata,
+        // Include any other fields
+        ...acc
+      }));
       
       // First check if there are platform-specific accounts (most reliable)
       const hasAccountsForPlatform = platformAccounts.length > 0;
@@ -722,7 +748,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           isConnected,
           allConnectedAccounts: userProfile.connectedAccounts?.length || 0,
           rawAccounts: allPlatformAccounts,
-          filteredAccounts: platformAccounts
+          filteredAccounts: platformAccounts,
+          accountIds: platformAccounts.map(acc => acc.accountId || acc.id)
         });
       }
       
