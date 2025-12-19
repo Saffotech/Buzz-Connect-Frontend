@@ -2814,17 +2814,13 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
-      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const base = rawApi.replace(/\/+$/, '');
-      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
-
       const res = await apiClient.getCurrentUser();
 
       if (res.success && res.data) {
         const freshUser = res.data;
 
-        // Construct the LinkedIn Personal auth URL
-        const linkedInAuthUrl = `${apiUrl}/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`;
+        // Construct the LinkedIn Personal auth URL using apiClient to avoid /api/api issue
+        const linkedInAuthUrl = apiClient.buildUrl(`/auth/linkedin?userId=${freshUser._id}&token=${storedToken}`);
 
         console.log('Redirecting to LinkedIn Personal auth:', linkedInAuthUrl);
         // Open in the same window
@@ -2849,10 +2845,6 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
-      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const base = rawApi.replace(/\/+$/, '');
-      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
-
       const res = await apiClient.getCurrentUser();
 
       if (res.success && res.data) {
@@ -2865,9 +2857,9 @@ const AccountsSettings = ({ onNotify }) => {
           return;
         }
 
-        // Construct the Twitter auth URL (backend placeholder endpoint)
+        // Construct the Twitter auth URL using apiClient to avoid /api/api issue
         // Token is no longer included in the state to avoid exposing it.
-        const twitterAuthUrl = `${apiUrl}/auth/x/auth?userId=${userId}`;
+        const twitterAuthUrl = apiClient.buildUrl(`/auth/x/auth?userId=${userId}`);
 
         // console.log('Redirecting to Twitter auth:', twitterAuthUrl);
 
@@ -2894,17 +2886,13 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
-      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const base = rawApi.replace(/\/+$/, '');
-      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
-
       const res = await apiClient.getCurrentUser();
 
       if (res.success && res.data) {
         const freshUser = res.data;
 
-        // Construct the LinkedIn Business auth URL
-        const linkedInBusinessAuthUrl = `${apiUrl}/auth/linkedin-business?userId=${freshUser._id}&token=${storedToken}`;
+        // Construct the LinkedIn Business auth URL using apiClient to avoid /api/api issue
+        const linkedInBusinessAuthUrl = apiClient.buildUrl(`/auth/linkedin-business?userId=${freshUser._id}&token=${storedToken}`);
 
         console.log('Redirecting to LinkedIn Business auth:', linkedInBusinessAuthUrl);
 
@@ -2939,22 +2927,18 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
-      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const base = rawApi.replace(/\/+$/, '');
-      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
-
       const res = await apiClient.getCurrentUser();
 
       if (res.success && res.data) {
         const freshUser = res.data;
 
-        // Construct the YouTube auth URL
+        // Construct the YouTube auth URL using apiClient to avoid /api/api issue
         const userId = freshUser?.id || freshUser?._id;
         if (!userId) {
           toast.error('Invalid user ID. Please log in again.');
           return;
         }
-        const youtubeAuthUrl = `${apiUrl}/auth/youtube?userId=${userId}&token=${storedToken}`;
+        const youtubeAuthUrl = apiClient.buildUrl(`/auth/youtube?userId=${userId}&token=${storedToken}`);
 
         console.log('Redirecting to YouTube auth:', youtubeAuthUrl);
 
@@ -2981,10 +2965,6 @@ const AccountsSettings = ({ onNotify }) => {
     }
 
     try {
-      const rawApi = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const base = rawApi.replace(/\/+$/, '');
-      const apiUrl = base.endsWith('/api') ? base : `${base}/api`;
-
       const res = await apiClient.getCurrentUser();
 
       if (res.success && res.data) {
@@ -2993,7 +2973,7 @@ const AccountsSettings = ({ onNotify }) => {
         // Use POST endpoint with connectionType (recommended method)
         try {
           const connectRes = await axios.post(
-            `${apiUrl}/auth/instagram/connect`,
+            apiClient.buildUrl('/auth/instagram/connect'),
             { connectionType: 'standard' },
             { headers: { Authorization: `Bearer ${storedToken}` } }
           );
@@ -3001,13 +2981,13 @@ const AccountsSettings = ({ onNotify }) => {
           if (connectRes.data.success && connectRes.data.data?.authUrl) {
             window.location.href = connectRes.data.data.authUrl;
           } else {
-            // Fallback to GET method
-            window.location.href = `${apiUrl}/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+            // Fallback to GET method using apiClient to avoid /api/api issue
+            window.location.href = apiClient.buildUrl(`/auth/instagram?userId=${freshUser._id}&token=${storedToken}`);
           }
         } catch (connectErr) {
           console.error('Error connecting Instagram:', connectErr);
-          // Fallback to GET method
-          window.location.href = `${apiUrl}/auth/instagram?userId=${freshUser._id}&token=${storedToken}`;
+          // Fallback to GET method using apiClient to avoid /api/api issue
+          window.location.href = apiClient.buildUrl(`/auth/instagram?userId=${freshUser._id}&token=${storedToken}`);
         }
       } else {
         toast.error('Failed to get user data');
@@ -3099,8 +3079,7 @@ const AccountsSettings = ({ onNotify }) => {
 
       console.log('Disconnecting account:', { baseId, platform, accountType, foundAccount });
 
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
+      // Use apiClient to build URL correctly and avoid double /api/api issue
       let endpoint = '';
 
       if (platform === 'instagram') {
@@ -3110,21 +3089,24 @@ const AccountsSettings = ({ onNotify }) => {
         // Option 2 (alias path):
         //   DELETE /api/auth/instagram/disconnect/{accountId}
         //
-        // We'll use the documented alias path here:
-        endpoint = `${apiUrl}/api/auth/instagram/disconnect/${baseId}`;
+        // Fix: Use apiClient to avoid double /api/api issue
+        endpoint = apiClient.buildUrl(`/auth/instagram/disconnect/${baseId}`);
+      } else if (platform === 'facebook') {
+        // Facebook accounts use the same Instagram endpoint structure
+        endpoint = apiClient.buildUrl(`/auth/instagram/disconnect/${baseId}`);
       } else if (platform === 'linkedin') {
         if (accountType === 'business') {
-          endpoint = `${apiUrl}/api/auth/linkedin-business/accounts/${baseId}`;
+          endpoint = apiClient.buildUrl(`/auth/linkedin-business/accounts/${baseId}`);
         } else {
-          endpoint = `${apiUrl}/api/auth/linkedin/accounts/${baseId}`;
+          endpoint = apiClient.buildUrl(`/auth/linkedin/accounts/${baseId}`);
         }
       } else if (platform === 'youtube') {
-        endpoint = `${apiUrl}/api/auth/youtube/disconnect/${baseId}`;
-      } else if (platform === 'twitter') {
-        endpoint = `${apiUrl}/api/auth/x/disconnect/${baseId}`;
+        endpoint = apiClient.buildUrl(`/auth/youtube/disconnect/${baseId}`);
+      } else if (platform === 'twitter' || platform === 'x') {
+        endpoint = apiClient.buildUrl(`/auth/x/disconnect/${baseId}`);
       } else {
         // Generic by-platform disconnect (e.g. /api/users/connected-accounts/{platform})
-        endpoint = `${apiUrl}/api/users/connected-accounts/${platform}`;
+        endpoint = apiClient.buildUrl(`/users/connected-accounts/${platform}`);
       }
 
       console.log('Calling disconnect endpoint:', endpoint);

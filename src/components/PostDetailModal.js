@@ -7,6 +7,7 @@ import {
   Users, ExternalLink, Copy
 } from "lucide-react";
 import axios from "axios";
+import apiClient from "../utils/api";
 
 const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain }) => {
   const [imgIndex, setImgIndex] = useState(0);
@@ -262,7 +263,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       console.log('Fetching analytics for post:', postId);
 
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/analytics/posts/${postId}`,
+        apiClient.buildUrl(`/analytics/posts/${postId}`),
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -308,7 +309,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       showToast('Syncing analytics from social platforms...', 'info');
 
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/analytics/posts/${postId}/sync`,
+        apiClient.buildUrl(`/analytics/posts/${postId}/sync`),
         {},
         {
           headers: {
@@ -347,7 +348,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       if (accountId) {
         const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
 
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/accounts/${accountId}`, {
+        const response = await fetch(apiClient.buildUrl(`/accounts/${accountId}`), {
           headers: {
             'Authorization': `Bearer ${token}`,
             'accept': 'application/json',
@@ -501,7 +502,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       showToast('Creating new post...', 'info');
 
       const createResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts`,
+        apiClient.buildUrl('/posts'),
         postData,
         {
           headers: {
@@ -523,7 +524,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
       showToast('Publishing post...', 'info');
 
       const publishResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
+        apiClient.buildUrl(`/posts/${postId}/publish`),
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -584,7 +585,7 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
         console.log(`🚀 Re-publishing ${platformPost.platform} for post ${postId}...`);
 
         const response = await axios.post(
-          `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/posts/${postId}/publish`,
+          apiClient.buildUrl(`/posts/${postId}/publish`),
           {
             platforms: [platformPost.platform],
             accountIds: [platformPost.accountId],

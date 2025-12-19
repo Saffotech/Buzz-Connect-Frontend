@@ -1,5 +1,6 @@
 // useInstagramConnection.js
 import { useState, useEffect, useCallback } from 'react';
+import apiClient from '../../utils/api';
 
 export function useInstagramConnection(token) {
   const [status, setStatus] = useState(null); // null | { connected, username, ... }
@@ -15,9 +16,9 @@ export function useInstagramConnection(token) {
     setLoading(true);
     setError(null);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      // Use connection-status endpoint to get Instagram connection info
-      const res = await fetch(`${apiUrl}/api/auth/instagram/connection-status`, {
+      // Use apiClient to build URL correctly and avoid double /api/api issue
+      const url = apiClient.buildUrl('/auth/instagram/connection-status');
+      const res = await fetch(url, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -60,8 +61,9 @@ export function useInstagramConnection(token) {
     setConnecting(true);
     setError(null);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiUrl}/api/auth/instagram/connect`, {
+      // Use apiClient to build URL correctly and avoid double /api/api issue
+      const url = apiClient.buildUrl('/auth/instagram/connect');
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

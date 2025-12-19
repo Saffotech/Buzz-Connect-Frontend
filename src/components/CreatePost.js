@@ -2268,25 +2268,68 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                               }}
                             />
                             <span style={{ color: hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000" }} >{platform.name}</span>
-                            <span className="connect-status">
-                              {canSelect ?
-                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : (hasAccounts ? `${platform.accounts.length} account${platform.accounts.length > 1 ? 's' : ''} available` : 'Connected'))
-                                : 'Connect Now'
-                              }
+                            <span className="connect-status" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
+                              {canSelect ? (
+                                selectedAccountsCount > 0 ? (
+                                  <span style={{ color: platform.color }}>{selectedAccountsCount} account{selectedAccountsCount > 1 ? 's' : ''} selected</span>
+                                ) : hasAccounts ? (
+                                  <span style={{ color: '#059669' }}>✓ {platform.accounts.length} page{platform.accounts.length > 1 ? 's' : ''} available</span>
+                                ) : (
+                                  'Connected'
+                                )
+                              ) : (
+                                <span style={{ color: '#ef4444' }}>Connect Now</span>
+                              )}
                             </span>
                           </button>
+                          
+                          {/* Visual indicator when accounts are available but not selected */}
+                          {!isSelected && hasAccounts && (
+                            <div style={{ 
+                              marginTop: '0.5rem', 
+                              padding: '0.5rem', 
+                              background: '#f0fdf4', 
+                              border: '1px solid #86efac', 
+                              borderRadius: '6px',
+                              fontSize: '0.75rem',
+                              color: '#166534'
+                            }}>
+                              💡 Click to select from {platform.accounts.length} available {platform.accounts.length > 1 ? 'pages' : 'page'}
+                            </div>
+                          )}
 
                           {/* Multi-Account Selection */}
                           {isSelected && canSelect && platform.accounts && platform.accounts.length > 0 && (
-                            <div className="account-multi-selector">
-                              <label className="account-label">
+                            <div className="account-multi-selector" style={{ 
+                              marginTop: '1rem', 
+                              padding: '1rem', 
+                              border: '1px solid #e2e8f0', 
+                              borderRadius: '8px', 
+                              background: '#f8fafc',
+                              display: 'block'
+                            }}>
+                              <label className="account-label" style={{ 
+                                fontWeight: 600, 
+                                marginBottom: '0.75rem', 
+                                display: 'block',
+                                fontSize: '0.875rem',
+                                color: '#374151'
+                              }}>
                                 Choose Profile{platform.accounts.length > 1 ? 's' : ''}:
-                                <span className="account-count">
+                                <span className="account-count" style={{ 
+                                  color: '#64748b', 
+                                  marginLeft: '0.5rem',
+                                  fontWeight: 400
+                                }}>
                                   ({selectedAccountsCount} of {platform.accounts.length} selected)
                                 </span>
                               </label>
-                              <div className="accounts-checkbox-list">
-                                {platform.accounts.map((account) => {
+                              <div className="accounts-checkbox-list" style={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                gap: '0.5rem'
+                              }}>
+                                {platform.accounts.map((account, index) => {
                                   const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId;
 
                                   if (!accountId) {
@@ -2301,18 +2344,64 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                                     : account.username || account.name || account.displayName || accountId;
 
                                   return (
-                                    <label key={`${platform.id}-${accountId}`} className="account-checkbox-item">
+                                    <label 
+                                      key={`${platform.id}-${accountId}-${index}`} 
+                                      className="account-checkbox-item"
+                                      style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: '0.75rem', 
+                                        padding: '0.75rem', 
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        transition: 'background 0.2s',
+                                        backgroundColor: isChecked ? '#dbeafe' : 'transparent',
+                                        border: isChecked ? '1px solid #3b82f6' : '1px solid transparent'
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        if (!isChecked) {
+                                          e.currentTarget.style.backgroundColor = '#f1f5f9';
+                                        }
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        if (!isChecked) {
+                                          e.currentTarget.style.backgroundColor = 'transparent';
+                                        }
+                                      }}
+                                    >
                                       <input
                                         type="checkbox"
                                         checked={isChecked}
-                                        onChange={(e) => handleAccountSelection(platform.id, accountId, e.target.checked)}
+                                        onChange={(e) => {
+                                          console.log(`✅ Toggling ${platform.id} account:`, accountId, accountName, e.target.checked);
+                                          handleAccountSelection(platform.id, accountId, e.target.checked);
+                                        }}
                                         className="account-checkbox"
+                                        style={{ width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
                                       />
                                       <span className="checkbox-custom"></span>
-                                      <span className="account-name">
+                                      {account.profilePicture && (
+                                        <img 
+                                          src={account.profilePicture} 
+                                          alt={accountName}
+                                          style={{ 
+                                            width: '32px', 
+                                            height: '32px', 
+                                            borderRadius: '50%', 
+                                            objectFit: 'cover',
+                                            flexShrink: 0
+                                          }}
+                                          onError={(e) => e.target.style.display = 'none'}
+                                        />
+                                      )}
+                                      <span className="account-name" style={{ 
+                                        flex: 1, 
+                                        fontWeight: isChecked ? 600 : 400,
+                                        color: isChecked ? '#1e40af' : '#374151'
+                                      }}>
                                         {accountName}
                                         {account.pageId && account.pageId !== accountId && (
-                                          <span className="account-id"> (ID: {account.pageId})</span>
+                                          <span className="account-id" style={{ color: '#64748b', marginLeft: '0.25rem', fontSize: '0.75rem' }}> (ID: {account.pageId})</span>
                                         )}
                                       </span>
                                     </label>
@@ -2931,25 +3020,68 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                                 }}
                               />
                               <span style={{ color: hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000" }} >{platform.name}</span>
-                              <span className="connect-status">
-                                {canSelect ?
-                                  (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : (hasAccounts ? `${platform.accounts.length} account${platform.accounts.length > 1 ? 's' : ''} available` : 'Connected'))
-                                  : 'Connect Now'
-                                }
+                              <span className="connect-status" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
+                                {canSelect ? (
+                                  selectedAccountsCount > 0 ? (
+                                    <span style={{ color: platform.color }}>{selectedAccountsCount} account{selectedAccountsCount > 1 ? 's' : ''} selected</span>
+                                  ) : hasAccounts ? (
+                                    <span style={{ color: '#059669' }}>✓ {platform.accounts.length} page{platform.accounts.length > 1 ? 's' : ''} available</span>
+                                  ) : (
+                                    'Connected'
+                                  )
+                                ) : (
+                                  <span style={{ color: '#ef4444' }}>Connect Now</span>
+                                )}
                               </span>
                             </button>
+                            
+                            {/* Visual indicator when accounts are available but not selected */}
+                            {!isSelected && hasAccounts && (
+                              <div style={{ 
+                                marginTop: '0.5rem', 
+                                padding: '0.5rem', 
+                                background: '#f0fdf4', 
+                                border: '1px solid #86efac', 
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                color: '#166534'
+                              }}>
+                                💡 Click to select from {platform.accounts.length} available {platform.accounts.length > 1 ? 'pages' : 'page'}
+                              </div>
+                            )}
 
                             {/* Multi-Account Selection */}
                             {isSelected && canSelect && platform.accounts && platform.accounts.length > 0 && (
-                              <div className="account-multi-selector">
-                                <label className="account-label">
+                              <div className="account-multi-selector" style={{ 
+                                marginTop: '1rem', 
+                                padding: '1rem', 
+                                border: '1px solid #e2e8f0', 
+                                borderRadius: '8px', 
+                                background: '#f8fafc',
+                                display: 'block'
+                              }}>
+                                <label className="account-label" style={{ 
+                                  fontWeight: 600, 
+                                  marginBottom: '0.75rem', 
+                                  display: 'block',
+                                  fontSize: '0.875rem',
+                                  color: '#374151'
+                                }}>
                                   Choose Profile{platform.accounts.length > 1 ? 's' : ''}:
-                                  <span className="account-count">
+                                  <span className="account-count" style={{ 
+                                    color: '#64748b', 
+                                    marginLeft: '0.5rem',
+                                    fontWeight: 400
+                                  }}>
                                     ({selectedAccountsCount} of {platform.accounts.length} selected)
                                   </span>
                                 </label>
-                                <div className="accounts-checkbox-list">
-                                  {platform.accounts.map((account) => {
+                                <div className="accounts-checkbox-list" style={{ 
+                                  display: 'flex', 
+                                  flexDirection: 'column', 
+                                  gap: '0.5rem'
+                                }}>
+                                  {platform.accounts.map((account, index) => {
                                     const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId;
 
                                     if (!accountId) {
@@ -2964,18 +3096,64 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                                       : account.username || account.name || account.displayName || accountId;
 
                                     return (
-                                      <label key={`${platform.id}-${accountId}`} className="account-checkbox-item">
+                                      <label 
+                                        key={`${platform.id}-${accountId}-${index}`} 
+                                        className="account-checkbox-item"
+                                        style={{ 
+                                          display: 'flex', 
+                                          alignItems: 'center', 
+                                          gap: '0.75rem', 
+                                          padding: '0.75rem', 
+                                          borderRadius: '6px',
+                                          cursor: 'pointer',
+                                          transition: 'background 0.2s',
+                                          backgroundColor: isChecked ? '#dbeafe' : 'transparent',
+                                          border: isChecked ? '1px solid #3b82f6' : '1px solid transparent'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          if (!isChecked) {
+                                            e.currentTarget.style.backgroundColor = '#f1f5f9';
+                                          }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          if (!isChecked) {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                          }
+                                        }}
+                                      >
                                         <input
                                           type="checkbox"
                                           checked={isChecked}
-                                          onChange={(e) => handleAccountSelection(platform.id, accountId, e.target.checked)}
+                                          onChange={(e) => {
+                                            console.log(`✅ Toggling ${platform.id} account:`, accountId, accountName, e.target.checked);
+                                            handleAccountSelection(platform.id, accountId, e.target.checked);
+                                          }}
                                           className="account-checkbox"
+                                          style={{ width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <span className="checkbox-custom"></span>
-                                        <span className="account-name">
+                                        {account.profilePicture && (
+                                          <img 
+                                            src={account.profilePicture} 
+                                            alt={accountName}
+                                            style={{ 
+                                              width: '32px', 
+                                              height: '32px', 
+                                              borderRadius: '50%', 
+                                              objectFit: 'cover',
+                                              flexShrink: 0
+                                            }}
+                                            onError={(e) => e.target.style.display = 'none'}
+                                          />
+                                        )}
+                                        <span className="account-name" style={{ 
+                                          flex: 1, 
+                                          fontWeight: isChecked ? 600 : 400,
+                                          color: isChecked ? '#1e40af' : '#374151'
+                                        }}>
                                           {accountName}
                                           {account.pageId && account.pageId !== accountId && (
-                                            <span className="account-id"> (ID: {account.pageId})</span>
+                                            <span className="account-id" style={{ color: '#64748b', marginLeft: '0.25rem', fontSize: '0.75rem' }}> (ID: {account.pageId})</span>
                                           )}
                                         </span>
                                       </label>
