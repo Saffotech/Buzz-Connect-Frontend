@@ -367,10 +367,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     setTimeout(() => setToast(null), 6000);
   };
 
-  // Fetch user profile and connected accounts on mount
+  // Fetch user profile and connected accounts when modal opens
   useEffect(() => {
     if (isOpen) {
+      console.log('🔄 Modal opened, fetching user profile...');
       fetchUserProfile();
+    } else {
+      // Reset user profile when modal closes to force fresh fetch next time
+      setUserProfile(null);
     }
   }, [isOpen]);
 
@@ -624,11 +628,27 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     setLoadingProfile(true);
     try {
       const response = await apiClient.getCurrentUser();
+      console.log('🔍 Full API response:', response);
 
-      if (response.data.success) {
-        // Get the raw data from API
-        const userData = response.data.data;
-        console.log('Raw API response data:', userData);
+      // Handle different response structures
+      // apiClient.getCurrentUser() returns data directly, but it might be wrapped
+      let userData = null;
+      if (response && response.success && response.data) {
+        // Response structure: { success: true, data: {...} }
+        userData = response.data;
+      } else if (response && response.data && response.data.success) {
+        // Response structure: { data: { success: true, data: {...} } }
+        userData = response.data.data;
+      } else if (response && (response.connectedAccounts || response.connectedPlatforms)) {
+        // Response structure: { connectedAccounts: [...], connectedPlatforms: [...] }
+        userData = response;
+      } else {
+        // Fallback: assume response is the user data directly
+        userData = response;
+      }
+
+      if (userData) {
+        console.log('✅ Parsed user data:', userData);
 
         // Ensure connectedPlatforms includes all platforms from connectedAccounts
         let connectedPlatforms = userData.connectedPlatforms || [];
@@ -672,10 +692,21 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         }
 
         setUserProfile(userData);
+      } else {
+        console.warn('⚠️ No user data found in response:', response);
+        // Still set empty profile to avoid blocking UI
+        setUserProfile({ connectedAccounts: [], connectedPlatforms: [] });
       }
     } catch (error) {
-      console.error('Failed to fetch user profile:', error);
+      console.error('❌ Failed to fetch user profile:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      });
       showToast('Failed to load user profile', 'error');
+      // Set empty profile to avoid blocking UI
+      setUserProfile({ connectedAccounts: [], connectedPlatforms: [] });
     } finally {
       setLoadingProfile(false);
     }
@@ -703,10 +734,17 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       
       // Filter out only accounts that are explicitly disconnected
       // Include accounts where connected is true, undefined, null, or missing
+      // BE VERY LENIENT: Only exclude if explicitly marked as false
       const platformAccounts = allPlatformAccounts.filter(acc => {
-        // Include if connected is true, undefined, null, or not explicitly false
-        const isConnected = acc.connected !== false && acc.connected !== 'false';
-        return isConnected;
+        // Include if connected is true, undefined, null, missing, or any truthy value
+        // Only exclude if explicitly false or the string 'false'
+        const isExplicitlyDisconnected = acc.connected === false || acc.connected === 'false';
+        
+        // Also check if account has required fields (at least platformUserId or id)
+        const hasRequiredFields = acc.platformUserId || acc.id || acc._id;
+        
+        // Include if not explicitly disconnected AND has required fields
+        return !isExplicitlyDisconnected && hasRequiredFields;
       }).map(acc => ({
         // Normalize account structure - handle both id and _id
         accountId: acc.id || acc._id || acc.platformUserId,
@@ -737,20 +775,28 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       // A platform is connected if either condition is true
       const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
       
-      // Debug logging for Facebook and Instagram
-      if ((platform.id === 'facebook' || platform.id === 'instagram') && userProfile) {
+      // Debug logging for Facebook and Instagram - always log to help diagnose
+      if (platform.id === 'facebook' || platform.id === 'instagram') {
         console.log(`🔍 ${platform.id.toUpperCase()} Platform Check:`, {
           platformId: platform.id,
+          userProfileExists: !!userProfile,
+          userProfileConnectedAccounts: userProfile?.connectedAccounts?.length || 0,
           allPlatformAccountsCount: allPlatformAccounts.length,
           platformAccountsCount: platformAccounts.length,
           hasAccountsForPlatform,
           isInConnectedPlatforms,
           isConnected,
-          allConnectedAccounts: userProfile.connectedAccounts?.length || 0,
+          connectedPlatforms: userProfile?.connectedPlatforms || [],
           rawAccounts: allPlatformAccounts,
           filteredAccounts: platformAccounts,
-          accountIds: platformAccounts.map(acc => acc.accountId || acc.id)
+          accountIds: platformAccounts.map(acc => acc.accountId || acc.id),
+          accountUsernames: platformAccounts.map(acc => acc.username || acc.name || 'N/A')
         });
+        
+        // If we have accounts but they're not showing, log detailed info
+        if (allPlatformAccounts.length > 0 && platformAccounts.length === 0) {
+          console.warn(`⚠️ ${platform.id.toUpperCase()} accounts found but filtered out:`, allPlatformAccounts);
+        }
       }
       
       return {
