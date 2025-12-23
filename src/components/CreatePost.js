@@ -1729,6 +1729,16 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
     };
   }, []);
 
+  // Prevent background page from scrolling while the modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow || '';
+    };
+  }, [isOpen]);
+
   // Keyboard navigation for carousel
   useEffect(() => {
     if (!showImageCarousel) return;
