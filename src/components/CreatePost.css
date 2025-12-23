@@ -23,6 +23,8 @@
   width: 95vw;
   /* max-width: 1200px; */
   max-height: 90vh; /* Limit modal height */
+  height: 90vh; /* Keep modal height bounded so inner areas can scroll */
+  overflow: hidden; /* Prevent inner content from spilling out of the modal */
   display: flex;
   flex-direction: column;
   z-index: 10000 !important;
@@ -206,6 +208,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0; /* Important for flexbox scrolling */
+  overflow: hidden; /* Contain children and allow internal scroll areas */
 }
 
 .compose-tab {
@@ -213,6 +216,9 @@
   display: grid;
   grid-template-columns: 1fr;
   min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto; /* Allow scrolling inside the modal instead of pushing content out */
   /* overflow: hidden; */
 }
 
@@ -249,6 +255,7 @@
   padding: 1.5rem;
   overflow-y: auto;
   min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -258,6 +265,7 @@
   padding: 1.5rem;
   overflow-y: auto;
   min-height: 0;
+  height: 100%;
   border-right: 1px solid #e2e8f0;
   max-width: 400px;
   flex-shrink: 0;
