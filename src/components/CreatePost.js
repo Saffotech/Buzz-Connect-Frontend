@@ -2657,11 +2657,98 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                           )}
                         </div>
                       </div>
+
+                      {postData.images && postData.images.length > 0 && (
+                        <div className="upload-preview-pane">
+                          <div className="media-section-header">
+                            <h4>Selected Media ({postData.images.length})</h4>
+                            <div className="media-header-actions">
+                              {postData.images.length > 1 && (
+                                <button
+                                  type="button"
+                                  className="view-carousel-header-btn"
+                                  onClick={() => openCarousel(0)}
+                                  title="View in carousel"
+                                >
+                                  <GalleryHorizontal size={16} />
+                                  View Carousel
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="clear-all-media"
+                                onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
+                                title="Remove all media"
+                              >
+                                Clear All
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="media-preview-grid compact">
+                            {postData.images.map((mediaItem, index) => {
+                              const MediaIcon = getMediaTypeIcon(mediaItem);
+                              const isVideo = mediaItem.fileType === 'video' || mediaItem.url?.includes('video');
+                              const displayName = mediaItem.displayName || mediaItem.originalName || mediaItem.altText || `Media ${index + 1}`;
+
+                              return (
+                                <div key={index} className="media-preview-item">
+                                  <div className="media-preview-container">
+                                    {isVideo ? (
+                                      <div className="video-preview">
+                                        <video
+                                          src={mediaItem.url}
+                                          className="media-preview-content"
+                                          muted
+                                          playsInline
+                                        />
+                                        <div className="video-overlay">
+                                          <Play size={16} />
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <img
+                                        src={mediaItem.url}
+                                        alt={displayName}
+                                        className="media-preview-content"
+                                      />
+                                    )}
+                                    <button
+                                      type="button"
+                                      className="remove-media-btn"
+                                      onClick={() => removeMedia(index)}
+                                      title="Remove media"
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                  <div className="media-info">
+                                    <div className="media-name">
+                                      <MediaIcon size={12} />
+                                      <span title={displayName}>{displayName}</span>
+                                    </div>
+                                    {mediaItem.size && (
+                                      <div className="media-size">
+                                        {formatFileSize(mediaItem.size)}
+                                      </div>
+                                    )}
+                                    {mediaItem.dimensions && (
+                                      <div className="media-dimensions">
+                                        {mediaItem.dimensions.width}×{mediaItem.dimensions.height}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Enhanced Media Previews with Carousel Integration */}
-                  {postData.images && postData.images.length > 0 && (
+                  {false && postData.images && postData.images.length > 0 && (
                     <div className="uploaded-media-section">
                       <div className="media-section-header">
                         <h4>Selected Media ({postData.images.length})</h4>
