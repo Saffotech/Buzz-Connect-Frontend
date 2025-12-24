@@ -1073,9 +1073,18 @@ const handleSubmit = async (e) => {
             const uploadIndex = imagesWithBlobUrls.findIndex(blobImg => blobImg === img);
             if (uploadIndex >= 0 && uploadResponse.data[uploadIndex]) {
               const uploadedMedia = uploadResponse.data[uploadIndex];
+              // Get VPS URL - try multiple possible fields
+              const vpsUrl = uploadedMedia.url || uploadedMedia.secure_url || uploadedMedia.public_url;
+              
+              // Validate that we got a valid VPS URL (not a blob URL)
+              if (!vpsUrl || vpsUrl.startsWith('blob:')) {
+                console.error('❌ Invalid VPS URL received:', uploadedMedia);
+                throw new Error(`Failed to get valid URL from server for image ${uploadIndex + 1}`);
+              }
+              
               return {
                 ...img,
-                url: uploadedMedia.url || uploadedMedia.secure_url,
+                url: vpsUrl,
                 publicId: uploadedMedia.publicId || img.publicId,
                 filename: uploadedMedia.filename || img.filename,
                 originalName: uploadedMedia.originalName || img.originalName,
@@ -1100,6 +1109,18 @@ const handleSubmit = async (e) => {
 
     if (processedImages.length === 0 && postData.images.length > 0) {
       throw new Error('Failed to upload images. Please try again.');
+    }
+
+    // 🔹 Final validation - ensure no blob URLs are being sent
+    const hasBlobUrls = processedImages.some(img => 
+      img.url && img.url.startsWith('blob:')
+    );
+    
+    if (hasBlobUrls) {
+      console.error('❌ CRITICAL: Blob URLs detected in processed images!', 
+        processedImages.filter(img => img.url && img.url.startsWith('blob:'))
+      );
+      throw new Error('Invalid image URLs detected. Please try uploading images again.');
     }
 
     // 🔹 Prepare final API post data
@@ -1142,7 +1163,8 @@ const handleSubmit = async (e) => {
         ? postData.hashtags
         : `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
 
-      const videoFiles = postData.images.filter(
+      // ✅ Use processedImages instead of postData.images to get VPS URLs (not blob URLs)
+      const videoFiles = processedImages.filter(
         img => img.fileType === 'video' || img.url?.includes('video') || img.url?.includes('.mp4')
       );
 
