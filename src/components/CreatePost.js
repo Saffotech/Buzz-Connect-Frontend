@@ -623,13 +623,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const fetchUserProfile = async () => {
     setLoadingProfile(true);
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.getCurrentUser();
 
-      if (response.data.success) {
+      if (response.success) {
         // Get the raw data from API
-        const userData = response.data.data;
+        const userData = response.data;
         console.log('Raw API response data:', userData);
 
         // Ensure connectedPlatforms includes all platforms from connectedAccounts
@@ -1116,7 +1114,7 @@ const handleSubmit = async (e) => {
       const createResponse = await onPostCreated(apiPostData);
       console.log('✅ Post created:', createResponse);
 
-      if (!createResponse?.data?._id) {
+      if (!createResponse?.data?.id && !createResponse?.data?._id) {
         throw new Error('Failed to create post - no ID returned');
       }
 
@@ -1127,21 +1125,17 @@ const handleSubmit = async (e) => {
 
       if (!token) throw new Error('Authentication token not found');
 
-      const postId = createResponse.data._id;
+      const postId = createResponse.data.id || createResponse.data._id;
       console.log('📤 Publishing post with ID:', postId);
 
-      const publishResponse = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const publishResponse = await apiClient.publishPost(postId);
 
       console.log('✅ Publish response:', publishResponse);
 
-      if (publishResponse.data.success) {
+      if (publishResponse.success) {
         showToast('Post published successfully!', 'success');
       } else {
-        throw new Error(publishResponse.data.message || 'Publishing failed');
+        throw new Error(publishResponse.message || 'Publishing failed');
       }
     }
     console.log('✅ FRONTEND - selectedAccountsWithNames built:', JSON.stringify(selectedAccountsWithNames, null, 2));
