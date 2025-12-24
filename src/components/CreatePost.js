@@ -1012,7 +1012,11 @@ const handleSubmit = async (e) => {
     // 🔹 Extract connected accounts from user profile
     const accountsMap = {};
     userProfile?.connectedAccounts?.forEach(account => {
-      accountsMap[account._id.toString()] = account;
+      // Handle both _id and id, and other possible ID fields
+      const accountId = account._id || account.id || account.accountId || account.pageId || account.companyId;
+      if (accountId) {
+        accountsMap[accountId.toString()] = account;
+      }
     });
 
     // 🔹 Clean up selectedAccounts (remove null/empty)
