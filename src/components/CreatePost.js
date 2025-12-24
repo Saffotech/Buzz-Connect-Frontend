@@ -1142,21 +1142,45 @@ const handleSubmit = async (e) => {
       platforms: postData.platforms,
       selectedAccounts: cleanedSelectedAccounts,
       selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
-      images: processedImages.map((img, index) => ({
-        url: img.url,
-        altText: img.altText || img.originalName || 'Post media',
-        originalName: img.originalName || img.filename || `Media ${index + 1}`,
-        displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-        filename: img.filename,
-        publicId: img.publicId || null,
-        fileType: img.fileType || 'image',
-        size: img.size,
-        dimensions: img.dimensions,
-        duration: img.duration,
-        order: index,
-        format: img.format,
-        humanSize: img.size ? formatFileSize(img.size) : null
-      })),
+      images: processedImages.map((img, index) => {
+        // Clean thumbnails - remove null/undefined values or convert to empty strings
+        // Backend expects all thumbnail values to be strings, not null
+        let cleanedThumbnails = null;
+        if (img.thumbnails && typeof img.thumbnails === 'object') {
+          cleanedThumbnails = {};
+          for (const [key, value] of Object.entries(img.thumbnails)) {
+            // Convert null/undefined to empty string, keep strings as-is
+            cleanedThumbnails[key] = value != null ? String(value) : '';
+          }
+          // Only include thumbnails if it has at least one non-empty value
+          if (Object.values(cleanedThumbnails).every(v => !v)) {
+            cleanedThumbnails = null;
+          }
+        }
+
+        const imageData = {
+          url: img.url,
+          altText: img.altText || img.originalName || 'Post media',
+          originalName: img.originalName || img.filename || `Media ${index + 1}`,
+          displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+          filename: img.filename,
+          publicId: img.publicId || null,
+          fileType: img.fileType || 'image',
+          size: img.size,
+          dimensions: img.dimensions,
+          duration: img.duration,
+          order: index,
+          format: img.format,
+          humanSize: img.size ? formatFileSize(img.size) : null
+        };
+
+        // Only include thumbnails if it's not null/empty
+        if (cleanedThumbnails) {
+          imageData.thumbnails = cleanedThumbnails;
+        }
+
+        return imageData;
+      }),
       hashtags: Array.isArray(postData.hashtags)
         ? postData.hashtags
         : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
