@@ -1038,13 +1038,77 @@ const handleSubmit = async (e) => {
 
     console.log('✅ Sending account usernames:', selectedAccountsWithNames);
 
+    // 🔹 Upload any blob URLs to VPS before creating post
+    let processedImages = [...postData.images];
+    const imagesWithBlobUrls = postData.images.filter(img => 
+      img.url && img.url.startsWith('blob:')
+    );
+
+    if (imagesWithBlobUrls.length > 0) {
+      showToast('Uploading images to server...', 'info');
+      
+      try {
+        // Convert blob URLs back to File objects
+        const filesToUpload = await Promise.all(
+          imagesWithBlobUrls.map(async (img) => {
+            const response = await fetch(img.url);
+            const blob = await response.blob();
+            const file = new File([blob], img.originalName || img.filename || 'image', {
+              type: blob.type || 'image/jpeg'
+            });
+            return { file, originalImg: img };
+          })
+        );
+
+        // Upload files to VPS using the uploadMedia function
+        const uploadResponse = await uploadMedia(filesToUpload.map(item => item.file));
+        
+        if (!uploadResponse.data || !Array.isArray(uploadResponse.data)) {
+          throw new Error('Failed to upload images - invalid response');
+        }
+
+        // Replace blob URLs with VPS URLs
+        processedImages = postData.images.map((img) => {
+          if (img.url && img.url.startsWith('blob:')) {
+            const uploadIndex = imagesWithBlobUrls.findIndex(blobImg => blobImg === img);
+            if (uploadIndex >= 0 && uploadResponse.data[uploadIndex]) {
+              const uploadedMedia = uploadResponse.data[uploadIndex];
+              return {
+                ...img,
+                url: uploadedMedia.url || uploadedMedia.secure_url,
+                publicId: uploadedMedia.publicId || img.publicId,
+                filename: uploadedMedia.filename || img.filename,
+                originalName: uploadedMedia.originalName || img.originalName,
+                displayName: uploadedMedia.displayName || uploadedMedia.originalName || img.displayName
+              };
+            }
+          }
+          return img;
+        });
+
+        showToast('Images uploaded successfully', 'success');
+      } catch (error) {
+        console.error('Failed to upload blob URLs:', error);
+        throw new Error(`Failed to upload images: ${error.message}`);
+      }
+    }
+
+    // 🔹 Filter out any images that still have blob URLs (safety check)
+    processedImages = processedImages.filter(img => 
+      !img.url || !img.url.startsWith('blob:')
+    );
+
+    if (processedImages.length === 0 && postData.images.length > 0) {
+      throw new Error('Failed to upload images. Please try again.');
+    }
+
     // 🔹 Prepare final API post data
     const apiPostData = {
       content: postData.content,
       platforms: postData.platforms,
       selectedAccounts: cleanedSelectedAccounts,
       selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
-      images: postData.images.map((img, index) => ({
+      images: processedImages.map((img, index) => ({
         url: img.url,
         altText: img.altText || img.originalName || 'Post media',
         originalName: img.originalName || img.filename || `Media ${index + 1}`,
