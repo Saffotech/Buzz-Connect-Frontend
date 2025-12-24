@@ -1237,6 +1237,26 @@ const handleSubmit = async (e) => {
 
       if (videoFiles.length > 0) {
         const { _id, ...cleanedVideo } = videoFiles[0];
+        
+        // Clean thumbnails in cleanedVideo - exclude null/undefined values
+        // Backend expects all thumbnail values to be strings, not null
+        if (cleanedVideo.thumbnails && typeof cleanedVideo.thumbnails === 'object') {
+          const cleanedThumbnails = {};
+          for (const [key, value] of Object.entries(cleanedVideo.thumbnails)) {
+            // Only include keys with valid non-null, non-undefined, non-empty values
+            if (value != null && value !== undefined && value !== '') {
+              cleanedThumbnails[key] = String(value);
+            }
+          }
+          // Only include thumbnails if it has at least one valid value
+          if (Object.keys(cleanedThumbnails).length > 0) {
+            cleanedVideo.thumbnails = cleanedThumbnails;
+          } else {
+            // Remove thumbnails if all values are null/empty
+            delete cleanedVideo.thumbnails;
+          }
+        }
+        
         apiPostData.youtubeVideo = cleanedVideo;
 
         if (postData.platforms.length === 1) {
