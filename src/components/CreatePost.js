@@ -1073,13 +1073,26 @@ const handleSubmit = async (e) => {
             const uploadIndex = imagesWithBlobUrls.findIndex(blobImg => blobImg === img);
             if (uploadIndex >= 0 && uploadResponse.data[uploadIndex]) {
               const uploadedMedia = uploadResponse.data[uploadIndex];
+              
+              // Check if upload failed (backend returned error field)
+              if (uploadedMedia.error) {
+                console.error('❌ Upload failed for file:', uploadedMedia.originalName || uploadedMedia.displayName, uploadedMedia.error);
+                throw new Error(
+                  `Failed to upload ${uploadedMedia.originalName || uploadedMedia.displayName || 'file'}: ${uploadedMedia.error}. ` +
+                  `Please check server configuration (ffprobe may be missing for video processing).`
+                );
+              }
+              
               // Get VPS URL - try multiple possible fields
               const vpsUrl = uploadedMedia.url || uploadedMedia.secure_url || uploadedMedia.public_url;
               
               // Validate that we got a valid VPS URL (not a blob URL)
               if (!vpsUrl || vpsUrl.startsWith('blob:')) {
                 console.error('❌ Invalid VPS URL received:', uploadedMedia);
-                throw new Error(`Failed to get valid URL from server for image ${uploadIndex + 1}`);
+                throw new Error(
+                  `Failed to get valid URL from server for ${uploadedMedia.originalName || uploadedMedia.displayName || 'file'}. ` +
+                  `Server response: ${JSON.stringify(uploadedMedia)}`
+                );
               }
               
               return {
