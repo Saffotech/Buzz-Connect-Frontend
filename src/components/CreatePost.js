@@ -1095,7 +1095,22 @@ const handleSubmit = async (e) => {
                 );
               }
               
-              return {
+              // Clean thumbnails from uploadedMedia or img - exclude null values
+              let cleanedThumbnails = null;
+              const thumbnailsSource = uploadedMedia.thumbnails || img.thumbnails;
+              if (thumbnailsSource && typeof thumbnailsSource === 'object') {
+                cleanedThumbnails = {};
+                for (const [key, value] of Object.entries(thumbnailsSource)) {
+                  if (value != null && value !== undefined && value !== '') {
+                    cleanedThumbnails[key] = String(value);
+                  }
+                }
+                if (Object.keys(cleanedThumbnails).length === 0) {
+                  cleanedThumbnails = null;
+                }
+              }
+
+              const updatedImg = {
                 ...img,
                 url: vpsUrl,
                 publicId: uploadedMedia.publicId || img.publicId,
@@ -1103,6 +1118,16 @@ const handleSubmit = async (e) => {
                 originalName: uploadedMedia.originalName || img.originalName,
                 displayName: uploadedMedia.displayName || uploadedMedia.originalName || img.displayName
               };
+
+              // Only include thumbnails if cleaned and has valid values
+              if (cleanedThumbnails) {
+                updatedImg.thumbnails = cleanedThumbnails;
+              } else {
+                // Explicitly remove thumbnails if it's null/empty
+                delete updatedImg.thumbnails;
+              }
+
+              return updatedImg;
             }
           }
           return img;
@@ -1143,17 +1168,22 @@ const handleSubmit = async (e) => {
       selectedAccounts: cleanedSelectedAccounts,
       selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
       images: processedImages.map((img, index) => {
-        // Clean thumbnails - remove null/undefined values or convert to empty strings
+        // Clean thumbnails - completely exclude null/undefined values
         // Backend expects all thumbnail values to be strings, not null
+        // Only include keys that have valid non-null string values
         let cleanedThumbnails = null;
         if (img.thumbnails && typeof img.thumbnails === 'object') {
           cleanedThumbnails = {};
           for (const [key, value] of Object.entries(img.thumbnails)) {
-            // Convert null/undefined to empty string, keep strings as-is
-            cleanedThumbnails[key] = value != null ? String(value) : '';
+            // Only include keys with valid non-null, non-undefined values
+            // Convert to string and exclude if null/undefined/empty
+            if (value != null && value !== undefined && value !== '') {
+              cleanedThumbnails[key] = String(value);
+            }
+            // If value is null/undefined, don't include it in the object at all
           }
-          // Only include thumbnails if it has at least one non-empty value
-          if (Object.values(cleanedThumbnails).every(v => !v)) {
+          // Only include thumbnails if it has at least one valid value
+          if (Object.keys(cleanedThumbnails).length === 0) {
             cleanedThumbnails = null;
           }
         }
@@ -1174,8 +1204,8 @@ const handleSubmit = async (e) => {
           humanSize: img.size ? formatFileSize(img.size) : null
         };
 
-        // Only include thumbnails if it's not null/empty
-        if (cleanedThumbnails) {
+        // Only include thumbnails if it has valid values (no null keys)
+        if (cleanedThumbnails && Object.keys(cleanedThumbnails).length > 0) {
           imageData.thumbnails = cleanedThumbnails;
         }
 
