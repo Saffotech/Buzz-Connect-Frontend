@@ -23,8 +23,6 @@
   width: 95vw;
   /* max-width: 1200px; */
   max-height: 90vh; /* Limit modal height */
-  height: 90vh; /* Keep modal height bounded so inner areas can scroll */
-  overflow: hidden; /* Prevent inner content from spilling out of the modal */
   display: flex;
   flex-direction: column;
   z-index: 10000 !important;
@@ -208,7 +206,6 @@
   flex-direction: column;
   flex: 1;
   min-height: 0; /* Important for flexbox scrolling */
-  overflow: hidden; /* Contain children and allow internal scroll areas */
 }
 
 .compose-tab {
@@ -216,24 +213,11 @@
   display: grid;
   grid-template-columns: 1fr;
   min-height: 0;
-  height: 100%;
-  max-height: 100%;
-  overflow-y: auto; /* Allow scrolling inside the modal instead of pushing content out */
   /* overflow: hidden; */
 }
 
 .compose-tab.with-ai {
   grid-template-columns: 400px 1fr;
-}
-
-.compose-tab.with-media {
-  grid-template-columns: 1fr 400px;
-  gap: 0;
-}
-
-.compose-tab.with-ai.with-media {
-  grid-template-columns: 400px 1fr 400px;
-  gap: 0;
 }
 
 .preview-tab {
@@ -255,30 +239,10 @@
   padding: 1.5rem;
   overflow-y: auto;
   min-height: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.media-preview-column {
-  padding: 1.5rem;
-  overflow-y: auto;
-  min-height: 0;
-  height: 100%;
-  border-right: 1px solid #e2e8f0;
-  max-width: 400px;
-  flex-shrink: 0;
 }
 
 .form-section {
   margin-bottom: 1.5rem;
-  width: 100%;
-  flex-shrink: 0;
-}
-
-.form-section:last-child {
-  margin-bottom: 0;
 }
 
 .section-label {
@@ -350,10 +314,8 @@
 .platforms-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.75rem;
-  flex-wrap: nowrap;
-  width: 100%;
-  margin: 0;
+  gap: 0.75rem; 
+ flex-wrap: nowrap;
 }
 
 

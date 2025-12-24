@@ -38,11 +38,11 @@ import {
   Maximize2,
 } from 'lucide-react';
 import { useMedia } from '../hooks/useApi';
+import apiClient from '../utils/api';
 import { PLATFORMS, PLATFORM_CONFIGS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../utils/constants';
 import './CreatePost.css';
 import Loader from '../components/common/Loader';
 import axios from 'axios';
-import apiClient from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -367,14 +367,10 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     setTimeout(() => setToast(null), 6000);
   };
 
-  // Fetch user profile and connected accounts when modal opens
+  // Fetch user profile and connected accounts on mount
   useEffect(() => {
     if (isOpen) {
-      console.log('🔄 Modal opened, fetching user profile...');
       fetchUserProfile();
-    } else {
-      // Reset user profile when modal closes to force fresh fetch next time
-      setUserProfile(null);
     }
   }, [isOpen]);
 
@@ -627,28 +623,14 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const fetchUserProfile = async () => {
     setLoadingProfile(true);
     try {
-      const response = await apiClient.getCurrentUser();
-      console.log('🔍 Full API response:', response);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-      // Handle different response structures
-      // apiClient.getCurrentUser() returns data directly, but it might be wrapped
-      let userData = null;
-      if (response && response.success && response.data) {
-        // Response structure: { success: true, data: {...} }
-        userData = response.data;
-      } else if (response && response.data && response.data.success) {
-        // Response structure: { data: { success: true, data: {...} } }
-        userData = response.data.data;
-      } else if (response && (response.connectedAccounts || response.connectedPlatforms)) {
-        // Response structure: { connectedAccounts: [...], connectedPlatforms: [...] }
-        userData = response;
-      } else {
-        // Fallback: assume response is the user data directly
-        userData = response;
-      }
-
-      if (userData) {
-        console.log('✅ Parsed user data:', userData);
+      if (response.data.success) {
+        // Get the raw data from API
+        const userData = response.data.data;
+        console.log('Raw API response data:', userData);
 
         // Ensure connectedPlatforms includes all platforms from connectedAccounts
         let connectedPlatforms = userData.connectedPlatforms || [];
@@ -670,43 +652,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
         // Update the userData with the enhanced connectedPlatforms
         userData.connectedPlatforms = connectedPlatforms;
-        console.log('✅ Enhanced user data:', userData);
-        console.log('📊 Connected Accounts from API:', userData.connectedAccounts);
-        console.log('📊 Connected Platforms:', connectedPlatforms);
-        console.log('📊 Facebook accounts:', userData.connectedAccounts?.filter(acc => acc.platform === 'facebook'));
-        console.log('📊 Instagram accounts:', userData.connectedAccounts?.filter(acc => acc.platform === 'instagram'));
-
-        // Also merge with connectedAccounts prop if provided
-        if (connectedAccounts && Array.isArray(connectedAccounts) && connectedAccounts.length > 0) {
-          console.log('📊 Merging with connectedAccounts prop:', connectedAccounts);
-          // Merge accounts from prop with accounts from API
-          const existingAccountIds = new Set((userData.connectedAccounts || []).map(acc => acc._id || acc.id));
-          const newAccounts = connectedAccounts.filter(acc => {
-            const accId = acc._id || acc.id;
-            return accId && !existingAccountIds.has(accId);
-          });
-          if (newAccounts.length > 0) {
-            userData.connectedAccounts = [...(userData.connectedAccounts || []), ...newAccounts];
-            console.log('📊 Merged accounts:', userData.connectedAccounts);
-          }
-        }
+        console.log('Enhanced user data:', userData);
 
         setUserProfile(userData);
-      } else {
-        console.warn('⚠️ No user data found in response:', response);
-        // Still set empty profile to avoid blocking UI
-        setUserProfile({ connectedAccounts: [], connectedPlatforms: [] });
       }
     } catch (error) {
-      console.error('❌ Failed to fetch user profile:', error);
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        response: error.response
-      });
+      console.error('Failed to fetch user profile:', error);
       showToast('Failed to load user profile', 'error');
-      // Set empty profile to avoid blocking UI
-      setUserProfile({ connectedAccounts: [], connectedPlatforms: [] });
     } finally {
       setLoadingProfile(false);
     }
@@ -723,93 +675,24 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     ];
 
     return allPlatforms.map(platform => {
-      // Get all accounts for this platform - be more lenient with filtering
-      // Include accounts that match the platform, excluding only those explicitly marked as disconnected
-      const allPlatformAccounts = userProfile?.connectedAccounts?.filter(acc => {
-        // Match platform (case-insensitive)
-        const accPlatform = (acc.platform || '').toLowerCase();
-        const targetPlatform = platform.id.toLowerCase();
-        return accPlatform === targetPlatform;
-      }) || [];
-      
-      // Filter out only accounts that are explicitly disconnected
-      // Include accounts where connected is true, undefined, null, or missing
-      // BE VERY LENIENT: Only exclude if explicitly marked as false
-      const platformAccounts = allPlatformAccounts.filter(acc => {
-        // Include if connected is true, undefined, null, missing, or any truthy value
-        // Only exclude if explicitly false or the string 'false'
-        const isExplicitlyDisconnected = acc.connected === false || acc.connected === 'false';
-        
-        // Also check if account has required fields (at least platformUserId or id)
-        const hasRequiredFields = acc.platformUserId || acc.id || acc._id;
-        
-        // Include if not explicitly disconnected AND has required fields
-        return !isExplicitlyDisconnected && hasRequiredFields;
-      }).map(acc => ({
-        // Normalize account structure - handle both id and _id
-        accountId: acc.id || acc._id || acc.platformUserId,
-        id: acc.id || acc._id || acc.platformUserId,
-        _id: acc.id || acc._id || acc.platformUserId,
-        platform: acc.platform,
-        username: acc.username || acc.name || acc.displayName,
-        name: acc.username || acc.name || acc.displayName,
-        displayName: acc.username || acc.name || acc.displayName,
-        platformUserId: acc.platformUserId,
-        accessToken: acc.accessToken,
-        connected: acc.connected !== false,
-        accountType: acc.accountType,
-        connectionType: acc.connectionType,
-        profilePicture: acc.profilePicture,
-        followerCount: acc.followerCount,
-        metadata: acc.metadata,
-        // Include any other fields
-        ...acc
-      }));
-      
       // First check if there are platform-specific accounts (most reliable)
-      const hasAccountsForPlatform = platformAccounts.length > 0;
-      
+      const hasAccountsForPlatform = userProfile?.connectedAccounts?.some(acc =>
+        acc.platform === platform.id && acc.connected !== false
+      );
       // Then check if the platform is in the connectedPlatforms array
       const isInConnectedPlatforms = userProfile?.connectedPlatforms?.includes(platform.id);
 
       // A platform is connected if either condition is true
       const isConnected = hasAccountsForPlatform || isInConnectedPlatforms;
-      
-      // Debug logging for Facebook and Instagram - always log to help diagnose
-      if (platform.id === 'facebook' || platform.id === 'instagram') {
-        console.log(`🔍 ${platform.id.toUpperCase()} Platform Check:`, {
-          platformId: platform.id,
-          userProfileExists: !!userProfile,
-          userProfileConnectedAccounts: userProfile?.connectedAccounts?.length || 0,
-          allPlatformAccountsCount: allPlatformAccounts.length,
-          platformAccountsCount: platformAccounts.length,
-          hasAccountsForPlatform,
-          isInConnectedPlatforms,
-          isConnected,
-          connectedPlatforms: userProfile?.connectedPlatforms || [],
-          rawAccounts: allPlatformAccounts,
-          filteredAccounts: platformAccounts,
-          accountIds: platformAccounts.map(acc => acc.accountId || acc.id),
-          accountUsernames: platformAccounts.map(acc => acc.username || acc.name || 'N/A')
-        });
-        
-        // If we have accounts but they're not showing, log detailed info
-        if (allPlatformAccounts.length > 0 && platformAccounts.length === 0) {
-          console.warn(`⚠️ ${platform.id.toUpperCase()} accounts found but filtered out:`, allPlatformAccounts);
-        }
-      }
-      
       return {
         ...platform,
         connected: isConnected,
-        accounts: platformAccounts
+        accounts: userProfile?.connectedAccounts?.filter(acc => acc.platform === platform.id) || []
       };
     });
   };
 
-  // Always show all platforms, even if userProfile hasn't loaded yet
-  // getAvailablePlatforms() handles null userProfile with optional chaining
-  const platforms = getAvailablePlatforms();
+  const platforms = userProfile ? getAvailablePlatforms() : [];
 
   // Images are now required for all platforms
   const areImagesRequired = () => {
@@ -989,9 +872,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
   const handlePlatformToggle = (platformId) => {
     const platform = platforms.find(p => p.id === platformId);
-    // Allow toggle if platform is connected OR has accounts available
-    const hasAccounts = platform?.accounts && platform.accounts.length > 0;
-    if (!platform || (!platform.connected && !hasAccounts)) return;
+    if (!platform || !platform.connected) return;
 
     setPostData(prev => {
       const newPlatforms = prev.platforms.includes(platformId)
@@ -1115,47 +996,6 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     showToast('Image removed', 'info');
   };
 
-  // Helper function to convert blob URL to base64
-  const blobUrlToBase64 = async (blobUrl) => {
-    const response = await fetch(blobUrl);
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  // Process images - convert blob URLs to base64
-  const processImagesForSubmission = async (images) => {
-    const processedImages = [];
-    
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i];
-      
-      // If image has blob URL, convert to base64
-      if (img.url && img.url.startsWith('blob:')) {
-        try {
-          showToast(`Processing image ${i + 1}...`, 'info');
-          const base64 = await blobUrlToBase64(img.url);
-          processedImages.push({
-            ...img,
-            url: base64
-          });
-        } catch (error) {
-          console.error(`Failed to convert blob URL to base64 for image ${i + 1}:`, error);
-          throw new Error(`Failed to process image ${i + 1}: ${error.message}`);
-        }
-      } else {
-        // Image already has S3 URL or base64, use as is
-        processedImages.push(img);
-      }
-    }
-    
-    return processedImages;
-  };
-
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsSubmitting(true);
@@ -1171,46 +1011,10 @@ const handleSubmit = async (e) => {
   const selectedAccountsWithNames = {}; // ✅ Added
 
   try {
-    // ✅ Validate Instagram account connection before posting
-    if (postData.platforms.includes('instagram')) {
-      const instagramAccounts = userProfile?.connectedAccounts?.filter(
-        acc => acc.platform === 'instagram' && acc.connected !== false
-      ) || [];
-      
-      if (instagramAccounts.length === 0) {
-        throw new Error(
-          'Instagram account is not connected. Please connect your Instagram Business account in Settings → Accounts. ' +
-          'Make sure your Instagram account is linked to your Facebook Page.'
-        );
-      }
-      
-      // Check if any selected Instagram accounts are valid
-      const selectedInstagramIds = postData.selectedAccounts?.instagram || [];
-      if (selectedInstagramIds.length > 0) {
-        const validInstagramIds = instagramAccounts.map(acc => acc._id?.toString() || acc.id);
-        const hasValidSelection = selectedInstagramIds.some(id => 
-          validInstagramIds.includes(id?.toString())
-        );
-        
-        if (!hasValidSelection) {
-          throw new Error(
-            'Selected Instagram account is not connected. Please reconnect your Instagram account in Settings → Accounts.'
-          );
-        }
-      }
-    }
-    
-    // 🔹 Process images - convert blob URLs to base64
-    showToast('Processing images...', 'info');
-    const processedImages = await processImagesForSubmission(postData.images);
-    
-    // 🔹 Extract connected accounts from user profile
     // 🔹 Extract connected accounts from user profile
     const accountsMap = {};
     userProfile?.connectedAccounts?.forEach(account => {
-      if (account?._id) {
-        accountsMap[account._id.toString()] = account;
-      }
+      accountsMap[account._id.toString()] = account;
     });
 
     // 🔹 Clean up selectedAccounts (remove null/empty)
@@ -1221,7 +1025,7 @@ const handleSubmit = async (e) => {
 
         // ✅ Add usernames mapped from connectedAccounts
         selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
-          const account = accountsMap[accountId?.toString()];
+          const account = accountsMap[accountId];
           return {
             id: accountId,
             username: account ? account.username : 'Unknown Account'
@@ -1238,7 +1042,7 @@ const handleSubmit = async (e) => {
       platforms: postData.platforms,
       selectedAccounts: cleanedSelectedAccounts,
       selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
-      images: processedImages.map((img, index) => ({
+      images: postData.images.map((img, index) => ({
         url: img.url,
         altText: img.altText || img.originalName || 'Post media',
         originalName: img.originalName || img.filename || `Media ${index + 1}`,
@@ -1272,7 +1076,7 @@ const handleSubmit = async (e) => {
         ? postData.hashtags
         : `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
 
-      const videoFiles = processedImages.filter(
+      const videoFiles = postData.images.filter(
         img => img.fileType === 'video' || img.url?.includes('video') || img.url?.includes('.mp4')
       );
 
@@ -1327,7 +1131,7 @@ const handleSubmit = async (e) => {
       console.log('📤 Publishing post with ID:', postId);
 
       const publishResponse = await axios.post(
-        '/api/posts/' + postId + '/publish',
+        `${process.env.REACT_APP_API_URL}/api/posts/${postId}/publish`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -1350,46 +1154,9 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
 
   } catch (error) {
     console.error('❌ Failed to create/publish post:', error);
-    
-    // ✅ Better error messages for Instagram-specific issues
-    let errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-    
-    // Check for Instagram-specific errors
-    if (errorMessage.includes('Missing Instagram') || 
-        errorMessage.includes('Instagram account') ||
-        errorMessage.includes('access token') ||
-        errorMessage.includes('authorization denied')) {
-      
-      if (errorMessage.includes('authorization denied') || errorMessage.includes('No token')) {
-        errorMessage = 'Instagram account is missing access token. Please reconnect your Instagram account in Settings → Accounts. ' +
-          'Make sure your Instagram Business account is linked to your Facebook Page.';
-      } else if (!errorMessage.includes('Please connect') && !errorMessage.includes('Please reconnect')) {
-        errorMessage = `Instagram posting failed: ${errorMessage}. Please check your Instagram account connection in Settings.`;
-      }
-    }
-    
-    // Check for platform-specific errors in response
-    if (error.response?.data?.data?.publishResults) {
-      const publishResults = error.response.data.data.publishResults;
-      const instagramErrors = publishResults.results?.filter(
-        r => r.platform === 'instagram' && !r.success
-      ) || [];
-      
-      if (instagramErrors.length > 0) {
-        const igError = instagramErrors[0].error || '';
-        if (igError.includes('Missing Instagram') || igError.includes('access token')) {
-          errorMessage = 'Instagram account is missing access token. Please reconnect your Instagram account in Settings → Accounts.';
-        } else if (igError) {
-          errorMessage = `Instagram posting failed: ${igError}`;
-        }
-      }
-    }
-    
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
     setError(errorMessage);
-    showToast(
-      errorMessage.length > 100 ? 'Failed to publish post. See error details below.' : errorMessage,
-      'error'
-    );
+    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
   } finally {
     setIsSubmitting(false);
   }
@@ -1729,16 +1496,6 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
     };
   }, []);
 
-  // Prevent background page from scrolling while the modal is open
-  useEffect(() => {
-    if (!isOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow || '';
-    };
-  }, [isOpen]);
-
   // Keyboard navigation for carousel
   useEffect(() => {
     if (!showImageCarousel) return;
@@ -1956,7 +1713,7 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
           )}
 
           {activeTab === 'compose' && (
-            <div className={`compose-tab ${showAISuggestions ? 'with-ai' : ''} ${postData.images && postData.images.length > 0 ? 'with-media' : ''}`}>
+            <div className={`compose-tab ${showAISuggestions ? 'with-ai' : ''}`}>
               {/* AI Suggestions Column */}
               {showAISuggestions && (
                 <div className="ai-suggestions-column">
@@ -2113,188 +1870,15 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
               )}
 
               {/* Main Form Column - ALWAYS visible */}
-              {postData.images && postData.images.length > 0 ? (
-                <div className="two-column-layout">
-                  {/* Left Column - Media Preview */}
-                  <div className="media-preview-column">
-                    {/* Enhanced Media Previews with Carousel Integration */}
-                    {postData.images && postData.images.length > 0 && (
-                      <div className="uploaded-media-section">
-                        <div className="media-section-header">
-                          <h4>Selected Media ({postData.images.length})</h4>
-                          <div className="media-header-actions">
-                            {postData.images.length > 1 && (
-                              <button
-                                type="button"
-                                className="view-carousel-header-btn"
-                                onClick={() => openCarousel(0)}
-                                title="View in carousel"
-                              >
-                                <GalleryHorizontal size={16} />
-                                View Carousel
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              className="clear-all-media"
-                              onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
-                              title="Remove all media"
-                            >
-                              Clear All
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="media-preview-grid">
-                          {postData.images.map((mediaItem, index) => {
-                            const MediaIcon = getMediaTypeIcon(mediaItem);
-                            const isVideo = mediaItem.fileType === 'video' || mediaItem.url?.includes('video');
-                            const displayName = mediaItem.displayName || mediaItem.originalName || mediaItem.altText || `Media ${index + 1}`;
-
-                            return (
-                              <div key={index} className="media-preview-item">
-                                <div className="media-preview-container">
-                                  <div
-                                    className="media-preview-wrapper"
-                                    onClick={() => openCarousel(index)}
-                                    title="Click to view in carousel"
-                                  >
-                                    {isVideo ? (
-                                      <div className="video-preview">
-                                        <video
-                                          src={mediaItem.url}
-                                          className="media-preview-content"
-                                          muted
-                                          playsInline
-                                        />
-                                        <div className="video-overlay">
-                                          <Play size={24} className="play-icon" />
-                                        </div>
-                                        <div className="preview-overlay">
-                                          <Eye size={20} />
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <div className="image-preview">
-                                        <img
-                                          src={mediaItem.url}
-                                          alt={mediaItem.altText || displayName}
-                                          className="media-preview-content"
-                                          onError={(e) => {
-                                            console.error('Failed to load image preview:', mediaItem.url);
-                                            e.target.style.display = 'none';
-                                          }}
-                                        />
-                                        <div className="preview-overlay">
-                                          <Eye size={20} />
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Media Controls */}
-                                  <div className="media-controls">
-                                    <button
-                                      type="button"
-                                      className="media-control-btn view-btn"
-                                      onClick={() => openCarousel(index)}
-                                      title="View in carousel"
-                                    >
-                                      <Eye size={14} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="media-control-btn remove-btn"
-                                      onClick={() => removeMedia(index)}
-                                      title={`Remove ${displayName}`}
-                                    >
-                                      <X size={14} />
-                                    </button>
-                                  </div>
-
-                                  {/* Position Indicator for Multiple Images */}
-                                  {postData.images.length > 1 && (
-                                    <div className="position-indicator">
-                                      {index + 1}
-                                    </div>
-                                  )}
-
-                                  {/* Loading Overlay for uploading files */}
-                                  {mediaItem.isLocal && uploadingFiles && (
-                                    <div className="upload-overlay">
-                                      <Loader size={20} />
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Media Info */}
-                                <div className="media-preview-info">
-                                  <div className="media-name" title={displayName}>
-                                    <MediaIcon size={14} />
-                                    <span>
-                                      {displayName.length > 15
-                                        ? `${displayName.substring(0, 15)}...`
-                                        : displayName
-                                      }
-                                    </span>
-                                  </div>
-                                  {mediaItem.size && (
-                                    <div className="media-size">
-                                      {formatFileSize(mediaItem.size)}
-                                    </div>
-                                  )}
-                                  {mediaItem.dimensions && (
-                                    <div className="media-dimensions">
-                                      {mediaItem.dimensions.width}×{mediaItem.dimensions.height}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {/* Carousel Quick Navigation */}
-                        {postData.images.length > 3 && (
-                          <div className="carousel-quick-nav">
-                            <button
-                              className="quick-nav-btn"
-                              onClick={() => openCarousel(0)}
-                            >
-                              <GalleryHorizontal size={16} />
-                              View All {postData.images.length} Media Files
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right Column - Platform Selection and Form */}
-                  <div className="form-column">
-                    {/* Platform Selection */}
-                    <div className="form-section">
-                      <label className="section-label">Select Platforms</label>
+              <div className="form-column">
+                {/* Platform Selection */}
+                <div className="form-section">
+                  <label className="section-label">Select Platforms</label>
                   <div className="platforms-grid">
                     {platforms.map((platform) => {
                       const Icon = platform.icon;
                       const isSelected = postData.platforms.includes(platform.id);
                       const selectedAccountsCount = getSelectedAccountsCount(platform.id);
-
-                      // Check if platform has accounts (more reliable than just connected flag)
-                      const hasAccounts = platform.accounts && platform.accounts.length > 0;
-                      const canSelect = platform.connected || hasAccounts;
-
-                      // Debug logging for click handler
-                      if (platform.id === 'facebook' || platform.id === 'instagram') {
-                        console.log(`🔍 ${platform.id.toUpperCase()} Platform State:`, {
-                          platformId: platform.id,
-                          hasAccounts,
-                          accountsCount: platform.accounts?.length || 0,
-                          platformConnected: platform.connected,
-                          canSelect,
-                          accounts: platform.accounts
-                        });
-                      }
 
                       return (
                         <div key={platform.id} className="platform-container" >
@@ -2303,16 +1887,13 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                             onMouseEnter={() => setHoveredPlatform(platform.id)}
                             onMouseLeave={() => setHoveredPlatform(null)}
                             className={`platform-btn
-                               ${!canSelect ? 'not-connected-btn' : ''}
+                               ${!platform.connected ? 'not-connected-btn' : ''}
                                ${selectedAccountsCount > 0 ? 'selectedx' : ''}`}
-                            onClick={(e) => {
-                              console.log(`🖱️ Clicked ${platform.id}:`, { canSelect, hasAccounts, connected: platform.connected, accountsCount: platform.accounts?.length });
-                              if (canSelect) {
-                                handlePlatformToggle(platform.id);
-                              } else {
-                                handleConnectClick(e);
-                              }
-                            }}
+                            onClick={(e) =>
+                              platform.connected
+                                ? handlePlatformToggle(platform.id)
+                                : handleConnectClick(e)
+                            }
                             style={{ '--platform-color': platform.color }}
                           >
                             <Icon
@@ -2324,68 +1905,25 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                               }}
                             />
                             <span style={{ color: hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000" }} >{platform.name}</span>
-                            <span className="connect-status" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
-                              {canSelect ? (
-                                selectedAccountsCount > 0 ? (
-                                  <span style={{ color: platform.color }}>{selectedAccountsCount} account{selectedAccountsCount > 1 ? 's' : ''} selected</span>
-                                ) : hasAccounts ? (
-                                  <span style={{ color: '#059669' }}>✓ {platform.accounts.length} page{platform.accounts.length > 1 ? 's' : ''} available</span>
-                                ) : (
-                                  'Connected'
-                                )
-                              ) : (
-                                <span style={{ color: '#ef4444' }}>Connect Now</span>
-                              )}
+                            <span className="connect-status">
+                              {platform.connected ?
+                                (selectedAccountsCount > 0 ? `${selectedAccountsCount} account${selectedAccountsCount > 1 ? 's' : ''} selected` : 'Connected')
+                                : 'Connect Now'
+                              }
                             </span>
                           </button>
-                          
-                          {/* Visual indicator when accounts are available but not selected */}
-                          {!isSelected && hasAccounts && (
-                            <div style={{ 
-                              marginTop: '0.5rem', 
-                              padding: '0.5rem', 
-                              background: '#f0fdf4', 
-                              border: '1px solid #86efac', 
-                              borderRadius: '6px',
-                              fontSize: '0.75rem',
-                              color: '#166534'
-                            }}>
-                              💡 Click to select from {platform.accounts.length} available {platform.accounts.length > 1 ? 'pages' : 'page'}
-                            </div>
-                          )}
 
                           {/* Multi-Account Selection */}
-                          {isSelected && canSelect && platform.accounts && platform.accounts.length > 0 && (
-                            <div className="account-multi-selector" style={{ 
-                              marginTop: '1rem', 
-                              padding: '1rem', 
-                              border: '1px solid #e2e8f0', 
-                              borderRadius: '8px', 
-                              background: '#f8fafc',
-                              display: 'block'
-                            }}>
-                              <label className="account-label" style={{ 
-                                fontWeight: 600, 
-                                marginBottom: '0.75rem', 
-                                display: 'block',
-                                fontSize: '0.875rem',
-                                color: '#374151'
-                              }}>
+                          {isSelected && platform.connected && platform.accounts && platform.accounts.length > 0 && (
+                            <div className="account-multi-selector">
+                              <label className="account-label">
                                 Choose Profile{platform.accounts.length > 1 ? 's' : ''}:
-                                <span className="account-count" style={{ 
-                                  color: '#64748b', 
-                                  marginLeft: '0.5rem',
-                                  fontWeight: 400
-                                }}>
+                                <span className="account-count">
                                   ({selectedAccountsCount} of {platform.accounts.length} selected)
                                 </span>
                               </label>
-                              <div className="accounts-checkbox-list" style={{ 
-                                display: 'flex', 
-                                flexDirection: 'column', 
-                                gap: '0.5rem'
-                              }}>
-                                {platform.accounts.map((account, index) => {
+                              <div className="accounts-checkbox-list">
+                                {platform.accounts.map((account) => {
                                   const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId;
 
                                   if (!accountId) {
@@ -2400,64 +1938,18 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                                     : account.username || account.name || account.displayName || accountId;
 
                                   return (
-                                    <label 
-                                      key={`${platform.id}-${accountId}-${index}`} 
-                                      className="account-checkbox-item"
-                                      style={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        gap: '0.75rem', 
-                                        padding: '0.75rem', 
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        transition: 'background 0.2s',
-                                        backgroundColor: isChecked ? '#dbeafe' : 'transparent',
-                                        border: isChecked ? '1px solid #3b82f6' : '1px solid transparent'
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        if (!isChecked) {
-                                          e.currentTarget.style.backgroundColor = '#f1f5f9';
-                                        }
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        if (!isChecked) {
-                                          e.currentTarget.style.backgroundColor = 'transparent';
-                                        }
-                                      }}
-                                    >
+                                    <label key={`${platform.id}-${accountId}`} className="account-checkbox-item">
                                       <input
                                         type="checkbox"
                                         checked={isChecked}
-                                        onChange={(e) => {
-                                          console.log(`✅ Toggling ${platform.id} account:`, accountId, accountName, e.target.checked);
-                                          handleAccountSelection(platform.id, accountId, e.target.checked);
-                                        }}
+                                        onChange={(e) => handleAccountSelection(platform.id, accountId, e.target.checked)}
                                         className="account-checkbox"
-                                        style={{ width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
                                       />
                                       <span className="checkbox-custom"></span>
-                                      {account.profilePicture && (
-                                        <img 
-                                          src={account.profilePicture} 
-                                          alt={accountName}
-                                          style={{ 
-                                            width: '32px', 
-                                            height: '32px', 
-                                            borderRadius: '50%', 
-                                            objectFit: 'cover',
-                                            flexShrink: 0
-                                          }}
-                                          onError={(e) => e.target.style.display = 'none'}
-                                        />
-                                      )}
-                                      <span className="account-name" style={{ 
-                                        flex: 1, 
-                                        fontWeight: isChecked ? 600 : 400,
-                                        color: isChecked ? '#1e40af' : '#374151'
-                                      }}>
+                                      <span className="account-name">
                                         {accountName}
                                         {account.pageId && account.pageId !== accountId && (
-                                          <span className="account-id" style={{ color: '#64748b', marginLeft: '0.25rem', fontSize: '0.75rem' }}> (ID: {account.pageId})</span>
+                                          <span className="account-id"> (ID: {account.pageId})</span>
                                         )}
                                       </span>
                                     </label>
@@ -2657,98 +2149,11 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                           )}
                         </div>
                       </div>
-
-                      {postData.images && postData.images.length > 0 && (
-                        <div className="upload-preview-pane">
-                          <div className="media-section-header">
-                            <h4>Selected Media ({postData.images.length})</h4>
-                            <div className="media-header-actions">
-                              {postData.images.length > 1 && (
-                                <button
-                                  type="button"
-                                  className="view-carousel-header-btn"
-                                  onClick={() => openCarousel(0)}
-                                  title="View in carousel"
-                                >
-                                  <GalleryHorizontal size={16} />
-                                  View Carousel
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                className="clear-all-media"
-                                onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
-                                title="Remove all media"
-                              >
-                                Clear All
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="media-preview-grid compact">
-                            {postData.images.map((mediaItem, index) => {
-                              const MediaIcon = getMediaTypeIcon(mediaItem);
-                              const isVideo = mediaItem.fileType === 'video' || mediaItem.url?.includes('video');
-                              const displayName = mediaItem.displayName || mediaItem.originalName || mediaItem.altText || `Media ${index + 1}`;
-
-                              return (
-                                <div key={index} className="media-preview-item">
-                                  <div className="media-preview-container">
-                                    {isVideo ? (
-                                      <div className="video-preview">
-                                        <video
-                                          src={mediaItem.url}
-                                          className="media-preview-content"
-                                          muted
-                                          playsInline
-                                        />
-                                        <div className="video-overlay">
-                                          <Play size={16} />
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <img
-                                        src={mediaItem.url}
-                                        alt={displayName}
-                                        className="media-preview-content"
-                                      />
-                                    )}
-                                    <button
-                                      type="button"
-                                      className="remove-media-btn"
-                                      onClick={() => removeMedia(index)}
-                                      title="Remove media"
-                                    >
-                                      <X size={14} />
-                                    </button>
-                                  </div>
-                                  <div className="media-info">
-                                    <div className="media-name">
-                                      <MediaIcon size={12} />
-                                      <span title={displayName}>{displayName}</span>
-                                    </div>
-                                    {mediaItem.size && (
-                                      <div className="media-size">
-                                        {formatFileSize(mediaItem.size)}
-                                      </div>
-                                    )}
-                                    {mediaItem.dimensions && (
-                                      <div className="media-dimensions">
-                                        {mediaItem.dimensions.width}×{mediaItem.dimensions.height}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
 
                   {/* Enhanced Media Previews with Carousel Integration */}
-                  {false && postData.images && postData.images.length > 0 && (
+                  {postData.images && postData.images.length > 0 && (
                     <div className="uploaded-media-section">
                       <div className="media-section-header">
                         <h4>Selected Media ({postData.images.length})</h4>
@@ -2899,76 +2304,8 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                   )}
                 </div>
 
-                    {/* Content */}
-                    <div className="form-section">
-                      <label className="section-label">
-                        Content
-                        <span className={`char-count ${charCount.remaining < 0 ? 'over-limit' : ''}`}>
-                          {charCount.current}/{charCount.max}
-                        </span>
-                      </label>
-                      <textarea
-                        value={postData.content}
-                        onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
-                        placeholder="What's happening? Share your thoughts..."
-                        className="content-textarea"
-                        rows={6}
-                        required
-                      />
-                    </div>
-
-                    {/* Hashtags and Mentions */}
-                    <div className="form-row">
-                      <div className="form-section">
-                        <label className="section-label">
-                          <Hash size={16} />
-                          Hashtags
-                          <button
-                            type="button"
-                            className="ai-hashtag-btn"
-                            onClick={generateHashtags}
-                            disabled={isGenerating || !postData.content.trim()}
-                            title="Generate hashtags with AI"
-                          >
-                            {isGenerating ? <></> : <Sparkles size={14} />}
-                            AI
-                          </button>
-                        </label>
-                        <input
-                          type="text"
-                          value={postData.hashtags}
-                          onChange={(e) => setPostData(prev => ({ ...prev, hashtags: e.target.value }))}
-                          placeholder="#marketing #socialmedia #content"
-                          className="form-input"
-                        />
-                      </div>
-                      <div className="form-section">
-                        <label className="section-label">
-                          <AtSign size={16} />
-                          Mentions
-                          <button
-                            type="button"
-                            className="ai-hashtag-btn"
-                            onClick={generateMentions}
-                            disabled={isGenerating || !postData.content.trim()}
-                            title="Generate mentions with AI"
-                          >
-                            {isGenerating ? <></> : <Sparkles size={14} />}
-                            AI
-                          </button>
-                        </label>
-                        <input
-                          type="text"
-                          value={postData.mentions}
-                          onChange={(e) => setPostData(prev => ({ ...prev, mentions: e.target.value }))}
-                          placeholder="@username @brand"
-                          className="form-input"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Scheduler Section */}
-                    <div className="form-section">
+                {/* Scheduler Section */}
+                <div className="form-section">
                   <label className="section-label">
                     <Clock size={16} />
                     Scheduler
@@ -3116,677 +2453,9 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                       </div>
                     )}
                   </div>
-                    </div>
-                  </div>
                 </div>
-              ) : (
-                /* Single Column Layout - No Media */
-                <div className="form-column">
-                  {/* Platform Selection */}
-                  <div className="form-section">
-                    <label className="section-label">Select Platforms</label>
-                    <div className="platforms-grid">
-                      {platforms.map((platform) => {
-                        const Icon = platform.icon;
-                        const isSelected = postData.platforms.includes(platform.id);
-                        const selectedAccountsCount = getSelectedAccountsCount(platform.id);
 
-                        // Check if platform has accounts (more reliable than just connected flag)
-                        const hasAccounts = platform.accounts && platform.accounts.length > 0;
-                        const canSelect = platform.connected || hasAccounts;
-
-                        return (
-                          <div key={platform.id} className="platform-container" >
-                            <button
-                              type="button"
-                              onMouseEnter={() => setHoveredPlatform(platform.id)}
-                              onMouseLeave={() => setHoveredPlatform(null)}
-                              className={`platform-btn
-                                 ${!canSelect ? 'not-connected-btn' : ''}
-                                 ${selectedAccountsCount > 0 ? 'selectedx' : ''}`}
-                              onClick={(e) => {
-                                console.log(`🖱️ Clicked ${platform.id}:`, { canSelect, hasAccounts, connected: platform.connected, accountsCount: platform.accounts?.length });
-                                if (canSelect) {
-                                  handlePlatformToggle(platform.id);
-                                } else {
-                                  handleConnectClick(e);
-                                }
-                              }}
-                              style={{ '--platform-color': platform.color }}
-                            >
-                              <Icon
-                                size={20}
-                                color={hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000"}
-                                style={{
-                                  transition: "transform 0.2s ease, color 0.2s ease",
-                                  transform: hoveredPlatform === platform.id ? "scale(1.1)" : "scale(1)"
-                                }}
-                              />
-                              <span style={{ color: hoveredPlatform === platform.id || selectedAccountsCount > 0 ? platform.color : "#000" }} >{platform.name}</span>
-                              <span className="connect-status" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
-                                {canSelect ? (
-                                  selectedAccountsCount > 0 ? (
-                                    <span style={{ color: platform.color }}>{selectedAccountsCount} account{selectedAccountsCount > 1 ? 's' : ''} selected</span>
-                                  ) : hasAccounts ? (
-                                    <span style={{ color: '#059669' }}>✓ {platform.accounts.length} page{platform.accounts.length > 1 ? 's' : ''} available</span>
-                                  ) : (
-                                    'Connected'
-                                  )
-                                ) : (
-                                  <span style={{ color: '#ef4444' }}>Connect Now</span>
-                                )}
-                              </span>
-                            </button>
-                            
-                            {/* Visual indicator when accounts are available but not selected */}
-                            {!isSelected && hasAccounts && (
-                              <div style={{ 
-                                marginTop: '0.5rem', 
-                                padding: '0.5rem', 
-                                background: '#f0fdf4', 
-                                border: '1px solid #86efac', 
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
-                                color: '#166534'
-                              }}>
-                                💡 Click to select from {platform.accounts.length} available {platform.accounts.length > 1 ? 'pages' : 'page'}
-                              </div>
-                            )}
-
-                            {/* Multi-Account Selection */}
-                            {isSelected && canSelect && platform.accounts && platform.accounts.length > 0 && (
-                              <div className="account-multi-selector" style={{ 
-                                marginTop: '1rem', 
-                                padding: '1rem', 
-                                border: '1px solid #e2e8f0', 
-                                borderRadius: '8px', 
-                                background: '#f8fafc',
-                                display: 'block'
-                              }}>
-                                <label className="account-label" style={{ 
-                                  fontWeight: 600, 
-                                  marginBottom: '0.75rem', 
-                                  display: 'block',
-                                  fontSize: '0.875rem',
-                                  color: '#374151'
-                                }}>
-                                  Choose Profile{platform.accounts.length > 1 ? 's' : ''}:
-                                  <span className="account-count" style={{ 
-                                    color: '#64748b', 
-                                    marginLeft: '0.5rem',
-                                    fontWeight: 400
-                                  }}>
-                                    ({selectedAccountsCount} of {platform.accounts.length} selected)
-                                  </span>
-                                </label>
-                                <div className="accounts-checkbox-list" style={{ 
-                                  display: 'flex', 
-                                  flexDirection: 'column', 
-                                  gap: '0.5rem'
-                                }}>
-                                  {platform.accounts.map((account, index) => {
-                                    const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId;
-
-                                    if (!accountId) {
-                                      console.warn('Account missing ID:', account);
-                                      return null;
-                                    }
-
-                                    const isChecked = isAccountSelected(platform.id, accountId);
-
-                                    const accountName = platform.id === 'linkedin' && account.accountType === 'company'
-                                      ? `${account.username || account.companyName || accountId} (Company Page)`
-                                      : account.username || account.name || account.displayName || accountId;
-
-                                    return (
-                                      <label 
-                                        key={`${platform.id}-${accountId}-${index}`} 
-                                        className="account-checkbox-item"
-                                        style={{ 
-                                          display: 'flex', 
-                                          alignItems: 'center', 
-                                          gap: '0.75rem', 
-                                          padding: '0.75rem', 
-                                          borderRadius: '6px',
-                                          cursor: 'pointer',
-                                          transition: 'background 0.2s',
-                                          backgroundColor: isChecked ? '#dbeafe' : 'transparent',
-                                          border: isChecked ? '1px solid #3b82f6' : '1px solid transparent'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                          if (!isChecked) {
-                                            e.currentTarget.style.backgroundColor = '#f1f5f9';
-                                          }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                          if (!isChecked) {
-                                            e.currentTarget.style.backgroundColor = 'transparent';
-                                          }
-                                        }}
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          checked={isChecked}
-                                          onChange={(e) => {
-                                            console.log(`✅ Toggling ${platform.id} account:`, accountId, accountName, e.target.checked);
-                                            handleAccountSelection(platform.id, accountId, e.target.checked);
-                                          }}
-                                          className="account-checkbox"
-                                          style={{ width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }}
-                                        />
-                                        <span className="checkbox-custom"></span>
-                                        {account.profilePicture && (
-                                          <img 
-                                            src={account.profilePicture} 
-                                            alt={accountName}
-                                            style={{ 
-                                              width: '32px', 
-                                              height: '32px', 
-                                              borderRadius: '50%', 
-                                              objectFit: 'cover',
-                                              flexShrink: 0
-                                            }}
-                                            onError={(e) => e.target.style.display = 'none'}
-                                          />
-                                        )}
-                                        <span className="account-name" style={{ 
-                                          flex: 1, 
-                                          fontWeight: isChecked ? 600 : 400,
-                                          color: isChecked ? '#1e40af' : '#374151'
-                                        }}>
-                                          {accountName}
-                                          {account.pageId && account.pageId !== accountId && (
-                                            <span className="account-id" style={{ color: '#64748b', marginLeft: '0.25rem', fontSize: '0.75rem' }}> (ID: {account.pageId})</span>
-                                          )}
-                                        </span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-
-                                {platform.accounts.length > 1 && (
-                                  <div className="account-selection-controls">
-                                    <button
-                                      type="button"
-                                      className="select-all-btn"
-                                      onClick={() => {
-                                        platform.accounts.forEach(account => {
-                                          const accountId = account.accountId || account.id || account._id || account.pageId || account.companyId;
-                                          if (accountId && !isAccountSelected(platform.id, accountId)) {
-                                            handleAccountSelection(platform.id, accountId, true);
-                                          }
-                                        });
-                                      }}
-                                      disabled={selectedAccountsCount === platform.accounts.length}
-                                    >
-                                      Select All
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="deselect-all-btn"
-                                      onClick={() => {
-                                        setPostData(prev => ({
-                                          ...prev,
-                                          selectedAccounts: {
-                                            ...prev.selectedAccounts,
-                                            [platform.id]: []
-                                          }
-                                        }));
-                                      }}
-                                      disabled={selectedAccountsCount === 0}
-                                    >
-                                      Deselect All
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="form-section">
-                    <label className="section-label">
-                      Content
-                      <span className={`char-count ${charCount.remaining < 0 ? 'over-limit' : ''}`}>
-                        {charCount.current}/{charCount.max}
-                      </span>
-                    </label>
-                    <textarea
-                      value={postData.content}
-                      onChange={(e) => setPostData(prev => ({ ...prev, content: e.target.value }))}
-                      placeholder="What's happening? Share your thoughts..."
-                      className="content-textarea"
-                      rows={6}
-                      required
-                    />
-                  </div>
-
-                  {/* Hashtags and Mentions */}
-                  <div className="form-row">
-                    <div className="form-section">
-                      <label className="section-label">
-                        <Hash size={16} />
-                        Hashtags
-                        <button
-                          type="button"
-                          className="ai-hashtag-btn"
-                          onClick={generateHashtags}
-                          disabled={isGenerating || !postData.content.trim()}
-                          title="Generate hashtags with AI"
-                        >
-                          {isGenerating ? <></> : <Sparkles size={14} />}
-                          AI
-                        </button>
-                      </label>
-                      <input
-                        type="text"
-                        value={postData.hashtags}
-                        onChange={(e) => setPostData(prev => ({ ...prev, hashtags: e.target.value }))}
-                        placeholder="#marketing #socialmedia #content"
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-section">
-                      <label className="section-label">
-                        <AtSign size={16} />
-                        Mentions
-                        <button
-                          type="button"
-                          className="ai-hashtag-btn"
-                          onClick={generateMentions}
-                          disabled={isGenerating || !postData.content.trim()}
-                          title="Generate mentions with AI"
-                        >
-                          {isGenerating ? <></> : <Sparkles size={14} />}
-                          AI
-                        </button>
-                      </label>
-                      <input
-                        type="text"
-                        value={postData.mentions}
-                        onChange={(e) => setPostData(prev => ({ ...prev, mentions: e.target.value }))}
-                        placeholder="@username @brand"
-                        className="form-input"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Enhanced Media Upload Section with Carousel Support */}
-                  <div className="form-section">
-                    <div className="headz">
-                      <label className="section-label">
-                        <Image size={16} />
-                        Media (Images & Videos)
-                      </label>
-
-                      <label className="section-label px" onClick={() => setShowMediaLibrary(true)}>
-                        <FolderOpen size={16} />
-                        Import from Media Library
-                      </label>
-                    </div>
-                    <div className="media-type-selector">
-  <label className="section-label">Media Type:</label>
-  <div className="media-type-options">
-    {postData.platforms.length > 0 && DIMENSIONS[postData.platforms[0]] && 
-      Object.keys(DIMENSIONS[postData.platforms[0]]).map(type => (
-        <button
-          key={type}
-          type="button"
-          className={`type-option ${mediaType === type ? 'active' : ''}`}
-          onClick={() => setMediaType(type)}
-        >
-          {type.charAt(0).toUpperCase() + type.slice(1)}
-          {type !== 'profile' && (
-            <small>
-              {DIMENSIONS[postData.platforms[0]][type][0]} x {DIMENSIONS[postData.platforms[0]][type][1]}
-            </small>
-          )}
-        </button>
-      ))
-    }
-  </div>
-</div>
-
-                    {/* Upload Options Grid */}
-                    <div className="media-upload-container">
-                      <div className="upload-options-grid">
-                        {/* Upload New Files with Drag & Drop */}
-                        <div className="upload-option">
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            multiple
-                            accept="image/*,video/*"
-                            onChange={handleFileInputChange}
-                            className="file-input"
-                            id="media-upload"
-                          />
-                          <div
-                            className={`upload-area ${dragActive ? 'drag-active' : ''} ${uploadingFiles ? 'uploading' : ''}`}
-                            onDragEnter={handleDrag}
-                            onDragLeave={handleDrag}
-                            onDragOver={handleDrag}
-                            onDrop={handleDrop}
-                            onClick={handleUploadAreaClick}
-                          >
-                            {uploadingFiles ? (
-                              <>
-                                <Loader className="spinner" size={32} />
-                                <span className="upload-title">Uploading media...</span>
-                                <small>Please wait while we upload your files</small>
-                              </>
-                            ) : (
-                              <>
-                                <Upload size={32} />
-                                <span className="upload-title">
-                                  {dragActive ? 'Drop files here' : 'Upload Media Files'}
-                                </span>
-                                <small className="upload-subtitle">
-                                  Drag & drop or click to select
-                                </small>
-                                <div className="upload-specs">
-                                  <span className='upidsc'><Image size={16} />  PNG, JPG, GIF up to 50MB</span>
-                                  <span className='upidsc'><Video size={16} />  MP4, MOV, AVI up to 250MB</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Enhanced Media Previews with Carousel Integration */}
-                    {postData.images && postData.images.length > 0 && (
-                      <div className="uploaded-media-section">
-                        <div className="media-section-header">
-                          <h4>Selected Media ({postData.images.length})</h4>
-                          <div className="media-header-actions">
-                            {postData.images.length > 1 && (
-                              <button
-                                type="button"
-                                className="view-carousel-header-btn"
-                                onClick={() => openCarousel(0)}
-                                title="View in carousel"
-                              >
-                                <GalleryHorizontal size={16} />
-                                View Carousel
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              className="clear-all-media"
-                              onClick={() => setPostData(prev => ({ ...prev, images: [] }))}
-                              title="Remove all media"
-                            >
-                              Clear All
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="media-preview-grid">
-                          {postData.images.map((mediaItem, index) => {
-                            const MediaIcon = getMediaTypeIcon(mediaItem);
-                            const isVideo = mediaItem.fileType === 'video' || mediaItem.url?.includes('video');
-                            const displayName = mediaItem.displayName || mediaItem.originalName || mediaItem.altText || `Media ${index + 1}`;
-
-                            return (
-                              <div key={index} className="media-preview-item">
-                                <div className="media-preview-container">
-                                  <div
-                                    className="media-preview-wrapper"
-                                    onClick={() => openCarousel(index)}
-                                    title="Click to view in carousel"
-                                  >
-                                    {isVideo ? (
-                                      <div className="video-preview">
-                                        <video
-                                          src={mediaItem.url}
-                                          className="media-preview-content"
-                                          muted
-                                          playsInline
-                                        />
-                                        <div className="video-overlay">
-                                          <Play size={24} className="play-icon" />
-                                        </div>
-                                        <div className="preview-overlay">
-                                          <Eye size={20} />
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <div className="image-preview">
-                                        <img
-                                          src={mediaItem.url}
-                                          alt={mediaItem.altText || displayName}
-                                          className="media-preview-content"
-                                          onError={(e) => {
-                                            console.error('Failed to load image preview:', mediaItem.url);
-                                            e.target.style.display = 'none';
-                                          }}
-                                        />
-                                        <div className="preview-overlay">
-                                          <Eye size={20} />
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Media Controls */}
-                                  <div className="media-controls">
-                                    <button
-                                      type="button"
-                                      className="media-control-btn view-btn"
-                                      onClick={() => openCarousel(index)}
-                                      title="View in carousel"
-                                    >
-                                      <Eye size={14} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="media-control-btn remove-btn"
-                                      onClick={() => removeMedia(index)}
-                                      title={`Remove ${displayName}`}
-                                    >
-                                      <X size={14} />
-                                    </button>
-                                  </div>
-
-                                  {/* Position Indicator for Multiple Images */}
-                                  {postData.images.length > 1 && (
-                                    <div className="position-indicator">
-                                      {index + 1}
-                                    </div>
-                                  )}
-
-                                  {/* Loading Overlay for uploading files */}
-                                  {mediaItem.isLocal && uploadingFiles && (
-                                    <div className="upload-overlay">
-                                      <Loader size={20} />
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Media Info */}
-                                <div className="media-preview-info">
-                                  <div className="media-name" title={displayName}>
-                                    <MediaIcon size={14} />
-                                    <span>
-                                      {displayName.length > 15
-                                        ? `${displayName.substring(0, 15)}...`
-                                        : displayName
-                                      }
-                                    </span>
-                                  </div>
-                                  {mediaItem.size && (
-                                    <div className="media-size">
-                                      {formatFileSize(mediaItem.size)}
-                                    </div>
-                                  )}
-                                  {mediaItem.dimensions && (
-                                    <div className="media-dimensions">
-                                      {mediaItem.dimensions.width}×{mediaItem.dimensions.height}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {/* Carousel Quick Navigation */}
-                        {postData.images.length > 3 && (
-                          <div className="carousel-quick-nav">
-                            <button
-                              className="quick-nav-btn"
-                              onClick={() => openCarousel(0)}
-                            >
-                              <GalleryHorizontal size={16} />
-                              View All {postData.images.length} Media Files
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Scheduler Section */}
-                  <div className="form-section">
-                    <label className="section-label">
-                      <Clock size={16} />
-                      Scheduler
-                    </label>
-
-                    <div className="scheduler-options">
-                      <div className="radio-group">
-                        <label className={`radio-option ${!isScheduled ? 'active' : ''}`}>
-                          <input
-                            type="radio"
-                            name="scheduler"
-                            value="now"
-                            checked={!isScheduled}
-                            onChange={() => {
-                              setIsScheduled(false);
-                              setPostData(prev => ({
-                                ...prev,
-                                scheduledDate: '',
-                                scheduledTime: ''
-                              }));
-                            }}
-                          />
-                          <span>Publish Now</span>
-                        </label>
-                        <label className={`radio-option ${isScheduled ? 'active' : ''}`}>
-                          <input
-                            type="radio"
-                            name="scheduler"
-                            value="later"
-                            checked={isScheduled}
-                            onChange={() => setIsScheduled(true)}
-                          />
-                          <span>Schedule for Later</span>
-                        </label>
-                      </div>
-
-                      {isScheduled && (
-                        <div className="schedule-inputs">
-                          <div className="input-group">
-                            <label>Select date</label>
-                            <input
-                              type="date"
-                              value={postData.scheduledDate}
-                              onChange={(e) => {
-                                const selectedDate = e.target.value;
-                                setPostData(prev => ({ ...prev, scheduledDate: selectedDate }));
-                                
-                                // Validate date
-                                const validation = validateScheduleDateTime(selectedDate, postData.scheduledTime);
-                                if (!validation.isValid) {
-                                  setError(validation.error);
-                                } else {
-                                  setError(null);
-                                }
-                              }}
-                              min={new Date().toISOString().split('T')[0]}
-                              required
-                            />
-                          </div>
-
-                          <div className="input-group">
-                            <div className="time-input-container">
-                              <div className="time-input-header">
-                                <span className="time-input-label">Select time</span>
-                                <Clock size={16} className="time-input-icon" />
-                              </div>
-                              <div key={postData.scheduledTime} className="time-picker-12hr">
-                                <select
-                                  value={currentTime12.hour}
-                                  onChange={(e) => {
-                                    const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
-                                    const newTime = { ...currentTime, hour: e.target.value };
-                                    const time24 = convertTo24Hour(newTime.hour, newTime.minute, newTime.period);
-                                    setPostData(prev => ({ ...prev, scheduledTime: time24 }));
-                                  }}
-                                  className="time-select"
-                                  required
-                                >
-                                  {[...Array(12)].map((_, i) => {
-                                    const hour = i + 1;
-                                    return (
-                                      <option key={hour} value={hour.toString()}>
-                                        {hour}
-                                      </option>
-                                    );
-                                  })}
-                                </select>
-
-                                <span className="time-separator">:</span>
-
-                                <select
-                                  value={currentTime12.minute}
-                                  onChange={(e) => {
-                                    const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
-                                    const newTime = { ...currentTime, minute: e.target.value };
-                                    const time24 = convertTo24Hour(newTime.hour, newTime.minute, newTime.period);
-                                    setPostData(prev => ({ ...prev, scheduledTime: time24 }));
-                                  }}
-                                  className="time-select"
-                                  required
-                                >
-                                  {[...Array(60)].map((_, i) => {
-                                    const minute = i.toString().padStart(2, '0');
-                                    return (
-                                      <option key={minute} value={minute}>
-                                        {minute}
-                                      </option>
-                                    );
-                                  })}
-                                </select>
-
-                                <select
-                                  value={currentTime12.period}
-                                  onChange={(e) => {
-                                    const currentTime = postData.scheduledTime ? convertTo12Hour(postData.scheduledTime) : { hour: '12', minute: '00', period: 'PM' };
-                                    const newTime = { ...currentTime, period: e.target.value };
-                                    const time24 = convertTo24Hour(newTime.hour, newTime.minute, newTime.period);
-                                    setPostData(prev => ({ ...prev, scheduledTime: time24 }));
-                                  }}
-                                  className="time-select period-select"
-                                  required
-                                >
-                                  <option value="AM">AM</option>
-                                  <option value="PM">PM</option>
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           )}
 
