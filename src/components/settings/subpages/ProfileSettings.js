@@ -5,6 +5,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../../hooks/useAuth';
 import { Eye, EyeOff } from 'lucide-react';
+import apiClient from '../../../utils/api';
 
 const ProfileSettings = ({ onNotify }) => {
   const { user, token } = useAuth();
@@ -27,13 +28,11 @@ const ProfileSettings = ({ onNotify }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get('/api/users/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await apiClient.getUserProfile();
 
-        if (res.data.success) {
-          setName(res.data.data.displayName || 'N/A');
-          setEmail(res.data.data.email || 'N/A');
+        if (res.success) {
+          setName(res.data.displayName || 'N/A');
+          setEmail(res.data.email || 'N/A');
         }
       } catch (err) {
         console.error('Error fetching profile:', err);

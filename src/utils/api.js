@@ -177,6 +177,10 @@ class ApiClient {
     return this.request('/api/auth/me');
   }
 
+  async getUserProfile() {
+    return this.request('/api/users/profile');
+  }
+
   async logout() {
     return this.request('/api/auth/logout', {
       method: 'POST'
@@ -449,6 +453,7 @@ export const {
   register,
   login,
   getCurrentUser,
+  getUserProfile,
   logout,
   getPosts,
   createPost,

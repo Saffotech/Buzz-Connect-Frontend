@@ -32,6 +32,7 @@ import './Layout.css';
 import Logo from "../assets/img/Logo.png";
 import { useDashboardData } from '../hooks/useApi';
 import FeedbackModal from '../components/common/Feedback/FeedbackModal';
+import apiClient from '../utils/api';
 
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(!window.innerWidth > 768);
@@ -383,12 +384,10 @@ const Layout = ({ children }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get('/api/users/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.data.success) {
-          setName(res.data.data.displayName || 'User');
-          setEmail(res.data.data.email || 'No Email');
+        const res = await apiClient.getUserProfile();
+        if (res.success) {
+          setName(res.data.displayName || 'User');
+          setEmail(res.data.email || 'No Email');
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
