@@ -1310,7 +1310,37 @@ const handleSubmit = async (e) => {
       console.log('✅ Publish response:', publishResponse);
 
       if (publishResponse.success) {
-        showToast('Post published successfully!', 'success');
+        // ✅ Show detailed platform results
+        const publishResults = publishResponse.data?.publishResults;
+        if (publishResults) {
+          const { successfulPublishes, totalAccounts, results } = publishResults;
+          
+          if (successfulPublishes === totalAccounts) {
+            // All platforms succeeded
+            showToast('Post published successfully to all platforms!', 'success');
+          } else if (successfulPublishes > 0) {
+            // Partial success - show details
+            const successful = results
+              .filter(r => r.success)
+              .map(r => r.platform?.toUpperCase() || 'Unknown')
+              .join(', ');
+            const failed = results
+              .filter(r => !r.success)
+              .map(r => r.platform?.toUpperCase() || 'Unknown')
+              .join(', ');
+            
+            showToast(
+              `Published to ${successfulPublishes}/${totalAccounts} platforms. Success: ${successful}${failed ? `. Failed: ${failed}` : ''}`,
+              'warning' // Use warning for partial success
+            );
+          } else {
+            // All failed
+            showToast('Post publishing failed for all platforms', 'error');
+          }
+        } else {
+          // Fallback to simple message or backend message
+          showToast(publishResponse.message || 'Post published successfully!', 'success');
+        }
       } else {
         throw new Error(publishResponse.message || 'Publishing failed');
       }

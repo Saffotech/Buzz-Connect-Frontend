@@ -12,6 +12,19 @@ import { faSquareXTwitter } from '@fortawesome/free-brands-svg-icons';
 import { faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import apiClient from '../../../utils/api';
 
+// ========== ADD THIS CODE HERE ==========
+// Only configure axios baseURL in development (local)
+// In production, frontend and backend are on same domain, so relative URLs work
+if (process.env.NODE_ENV === 'development' || process.env.REACT_APP_API_URL) {
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  axios.defaults.baseURL = API_BASE_URL;
+  console.log('🔧 Axios configured for development with baseURL:', API_BASE_URL);
+} else {
+  // Production: Don't set baseURL, use relative URLs (same domain)
+  console.log('🔧 Axios using relative URLs (production mode)');
+}
+// ========== END ==========
+
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, accountUsername, platform }) => {
