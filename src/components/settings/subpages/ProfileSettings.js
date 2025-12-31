@@ -57,13 +57,9 @@ const ProfileSettings = ({ onNotify }) => {
     setVerifyingPassword(true);
     try {
       // Call API to verify current password
-      const res = await axios.post(
-        '/api/users/verify-password',
-        { currentPassword },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await apiClient.verifyPassword(currentPassword);
 
-      if (res.data.success) {
+      if (res.success) {
         setCurrentPasswordVerified(true);
         toast.success('Password verified! You can now set a new password.');
       } else {
@@ -98,14 +94,7 @@ const ProfileSettings = ({ onNotify }) => {
 
     setUpdatingPassword(true);
     try {
-      const res = await axios.put(
-        '/api/users/update-password',
-        {
-          currentPassword,
-          newPassword
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await apiClient.updatePassword(currentPassword, newPassword);
 
       if (res.data.success) {
         toast.success('Password updated successfully');

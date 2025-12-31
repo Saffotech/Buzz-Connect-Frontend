@@ -396,6 +396,66 @@ class ApiClient {
   async getDashboard() {
   return this.request('/api/dashboard');
 }
+
+  // Notifications endpoints
+  async getNotifications() {
+    return this.request('/api/notifications');
+  }
+
+  async markNotificationAsRead(id) {
+    return this.request(`/api/notifications/${id}/read`, {
+      method: 'PATCH'
+    });
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.request('/api/notifications/read-all', {
+      method: 'PATCH'
+    });
+  }
+
+  async deleteNotification(id) {
+    return this.request(`/api/notifications/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Auth status endpoints (for AccountsSettings)
+  async getLinkedInStatus() {
+    return this.request('/api/auth/linkedin/status');
+  }
+
+  async getLinkedInBusinessStatus() {
+    return this.request('/api/auth/linkedin-business/status');
+  }
+
+  async getYouTubeStatus() {
+    return this.request('/api/auth/youtube/status');
+  }
+
+  async getYouTubeChannel() {
+    return this.request('/api/auth/youtube/channel');
+  }
+
+  async getTwitterStatus() {
+    return this.request('/api/auth/x/status');
+  }
+
+  // User password endpoints
+  async verifyPassword(currentPassword) {
+    return this.request('/api/users/verify-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword })
+    });
+  }
+
+  async updatePassword(currentPassword, newPassword) {
+    return this.request('/api/users/update-password', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+  }
+
 async validateImageDimensions(file, platform, type) {
   const formData = new FormData();
   formData.append('media', file);
@@ -478,6 +538,11 @@ export const {
   getInstagramAccounts,
   getInstagramConnectionStatus,
   disconnectInstagramAccount,
+  getLinkedInStatus,
+  getLinkedInBusinessStatus,
+  getYouTubeStatus,
+  getYouTubeChannel,
+  getTwitterStatus,
   generateContent,
   suggestHashtags,
   analyzeContent,
@@ -485,6 +550,12 @@ export const {
   getAIInfo,
   getAIHealth,
   healthCheck,
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
+  verifyPassword,
+  updatePassword,
   validateImageDimensions,
   uploadAndResize
 } = apiClient;

@@ -2401,33 +2401,31 @@ const AccountsSettings = ({ onNotify }) => {
         let accounts = [];
         
         try {
-          const instaRes = await axios.get('/api/auth/instagram/accounts', {
-            headers: { Authorization: `Bearer ${authToken}` }
-          });
+          const instaRes = await apiClient.getInstagramAccounts();
 
           // Handle new response structure: data.data.accountsByPlatform
-          if (instaRes.data.success && instaRes.data.data) {
+          if (instaRes.success && instaRes.data) {
             // Get all accounts from accountsByPlatform (Instagram + Facebook)
-            if (instaRes.data.data.accountsByPlatform) {
+            if (instaRes.data.accountsByPlatform) {
               accounts = [
-                ...(instaRes.data.data.accountsByPlatform.instagram || []),
-                ...(instaRes.data.data.accountsByPlatform.facebook || []),
+                ...(instaRes.data.accountsByPlatform.instagram || []),
+                ...(instaRes.data.accountsByPlatform.facebook || []),
               ];
               console.log('📊 Fetched accounts from accountsByPlatform:', {
-                instagram: instaRes.data.data.accountsByPlatform.instagram?.length || 0,
-                facebook: instaRes.data.data.accountsByPlatform.facebook?.length || 0,
+                instagram: instaRes.data.accountsByPlatform.instagram?.length || 0,
+                facebook: instaRes.data.accountsByPlatform.facebook?.length || 0,
                 total: accounts.length
               });
-            } else if (instaRes.data.data.accounts) {
+            } else if (instaRes.data.accounts) {
               // Fallback to flat accounts array
-              accounts = instaRes.data.data.accounts;
+              accounts = instaRes.data.accounts;
               console.log('📊 Fetched accounts from accounts array:', accounts.length);
-            } else if (Array.isArray(instaRes.data.data)) {
-              accounts = instaRes.data.data;
+            } else if (Array.isArray(instaRes.data)) {
+              accounts = instaRes.data;
               console.log('📊 Fetched accounts from array:', accounts.length);
             }
-          } else if (instaRes.data.accounts) {
-            accounts = instaRes.data.accounts;
+          } else if (instaRes.accounts) {
+            accounts = instaRes.accounts;
             console.log('📊 Fetched accounts from root:', accounts.length);
           }
         } catch (instaErr) {
@@ -2437,21 +2435,19 @@ const AccountsSettings = ({ onNotify }) => {
 
           // Fetch LinkedIn accounts
           try {
-            const linkedInRes = await axios.get('/api/auth/linkedin/status', {
-              headers: { Authorization: `Bearer ${authToken}` }
-            });
+            const linkedInRes = await apiClient.getLinkedInStatus();
 
             // Backend returns SuccessResponse with nested data structure
-            if (linkedInRes.data.success && linkedInRes.data.data) {
-              const linkedInData = linkedInRes.data.data;
+            if (linkedInRes.success && linkedInRes.data) {
+              const linkedInData = linkedInRes.data;
               if (linkedInData.connected && linkedInData.accounts && Array.isArray(linkedInData.accounts)) {
                 accounts = [...accounts, ...linkedInData.accounts];
                 console.log('📊 Fetched LinkedIn personal accounts:', linkedInData.accounts.length);
               }
-            } else if (linkedInRes.data.connected && linkedInRes.data.accounts) {
+            } else if (linkedInRes.connected && linkedInRes.accounts) {
               // Fallback for old response format
-              accounts = [...accounts, ...linkedInRes.data.accounts];
-              console.log('📊 Fetched LinkedIn personal accounts (fallback):', linkedInRes.data.accounts.length);
+              accounts = [...accounts, ...linkedInRes.accounts];
+              console.log('📊 Fetched LinkedIn personal accounts (fallback):', linkedInRes.accounts.length);
             }
           } catch (linkedInErr) {
             console.error('Error fetching LinkedIn accounts:', linkedInErr);
@@ -2459,21 +2455,19 @@ const AccountsSettings = ({ onNotify }) => {
 
           // Fetch LinkedIn Business accounts
           try {
-            const linkedInBusinessRes = await axios.get('/api/auth/linkedin-business/status', {
-              headers: { Authorization: `Bearer ${authToken}` }
-            });
+            const linkedInBusinessRes = await apiClient.getLinkedInBusinessStatus();
 
             // Backend returns SuccessResponse with nested data structure
-            if (linkedInBusinessRes.data.success && linkedInBusinessRes.data.data) {
-              const linkedInBusinessData = linkedInBusinessRes.data.data;
+            if (linkedInBusinessRes.success && linkedInBusinessRes.data) {
+              const linkedInBusinessData = linkedInBusinessRes.data;
               if (linkedInBusinessData.connected && linkedInBusinessData.accounts && Array.isArray(linkedInBusinessData.accounts)) {
                 accounts = [...accounts, ...linkedInBusinessData.accounts];
                 console.log('📊 Fetched LinkedIn Business accounts:', linkedInBusinessData.accounts.length);
               }
-            } else if (linkedInBusinessRes.data.connected && linkedInBusinessRes.data.accounts) {
+            } else if (linkedInBusinessRes.connected && linkedInBusinessRes.accounts) {
               // Fallback for old response format
-              accounts = [...accounts, ...linkedInBusinessRes.data.accounts];
-              console.log('📊 Fetched LinkedIn Business accounts (fallback):', linkedInBusinessRes.data.accounts.length);
+              accounts = [...accounts, ...linkedInBusinessRes.accounts];
+              console.log('📊 Fetched LinkedIn Business accounts (fallback):', linkedInBusinessRes.accounts.length);
             }
           } catch (linkedInBusinessErr) {
             console.error('Error fetching LinkedIn Business accounts:', linkedInBusinessErr);
@@ -2481,21 +2475,17 @@ const AccountsSettings = ({ onNotify }) => {
 
           // Fetch YouTube accounts
           try {
-            const youtubeRes = await axios.get('/api/auth/youtube/status', {
-              headers: { Authorization: `Bearer ${authToken}` }
-            });
+            const youtubeRes = await apiClient.getYouTubeStatus();
 
             // Backend wraps data inside { success, data: { connected, accounts } }
-            const ytStatus = youtubeRes.data?.data || youtubeRes.data;
+            const ytStatus = youtubeRes?.data || youtubeRes;
             const ytConnected = ytStatus?.connected;
 
             if (ytConnected) {
-              const channelRes = await axios.get('/api/auth/youtube/channel', {
-                headers: { Authorization: `Bearer ${authToken}` }
-              });
+              const channelRes = await apiClient.getYouTubeChannel();
 
-              if (channelRes.data.success && channelRes.data.data) {
-                const ytData = channelRes.data.data;
+              if (channelRes.success && channelRes.data) {
+                const ytData = channelRes.data;
 
                 if (!accounts.some(acc => acc.platform === 'youtube' && acc.platformUserId === ytData.id)) {
                   accounts.push({
@@ -2522,13 +2512,11 @@ const AccountsSettings = ({ onNotify }) => {
 
           // Fetch Twitter/X accounts
           try {
-            const twitterRes = await axios.get('/api/auth/x/status', {
-              headers: { Authorization: `Bearer ${authToken}` }
-            });
+            const twitterRes = await apiClient.getTwitterStatus();
 
             // Backend returns SuccessResponse with nested data structure
-            if (twitterRes.data.success && twitterRes.data.data) {
-              const twitterData = twitterRes.data.data;
+            if (twitterRes.success && twitterRes.data) {
+              const twitterData = twitterRes.data;
               if (twitterData.connected && twitterData.accounts && Array.isArray(twitterData.accounts)) {
                 accounts = [...accounts, ...twitterData.accounts];
                 console.log('📊 Fetched Twitter/X accounts:', twitterData.accounts.length);

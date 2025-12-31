@@ -85,11 +85,9 @@ const Layout = ({ children }) => {
     setNotificationsError(null);
 
     try {
-      const response = await axios.get('/api/notifications', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.getNotifications();
 
-      if (response.data && response.data.success) {
+      if (response && response.success) {
         const notificationsData = response.data.notifications || [];
 
         // Process notifications
@@ -121,11 +119,7 @@ const Layout = ({ children }) => {
   // Mark notification as read
   const markAsRead = async (id) => {
     try {
-      await axios.patch(
-        `/api/notifications/${id}/read`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await apiClient.markNotificationAsRead(id);
 
       // Update local state
       setNotifications(prev =>
@@ -156,11 +150,7 @@ const Layout = ({ children }) => {
   // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
-      await axios.patch(
-        '/api/notifications/read-all',
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await apiClient.markAllNotificationsAsRead();
 
       // Update local state
       setNotifications(prev =>
@@ -185,10 +175,7 @@ const Layout = ({ children }) => {
     }
 
     try {
-      await axios.delete(
-        `/api/notifications/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await apiClient.deleteNotification(id);
 
       // Check if notification was unread and update count if needed
       const notification = notifications.find(n => n._id === id);
