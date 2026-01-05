@@ -27,7 +27,7 @@ import {
   Sparkles,
   Link2,
   MessageCircle,
-  Share 
+  Share
 } from 'lucide-react';
 import { useDashboardData } from '../hooks/useApi';
 import { useNavigate } from 'react-router-dom';
@@ -139,14 +139,6 @@ const Dashboard = () => {
         const fetchedPosts = response.data.posts || [];
         setPosts(fetchedPosts);
 
-        // Filter upcoming posts (scheduled status and future dates)
-        const now = new Date();
-        const upcoming = fetchedPosts.filter(post =>
-          post.status === 'scheduled' &&
-          new Date(post.scheduledDate) > now
-        );
-        setUpcomingPosts(upcoming);
-
         // Calculate user stats from posts
         calculateUserStats(fetchedPosts);
       } else {
@@ -156,7 +148,7 @@ const Dashboard = () => {
       console.error('Failed to fetch posts:', error);
       setPostsError(error.message || 'Failed to fetch posts');
       setPosts([]);
-      setUpcomingPosts([]);
+      // Don't clear upcomingPosts here - keep dashboard API data
     } finally {
       setPostsLoading(false);
     }
@@ -291,16 +283,22 @@ const Dashboard = () => {
 
   const upcomingPostsFromAPI = data?.upcomingPosts || [];
 
+  // ✅ FIX: Use upcoming posts from dashboard API instead of filtering locally
+  useEffect(() => {
+    const upcomingPosts = data?.upcomingPosts;
+    if (upcomingPosts !== undefined) {
+      if (Array.isArray(upcomingPosts)) {
+        console.log('📅 Setting upcoming posts from dashboard API:', upcomingPosts.length);
+        setUpcomingPosts(upcomingPosts);
+      } else {
+        console.warn('⚠️ Dashboard API returned invalid upcomingPosts format:', upcomingPosts);
+        setUpcomingPosts([]);
+      }
+    }
+    // If data.upcomingPosts is undefined, keep current state (don't clear)
+  }, [data]);
 
   // Show notification temporarily
-  useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => {
-        setNotification(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [notification]);
 
   // Loading state
   if (dashboardLoading || (postsLoading && posts.length === 0)) {
@@ -446,318 +444,318 @@ const Dashboard = () => {
           </div>
 
           {/* Upcoming Posts */}
-      <div className="upcoming-posts-section">
-  <div className="header-with-button">
+          <div className="upcoming-posts-section">
+            <div className="header-with-button">
 
-    <h3>Upcoming Posts</h3>
-    <button
-      className="inline-refresh-btn"
-      onClick={handleRefreshPosts}
-      disabled={postsLoading}
-    >
-      <RefreshCw size={16} className={spinning ? "spinning" : ""} />
-      <span style={{ marginLeft: "6px" }}>Refresh Now</span>
+              <h3>Upcoming Posts</h3>
+              <button
+                className="inline-refresh-btn"
+                onClick={handleRefreshPosts}
+                disabled={postsLoading}
+              >
+                <RefreshCw size={16} className={spinning ? "spinning" : ""} />
+                <span style={{ marginLeft: "6px" }}>Refresh Now</span>
 
-    </button>
-  </div>
-
-
-
-  {postsError && (
-    <div className="error-message">
-      <AlertCircle size={16} />
-      <span>{postsError}</span>
-      <button onClick={() => fetchPosts(true)}>Retry</button>
-    </div>
-  )}
-
-  <div className={`upcoming-posts-scroll ${upcomingPosts.length == 0 ? 'upsflx' : ''}`} onClick={() => { navigate('/content') }}>
-    {postsLoading && posts.length === 0 ? (
-      <div className="loading-posts">
-        <Loader />
-      </div>
-    ) : upcomingPosts.length > 0 ? (
-      upcomingPosts.slice(0, slicePosts).map(post => {
-        // Helper function to detect if URL is a video
-        const isVideoUrl = (url) => {
-          if (!url) return false;
-          const videoExtensions = /\.(mp4|webm|ogg|mov|avi|m4v|3gp|mkv)(\?.*)?$/i;
-          return videoExtensions.test(url);
-        };
-
-        // Get all media items
-        const getAllMedia = () => {
-          const allMedia = [];
-
-          if (post.images && Array.isArray(post.images)) {
-            post.images.forEach(item => {
-              const url = typeof item === 'string' ? item : item.url || item.src;
-              if (url) {
-                allMedia.push({
-                  type: isVideoUrl(url) ? 'video' : 'image',
-                  url: url,
-                  alt: 'Post media'
-                });
-              }
-            });
-          }
-
-          if (post.videos && Array.isArray(post.videos)) {
-            post.videos.forEach(item => {
-              const url = typeof item === 'string' ? item : item.url || item.src;
-              if (url) {
-                allMedia.push({
-                  type: 'video',
-                  url: url,
-                  alt: 'Post video'
-                });
-              }
-            });
-          }
-
-          if (post.media && Array.isArray(post.media)) {
-            post.media.forEach(item => {
-              const url = typeof item === 'string' ? item : item.url || item.src;
-              if (url) {
-                allMedia.push({
-                  type: item.type || (isVideoUrl(url) ? 'video' : 'image'),
-                  url: url,
-                  alt: 'Post media'
-                });
-              }
-            });
-          }
-
-          if (post.video) {
-            const url = typeof post.video === 'string' ? post.video : post.video.url || post.video.src;
-            if (url) {
-              allMedia.push({
-                type: 'video',
-                url: url,
-                alt: 'Post video'
-              });
-            }
-          }
-
-          if (post.image && !post.images) {
-            const url = typeof post.image === 'string' ? post.image : post.image.url || post.image.src;
-            if (url) {
-              allMedia.push({
-                type: isVideoUrl(url) ? 'video' : 'image',
-                url: url,
-                alt: 'Post image'
-              });
-            }
-          }
-
-          return allMedia;
-        };
-
-        // Get unique platforms
-        const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
-          ? post.platforms
-          : (post.platformPosts?.map(p => p.platform) || ['instagram']);
-
-        const uniquePlatforms = [...new Set(platforms)];
-        const mediaItems = getAllMedia();
-        const displayMedia = mediaItems.slice(0, 4); // Show max 4 media items
-        const layoutClass = mediaItems.length === 1 ? 'single-media' : 
-                            mediaItems.length === 2 ? 'two-media' : 
-                            mediaItems.length === 3 ? 'three-media' : 'four-plus-media';
-        
-        const getAccountDetails = () => {
-          if (post.platformPosts && post.platformPosts.length > 0) {
-            return post.platformPosts.map(pp => ({
-              platform: pp.platform,
-              username: pp.accountName || 'Unknown',
-              id: pp.accountId
-            }));
-          }
-          return [];
-        };
-        
-        const accountDetails = getAccountDetails();
-        const displayDate = post.scheduledDate ? new Date(post.scheduledDate) : 
-                           (post.publishedAt ? new Date(post.publishedAt) : new Date(post.createdAt));
-        const postStatus = post.status || 'draft';
-
-        return (
-          <div 
-            key={post._id || post.id} 
-            className="unified-post-card dashboard-post-card"
-          >
-            {/* Post Header */}
-            <div className="post-header">
-              <div className="post-schedule">
-                <Clock size={16} />
-                <span className="schedule-time">
-                  {displayDate.toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              </div>
-
-              {/* Platform Icons */}
-              <div className="post-platforms">
-                {uniquePlatforms.map((platform, index) => {
-                  let PlatformIcon;
-                  switch(platform.toLowerCase()) {
-                    case 'instagram': PlatformIcon = Instagram; break;
-                    case 'facebook': PlatformIcon = Facebook; break;
-                    case 'twitter': PlatformIcon = Twitter; break;
-                    case 'youtube': PlatformIcon = Youtube; break;
-                    case 'linkedin': PlatformIcon = Linkedin; break;
-                    default: PlatformIcon = FileText;
-                  }
-                  return (
-                    <div
-                      key={index}
-                      className={`platform-icon ${platform.toLowerCase()}`}
-                      title={platform}
-                    >
-                      <PlatformIcon size={16} />
-                    </div>
-                  );
-                })}
-              </div>
+              </button>
             </div>
 
-            {/* Media Section */}
-            {displayMedia.length > 0 && (
-              <div className={`preview-images ${layoutClass}`}>
-                {(() => {
-                  const media = displayMedia[0];
-                  if (!media) return null;
-                  
-                  return (
-                    <div className="media-item">
-                      {media.type === 'video' ? (
-                        <>
-                          <video
-                            src={media.url}
-                            muted
-                            loop
-                            playsInline
-                            onMouseEnter={(e) => {
-                              e.target.currentTime = 0;
-                              e.target.play().catch(console.error);
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.pause();
-                              e.target.currentTime = 0;
-                            }}
-                            onError={() => console.error('Video failed to load:', media.url)}
-                          />
-                          <div className="video-indicator">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                              <path d="M8 5v14l11-7z" />
-                            </svg>
 
-                          </div>
-                        </>
-                      ) : (
-                        <img
-                          src={media.url}
-                          alt={media.alt}
-                          loading="lazy"
-                        />
-                      )}
-                    </div>
-                  );
-                })()}
 
-                {mediaItems.length > 4 && (
-                  <div className="image-count">
-                    +{mediaItems.length - 4}
-                  </div>
-                )}
+            {postsError && (
+              <div className="error-message">
+                <AlertCircle size={16} />
+                <span>{postsError}</span>
+                <button onClick={() => fetchPosts(true)}>Retry</button>
               </div>
             )}
 
-            <div className='postdesc'>
-              {/* Post Content */}
-              <div className="preview-text">
-                <p>{post.content?.substring(0, 80)}{post.content?.length > 80 ? '…' : ''}</p>
-              </div>
+            <div className={`upcoming-posts-scroll ${upcomingPosts.length == 0 ? 'upsflx' : ''}`} onClick={() => { navigate('/content') }}>
+              {postsLoading && posts.length === 0 ? (
+                <div className="loading-posts">
+                  <Loader />
+                </div>
+              ) : upcomingPosts.length > 0 ? (
+                upcomingPosts.slice(0, slicePosts).map(post => {
+                  // Helper function to detect if URL is a video
+                  const isVideoUrl = (url) => {
+                    if (!url) return false;
+                    const videoExtensions = /\.(mp4|webm|ogg|mov|avi|m4v|3gp|mkv)(\?.*)?$/i;
+                    return videoExtensions.test(url);
+                  };
 
-              {/* Account Names Display */}
-              {accountDetails.length > 0 && (
-                <div className="post-account-details">
-                  {accountDetails.map((account, idx) => {
-                    // Define icon components for each platform
-                    let PlatformIcon;
-                    if (account.platform === 'instagram') PlatformIcon = Instagram;
-                    else if (account.platform === 'facebook') PlatformIcon = Facebook;
-                    else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
-                    else if (account.platform === 'youtube') PlatformIcon = Youtube;
-                    else if (account.platform === 'twitter') PlatformIcon = Twitter;
-                    else PlatformIcon = null;
+                  // Get all media items
+                  const getAllMedia = () => {
+                    const allMedia = [];
 
-                    return (
-                      <span key={idx} className={`account-badge ${account.platform}`}>
-                        {PlatformIcon && <PlatformIcon size={12} />}
-                        {account.username}
-                      </span>
-                    );
-                  })}
+                    if (post.images && Array.isArray(post.images)) {
+                      post.images.forEach(item => {
+                        const url = typeof item === 'string' ? item : item.url || item.src;
+                        if (url) {
+                          allMedia.push({
+                            type: isVideoUrl(url) ? 'video' : 'image',
+                            url: url,
+                            alt: 'Post media'
+                          });
+                        }
+                      });
+                    }
+
+                    if (post.videos && Array.isArray(post.videos)) {
+                      post.videos.forEach(item => {
+                        const url = typeof item === 'string' ? item : item.url || item.src;
+                        if (url) {
+                          allMedia.push({
+                            type: 'video',
+                            url: url,
+                            alt: 'Post video'
+                          });
+                        }
+                      });
+                    }
+
+                    if (post.media && Array.isArray(post.media)) {
+                      post.media.forEach(item => {
+                        const url = typeof item === 'string' ? item : item.url || item.src;
+                        if (url) {
+                          allMedia.push({
+                            type: item.type || (isVideoUrl(url) ? 'video' : 'image'),
+                            url: url,
+                            alt: 'Post media'
+                          });
+                        }
+                      });
+                    }
+
+                    if (post.video) {
+                      const url = typeof post.video === 'string' ? post.video : post.video.url || post.video.src;
+                      if (url) {
+                        allMedia.push({
+                          type: 'video',
+                          url: url,
+                          alt: 'Post video'
+                        });
+                      }
+                    }
+
+                    if (post.image && !post.images) {
+                      const url = typeof post.image === 'string' ? post.image : post.image.url || post.image.src;
+                      if (url) {
+                        allMedia.push({
+                          type: isVideoUrl(url) ? 'video' : 'image',
+                          url: url,
+                          alt: 'Post image'
+                        });
+                      }
+                    }
+
+                    return allMedia;
+                  };
+
+                  // Get unique platforms
+                  const platforms = Array.isArray(post.platforms) && post.platforms.length > 0
+                    ? post.platforms
+                    : (post.platformPosts?.map(p => p.platform) || ['instagram']);
+
+                  const uniquePlatforms = [...new Set(platforms)];
+                  const mediaItems = getAllMedia();
+                  const displayMedia = mediaItems.slice(0, 4); // Show max 4 media items
+                  const layoutClass = mediaItems.length === 1 ? 'single-media' :
+                    mediaItems.length === 2 ? 'two-media' :
+                      mediaItems.length === 3 ? 'three-media' : 'four-plus-media';
+
+                  const getAccountDetails = () => {
+                    if (post.platformPosts && post.platformPosts.length > 0) {
+                      return post.platformPosts.map(pp => ({
+                        platform: pp.platform,
+                        username: pp.accountName || 'Unknown',
+                        id: pp.accountId
+                      }));
+                    }
+                    return [];
+                  };
+
+                  const accountDetails = getAccountDetails();
+                  const displayDate = post.scheduledDate ? new Date(post.scheduledDate) :
+                    (post.publishedAt ? new Date(post.publishedAt) : new Date(post.createdAt));
+                  const postStatus = post.status || 'draft';
+
+                  return (
+                    <div
+                      key={post._id || post.id}
+                      className="unified-post-card dashboard-post-card"
+                    >
+                      {/* Post Header */}
+                      <div className="post-header">
+                        <div className="post-schedule">
+                          <Clock size={16} />
+                          <span className="schedule-time">
+                            {displayDate.toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
+
+                        {/* Platform Icons */}
+                        <div className="post-platforms">
+                          {uniquePlatforms.map((platform, index) => {
+                            let PlatformIcon;
+                            switch (platform.toLowerCase()) {
+                              case 'instagram': PlatformIcon = Instagram; break;
+                              case 'facebook': PlatformIcon = Facebook; break;
+                              case 'twitter': PlatformIcon = Twitter; break;
+                              case 'youtube': PlatformIcon = Youtube; break;
+                              case 'linkedin': PlatformIcon = Linkedin; break;
+                              default: PlatformIcon = FileText;
+                            }
+                            return (
+                              <div
+                                key={index}
+                                className={`platform-icon ${platform.toLowerCase()}`}
+                                title={platform}
+                              >
+                                <PlatformIcon size={16} />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Media Section */}
+                      {displayMedia.length > 0 && (
+                        <div className={`preview-images ${layoutClass}`}>
+                          {(() => {
+                            const media = displayMedia[0];
+                            if (!media) return null;
+
+                            return (
+                              <div className="media-item">
+                                {media.type === 'video' ? (
+                                  <>
+                                    <video
+                                      src={media.url}
+                                      muted
+                                      loop
+                                      playsInline
+                                      onMouseEnter={(e) => {
+                                        e.target.currentTime = 0;
+                                        e.target.play().catch(console.error);
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.target.pause();
+                                        e.target.currentTime = 0;
+                                      }}
+                                      onError={() => console.error('Video failed to load:', media.url)}
+                                    />
+                                    <div className="video-indicator">
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                                        <path d="M8 5v14l11-7z" />
+                                      </svg>
+
+                                    </div>
+                                  </>
+                                ) : (
+                                  <img
+                                    src={media.url}
+                                    alt={media.alt}
+                                    loading="lazy"
+                                  />
+                                )}
+                              </div>
+                            );
+                          })()}
+
+                          {mediaItems.length > 4 && (
+                            <div className="image-count">
+                              +{mediaItems.length - 4}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className='postdesc'>
+                        {/* Post Content */}
+                        <div className="preview-text">
+                          <p>{post.content?.substring(0, 80)}{post.content?.length > 80 ? '…' : ''}</p>
+                        </div>
+
+                        {/* Account Names Display */}
+                        {accountDetails.length > 0 && (
+                          <div className="post-account-details">
+                            {accountDetails.map((account, idx) => {
+                              // Define icon components for each platform
+                              let PlatformIcon;
+                              if (account.platform === 'instagram') PlatformIcon = Instagram;
+                              else if (account.platform === 'facebook') PlatformIcon = Facebook;
+                              else if (account.platform === 'linkedin') PlatformIcon = Linkedin;
+                              else if (account.platform === 'youtube') PlatformIcon = Youtube;
+                              else if (account.platform === 'twitter') PlatformIcon = Twitter;
+                              else PlatformIcon = null;
+
+                              return (
+                                <span key={idx} className={`account-badge ${account.platform}`}>
+                                  {PlatformIcon && <PlatformIcon size={12} />}
+                                  {account.username}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Hashtags section */}
+                        <div className="preview-hashtags">
+                          {post.hashtags?.slice(0, 3).map((hashtag, i) => (
+                            <span key={i} className="hashtag">{hashtag}</span>
+                          ))}
+                        </div>
+
+                        {/* Post Stats */}
+                        <div className="post-stats">
+                          <span><Heart size={14} /> {post.totalEngagement || 0}</span>
+                          <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
+                          <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="post-status">
+                          <span className={`status-badge ${postStatus}`}>
+                            {postStatus === 'published' && <CheckCircle size={12} />}
+                            {postStatus === 'failed' && <XCircle size={12} />}
+                            {postStatus === 'scheduled' && <Clock size={12} />}
+                            &nbsp; &nbsp;{postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="empty-upcoming">
+                  <Calendar size={32} />
+                  <p>No upcoming posts scheduled</p>
+                  <p className="empty-subtitle">Create posts with future dates to see them here</p>
                 </div>
               )}
-
-              {/* Hashtags section */}
-              <div className="preview-hashtags">
-                {post.hashtags?.slice(0, 3).map((hashtag, i) => (
-                  <span key={i} className="hashtag">{hashtag}</span>
-                ))}
-              </div>
-
-              {/* Post Stats */}
-              <div className="post-stats">
-                <span><Heart size={14} /> {post.totalEngagement || 0}</span>
-                <span><MessageCircle size={14} /> {post.platformPosts?.[0]?.analytics?.comments || 0}</span>
-                <span><Share size={14} /> {post.platformPosts?.[0]?.analytics?.shares || 0}</span>
-              </div>
-
-              {/* Status Badge */}
-              <div className="post-status">
-                <span className={`status-badge ${postStatus}`}>
-                  {postStatus === 'published' && <CheckCircle size={12} />}
-                  {postStatus === 'failed' && <XCircle size={12} />}
-                  {postStatus === 'scheduled' && <Clock size={12} />}
-                  &nbsp; &nbsp;{postStatus.charAt(0).toUpperCase() + postStatus.slice(1)}
-                </span>
-              </div>
             </div>
+
+            {upcomingPosts.length > 0 &&
+              <div className='ctBtn'>
+                <button
+                  className="inline-refresh-btn"
+                  style={{ width: 'fit-content' }}
+                  onClick={() => {
+                    navigate('/content')
+                  }}
+                  disabled={postsLoading}
+                >
+                  View All
+                </button>
+              </div>
+            }
           </div>
-        );
-      })
-    ) : (
-      <div className="empty-upcoming">
-        <Calendar size={32} />
-        <p>No upcoming posts scheduled</p>
-        <p className="empty-subtitle">Create posts with future dates to see them here</p>
-      </div>
-    )}
-  </div>
-  
-  {upcomingPosts.length > 0 &&
-    <div className='ctBtn'>
-      <button
-        className="inline-refresh-btn"
-        style={{ width: 'fit-content' }}
-        onClick={() => {
-          navigate('/content')
-        }}
-        disabled={postsLoading}
-      >
-        View All
-      </button>
-    </div>
-  }
-</div>
         </div>
 
         {/* Right Column: Actions & Status */}
