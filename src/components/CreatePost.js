@@ -375,176 +375,176 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   }, [isOpen]);
 
   const handleFileUpload = async (files) => {
-  if (!files || files.length === 0) return;
+    if (!files || files.length === 0) return;
 
-  const validFiles = [];
-  const invalidFiles = [];
-  const resizedFiles = []; // ⭐ NEW
-  
-
-  // ⭐ NEW — Platform selection check
-  const selectedPlatforms = postData?.platforms || [];
-  if (selectedPlatforms.length === 0) {
-    showToast('Please select at least one platform before uploading media', 'warning');
-    return;
-  }
-
-  const platform = selectedPlatforms[0]; // use first platform
+    const validFiles = [];
+    const invalidFiles = [];
+    const resizedFiles = []; // ⭐ NEW
 
 
-  Array.from(files).forEach(async (file) => {
-    const isImage = file.type.startsWith("image/");
-    const isVideo = file.type.startsWith("video/");
-
-    if (!isImage && !isVideo) {
-      invalidFiles.push({ file, reason: "Unsupported file type" });
+    // ⭐ NEW — Platform selection check
+    const selectedPlatforms = postData?.platforms || [];
+    if (selectedPlatforms.length === 0) {
+      showToast('Please select at least one platform before uploading media', 'warning');
       return;
     }
 
-    if (isVideo && file.size > 250 * 1024 * 1024) {
-      invalidFiles.push({ file, reason: "Video too large (max 250MB)" });
-      return;
-    }
+    const platform = selectedPlatforms[0]; // use first platform
 
-    if (isImage && file.size > 50 * 1024 * 1024) {
-      invalidFiles.push({ file, reason: "Image too large (max 50MB)" });
-      return;
-    }
 
-    // ⭐ NEW — Image dimension validation + auto-resize
-    if (isImage) {
-      try {
-        const img = new Image();
+    Array.from(files).forEach(async (file) => {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
 
-        await new Promise((resolve) => {
-          img.onload = resolve;
-          img.src = URL.createObjectURL(file);
-        });
-
-        const imageType = getOptimalImageType(img.width, img.height, platform);
-        URL.revokeObjectURL(img.src);
-
-        const validation = await validateImageDimensions(file, platform, imageType);
-
-        if (!validation.isValid) {
-          console.log(`Auto-resizing image for ${platform}/${imageType}`);
-          const resizedFile = await autoResizeImage(file, platform, imageType);
-          validFiles.push(resizedFile);
-          resizedFiles.push(file.name);
-        } else {
-          validFiles.push(file);
-        }
-      } catch (err) {
-        console.error("Image validation failed:", err);
-        validFiles.push(file); // fallback
+      if (!isImage && !isVideo) {
+        invalidFiles.push({ file, reason: "Unsupported file type" });
+        return;
       }
 
-      return;
-    }
+      if (isVideo && file.size > 500 * 1024 * 1024) { // ✅ CHANGED: 500MB
+        invalidFiles.push({ file, reason: "Video too large (max 500MB)" });
+        return;
+      }
 
-    // Videos remain unchanged
-    validFiles.push(file);
-  });
+      if (isImage && file.size > 50 * 1024 * 1024) {
+        invalidFiles.push({ file, reason: "Image too large (max 50MB)" });
+        return;
+      }
 
-  if (invalidFiles.length > 0) {
-    const errorMessages = invalidFiles
-      .map(({ file, reason }) => `${file.name}: ${reason}`)
-      .join("\n");
-    showToast(`Some files were skipped:\n${errorMessages}`, "error", 5000);
-  }
+      // ⭐ NEW — Image dimension validation + auto-resize
+      if (isImage) {
+        try {
+          const img = new Image();
 
-  if (resizedFiles.length > 0) {
-    showToast(
-      `${resizedFiles.length} image(s) automatically resized for ${platform}: ${resizedFiles.join(", ")}`,
-      "info",
-      5000
-    );
-  }
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.src = URL.createObjectURL(file);
+          });
 
-  if (validFiles.length === 0) return;
+          const imageType = getOptimalImageType(img.width, img.height, platform);
+          URL.revokeObjectURL(img.src);
 
-  setUploadingFiles(true);
-  setError(null);
+          const validation = await validateImageDimensions(file, platform, imageType);
 
-  try {
-    console.log("✅ Uploading files:", validFiles);
+          if (!validation.isValid) {
+            console.log(`Auto-resizing image for ${platform}/${imageType}`);
+            const resizedFile = await autoResizeImage(file, platform, imageType);
+            validFiles.push(resizedFile);
+            resizedFiles.push(file.name);
+          } else {
+            validFiles.push(file);
+          }
+        } catch (err) {
+          console.error("Image validation failed:", err);
+          validFiles.push(file); // fallback
+        }
 
-    const response = await uploadMedia(validFiles);
-    console.log("✅ Upload response:", response);
+        return;
+      }
 
-    if (!response.data || !Array.isArray(response.data)) {
-      throw new Error("Invalid upload response format");
-    }
-
-    const uploadedMedia = response.data.map((media, index) => {
-      const originalFile = validFiles[index];
-
-      let mediaUrl = media.url || media.secure_url;
-      if (!mediaUrl) mediaUrl = URL.createObjectURL(originalFile);
-
-      return {
-        url: mediaUrl,
-        altText:
-          media.originalName ||
-          originalFile?.name ||
-          "Post media",
-        originalName:
-          media.originalName ||
-          originalFile?.name ||
-          media.filename ||
-          "Untitled Media",
-        displayName:
-          media.originalName ||
-          originalFile?.name ||
-          media.filename ||
-          "Untitled Media",
-        filename: media.filename || originalFile?.name,
-        publicId: media.publicId,
-        fileType:
-          media.fileType ||
-          (originalFile?.type.startsWith("video/") ? "video" : "image"),
-        size: media.size || originalFile?.size,
-        dimensions: media.dimensions,
-        duration: media.duration || null,
-        fps: media.fps || null,
-        hasAudio: media.hasAudio || null,
-        thumbnails: media.thumbnails || null,
-        videoQualities: media.videoQualities || null,
-        platformOptimized: media.platformOptimized || null,
-        format: originalFile?.type || "application/octet-stream",
-        createdAt: new Date().toISOString(),
-      };
+      // Videos remain unchanged
+      validFiles.push(file);
     });
 
-    setPostData((prev) => ({
-      ...prev,
-      images: prev.images.filter((img) => !img.isLocal).concat(uploadedMedia),
-    }));
+    if (invalidFiles.length > 0) {
+      const errorMessages = invalidFiles
+        .map(({ file, reason }) => `${file.name}: ${reason}`)
+        .join("\n");
+      showToast(`Some files were skipped:\n${errorMessages}`, "error", 5000);
+    }
 
-    const fileTypeText =
-      validFiles.length === 1
-        ? validFiles[0].type.startsWith("video/")
-          ? "video"
-          : "image"
-        : "files";
+    if (resizedFiles.length > 0) {
+      showToast(
+        `${resizedFiles.length} image(s) automatically resized for ${platform}: ${resizedFiles.join(", ")}`,
+        "info",
+        5000
+      );
+    }
 
-    showToast(
-      `Successfully uploaded ${validFiles.length} ${fileTypeText}!`,
-      "success"
-    );
-  } catch (error) {
-    console.error("❌ Upload failed:", error);
-    setError(error.message || "Failed to upload media");
-    showToast("Failed to upload media", "error");
+    if (validFiles.length === 0) return;
 
-    setPostData((prev) => ({
-      ...prev,
-      images: prev.images.filter((img) => !img.isLocal),
-    }));
-  } finally {
-    setUploadingFiles(false);
-  }
-};
+    setUploadingFiles(true);
+    setError(null);
+
+    try {
+      console.log("✅ Uploading files:", validFiles);
+
+      const response = await uploadMedia(validFiles);
+      console.log("✅ Upload response:", response);
+
+      if (!response.data || !Array.isArray(response.data)) {
+        throw new Error("Invalid upload response format");
+      }
+
+      const uploadedMedia = response.data.map((media, index) => {
+        const originalFile = validFiles[index];
+
+        let mediaUrl = media.url || media.secure_url;
+        if (!mediaUrl) mediaUrl = URL.createObjectURL(originalFile);
+
+        return {
+          url: mediaUrl,
+          altText:
+            media.originalName ||
+            originalFile?.name ||
+            "Post media",
+          originalName:
+            media.originalName ||
+            originalFile?.name ||
+            media.filename ||
+            "Untitled Media",
+          displayName:
+            media.originalName ||
+            originalFile?.name ||
+            media.filename ||
+            "Untitled Media",
+          filename: media.filename || originalFile?.name,
+          publicId: media.publicId,
+          fileType:
+            media.fileType ||
+            (originalFile?.type.startsWith("video/") ? "video" : "image"),
+          size: media.size || originalFile?.size,
+          dimensions: media.dimensions,
+          duration: media.duration || null,
+          fps: media.fps || null,
+          hasAudio: media.hasAudio || null,
+          thumbnails: media.thumbnails || null,
+          videoQualities: media.videoQualities || null,
+          platformOptimized: media.platformOptimized || null,
+          format: originalFile?.type || "application/octet-stream",
+          createdAt: new Date().toISOString(),
+        };
+      });
+
+      setPostData((prev) => ({
+        ...prev,
+        images: prev.images.filter((img) => !img.isLocal).concat(uploadedMedia),
+      }));
+
+      const fileTypeText =
+        validFiles.length === 1
+          ? validFiles[0].type.startsWith("video/")
+            ? "video"
+            : "image"
+          : "files";
+
+      showToast(
+        `Successfully uploaded ${validFiles.length} ${fileTypeText}!`,
+        "success"
+      );
+    } catch (error) {
+      console.error("❌ Upload failed:", error);
+      setError(error.message || "Failed to upload media");
+      showToast("Failed to upload media", "error");
+
+      setPostData((prev) => ({
+        ...prev,
+        images: prev.images.filter((img) => !img.isLocal),
+      }));
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
 
 
   // ✅ Handle file input change
@@ -994,374 +994,374 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     showToast('Image removed', 'info');
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setError(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
-  if (!validateForm()) {
-    setIsSubmitting(false);
-    return;
-  }
+    if (!validateForm()) {
+      setIsSubmitting(false);
+      return;
+    }
 
-  // Define cleanedSelectedAccounts BEFORE the try block
-  const cleanedSelectedAccounts = {};
-  const selectedAccountsWithNames = {}; // ✅ Added
+    // Define cleanedSelectedAccounts BEFORE the try block
+    const cleanedSelectedAccounts = {};
+    const selectedAccountsWithNames = {}; // ✅ Added
 
-  try {
-    // 🔹 Extract connected accounts from user profile
-    const accountsMap = {};
-    userProfile?.connectedAccounts?.forEach(account => {
-      // Handle both _id and id, and other possible ID fields
-      const accountId = account._id || account.id || account.accountId || account.pageId || account.companyId;
-      if (accountId) {
-        accountsMap[accountId.toString()] = account;
-      }
-    });
-
-    // 🔹 Clean up selectedAccounts (remove null/empty)
-    Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-      const validAccounts = accounts.filter(account => account != null && account !== '');
-      if (validAccounts.length > 0) {
-        cleanedSelectedAccounts[platform] = validAccounts;
-
-        // ✅ Add usernames mapped from connectedAccounts
-        selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
-          const account = accountsMap[accountId];
-          return {
-            id: accountId,
-            username: account ? account.username : 'Unknown Account'
-          };
-        });
-      }
-    });
-
-    console.log('✅ Sending account usernames:', selectedAccountsWithNames);
-
-    // 🔹 Upload any blob URLs to VPS before creating post
-    let processedImages = [...postData.images];
-    const imagesWithBlobUrls = postData.images.filter(img => 
-      img.url && img.url.startsWith('blob:')
-    );
-
-    if (imagesWithBlobUrls.length > 0) {
-      showToast('Uploading images to server...', 'info');
-      
-      try {
-        // Convert blob URLs back to File objects
-        const filesToUpload = await Promise.all(
-          imagesWithBlobUrls.map(async (img) => {
-            const response = await fetch(img.url);
-            const blob = await response.blob();
-            const file = new File([blob], img.originalName || img.filename || 'image', {
-              type: blob.type || 'image/jpeg'
-            });
-            return { file, originalImg: img };
-          })
-        );
-
-        // Upload files to VPS using the uploadMedia function
-        const uploadResponse = await uploadMedia(filesToUpload.map(item => item.file));
-        
-        if (!uploadResponse.data || !Array.isArray(uploadResponse.data)) {
-          throw new Error('Failed to upload images - invalid response');
+    try {
+      // 🔹 Extract connected accounts from user profile
+      const accountsMap = {};
+      userProfile?.connectedAccounts?.forEach(account => {
+        // Handle both _id and id, and other possible ID fields
+        const accountId = account._id || account.id || account.accountId || account.pageId || account.companyId;
+        if (accountId) {
+          accountsMap[accountId.toString()] = account;
         }
+      });
 
-        // Replace blob URLs with VPS URLs
-        processedImages = postData.images.map((img) => {
-          if (img.url && img.url.startsWith('blob:')) {
-            const uploadIndex = imagesWithBlobUrls.findIndex(blobImg => blobImg === img);
-            if (uploadIndex >= 0 && uploadResponse.data[uploadIndex]) {
-              const uploadedMedia = uploadResponse.data[uploadIndex];
-              
-              // Check if upload failed (backend returned error field)
-              if (uploadedMedia.error) {
-                console.error('❌ Upload failed for file:', uploadedMedia.originalName || uploadedMedia.displayName, uploadedMedia.error);
-                throw new Error(
-                  `Failed to upload ${uploadedMedia.originalName || uploadedMedia.displayName || 'file'}: ${uploadedMedia.error}. ` +
-                  `Please check server configuration (ffprobe may be missing for video processing).`
-                );
-              }
-              
-              // Get VPS URL - try multiple possible fields
-              const vpsUrl = uploadedMedia.url || uploadedMedia.secure_url || uploadedMedia.public_url;
-              
-              // Validate that we got a valid VPS URL (not a blob URL)
-              if (!vpsUrl || vpsUrl.startsWith('blob:')) {
-                console.error('❌ Invalid VPS URL received:', uploadedMedia);
-                throw new Error(
-                  `Failed to get valid URL from server for ${uploadedMedia.originalName || uploadedMedia.displayName || 'file'}. ` +
-                  `Server response: ${JSON.stringify(uploadedMedia)}`
-                );
-              }
-              
-              // Clean thumbnails from uploadedMedia or img - exclude null values
-              let cleanedThumbnails = null;
-              const thumbnailsSource = uploadedMedia.thumbnails || img.thumbnails;
-              if (thumbnailsSource && typeof thumbnailsSource === 'object') {
-                cleanedThumbnails = {};
-                for (const [key, value] of Object.entries(thumbnailsSource)) {
-                  if (value != null && value !== undefined && value !== '') {
-                    cleanedThumbnails[key] = String(value);
+      // 🔹 Clean up selectedAccounts (remove null/empty)
+      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
+        const validAccounts = accounts.filter(account => account != null && account !== '');
+        if (validAccounts.length > 0) {
+          cleanedSelectedAccounts[platform] = validAccounts;
+
+          // ✅ Add usernames mapped from connectedAccounts
+          selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
+            const account = accountsMap[accountId];
+            return {
+              id: accountId,
+              username: account ? account.username : 'Unknown Account'
+            };
+          });
+        }
+      });
+
+      console.log('✅ Sending account usernames:', selectedAccountsWithNames);
+
+      // 🔹 Upload any blob URLs to VPS before creating post
+      let processedImages = [...postData.images];
+      const imagesWithBlobUrls = postData.images.filter(img =>
+        img.url && img.url.startsWith('blob:')
+      );
+
+      if (imagesWithBlobUrls.length > 0) {
+        showToast('Uploading images to server...', 'info');
+
+        try {
+          // Convert blob URLs back to File objects
+          const filesToUpload = await Promise.all(
+            imagesWithBlobUrls.map(async (img) => {
+              const response = await fetch(img.url);
+              const blob = await response.blob();
+              const file = new File([blob], img.originalName || img.filename || 'image', {
+                type: blob.type || 'image/jpeg'
+              });
+              return { file, originalImg: img };
+            })
+          );
+
+          // Upload files to VPS using the uploadMedia function
+          const uploadResponse = await uploadMedia(filesToUpload.map(item => item.file));
+
+          if (!uploadResponse.data || !Array.isArray(uploadResponse.data)) {
+            throw new Error('Failed to upload images - invalid response');
+          }
+
+          // Replace blob URLs with VPS URLs
+          processedImages = postData.images.map((img) => {
+            if (img.url && img.url.startsWith('blob:')) {
+              const uploadIndex = imagesWithBlobUrls.findIndex(blobImg => blobImg === img);
+              if (uploadIndex >= 0 && uploadResponse.data[uploadIndex]) {
+                const uploadedMedia = uploadResponse.data[uploadIndex];
+
+                // Check if upload failed (backend returned error field)
+                if (uploadedMedia.error) {
+                  console.error('❌ Upload failed for file:', uploadedMedia.originalName || uploadedMedia.displayName, uploadedMedia.error);
+                  throw new Error(
+                    `Failed to upload ${uploadedMedia.originalName || uploadedMedia.displayName || 'file'}: ${uploadedMedia.error}. ` +
+                    `Please check server configuration (ffprobe may be missing for video processing).`
+                  );
+                }
+
+                // Get VPS URL - try multiple possible fields
+                const vpsUrl = uploadedMedia.url || uploadedMedia.secure_url || uploadedMedia.public_url;
+
+                // Validate that we got a valid VPS URL (not a blob URL)
+                if (!vpsUrl || vpsUrl.startsWith('blob:')) {
+                  console.error('❌ Invalid VPS URL received:', uploadedMedia);
+                  throw new Error(
+                    `Failed to get valid URL from server for ${uploadedMedia.originalName || uploadedMedia.displayName || 'file'}. ` +
+                    `Server response: ${JSON.stringify(uploadedMedia)}`
+                  );
+                }
+
+                // Clean thumbnails from uploadedMedia or img - exclude null values
+                let cleanedThumbnails = null;
+                const thumbnailsSource = uploadedMedia.thumbnails || img.thumbnails;
+                if (thumbnailsSource && typeof thumbnailsSource === 'object') {
+                  cleanedThumbnails = {};
+                  for (const [key, value] of Object.entries(thumbnailsSource)) {
+                    if (value != null && value !== undefined && value !== '') {
+                      cleanedThumbnails[key] = String(value);
+                    }
+                  }
+                  if (Object.keys(cleanedThumbnails).length === 0) {
+                    cleanedThumbnails = null;
                   }
                 }
-                if (Object.keys(cleanedThumbnails).length === 0) {
-                  cleanedThumbnails = null;
+
+                const updatedImg = {
+                  ...img,
+                  url: vpsUrl,
+                  publicId: uploadedMedia.publicId || img.publicId,
+                  filename: uploadedMedia.filename || img.filename,
+                  originalName: uploadedMedia.originalName || img.originalName,
+                  displayName: uploadedMedia.displayName || uploadedMedia.originalName || img.displayName
+                };
+
+                // Only include thumbnails if cleaned and has valid values
+                if (cleanedThumbnails) {
+                  updatedImg.thumbnails = cleanedThumbnails;
+                } else {
+                  // Explicitly remove thumbnails if it's null/empty
+                  delete updatedImg.thumbnails;
                 }
+
+                return updatedImg;
               }
-
-              const updatedImg = {
-                ...img,
-                url: vpsUrl,
-                publicId: uploadedMedia.publicId || img.publicId,
-                filename: uploadedMedia.filename || img.filename,
-                originalName: uploadedMedia.originalName || img.originalName,
-                displayName: uploadedMedia.displayName || uploadedMedia.originalName || img.displayName
-              };
-
-              // Only include thumbnails if cleaned and has valid values
-              if (cleanedThumbnails) {
-                updatedImg.thumbnails = cleanedThumbnails;
-              } else {
-                // Explicitly remove thumbnails if it's null/empty
-                delete updatedImg.thumbnails;
-              }
-
-              return updatedImg;
             }
-          }
-          return img;
-        });
+            return img;
+          });
 
-        showToast('Images uploaded successfully', 'success');
-      } catch (error) {
-        console.error('Failed to upload blob URLs:', error);
-        throw new Error(`Failed to upload images: ${error.message}`);
-      }
-    }
-
-    // 🔹 Filter out any images that still have blob URLs (safety check)
-    processedImages = processedImages.filter(img => 
-      !img.url || !img.url.startsWith('blob:')
-    );
-
-    if (processedImages.length === 0 && postData.images.length > 0) {
-      throw new Error('Failed to upload images. Please try again.');
-    }
-
-    // 🔹 Final validation - ensure no blob URLs are being sent
-    const hasBlobUrls = processedImages.some(img => 
-      img.url && img.url.startsWith('blob:')
-    );
-    
-    if (hasBlobUrls) {
-      console.error('❌ CRITICAL: Blob URLs detected in processed images!', 
-        processedImages.filter(img => img.url && img.url.startsWith('blob:'))
-      );
-      throw new Error('Invalid image URLs detected. Please try uploading images again.');
-    }
-
-    // 🔹 Prepare final API post data
-    const apiPostData = {
-      content: postData.content,
-      platforms: postData.platforms,
-      selectedAccounts: cleanedSelectedAccounts,
-      selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
-      images: processedImages.map((img, index) => {
-        // Clean thumbnails - completely exclude null/undefined values
-        // Backend expects all thumbnail values to be strings, not null
-        // Only include keys that have valid non-null string values
-        let cleanedThumbnails = null;
-        if (img.thumbnails && typeof img.thumbnails === 'object') {
-          cleanedThumbnails = {};
-          for (const [key, value] of Object.entries(img.thumbnails)) {
-            // Only include keys with valid non-null, non-undefined values
-            // Convert to string and exclude if null/undefined/empty
-            if (value != null && value !== undefined && value !== '') {
-              cleanedThumbnails[key] = String(value);
-            }
-            // If value is null/undefined, don't include it in the object at all
-          }
-          // Only include thumbnails if it has at least one valid value
-          if (Object.keys(cleanedThumbnails).length === 0) {
-            cleanedThumbnails = null;
-          }
+          showToast('Images uploaded successfully', 'success');
+        } catch (error) {
+          console.error('Failed to upload blob URLs:', error);
+          throw new Error(`Failed to upload images: ${error.message}`);
         }
-
-        const imageData = {
-          url: img.url,
-          altText: img.altText || img.originalName || 'Post media',
-          originalName: img.originalName || img.filename || `Media ${index + 1}`,
-          displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-          filename: img.filename,
-          publicId: img.publicId || null,
-          fileType: img.fileType || 'image',
-          size: img.size,
-          dimensions: img.dimensions,
-          duration: img.duration,
-          order: index,
-          format: img.format,
-          humanSize: img.size ? formatFileSize(img.size) : null
-        };
-
-        // Only include thumbnails if it has valid values (no null keys)
-        if (cleanedThumbnails && Object.keys(cleanedThumbnails).length > 0) {
-          imageData.thumbnails = cleanedThumbnails;
-        }
-
-        return imageData;
-      }),
-      hashtags: Array.isArray(postData.hashtags)
-        ? postData.hashtags
-        : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
-      mentions: Array.isArray(postData.mentions)
-        ? postData.mentions
-        : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
-      metadata: {
-        category: postData.metadata?.category || 'other',
-        source: 'web'
       }
-    };
 
-    // 🟥 YouTube-specific logic
-    if (postData.platforms.includes('youtube')) {
-      apiPostData.title = postData.content.substring(0, 100);
-      apiPostData.description = postData.hashtags
-        ? postData.hashtags
-        : `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
-
-      // ✅ Use processedImages instead of postData.images to get VPS URLs (not blob URLs)
-      const videoFiles = processedImages.filter(
-        img => img.fileType === 'video' || img.url?.includes('video') || img.url?.includes('.mp4')
+      // 🔹 Filter out any images that still have blob URLs (safety check)
+      processedImages = processedImages.filter(img =>
+        !img.url || !img.url.startsWith('blob:')
       );
 
-      if (videoFiles.length > 0) {
-        const { _id, ...cleanedVideo } = videoFiles[0];
-        
-        // Clean thumbnails in cleanedVideo - exclude null/undefined values
-        // Backend expects all thumbnail values to be strings, not null
-        if (cleanedVideo.thumbnails && typeof cleanedVideo.thumbnails === 'object') {
-          const cleanedThumbnails = {};
-          for (const [key, value] of Object.entries(cleanedVideo.thumbnails)) {
-            // Only include keys with valid non-null, non-undefined, non-empty values
-            if (value != null && value !== undefined && value !== '') {
-              cleanedThumbnails[key] = String(value);
+      if (processedImages.length === 0 && postData.images.length > 0) {
+        throw new Error('Failed to upload images. Please try again.');
+      }
+
+      // 🔹 Final validation - ensure no blob URLs are being sent
+      const hasBlobUrls = processedImages.some(img =>
+        img.url && img.url.startsWith('blob:')
+      );
+
+      if (hasBlobUrls) {
+        console.error('❌ CRITICAL: Blob URLs detected in processed images!',
+          processedImages.filter(img => img.url && img.url.startsWith('blob:'))
+        );
+        throw new Error('Invalid image URLs detected. Please try uploading images again.');
+      }
+
+      // 🔹 Prepare final API post data
+      const apiPostData = {
+        content: postData.content,
+        platforms: postData.platforms,
+        selectedAccounts: cleanedSelectedAccounts,
+        selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
+        images: processedImages.map((img, index) => {
+          // Clean thumbnails - completely exclude null/undefined values
+          // Backend expects all thumbnail values to be strings, not null
+          // Only include keys that have valid non-null string values
+          let cleanedThumbnails = null;
+          if (img.thumbnails && typeof img.thumbnails === 'object') {
+            cleanedThumbnails = {};
+            for (const [key, value] of Object.entries(img.thumbnails)) {
+              // Only include keys with valid non-null, non-undefined values
+              // Convert to string and exclude if null/undefined/empty
+              if (value != null && value !== undefined && value !== '') {
+                cleanedThumbnails[key] = String(value);
+              }
+              // If value is null/undefined, don't include it in the object at all
+            }
+            // Only include thumbnails if it has at least one valid value
+            if (Object.keys(cleanedThumbnails).length === 0) {
+              cleanedThumbnails = null;
             }
           }
-          // Only include thumbnails if it has at least one valid value
-          if (Object.keys(cleanedThumbnails).length > 0) {
-            cleanedVideo.thumbnails = cleanedThumbnails;
-          } else {
-            // Remove thumbnails if all values are null/empty
-            delete cleanedVideo.thumbnails;
+
+          const imageData = {
+            url: img.url,
+            altText: img.altText || img.originalName || 'Post media',
+            originalName: img.originalName || img.filename || `Media ${index + 1}`,
+            displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
+            filename: img.filename,
+            publicId: img.publicId || null,
+            fileType: img.fileType || 'image',
+            size: img.size,
+            dimensions: img.dimensions,
+            duration: img.duration,
+            order: index,
+            format: img.format,
+            humanSize: img.size ? formatFileSize(img.size) : null
+          };
+
+          // Only include thumbnails if it has valid values (no null keys)
+          if (cleanedThumbnails && Object.keys(cleanedThumbnails).length > 0) {
+            imageData.thumbnails = cleanedThumbnails;
+          }
+
+          return imageData;
+        }),
+        hashtags: Array.isArray(postData.hashtags)
+          ? postData.hashtags
+          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+        mentions: Array.isArray(postData.mentions)
+          ? postData.mentions
+          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+        metadata: {
+          category: postData.metadata?.category || 'other',
+          source: 'web'
+        }
+      };
+
+      // 🟥 YouTube-specific logic
+      if (postData.platforms.includes('youtube')) {
+        apiPostData.title = postData.content.substring(0, 100);
+        apiPostData.description = postData.hashtags
+          ? postData.hashtags
+          : `Thanks for watching this video about ${postData.content}!\n\nDon't forget to like and subscribe for more content.`;
+
+        // ✅ Use processedImages instead of postData.images to get VPS URLs (not blob URLs)
+        const videoFiles = processedImages.filter(
+          img => img.fileType === 'video' || img.url?.includes('video') || img.url?.includes('.mp4')
+        );
+
+        if (videoFiles.length > 0) {
+          const { _id, ...cleanedVideo } = videoFiles[0];
+
+          // Clean thumbnails in cleanedVideo - exclude null/undefined values
+          // Backend expects all thumbnail values to be strings, not null
+          if (cleanedVideo.thumbnails && typeof cleanedVideo.thumbnails === 'object') {
+            const cleanedThumbnails = {};
+            for (const [key, value] of Object.entries(cleanedVideo.thumbnails)) {
+              // Only include keys with valid non-null, non-undefined, non-empty values
+              if (value != null && value !== undefined && value !== '') {
+                cleanedThumbnails[key] = String(value);
+              }
+            }
+            // Only include thumbnails if it has at least one valid value
+            if (Object.keys(cleanedThumbnails).length > 0) {
+              cleanedVideo.thumbnails = cleanedThumbnails;
+            } else {
+              // Remove thumbnails if all values are null/empty
+              delete cleanedVideo.thumbnails;
+            }
+          }
+
+          apiPostData.youtubeVideo = cleanedVideo;
+
+          if (postData.platforms.length === 1) {
+            apiPostData.images = [cleanedVideo];
           }
         }
-        
-        apiPostData.youtubeVideo = cleanedVideo;
 
-        if (postData.platforms.length === 1) {
-          apiPostData.images = [cleanedVideo];
+        if (postData.mentions) {
+          apiPostData.tags = postData.mentions
+            .split(/\s+/)
+            .map(tag => (tag.startsWith('@') ? tag.substring(1) : tag))
+            .filter(tag => tag.length > 0);
         }
       }
 
-      if (postData.mentions) {
-        apiPostData.tags = postData.mentions
-          .split(/\s+/)
-          .map(tag => (tag.startsWith('@') ? tag.substring(1) : tag))
-          .filter(tag => tag.length > 0);
-      }
-    }
+      // ✅ Handle scheduling or immediate publish
+      if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
+        apiPostData.scheduledDate = scheduledDateTime.toISOString();
 
-    // ✅ Handle scheduling or immediate publish
-    if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-      const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-      apiPostData.scheduledDate = scheduledDateTime.toISOString();
+        console.log('📅 Scheduling post for:', scheduledDateTime.toISOString());
+        showToast('Scheduling post...', 'info');
 
-      console.log('📅 Scheduling post for:', scheduledDateTime.toISOString());
-      showToast('Scheduling post...', 'info');
+        const response = await onPostCreated(apiPostData);
+        console.log('✅ Scheduled post created:', response);
 
-      const response = await onPostCreated(apiPostData);
-      console.log('✅ Scheduled post created:', response);
+        showToast('Post scheduled successfully!', 'success');
+      } else {
+        console.log('🚀 Creating and publishing post immediately...');
+        showToast('Creating and publishing post...', 'info');
 
-      showToast('Post scheduled successfully!', 'success');
-    } else {
-      console.log('🚀 Creating and publishing post immediately...');
-      showToast('Creating and publishing post...', 'info');
+        const createResponse = await onPostCreated(apiPostData);
+        console.log('✅ Post created:', createResponse);
 
-      const createResponse = await onPostCreated(apiPostData);
-      console.log('✅ Post created:', createResponse);
+        if (!createResponse?.data?.id && !createResponse?.data?._id) {
+          throw new Error('Failed to create post - no ID returned');
+        }
 
-      if (!createResponse?.data?.id && !createResponse?.data?._id) {
-        throw new Error('Failed to create post - no ID returned');
-      }
+        const token =
+          localStorage.getItem('token') ||
+          localStorage.getItem('authToken') ||
+          localStorage.getItem('accessToken');
 
-      const token =
-        localStorage.getItem('token') ||
-        localStorage.getItem('authToken') ||
-        localStorage.getItem('accessToken');
+        if (!token) throw new Error('Authentication token not found');
 
-      if (!token) throw new Error('Authentication token not found');
+        const postId = createResponse.data.id || createResponse.data._id;
+        console.log('📤 Publishing post with ID:', postId);
 
-      const postId = createResponse.data.id || createResponse.data._id;
-      console.log('📤 Publishing post with ID:', postId);
+        const publishResponse = await apiClient.publishPost(postId);
 
-      const publishResponse = await apiClient.publishPost(postId);
+        console.log('✅ Publish response:', publishResponse);
 
-      console.log('✅ Publish response:', publishResponse);
+        if (publishResponse.success) {
+          // ✅ Show detailed platform results
+          const publishResults = publishResponse.data?.publishResults;
+          if (publishResults) {
+            const { successfulPublishes, totalAccounts, results } = publishResults;
 
-      if (publishResponse.success) {
-        // ✅ Show detailed platform results
-        const publishResults = publishResponse.data?.publishResults;
-        if (publishResults) {
-          const { successfulPublishes, totalAccounts, results } = publishResults;
-          
-          if (successfulPublishes === totalAccounts) {
-            // All platforms succeeded
-            showToast('Post published successfully to all platforms!', 'success');
-          } else if (successfulPublishes > 0) {
-            // Partial success - show details
-            const successful = results
-              .filter(r => r.success)
-              .map(r => r.platform?.toUpperCase() || 'Unknown')
-              .join(', ');
-            const failed = results
-              .filter(r => !r.success)
-              .map(r => r.platform?.toUpperCase() || 'Unknown')
-              .join(', ');
-            
-            showToast(
-              `Published to ${successfulPublishes}/${totalAccounts} platforms. Success: ${successful}${failed ? `. Failed: ${failed}` : ''}`,
-              'warning' // Use warning for partial success
-            );
+            if (successfulPublishes === totalAccounts) {
+              // All platforms succeeded
+              showToast('Post published successfully to all platforms!', 'success');
+            } else if (successfulPublishes > 0) {
+              // Partial success - show details
+              const successful = results
+                .filter(r => r.success)
+                .map(r => r.platform?.toUpperCase() || 'Unknown')
+                .join(', ');
+              const failed = results
+                .filter(r => !r.success)
+                .map(r => r.platform?.toUpperCase() || 'Unknown')
+                .join(', ');
+
+              showToast(
+                `Published to ${successfulPublishes}/${totalAccounts} platforms. Success: ${successful}${failed ? `. Failed: ${failed}` : ''}`,
+                'warning' // Use warning for partial success
+              );
+            } else {
+              // All failed
+              showToast('Post publishing failed for all platforms', 'error');
+            }
           } else {
-            // All failed
-            showToast('Post publishing failed for all platforms', 'error');
+            // Fallback to simple message or backend message
+            showToast(publishResponse.message || 'Post published successfully!', 'success');
           }
         } else {
-          // Fallback to simple message or backend message
-          showToast(publishResponse.message || 'Post published successfully!', 'success');
+          throw new Error(publishResponse.message || 'Publishing failed');
         }
-      } else {
-        throw new Error(publishResponse.message || 'Publishing failed');
       }
+      console.log('✅ FRONTEND - selectedAccountsWithNames built:', JSON.stringify(selectedAccountsWithNames, null, 2));
+      console.log('✅ FRONTEND - userProfile.connectedAccounts:',
+        userProfile?.connectedAccounts?.map(acc => ({ id: acc._id, username: acc.username })));
+
+      // ✅ Reset and close modal
+      resetForm();
+      onClose();
+
+    } catch (error) {
+      console.error('❌ Failed to create/publish post:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+      setError(errorMessage);
+      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-    console.log('✅ FRONTEND - selectedAccountsWithNames built:', JSON.stringify(selectedAccountsWithNames, null, 2));
-console.log('✅ FRONTEND - userProfile.connectedAccounts:', 
-  userProfile?.connectedAccounts?.map(acc => ({ id: acc._id, username: acc.username })));
-
-    // ✅ Reset and close modal
-    resetForm();
-    onClose();
-
-  } catch (error) {
-    console.error('❌ Failed to create/publish post:', error);
-    const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
-    setError(errorMessage);
-    showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
 
 
@@ -1451,21 +1451,21 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
             // Extract hashtags from content if they exist
             const hashtagPattern = /#[\w]+/g;
             const foundHashtags = originalContent.match(hashtagPattern) || [];
-            
+
             // Remove hashtag-only lines from content
             let cleanContent = originalContent;
             if (foundHashtags.length > 0) {
               const lines = originalContent.split('\n');
               const contentLines = [];
               const hashtagLines = [];
-              
+
               lines.forEach(line => {
                 const trimmedLine = line.trim();
                 const lineHashtags = trimmedLine.match(hashtagPattern) || [];
-                
+
                 // Check if line is ONLY hashtags (no other text)
                 const lineWithoutHashtags = trimmedLine.replace(hashtagPattern, '').trim();
-                
+
                 if (lineHashtags.length > 0 && lineWithoutHashtags === '') {
                   // This line contains only hashtags
                   hashtagLines.push(...lineHashtags);
@@ -1474,14 +1474,14 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                   contentLines.push(line);
                 }
               });
-              
+
               cleanContent = contentLines.join('\n').trim();
-              
+
               // Use extracted hashtags or fallback to all found hashtags
-              const extractedHashtags = hashtagLines.length > 0 
-                ? hashtagLines 
+              const extractedHashtags = hashtagLines.length > 0
+                ? hashtagLines
                 : foundHashtags;
-              
+
               suggestions.push({
                 id: `${platform}-${Date.now()}`,
                 content: cleanContent, // Content without hashtag-only lines
@@ -1627,15 +1627,15 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
       // Handle YouTube content - combine title and description in content field
       const youtubeTitle = suggestion.content.title || '';
       const youtubeDescription = suggestion.content.description || '';
-      
+
       // Combine title and description with line breaks
-      const combinedContent = youtubeTitle && youtubeDescription 
+      const combinedContent = youtubeTitle && youtubeDescription
         ? `${youtubeTitle}\n\n${youtubeDescription}`
         : youtubeTitle || youtubeDescription;
 
       // Get tags and format them with # prefix
       const youtubeTags = suggestion.content.tags || [];
-      const formattedTags = Array.isArray(youtubeTags) 
+      const formattedTags = Array.isArray(youtubeTags)
         ? youtubeTags.map(tag => tag.startsWith('#') ? tag : `#${tag}`).join(' ')
         : '';
 
@@ -1649,8 +1649,8 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
       showToast('YouTube content applied successfully', 'success');
     } else {
       // Handle other platforms - put EVERYTHING in content field
-      const contentText = typeof suggestion.content === 'string' 
-        ? suggestion.content 
+      const contentText = typeof suggestion.content === 'string'
+        ? suggestion.content
         : JSON.stringify(suggestion.content);
 
       // Get hashtags from the suggestion
@@ -1663,7 +1663,7 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
         mentions: '',              // Clear mentions
         platforms: suggestion.platforms
       }));
-      
+
       showToast('AI suggestion applied successfully', 'success');
     }
   };
@@ -2283,27 +2283,27 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                     </label>
                   </div>
                   <div className="media-type-selector">
-  <label className="section-label">Media Type:</label>
-  <div className="media-type-options">
-    {postData.platforms.length > 0 && DIMENSIONS[postData.platforms[0]] && 
-      Object.keys(DIMENSIONS[postData.platforms[0]]).map(type => (
-        <button
-          key={type}
-          type="button"
-          className={`type-option ${mediaType === type ? 'active' : ''}`}
-          onClick={() => setMediaType(type)}
-        >
-          {type.charAt(0).toUpperCase() + type.slice(1)}
-          {type !== 'profile' && (
-            <small>
-              {DIMENSIONS[postData.platforms[0]][type][0]} x {DIMENSIONS[postData.platforms[0]][type][1]}
-            </small>
-          )}
-        </button>
-      ))
-    }
-  </div>
-</div>
+                    <label className="section-label">Media Type:</label>
+                    <div className="media-type-options">
+                      {postData.platforms.length > 0 && DIMENSIONS[postData.platforms[0]] &&
+                        Object.keys(DIMENSIONS[postData.platforms[0]]).map(type => (
+                          <button
+                            key={type}
+                            type="button"
+                            className={`type-option ${mediaType === type ? 'active' : ''}`}
+                            onClick={() => setMediaType(type)}
+                          >
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                            {type !== 'profile' && (
+                              <small>
+                                {DIMENSIONS[postData.platforms[0]][type][0]} x {DIMENSIONS[postData.platforms[0]][type][1]}
+                              </small>
+                            )}
+                          </button>
+                        ))
+                      }
+                    </div>
+                  </div>
 
                   {/* Upload Options Grid */}
                   <div className="media-upload-container">
@@ -2344,7 +2344,7 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                               </small>
                               <div className="upload-specs">
                                 <span className='upidsc'><Image size={16} />  PNG, JPG, GIF up to 50MB</span>
-                                <span className='upidsc'><Video size={16} />  MP4, MOV, AVI up to 250MB</span>
+                                <span className='upidsc'><Video size={16} />  MP4, MOV, AVI up to 500MB</span>
                               </div>
                             </>
                           )}
@@ -2549,7 +2549,7 @@ console.log('✅ FRONTEND - userProfile.connectedAccounts:',
                               const defaultDate = new Date();
                               const fiveMinAhead = new Date();
                               fiveMinAhead.setMinutes(fiveMinAhead.getMinutes() + 5);
-                              
+
                               setPostData(prev => ({
                                 ...prev,
                                 scheduledDate: defaultDate.toISOString().split("T")[0],

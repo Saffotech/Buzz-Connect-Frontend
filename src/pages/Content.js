@@ -2066,11 +2066,11 @@ const MediaUploadModal = ({ isOpen, onClose, onUpload }) => {
   const [validationErrors, setValidationErrors] = useState([]); // ✅ NEW: Track validation errors
   const fileInputRef = useRef(null);
 
-  // ✅ NEW: Get file size limits from backend (you should fetch this from your API)
+    // ✅ NEW: Get file size limits from backend (you should fetch this from your API)
   const FILE_SIZE_LIMITS = {
     video: {
-      maxSize: 250 * 1024 * 1024, // 100MB to match backend
-      maxSizeMB: 250
+      maxSize: 500 * 1024 * 1024, // ✅ CHANGED: 500MB to match backend
+      maxSizeMB: 500
     },
     image: {
       maxSize: 50 * 1024 * 1024, // 10MB to match backend
