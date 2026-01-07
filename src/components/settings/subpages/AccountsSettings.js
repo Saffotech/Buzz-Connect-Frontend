@@ -3080,43 +3080,35 @@ const AccountsSettings = ({ onNotify }) => {
 
       console.log('Disconnecting account:', { baseId, platform, accountType, foundAccount });
 
-      // Use apiClient to build URL correctly and avoid double /api/api issue
+      // ✅ FIXED: Use apiClient.request() with /api prefix, same pattern as dashboard and other DELETE calls
       let endpoint = '';
 
       if (platform === 'instagram') {
-        // Backend recommendation:
-        // Option 1 (preferred for a single account row):
-        //   DELETE /api/auth/instagram/accounts/{accountId}
-        // Option 2 (alias path):
-        //   DELETE /api/auth/instagram/disconnect/{accountId}
-        //
-        // Fix: Use apiClient to avoid double /api/api issue
-        endpoint = apiClient.buildUrl(`/auth/instagram/disconnect/${baseId}`);
+        endpoint = `/api/auth/instagram/disconnect/${baseId}`;
       } else if (platform === 'facebook') {
-        // Facebook accounts use the same Instagram endpoint structure
-        endpoint = apiClient.buildUrl(`/auth/instagram/disconnect/${baseId}`);
+        endpoint = `/api/auth/instagram/disconnect/${baseId}`;
       } else if (platform === 'linkedin') {
         if (accountType === 'business') {
-          endpoint = apiClient.buildUrl(`/auth/linkedin-business/accounts/${baseId}`);
+          endpoint = `/api/auth/linkedin-business/accounts/${baseId}`;
         } else {
-          endpoint = apiClient.buildUrl(`/auth/linkedin/accounts/${baseId}`);
+          endpoint = `/api/auth/linkedin/accounts/${baseId}`;
         }
       } else if (platform === 'youtube') {
-        endpoint = apiClient.buildUrl(`/auth/youtube/disconnect/${baseId}`);
+        endpoint = `/api/auth/youtube/disconnect/${baseId}`;
       } else if (platform === 'twitter' || platform === 'x') {
-        endpoint = apiClient.buildUrl(`/auth/x/disconnect/${baseId}`);
+        endpoint = `/api/auth/x/disconnect/${baseId}`;
       } else {
-        // Generic by-platform disconnect (e.g. /api/users/connected-accounts/{platform})
-        endpoint = apiClient.buildUrl(`/users/connected-accounts/${platform}`);
+        endpoint = `/api/users/connected-accounts/${platform}`;
       }
 
       console.log('Calling disconnect endpoint:', endpoint);
 
-      const response = await axios.delete(endpoint, {
-        headers: { Authorization: `Bearer ${authToken}` }
+      // ✅ FIXED: Use apiClient.request() instead of axios.delete(), same pattern as Content.js and dashboard
+      const response = await apiClient.request(endpoint, {
+        method: 'DELETE'
       });
 
-      console.log('Disconnect response:', response.data);
+      console.log('Disconnect response:', response);
 
       // Remove the account from state
       setConnectedAccounts(prev => {
@@ -3142,19 +3134,8 @@ const AccountsSettings = ({ onNotify }) => {
     } catch (err) {
       console.error('Failed to disconnect account', err);
       
-      // Extract error message from response
-      let errorMessage = 'Failed to disconnect account';
-      if (err.response) {
-        const errorDetail = err.response.data?.detail || err.response.data?.error || err.response.data?.message;
-        if (errorDetail) {
-          errorMessage = typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail);
-        } else {
-          errorMessage = `Failed to disconnect account: ${err.response.status} ${err.response.statusText}`;
-        }
-      } else if (err.message) {
-        errorMessage = `Failed to disconnect account: ${err.message}`;
-      }
-      
+      // ✅ FIXED: apiClient.request() throws Error objects, not axios response errors
+      const errorMessage = err.message || 'Failed to disconnect account';
       toast.error(errorMessage);
     }
   };
