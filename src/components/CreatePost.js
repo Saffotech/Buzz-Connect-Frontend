@@ -391,30 +391,31 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     const platform = selectedPlatforms[0]; // use first platform
 
-
-    Array.from(files).forEach(async (file) => {
+    // ✅ FIX: Use for...of loop instead of forEach to properly await async operations
+    for (const file of Array.from(files)) {
       const isImage = file.type.startsWith("image/");
       const isVideo = file.type.startsWith("video/");
 
       if (!isImage && !isVideo) {
         invalidFiles.push({ file, reason: "Unsupported file type" });
-        return;
+        continue;
       }
 
       if (isVideo && file.size > 500 * 1024 * 1024) { // ✅ CHANGED: 500MB
         invalidFiles.push({ file, reason: "Video too large (max 500MB)" });
-        return;
+        continue;
       }
 
       if (isImage && file.size > 50 * 1024 * 1024) {
         invalidFiles.push({ file, reason: "Image too large (max 50MB)" });
-        return;
+        continue;
       }
 
       // ⭐ NEW — Image dimension validation + auto-resize
       if (isImage) {
         try {
-          const img = new Image();
+          // ✅ FIX: Use native browser Image constructor explicitly to avoid conflicts
+          const img = new window.Image();
 
           await new Promise((resolve) => {
             img.onload = resolve;
@@ -439,12 +440,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           validFiles.push(file); // fallback
         }
 
-        return;
+        continue;
       }
 
       // Videos remain unchanged
       validFiles.push(file);
-    });
+    }
 
     if (invalidFiles.length > 0) {
       const errorMessages = invalidFiles

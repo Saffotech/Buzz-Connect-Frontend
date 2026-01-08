@@ -271,9 +271,14 @@ const Dashboard = () => {
   // In Dashboard.js, update the stats calculation
   const isConnected = data?.stats?.connectedPlatforms > 0;
 
+  // ✅ FIX: Get Instagram followers specifically, or total if Instagram not connected
+  const followersByPlatform = data?.stats?.followersByPlatform || {};
+  const instagramFollowers = followersByPlatform.instagram || 0;
+  const displayFollowers = instagramFollowers > 0 ? instagramFollowers : (data?.stats?.totalFollowers || 0);
+
   // Simplified stats object - let individual cards handle the connection logic
   const stats = {
-    followers: isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0',
+    followers: isConnected ? displayFollowers.toLocaleString() : '0',
     engagement: isConnected ? (data?.analyticsOverview?.avgEngagementRate?.toFixed(1) || '0') : '0',
     postsThisMonth: isConnected ? (data?.stats?.publishedPosts?.toLocaleString() || '0') : '0',
     reach: isConnected ? (data?.analyticsOverview?.totalReach?.toLocaleString() || '0') : '0'
@@ -347,11 +352,13 @@ const Dashboard = () => {
                   <Users size={24} />
                 </div>
                 <div className="stat-content">
-                  <h3>{isConnected ? (data?.stats?.totalFollowers?.toLocaleString() || '0') : '0'}</h3>
-                  <p>Total Followers</p>
+                  <h3>{isConnected ? displayFollowers.toLocaleString() : '0'}</h3>
+                  <p>{instagramFollowers > 0 ? 'Instagram Followers' : 'Total Followers'}</p>
                   <span className={`stat-change ${isConnected ? 'positive' : 'neutral'}`}>
                     {isConnected
-                      ? `${data?.stats?.connectedPlatforms || 0} platforms connected`
+                      ? instagramFollowers > 0
+                        ? 'Instagram account'
+                        : `${data?.stats?.connectedPlatforms || 0} platforms connected`
                       : 'No platforms connected'
                     }
                   </span>

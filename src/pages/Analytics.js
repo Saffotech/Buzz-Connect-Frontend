@@ -880,8 +880,26 @@ const Analytics = () => {
                     <Users size={24} />
                   </div>
                   <div className="kpi-content">
-                    <div className="kpi-value">{formatNumber(dashboardData?.stats?.totalFollowers || 15200)}</div>
-                    <div className="kpi-label">Total Followers</div>
+                    {/* ✅ FIX: Use followersByPlatform when filtering by single platform, otherwise use totalFollowers */}
+                    <div className="kpi-value">
+                      {(() => {
+                        // If filtering by a single platform, show only that platform's followers
+                        if (!filters.platforms.includes('all') && filters.platforms.length === 1) {
+                          const platform = filters.platforms[0].toLowerCase();
+                          const platformFollowers = analyticsData?.overview?.followersByPlatform?.[platform] || 0;
+                          return formatNumber(platformFollowers);
+                        }
+                        // Otherwise show total followers from analytics or dashboard
+                        return formatNumber(analyticsData?.overview?.totalFollowers ?? dashboardData?.stats?.totalFollowers ?? 0);
+                      })()}
+                    </div>
+                    <div className="kpi-label">
+                      {filters.platforms.includes('all') || filters.platforms.length === 0
+                        ? 'Total Followers'
+                        : filters.platforms.length === 1
+                        ? `${filters.platforms[0].charAt(0).toUpperCase() + filters.platforms[0].slice(1)} Followers`
+                        : 'Total Followers'}
+                    </div>
                     {/* <div className="kpi-change positive">
                       <ArrowUp size={12} />
                       +2.3%
