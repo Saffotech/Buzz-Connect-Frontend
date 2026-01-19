@@ -755,7 +755,7 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
           </button>
 
           {/* LinkedIn Business Profile Connection Option */}
-          {/* <button
+          <button
             onClick={onSelectLinkedInBusiness}
             style={{
               display: 'flex',
@@ -794,10 +794,10 @@ const ConnectionOptionsModal = ({ isOpen, onClose, onSelectFacebookInstagram, on
                 LinkedIn Business/Company Page
               </div>
               <div style={{ color: '#6B7280', fontSize: '14px' }}>
-                Connect your LinkedIn business or company page
+                Connect your LinkedIn business or company page (for analytics)
               </div>
             </div>
-          </button> */}
+          </button>
 
           <button
             onClick={onSelectTwitter}
