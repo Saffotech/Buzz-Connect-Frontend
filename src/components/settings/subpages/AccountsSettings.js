@@ -2859,7 +2859,8 @@ const AccountsSettings = ({ onNotify }) => {
         }
 
         // Construct the Twitter auth URL using apiClient to avoid /api/api issue
-        // Token is no longer included in the state to avoid exposing it.
+        // Use OAuth 1.0a endpoint for publishing/media (supports images)
+        // Backend supports both JWT and userId parameter authentication
         const twitterAuthUrl = apiClient.buildUrl(`/auth/x/auth?userId=${userId}`);
 
         // console.log('Redirecting to Twitter auth:', twitterAuthUrl);
