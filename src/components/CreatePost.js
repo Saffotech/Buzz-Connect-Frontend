@@ -1273,12 +1273,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         }
       }
 
-      // ✅ Handle scheduling or immediate publish
+      // ✅ Handle scheduling or immediate publish (send time in IST, UTC+5:30)
       if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
-        const scheduledDateTime = new Date(`${postData.scheduledDate}T${postData.scheduledTime}`);
-        apiPostData.scheduledDate = scheduledDateTime.toISOString();
+        const timePart = postData.scheduledTime.length === 5 ? `${postData.scheduledTime}:00` : postData.scheduledTime;
+        apiPostData.scheduledDate = `${postData.scheduledDate}T${timePart}+05:30`;
 
-        console.log('📅 Scheduling post for:', scheduledDateTime.toISOString());
+        console.log('📅 Scheduling post for (IST):', apiPostData.scheduledDate);
         showToast('Scheduling post...', 'info');
 
         const response = await onPostCreated(apiPostData);

@@ -481,7 +481,25 @@ const Analytics = () => {
       });
 
       if (response.success) {
-        showToast(`Successfully synced analytics for ${response.data.platformsSynced} platforms`, 'success');
+        // ✅ Compute distinct platforms that had at least one successful sync,
+        // instead of using raw platformsSynced (which counts per-post syncs).
+        const syncResults = response.data?.results || [];
+        const successfulPlatforms = new Set();
+
+        syncResults.forEach(postResult => {
+          (postResult.results || []).forEach(r => {
+            if (r && r.success && r.platform) {
+              successfulPlatforms.add(String(r.platform).toLowerCase());
+            }
+          });
+        });
+
+        const platformCount = successfulPlatforms.size;
+        const label = platformCount === 1 ? 'platform' : 'platforms';
+        showToast(
+          `Successfully synced analytics for ${platformCount} ${label}`,
+          'success'
+        );
         // This will refresh both overview and individual account data
         await fetchAnalyticsOverview();
       } else {

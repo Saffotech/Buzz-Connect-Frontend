@@ -22,6 +22,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('token');
+      const storedUserRaw = localStorage.getItem('user');
+      let storedUser = null;
+      try {
+        storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+      } catch {
+        storedUser = null;
+      }
       
       if (storedToken) {  
         try {
@@ -56,18 +63,62 @@ export const AuthProvider = ({ children }) => {
               setToken(storedToken);
               console.log("User authenticated:", userData.email || userData.displayName);
             } else {
-              console.warn("Invalid user data in response, clearing auth", response);
-              clearAuth();
+              console.warn("Invalid user data in response", response);
+              // Fall back to stored user if available
+              if (storedUser) {
+                console.log("Using stored user data from localStorage as fallback");
+                setUser(storedUser);
+                setIsAuthenticated(true);
+                setToken(storedToken);
+              } else {
+                clearAuth();
+              }
             }
           } else {
-            // Token is invalid, clear it silently
-            console.log("Token verification failed, clearing auth");
-            clearAuth();
+            // Non-success response; decide if it's an auth problem
+            const msg = (response && (response.message || response.error)) || '';
+            const lowerMsg = msg.toLowerCase();
+
+            if (
+              lowerMsg.includes('unauthorized') ||
+              lowerMsg.includes('forbidden') ||
+              lowerMsg.includes('token') ||
+              lowerMsg.includes('authorization')
+            ) {
+              console.log("Token verification failed (auth error), clearing auth:", msg);
+              clearAuth();
+            } else if (storedUser) {
+              console.warn("getCurrentUser failed but token may still be valid; using stored user", msg);
+              setUser(storedUser);
+              setIsAuthenticated(true);
+              setToken(storedToken);
+            } else {
+              console.warn("getCurrentUser failed and no stored user; leaving unauthenticated", msg);
+              clearAuth();
+            }
           }
         } catch (error) {
-          // Silently handle errors (user doesn't exist, token invalid, etc.)
-          console.log('Token verification failed (user may not exist):', error.message);
-          clearAuth();
+          const msg = (error && error.message) || '';
+          const lowerMsg = msg.toLowerCase();
+
+          // Only clear auth on clear authentication failures
+          if (
+            lowerMsg.includes('unauthorized') ||
+            lowerMsg.includes('forbidden') ||
+            lowerMsg.includes('token') ||
+            lowerMsg.includes('authorization')
+          ) {
+            console.log('Token verification failed (auth error), clearing auth:', msg);
+            clearAuth();
+          } else if (storedUser) {
+            console.log('Token verification failed (network/server error); keeping existing auth:', msg);
+            setUser(storedUser);
+            setIsAuthenticated(true);
+            setToken(storedToken);
+          } else {
+            console.log('Token verification failed and no stored user; leaving unauthenticated:', msg);
+            clearAuth();
+          }
         }
       } else {
         // No token, make sure auth is cleared

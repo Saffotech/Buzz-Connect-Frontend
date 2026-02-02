@@ -288,19 +288,14 @@ const Dashboard = () => {
 
   const upcomingPostsFromAPI = data?.upcomingPosts || [];
 
-  // ✅ FIX: Use upcoming posts from dashboard API instead of filtering locally
+  // ✅ Use upcoming posts from dashboard API (posts due within next 3 min)
   useEffect(() => {
     const upcomingPosts = data?.upcomingPosts;
-    if (upcomingPosts !== undefined) {
-      if (Array.isArray(upcomingPosts)) {
-        console.log('📅 Setting upcoming posts from dashboard API:', upcomingPosts.length);
-        setUpcomingPosts(upcomingPosts);
-      } else {
-        console.warn('⚠️ Dashboard API returned invalid upcomingPosts format:', upcomingPosts);
-        setUpcomingPosts([]);
-      }
+    if (Array.isArray(upcomingPosts)) {
+      setUpcomingPosts(upcomingPosts);
+    } else {
+      setUpcomingPosts([]);
     }
-    // If data.upcomingPosts is undefined, keep current state (don't clear)
   }, [data]);
 
   // Show notification temporarily
@@ -602,6 +597,7 @@ const Dashboard = () => {
                               day: 'numeric',
                               hour: '2-digit',
                               minute: '2-digit',
+                              timeZone: 'Asia/Kolkata',
                             })}
                           </span>
                         </div>
