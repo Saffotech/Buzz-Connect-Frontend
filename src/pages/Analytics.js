@@ -481,20 +481,20 @@ const Analytics = () => {
       });
 
       if (response.success) {
-        // ✅ Compute distinct platforms that had at least one successful sync,
-        // instead of using raw platformsSynced (which counts per-post syncs).
-        const syncResults = response.data?.results || [];
-        const successfulPlatforms = new Set();
-
-        syncResults.forEach(postResult => {
-          (postResult.results || []).forEach(r => {
-            if (r && r.success && r.platform) {
-              successfulPlatforms.add(String(r.platform).toLowerCase());
-            }
+        // Prefer backend's connected platforms count so production shows correct channel count (e.g. 5)
+        const connectedCount = response.data?.connectedPlatformsCount;
+        let platformCount;
+        if (typeof connectedCount === 'number' && connectedCount > 0) {
+          platformCount = connectedCount;
+        } else {
+          const successfulPlatforms = new Set();
+          (response.data?.results || []).forEach(postResult => {
+            (postResult.results || []).forEach(r => {
+              if (r && r.success && r.platform) successfulPlatforms.add(String(r.platform).toLowerCase());
+            });
           });
-        });
-
-        const platformCount = successfulPlatforms.size;
+          platformCount = successfulPlatforms.size;
+        }
         const label = platformCount === 1 ? 'platform' : 'platforms';
         showToast(
           `Successfully synced analytics for ${platformCount} ${label}`,
