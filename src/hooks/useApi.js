@@ -203,7 +203,20 @@ export const useMedia = () => {
       setMedia(prev => [...newMedia, ...prev]);
       return response;
     } catch (err) {
-      throw new Error(err.message || 'Failed to upload media');
+      const message = err?.message || '';
+      const isNetworkError =
+        typeof navigator !== 'undefined' && (
+          !navigator.onLine ||
+          message.includes('Failed to fetch') ||
+          message.includes('NetworkError') ||
+          message.toLowerCase().includes('network error')
+        );
+
+      if (isNetworkError) {
+        throw new Error('Reconnect to network');
+      }
+
+      throw new Error(message || 'Failed to upload media');
     }
   };
 

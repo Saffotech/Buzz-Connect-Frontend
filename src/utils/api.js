@@ -53,15 +53,25 @@ class ApiClient {
   // Generic request method
   async request(endpoint, options = {}) {
     const url = this.buildUrl(endpoint);
+    const method = (options.method || 'GET').toUpperCase();
+    // fetch() uses "body", not "data" - ensure payload is sent for PUT/POST/PATCH
+    const body = options.body != null
+      ? options.body
+      : (options.data != null && ['PUT', 'POST', 'PATCH'].includes(method)
+        ? JSON.stringify(options.data)
+        : undefined);
     const config = {
       headers: this.getAuthHeaders(),
-      ...options
+      ...options,
+      method,
+      ...(body !== undefined && { body })
     };
+    delete config.data; // avoid passing data to fetch
 
     // Log request for debugging
     console.log('API Request:', {
       url,
-      method: options.method || 'GET',
+      method: config.method || 'GET',
       headers: config.headers
     });
 

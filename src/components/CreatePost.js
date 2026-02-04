@@ -93,6 +93,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Normalize date to YYYY-MM-DD for API and date input (handles Date object or string)
+  const toDateOnlyString = (val) => {
+    if (val == null || val === '') return '';
+    if (val instanceof Date) return `${val.getFullYear()}-${String(val.getMonth() + 1).padStart(2, '0')}-${String(val.getDate()).padStart(2, '0')}`;
+    return String(val).substring(0, 10);
+  };
+
   // ✅ ADD: Schedule DateTime Validation Function
   const validateScheduleDateTime = (date, time) => {
     if (!date || !time) return { isValid: true }; // Skip validation if not scheduling
@@ -117,11 +124,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       setPostData(prev => ({
         ...prev,
         content: initialData.content || '',
-        platforms: initialData.platforms || [],
+        platforms: Array.isArray(initialData.platforms) ? initialData.platforms : [],
         hashtags: initialData.hashtags || '',
         mentions: initialData.mentions || '',
-        selectedAccounts: initialData.selectedAccounts || {},
-        images: initialData.images && initialData.images.length > 0 ? initialData.images : [],
+        selectedAccounts: (initialData.selectedAccounts && typeof initialData.selectedAccounts === 'object' && !Array.isArray(initialData.selectedAccounts))
+          ? initialData.selectedAccounts
+          : {},
+        images: (initialData.images && Array.isArray(initialData.images) && initialData.images.length > 0) ? initialData.images : [],
         scheduledDate: initialData.scheduledDate ? new Date(initialData.scheduledDate) : null,
         scheduledTime: initialData.scheduledTime || '', // Keep in 24-hour format for backend
         metadata: {
@@ -519,7 +528,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
       setPostData((prev) => ({
         ...prev,
-        images: prev.images.filter((img) => !img.isLocal).concat(uploadedMedia),
+        images: (prev.images || []).filter((img) => !img.isLocal).concat(uploadedMedia),
       }));
 
       const fileTypeText =
@@ -535,13 +544,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       );
     } catch (error) {
       console.error("❌ Upload failed:", error);
-      setError(error.message || "Failed to upload media");
-      showToast("Failed to upload media", "error");
-
-      setPostData((prev) => ({
-        ...prev,
-        images: prev.images.filter((img) => !img.isLocal),
-      }));
+      const message = error.message || "Failed to upload media";
+      setError(message);
+      showToast(message, "error");
     } finally {
       setUploadingFiles(false);
     }
@@ -587,8 +592,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     setPostData(prev => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: (prev.images || []).filter((_, i) => i !== index)
     }));
+    // Reset file input so selecting the same file again triggers onChange
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     showToast('Media removed', 'info');
   };
 
@@ -874,12 +883,13 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
     if (!platform || !platform.connected) return;
 
     setPostData(prev => {
-      const newPlatforms = prev.platforms.includes(platformId)
-        ? prev.platforms.filter(id => id !== platformId)
-        : [...prev.platforms, platformId];
+      const currentPlatforms = prev.platforms || [];
+      const newPlatforms = currentPlatforms.includes(platformId)
+        ? currentPlatforms.filter(id => id !== platformId)
+        : [...currentPlatforms, platformId];
 
       // Remove selected accounts if platform is deselected
-      const newSelectedAccounts = { ...prev.selectedAccounts };
+      const newSelectedAccounts = { ...(prev.selectedAccounts || {}) };
       if (!newPlatforms.includes(platformId)) {
         delete newSelectedAccounts[platformId];
       }
@@ -967,7 +977,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       // Replace local previews with actual uploaded URLs
       setPostData(prev => ({
         ...prev,
-        images: prev.images.filter(img => !img.isLocal).concat(uploadedImages)
+        images: (prev.images || []).filter(img => !img.isLocal).concat(uploadedImages)
       }));
 
       showToast(`Successfully uploaded ${files.length} image(s)`, 'success');
@@ -980,7 +990,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       // Remove local previews on error
       setPostData(prev => ({
         ...prev,
-        images: prev.images.filter(img => !img.isLocal)
+        images: (prev.images || []).filter(img => !img.isLocal)
       }));
     } finally {
       setUploadingFiles(false);
@@ -990,7 +1000,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
   const removeImage = (index) => {
     setPostData(prev => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: (prev.images || []).filter((_, i) => i !== index)
     }));
     showToast('Image removed', 'info');
   };
@@ -1021,17 +1031,17 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       });
 
       // 🔹 Clean up selectedAccounts (remove null/empty)
-      Object.entries(postData.selectedAccounts).forEach(([platform, accounts]) => {
-        const validAccounts = accounts.filter(account => account != null && account !== '');
+      Object.entries(postData.selectedAccounts || {}).forEach(([platform, accounts]) => {
+        const validAccounts = (accounts || []).filter(account => account != null && account !== '');
         if (validAccounts.length > 0) {
-          cleanedSelectedAccounts[platform] = validAccounts;
+          cleanedSelectedAccounts[platform] = validAccounts.map(id => String(id));
 
-          // ✅ Add usernames mapped from connectedAccounts
+          // ✅ Add usernames mapped from connectedAccounts (backend requires id + username as strings)
           selectedAccountsWithNames[platform] = validAccounts.map(accountId => {
             const account = accountsMap[accountId];
             return {
-              id: accountId,
-              username: account ? account.username : 'Unknown Account'
+              id: String(accountId),
+              username: String(account?.username ?? 'Unknown Account')
             };
           });
         }
@@ -1040,8 +1050,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
       console.log('✅ Sending account usernames:', selectedAccountsWithNames);
 
       // 🔹 Upload any blob URLs to VPS before creating post
-      let processedImages = [...postData.images];
-      const imagesWithBlobUrls = postData.images.filter(img =>
+      const imagesArray = postData.images || [];
+      let processedImages = [...imagesArray];
+      const imagesWithBlobUrls = imagesArray.filter(img =>
         img.url && img.url.startsWith('blob:')
       );
 
@@ -1069,7 +1080,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
           }
 
           // Replace blob URLs with VPS URLs
-          processedImages = postData.images.map((img) => {
+          processedImages = (postData.images || []).map((img) => {
             if (img.url && img.url.startsWith('blob:')) {
               const uploadIndex = imagesWithBlobUrls.findIndex(blobImg => blobImg === img);
               if (uploadIndex >= 0 && uploadResponse.data[uploadIndex]) {
@@ -1146,7 +1157,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         !img.url || !img.url.startsWith('blob:')
       );
 
-      if (processedImages.length === 0 && postData.images.length > 0) {
+      if (processedImages.length === 0 && (postData.images || []).length > 0) {
         throw new Error('Failed to upload images. Please try again.');
       }
 
@@ -1164,48 +1175,54 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
       // 🔹 Prepare final API post data
       const apiPostData = {
-        content: postData.content,
-        platforms: postData.platforms,
+        content: postData.content || '',
+        platforms: postData.platforms || [],
         selectedAccounts: cleanedSelectedAccounts,
         selectedAccountsWithNames: selectedAccountsWithNames, // ✅ Added to payload
-        images: processedImages.map((img, index) => {
+        images: processedImages
+          .filter(img => img && img.url && String(img.url).trim())
+          .map((img, index) => {
           // Clean thumbnails - completely exclude null/undefined values
-          // Backend expects all thumbnail values to be strings, not null
-          // Only include keys that have valid non-null string values
           let cleanedThumbnails = null;
           if (img.thumbnails && typeof img.thumbnails === 'object') {
             cleanedThumbnails = {};
             for (const [key, value] of Object.entries(img.thumbnails)) {
-              // Only include keys with valid non-null, non-undefined values
-              // Convert to string and exclude if null/undefined/empty
               if (value != null && value !== undefined && value !== '') {
                 cleanedThumbnails[key] = String(value);
               }
-              // If value is null/undefined, don't include it in the object at all
             }
-            // Only include thumbnails if it has at least one valid value
             if (Object.keys(cleanedThumbnails).length === 0) {
               cleanedThumbnails = null;
             }
           }
 
+          // Backend expects dimensions as { width?: int, height?: int } or null
+          let dimensions = null;
+          if (img.dimensions && typeof img.dimensions === 'object' && !Array.isArray(img.dimensions)) {
+            const w = img.dimensions.width;
+            const h = img.dimensions.height;
+            const nw = w != null ? Number(w) : null;
+            const nh = h != null ? Number(h) : null;
+            if (nw != null || nh != null) {
+              dimensions = { width: Number.isFinite(nw) ? nw : null, height: Number.isFinite(nh) ? nh : null };
+            }
+          }
+
           const imageData = {
-            url: img.url,
-            altText: img.altText || img.originalName || 'Post media',
+            url: String(img.url),
+            altText: (img.altText || img.originalName || 'Post media').substring(0, 200),
             originalName: img.originalName || img.filename || `Media ${index + 1}`,
             displayName: img.displayName || img.originalName || img.filename || `Media ${index + 1}`,
-            filename: img.filename,
-            publicId: img.publicId || null,
-            fileType: img.fileType || 'image',
-            size: img.size,
-            dimensions: img.dimensions,
-            duration: img.duration,
-            order: index,
-            format: img.format,
-            humanSize: img.size ? formatFileSize(img.size) : null
+            filename: img.filename ?? null,
+            publicId: img.publicId ?? null,
+            fileType: (img.fileType === 'video' || img.fileType === 'image') ? img.fileType : 'image',
+            size: img.size != null && img.size !== '' ? Number(img.size) : null,
+            dimensions,
+            duration: img.duration != null && img.duration !== '' ? Number(img.duration) : null,
+            order: Number(index) || 0,
+            format: img.format ?? null
           };
 
-          // Only include thumbnails if it has valid values (no null keys)
           if (cleanedThumbnails && Object.keys(cleanedThumbnails).length > 0) {
             imageData.thumbnails = cleanedThumbnails;
           }
@@ -1214,12 +1231,12 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         }),
         hashtags: Array.isArray(postData.hashtags)
           ? postData.hashtags
-          : postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')),
+          : (typeof postData.hashtags === 'string' ? postData.hashtags.split(/\s+/).filter(tag => tag.startsWith('#')) : []),
         mentions: Array.isArray(postData.mentions)
           ? postData.mentions
-          : postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')),
+          : (typeof postData.mentions === 'string' ? postData.mentions.split(/\s+/).filter(mention => mention.startsWith('@')) : []),
         metadata: {
-          category: postData.metadata?.category || 'other',
+          category: ['promotional', 'educational', 'entertainment', 'news', 'personal', 'other'].includes(postData.metadata?.category) ? postData.metadata.category : 'other',
           source: 'web'
         }
       };
@@ -1275,8 +1292,11 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
       // ✅ Handle scheduling or immediate publish (send time in IST, UTC+5:30)
       if (isScheduled && postData.scheduledDate && postData.scheduledTime) {
+        const dateStr = toDateOnlyString(postData.scheduledDate);
         const timePart = postData.scheduledTime.length === 5 ? `${postData.scheduledTime}:00` : postData.scheduledTime;
-        apiPostData.scheduledDate = `${postData.scheduledDate}T${timePart}+05:30`;
+        if (dateStr) {
+          apiPostData.scheduledDate = `${dateStr}T${timePart}+05:30`;
+        }
 
         console.log('📅 Scheduling post for (IST):', apiPostData.scheduledDate);
         showToast('Scheduling post...', 'info');
@@ -2574,7 +2594,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                         <div className="input-group">
                           <input
                             type="date"
-                            value={postData.scheduledDate}
+                            value={toDateOnlyString(postData.scheduledDate)}
                             onChange={(e) =>
                               setPostData(prev => ({ ...prev, scheduledDate: e.target.value }))
                             }
@@ -2688,7 +2708,7 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                             >
                               {/* YouTube: just show first video-like item */}
                               {platformId === 'youtube' ? (
-                                postData.images
+                                (postData.images || [])
                                   .filter(img => img.fileType === 'video' || img.url?.includes('video') || img.url?.includes('.mp4'))
                                   .slice(0, 1)
                                   .map((videoItem, i) => (

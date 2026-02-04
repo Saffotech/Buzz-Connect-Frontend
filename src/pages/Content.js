@@ -227,7 +227,7 @@ const Content = () => {
 
       const response = await apiClient.request(`/api/posts/${postId}`, {
         method: 'PUT',
-        data: postData  // Use data instead of body
+        body: JSON.stringify(postData)
       });
 
       if (response && (response.success || response.data || response._id)) {
@@ -1016,7 +1016,9 @@ const PostsSubPage = ({
               ref={statusBtnRef}
               onClick={() => setShowStatusFilters(!showStatusFilters)}
             >
-              {filters.status === 'all' ? 'All Posts' : filters.status}
+              {filters.status === 'all'
+                ? 'All Posts'
+                : filters.status.charAt(0).toUpperCase() + filters.status.slice(1)}
               {showStatusFilters && <div className="status-dropdown" ref={statusDropdownRef}>
                 <div className="filter-group">
                   <label>Filter Posts</label>
