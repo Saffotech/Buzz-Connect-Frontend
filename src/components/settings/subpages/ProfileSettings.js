@@ -8,9 +8,11 @@ import { Eye, EyeOff } from 'lucide-react';
 import apiClient from '../../../utils/api';
 
 const ProfileSettings = ({ onNotify }) => {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [name, setName] = useState('Loading...');
   const [email, setEmail] = useState('Loading...');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [updatingProfile, setUpdatingProfile] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -36,9 +38,35 @@ const ProfileSettings = ({ onNotify }) => {
         }
       } catch (err) {
         console.error('Error fetching profile:', err);
-        toast.error('Failed to load profile data');
-        setName('Error loading');
-        setEmail('Error loading');
+
+        const rawMessage =
+          err?.response?.data?.message ||
+          err?.message ||
+          '';
+
+        const lowerMsg = rawMessage.toLowerCase();
+
+        const isNetworkError =
+          (typeof navigator !== 'undefined' && !navigator.onLine) ||
+          lowerMsg.includes('network') ||
+          lowerMsg.includes('failed to fetch') ||
+          lowerMsg.includes('unable to connect') ||
+          lowerMsg.includes('could not reach');
+
+        if (isNetworkError) {
+          const msg =
+            'We could not load your profile because of a network connectivity issue. ' +
+            'Please check your internet connection and try again.';
+          toast.error(msg);
+          // Make it clear this is an offline/network issue instead of a generic error
+          setName('Offline – check connection');
+          setEmail('Offline – check connection');
+        } else {
+          const msg = rawMessage || 'Failed to load profile data';
+          toast.error(msg);
+          setName('Error loading');
+          setEmail('Error loading');
+        }
       }
     };
 
@@ -96,7 +124,7 @@ const ProfileSettings = ({ onNotify }) => {
     try {
       const res = await apiClient.updatePassword(currentPassword, newPassword);
 
-      if (res.data.success) {
+      if (res.success) {
         toast.success('Password updated successfully');
         // Reset form
         setShowPasswordForm(false);
@@ -115,7 +143,7 @@ const ProfileSettings = ({ onNotify }) => {
       }
     } catch (err) {
       console.error('Password update error:', err);
-      toast.error(err.response?.data?.message || 'Failed to update password');
+      toast.error(err?.message || 'Failed to update password');
     } finally {
       setUpdatingPassword(false);
     }
@@ -143,10 +171,82 @@ const ProfileSettings = ({ onNotify }) => {
     }
   };
 
+  // Handle profile name update
+  const handleProfileSave = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      toast.error('Name cannot be empty');
+      return;
+    }
+
+    setUpdatingProfile(true);
+    try {
+      const res = await apiClient.request('/api/users/profile', {
+        method: 'PUT',
+        body: JSON.stringify({ displayName: trimmedName })
+      });
+
+      if (res && res.success) {
+        toast.success('Profile updated successfully');
+        setIsEditingProfile(false);
+
+        // Update global auth user so name changes across the app
+        if (user) {
+          updateUser({ ...user, displayName: trimmedName });
+        }
+        // Optionally notify parent
+        if (onNotify) {
+          onNotify('Profile updated successfully');
+        }
+      } else {
+        toast.error(res?.message || 'Failed to update profile');
+      }
+    } catch (err) {
+      console.error('Profile update error:', err);
+      toast.error(err?.message || 'Failed to update profile');
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
+  const handleCancelProfileEdit = () => {
+    setIsEditingProfile(false);
+    // Optionally reload profile to reset name; for now keep current value
+  };
+
   return (
     <div className="settings-subpage">
       <div className="settings-content">
-        <SettingsCard title="Profile Information">
+        <SettingsCard
+          title="Profile Information"
+          headerAction={
+            isEditingProfile ? (
+              <div className="button-group">
+                <button
+                  className="btn-primary"
+                  onClick={handleProfileSave}
+                  disabled={updatingProfile || !name.trim()}
+                >
+                  {updatingProfile ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={handleCancelProfileEdit}
+                  disabled={updatingProfile}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                className="btn-primary"
+                onClick={() => setIsEditingProfile(true)}
+              >
+                Edit
+              </button>
+            )
+          }
+        >
           <div className="content-card">
             <div className="form-row">
               <div className="form-group">
@@ -154,8 +254,9 @@ const ProfileSettings = ({ onNotify }) => {
                 <input
                   type="text"
                   value={name}
-                  readOnly
-                  className="readonly-input"
+                  onChange={(e) => setName(e.target.value)}
+                  readOnly={!isEditingProfile}
+                  className={isEditingProfile ? 'form-input' : 'readonly-input'}
                 />
               </div>
               <div className="form-group">

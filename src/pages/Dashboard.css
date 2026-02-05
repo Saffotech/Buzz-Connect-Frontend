@@ -167,30 +167,40 @@
 /* Notification */
 .notification {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
-  padding: 1rem 1.5rem;
+  /* Small toast just under the fixed 12vh navbar */
+  top: calc(12vh + 8px);
+  right: 1.5rem;
+  padding: 0.6rem 0.9rem;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  z-index: 1000;
-  min-width: 300px;
+  gap: 0.5rem;
+  z-index: 1200;
+  min-width: 260px;
+  max-width: 320px;
+  max-height: 110px;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 
 .notification.success {
-  background-color: #dcfce7;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
   color: #166534;
   border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
 }
 
 
 .notification.error {
-  background-color: #fee2e2;
-  color: #dc2626;
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  color: #b91c1c;
   border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
 }
 
 

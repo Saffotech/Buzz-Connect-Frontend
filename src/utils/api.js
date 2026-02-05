@@ -158,9 +158,22 @@ class ApiClient {
       });
 
       // Handle network errors (CORS, connection refused, etc.)
-      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      const isNetworkError =
+        error.message.includes('Failed to fetch') ||
+        error.message.includes('NetworkError');
+
+      if (isNetworkError) {
+        // More helpful message for post create/publish flows
+        if (endpoint.includes('/posts')) {
+          throw new Error(
+            'We could not publish your post because of a network connectivity issue. ' +
+            'Please reconnect to the internet and try again.'
+          );
+        }
+
+        // Generic fallback for other endpoints
         throw new Error(
-          'Unable to connect to server. Please check if the backend is running on http://localhost:5000'
+          'Network error: could not reach the server. Please check your internet connection and try again.'
         );
       }
 
@@ -460,7 +473,7 @@ class ApiClient {
   }
 
   async updatePassword(currentPassword, newPassword) {
-    return this.request('/api/users/update-password', {
+    return this.request('/api/users/password', {
       method: 'PUT',
       body: JSON.stringify({ currentPassword, newPassword })
     });

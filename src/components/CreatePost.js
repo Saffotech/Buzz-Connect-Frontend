@@ -50,7 +50,7 @@ import { faXTwitter } from "@fortawesome/free-brands-svg-icons";
 import { validateImageDimensions, autoResizeImage, isValidAspectRatio, getOptimalImageType } from '../utils/imageUtils';
 import DIMENSIONS from '../utils/dimensions-config';
 
-const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData }) => {
+const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initialData, onPublishResult }) => {
   const [imgIndex, setImgIndex] = useState(0);
   const [hoveredPlatform, setHoveredPlatform] = useState(null);
   const { uploadMedia } = useMedia();
@@ -1301,7 +1301,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         console.log('📅 Scheduling post for (IST):', apiPostData.scheduledDate);
         showToast('Scheduling post...', 'info');
 
-        const response = await onPostCreated(apiPostData);
+        // Suppress global "post created" toast here; we show a schedule-specific toast below
+        const response = await onPostCreated(apiPostData, { suppressSuccessToast: true });
         console.log('✅ Scheduled post created:', response);
 
         showToast('Post scheduled successfully!', 'success');
@@ -1309,7 +1310,8 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
         console.log('🚀 Creating and publishing post immediately...');
         showToast('Creating and publishing post...', 'info');
 
-        const createResponse = await onPostCreated(apiPostData);
+        // Suppress global "post created" toast; publish result will drive the user messaging
+        const createResponse = await onPostCreated(apiPostData, { suppressSuccessToast: true });
         console.log('✅ Post created:', createResponse);
 
         if (!createResponse?.data?.id && !createResponse?.data?._id) {
@@ -1338,7 +1340,9 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
             if (successfulPublishes === totalAccounts) {
               // All platforms succeeded
-              showToast('Post published successfully to all platforms!', 'success');
+              const msg = 'Post published successfully to all platforms!';
+              showToast(msg, 'success');
+              if (onPublishResult) onPublishResult('success', msg);
             } else if (successfulPublishes > 0) {
               // Partial success - show details
               const successful = results
@@ -1350,17 +1354,26 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
                 .map(r => r.platform?.toUpperCase() || 'Unknown')
                 .join(', ');
 
-              showToast(
-                `Published to ${successfulPublishes}/${totalAccounts} platforms. Success: ${successful}${failed ? `. Failed: ${failed}` : ''}`,
-                'warning' // Use warning for partial success
-              );
+              const msg = `Published to ${successfulPublishes}/${totalAccounts} platforms. Success: ${successful}${failed ? `. Failed: ${failed}` : ''}`;
+              showToast(msg, 'warning'); // Use warning for partial success
+              if (onPublishResult) onPublishResult('warning', msg);
             } else {
-              // All failed
-              showToast('Post publishing failed for all platforms', 'error');
+              // All failed – likely a connectivity or platform error
+              const failedPlatforms = (results || [])
+                .map(r => r.platform?.toUpperCase?.() || 'UNKNOWN')
+                .join(', ');
+              const baseMsg = publishResponse.message || 'We could not publish your post to any platform.';
+              const networkHint = ' Please check your internet connection or the status of your social accounts and try again.';
+
+              const msg = `${baseMsg}${failedPlatforms ? ` (Platforms: ${failedPlatforms})` : ''}${networkHint}`;
+              showToast(msg, 'error');
+              if (onPublishResult) onPublishResult('error', msg);
             }
           } else {
             // Fallback to simple message or backend message
-            showToast(publishResponse.message || 'Post published successfully!', 'success');
+            const msg = publishResponse.message || 'Post published successfully!';
+            showToast(msg, 'success');
+            if (onPublishResult) onPublishResult('success', msg);
           }
         } else {
           throw new Error(publishResponse.message || 'Publishing failed');
@@ -1376,9 +1389,36 @@ const CreatePost = ({ isOpen, onClose, onPostCreated, connectedAccounts, initial
 
     } catch (error) {
       console.error('❌ Failed to create/publish post:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to create post';
+
+      const rawMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        '';
+
+      const lowerMsg = rawMessage.toLowerCase();
+
+      const isNetworkError =
+        (typeof navigator !== 'undefined' && !navigator.onLine) ||
+        lowerMsg.includes('network') ||
+        lowerMsg.includes('failed to fetch') ||
+        lowerMsg.includes('unable to connect') ||
+        lowerMsg.includes('could not reach');
+
+      let errorMessage;
+
+      if (isNetworkError) {
+        // Very clear, internet-specific message
+        errorMessage = 'Your internet connection appears to be offline. Please reconnect to the internet and try again.';
+      } else {
+        const label = isScheduled ? 'Failed to schedule post' : 'Failed to publish post';
+        // Always show at least the generic label; append backend/platform message when present
+        errorMessage = rawMessage ? `${label}. ${rawMessage}` : label;
+      }
+
       setError(errorMessage);
-      showToast(isScheduled ? 'Failed to schedule post' : 'Failed to publish post', 'error');
+      // Show a clear, user-friendly reason (network vs other issues)
+      showToast(errorMessage, 'error');
+      if (onPublishResult) onPublishResult('error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }

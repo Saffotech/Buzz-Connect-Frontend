@@ -3860,6 +3860,3 @@ const AccountsSettings = ({ onNotify }) => {
 };
 
 export default AccountsSettings;
-
-
-

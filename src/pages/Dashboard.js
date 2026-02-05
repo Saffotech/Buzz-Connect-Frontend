@@ -217,10 +217,17 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const handleCreatePost = async (postData) => {
+  const handleCreatePost = async (postData, options = {}) => {
+    const { suppressSuccessToast } = options || {};
+
     try {
       const response = await apiCreatePost(postData);
-      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
+
+      // Only show generic "post created" notification when not suppressing
+      if (!suppressSuccessToast) {
+        setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
+      }
+
       setShowCreatePost(false);
 
       // Refresh posts after creating new one
@@ -238,14 +245,15 @@ const Dashboard = () => {
       await apiClient.logout();
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      navigate('/auth');
+      // Ensure history entry is replaced so Back can't return to dashboard
+      navigate('/auth', { replace: true });
       window.location.reload();
     } catch (error) {
       console.error('Logout error:', error);
       // Force logout even if API call fails
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      navigate('/auth');
+      navigate('/auth', { replace: true });
       window.location.reload();
     }
   };

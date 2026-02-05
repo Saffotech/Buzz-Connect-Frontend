@@ -68,11 +68,15 @@ const CreatePostButton = ({ onPostCreated, refreshPosts }) => {
     createPost: apiCreatePost,
   } = useDashboardData();
 
-  const handleCreatePost = async (postData) => {
+  const handleCreatePost = async (postData, options = {}) => {
+    const { suppressSuccessToast } = options || {};
     try {
       console.log('Creating post with data:', postData);
       const response = await apiCreatePost(postData);
-      setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
+
+      if (!suppressSuccessToast) {
+        setNotification({ type: 'success', message: SUCCESS_MESSAGES.POST_CREATED });
+      }
       setShowCreatePost(false);
 
       if (refreshPosts) {

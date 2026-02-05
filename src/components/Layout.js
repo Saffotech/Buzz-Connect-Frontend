@@ -357,7 +357,8 @@ const Layout = ({ children }) => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/auth');
+      // Replace the current history entry so Back cannot return to a protected page
+      navigate('/auth', { replace: true });
     } catch (error) {
       console.error('Logout failed:', error);
     }

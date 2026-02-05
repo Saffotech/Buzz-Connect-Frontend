@@ -252,35 +252,19 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
 
     setLoadingAnalytics(true);
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-
-      if (!token) {
-        console.error('No authentication token found');
-        return;
-      }
-
       const postId = post._id || post.id;
       console.log('Fetching analytics for post:', postId);
+      const response = await apiClient.getPostAnalytics(postId);
 
-      const response = await axios.get(
-        apiClient.buildUrl(`/analytics/posts/${postId}`),
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'accept': '*/*'
-          }
-        }
-      );
-
-      if (response.data.success) {
-        console.log('Analytics data received:', response.data.data);
-        setAnalyticsData(response.data.data);
+      if (response.success) {
+        console.log('Analytics data received:', response.data);
+        setAnalyticsData(response.data);
       } else {
-        console.error('Failed to fetch analytics:', response.data.message);
+        console.error('Failed to fetch analytics:', response.message);
       }
     } catch (error) {
       console.error('Error fetching post analytics:', error);
-      if (error.response?.status === 404) {
+      if (error?.message?.includes('404') || error?.message?.includes('Post not found')) {
         console.log('Post not found in analytics - this is normal for draft posts');
       } else {
         showToast('Failed to load analytics data', 'error');
@@ -296,41 +280,27 @@ const PostDetailModal = ({ post, isOpen, onClose, onEdit, onDelete, onPostAgain 
 
     setSyncingAnalytics(true);
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-
-      if (!token) {
-        showToast('Authentication required', 'error');
-        return;
-      }
-
       const postId = post._id || post.id;
       console.log('Syncing analytics for post:', postId);
 
       showToast('Syncing analytics from social platforms...', 'info');
 
-      const response = await axios.post(
-        apiClient.buildUrl(`/analytics/posts/${postId}/sync`),
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'accept': '*/*'
-          }
-        }
-      );
+      const response = await apiClient.request(`/api/analytics/posts/${postId}/sync`, {
+        method: 'POST'
+      });
 
-      if (response.data.success) {
-        console.log('Sync successful:', response.data);
-        showToast(response.data.message || 'Analytics synced successfully!', 'success');
+      if (response.success) {
+        console.log('Sync successful:', response);
+        showToast(response.message || 'Analytics synced successfully!', 'success');
 
         // Refresh analytics data after sync
         await fetchPostAnalytics();
       } else {
-        throw new Error(response.data.message || 'Sync failed');
+        throw new Error(response.message || 'Sync failed');
       }
     } catch (error) {
       console.error('Error syncing post analytics:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to sync analytics';
+      const errorMessage = error?.message || 'Failed to sync analytics';
       showToast(errorMessage, 'error');
     } finally {
       setSyncingAnalytics(false);
