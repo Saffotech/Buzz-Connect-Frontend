@@ -3134,9 +3134,21 @@ const AccountsSettings = ({ onNotify }) => {
 
     } catch (err) {
       console.error('Failed to disconnect account', err);
-      
-      // ✅ FIXED: apiClient.request() throws Error objects, not axios response errors
-      const errorMessage = err.message || 'Failed to disconnect account';
+
+      const rawMessage = err?.message || '';
+      const lowerMsg = rawMessage.toLowerCase();
+
+      const isNetworkError =
+        (typeof navigator !== 'undefined' && !navigator.onLine) ||
+        lowerMsg.includes('network') ||
+        lowerMsg.includes('failed to fetch') ||
+        lowerMsg.includes('unable to connect') ||
+        lowerMsg.includes('could not reach');
+
+      const errorMessage = isNetworkError
+        ? "We couldn't disconnect the account because of a network issue. Please check your internet connection and try again."
+        : (rawMessage || 'Failed to disconnect account');
+
       toast.error(errorMessage);
     }
   };
