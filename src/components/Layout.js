@@ -66,6 +66,33 @@ const Layout = ({ children }) => {
 
   const { user } = useDashboardData();
 
+  // 🔐 Extra safety: if this layout is ever shown without a valid token
+  // (e.g. browser restores an old Dashboard/Content from back/forward cache),
+  // immediately redirect to the auth page.
+  useEffect(() => {
+    const checkAuthFromStorage = () => {
+      const storedToken = localStorage.getItem('token');
+      if (!storedToken) {
+        // No token in storage -> user is effectively logged out,
+        // so we should not show any protected content.
+        window.location.replace('/auth');
+      }
+    };
+
+    // Run once on mount
+    checkAuthFromStorage();
+
+    // Handle back/forward cache restores
+    const handlePageShow = (event) => {
+      if (event.persisted) {
+        checkAuthFromStorage();
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+
   // Initialize notifications on component mount
   useEffect(() => {
     loadNotifications();
