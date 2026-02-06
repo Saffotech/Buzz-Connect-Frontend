@@ -357,10 +357,13 @@ const Layout = ({ children }) => {
   const handleLogout = async () => {
     try {
       await logout();
-      // Replace the current history entry so Back cannot return to a protected page
-      navigate('/auth', { replace: true });
+      // Force a full navigation to auth and replace history entry
+      // so browser Back cannot resurrect cached dashboard/content screens
+      window.location.replace('/auth');
     } catch (error) {
       console.error('Logout failed:', error);
+      // Even if logout API fails, ensure user is taken to auth screen
+      window.location.replace('/auth');
     }
   };
 
